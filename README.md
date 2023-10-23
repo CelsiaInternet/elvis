@@ -3,9 +3,9 @@
 # Public
 
 ```
-git tag V0.0.1.63
-git push origin --tags
 git update
+git tag V0.0.39
+git push origin --tags
 
 go build ./cmd/create-go
 gofmt -w . && go run ./cmd/create-go
