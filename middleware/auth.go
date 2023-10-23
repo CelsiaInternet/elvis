@@ -8,7 +8,7 @@ import (
 
 	"github.com/cgalvisleon/elvis/claim"
 	"github.com/cgalvisleon/elvis/console"
-	. "github.com/cgalvisleon/elvis/core"
+	"github.com/cgalvisleon/elvis/event"
 	. "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/response"
 	. "github.com/cgalvisleon/elvis/utilities"
@@ -66,11 +66,12 @@ func Authorization(next http.Handler) http.Handler {
 		now := Now()
 		hostName, _ := os.Hostname()
 		data := Json{
+			"clientId": c.ID,
 			"last_use":  now,
 			"host_name": hostName,
 		}
 
-		go UpSertCollection("telemetry.token.last_use", "-1", c.ID, data)
+		event.EventPublish("telemetry.token.last_use", data)		
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

@@ -28,7 +28,7 @@ func MkPMicroservice(packageName, name, author, schema string) error {
 	progressNext(60)
 	_, err = Command([]string{
 		fmt.Sprintf("cd ./%s", name),
-		fmt.Sprintf("go init github.com/%s/%s", author, name),
+		fmt.Sprintf("go mod init github.com/%s/%s", author, name),
 	})
 	if err != nil {
 		return err

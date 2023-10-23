@@ -412,8 +412,8 @@ import (
 	"github.com/go-chi/chi"
 )
 
-var PackageName = "Demo"
-var PackageTitle = "Demo"
+var PackageName = "$1"
+var PackageTitle = "$1"
 var PackagePath = "/api/$1"
 var PackageVersion = EnvarStr("VERSION")
 var HostName, _ = os.Hostname()
