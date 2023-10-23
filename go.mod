@@ -10,8 +10,10 @@ require (
 	github.com/gorilla/websocket v1.5.0
 	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.10.9
+	github.com/manifoldco/promptui v0.9.0
 	github.com/nats-io/nats.go v1.28.0
 	github.com/redis/go-redis/v9 v9.1.0
+	github.com/schollz/progressbar/v3 v3.13.1
 	github.com/xhit/go-simple-mail/v2 v2.16.0
 	golang.org/x/crypto v0.12.0
 	golang.org/x/exp v0.0.0-20230817173708-d852ddb80c63
@@ -21,11 +23,9 @@ require (
 require (
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
-	github.com/manifoldco/promptui v0.9.0 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
-	github.com/schollz/progressbar/v3 v3.13.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	golang.org/x/term v0.13.0 // indirect
 )
