@@ -92,17 +92,14 @@ func NewNode(params *Json) (*Node, error) {
 }
 
 func DefineNodes() error {
-	if err := DefineCoreSchema(); err != nil {
-		return console.PanicE(err)
-	}
-
 	if master.InitNodes {
 		return nil
 	}
 
-	sql := `  
+	sql := `
   -- DROP TABLE IF EXISTS core.NODES CASCADE;
 	-- DROP TABLE IF EXISTS core.SYNC CASCADE;
+	CREATE SCHEMA IF NOT EXISTS "core";
 
   CREATE TABLE IF NOT EXISTS core.NODES(
 		DATE_MAKE TIMESTAMP DEFAULT NOW(),
