@@ -12,7 +12,7 @@ import (
 var Stacks *Model
 
 func DefineStacks() error {
-	if err := DefineCoreSchema(); err != nil {
+	if err := defineSchema(); err != nil {
 		return console.PanicE(err)
 	}
 
@@ -20,7 +20,7 @@ func DefineStacks() error {
 		return nil
 	}
 
-	Stacks = NewModel(SchemaCore, "STACK", "Tabla de colas", 1)
+	Stacks = NewModel(SchemaModule, "STACK", "Tabla de colas", 1)
 	Stacks.DefineColum("date_make", "", "TIMESTAMP", "NOW()")
 	Stacks.DefineColum("_state", "", "VARCHAR(80)", ACTIVE)
 	Stacks.DefineColum("_id", "", "VARCHAR(80)", "-1")

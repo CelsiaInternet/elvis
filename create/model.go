@@ -240,41 +240,6 @@ func Banner() {
 }
 `
 
-const modelControllerGo = `package $1
-
-import (
-	"context"
-
-	"github.com/cgalvisleon/elvis/jdb"
-	. "github.com/cgalvisleon/elvis/json"
-	. "github.com/cgalvisleon/elvis/envar"
-	_ "github.com/joho/godotenv/autoload"
-)
-
-type Controller struct {
-	Db *jdb.Conn
-}
-
-func (c *Controller) Version(ctx context.Context) (Json, error) {
-	company := EnvarStr("COMPANY")
-	web := EnvarStr("WEB")
-	version := EnvarStr("VERSION")
-
-	return Json{
-		"version": version,
-		"service": PackageName,
-		"host":    HostName,
-		"company": company,
-		"web":     web,
-		"help":    "",
-	}, nil
-}
-
-func (c *Controller) Init(ctx context.Context) {
-	initModels()
-}
-`
-
 const modelEventGo = `package $1
 
 import (
@@ -384,20 +349,6 @@ const (
 )
 `
 
-const modelRepositoryGo = `package $1
-
-import (
-	"context"
-
-	. "github.com/cgalvisleon/elvis/json"
-)
-
-type Repository interface {
-	Version(ctx context.Context) (Json, error)
-	Init(ctx context.Context)
-}
-`
-
 const modelRouterGo = `package $1
 
 import (
@@ -408,6 +359,7 @@ import (
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/response"
 	. "github.com/cgalvisleon/elvis/router"
+	. "github.com/cgalvisleon/elvis/json"
 	. "github.com/cgalvisleon/elvis/envar"
 	"github.com/go-chi/chi"
 )
@@ -417,6 +369,34 @@ var PackageTitle = "$1"
 var PackagePath = "/api/$1"
 var PackageVersion = EnvarStr("VERSION")
 var HostName, _ = os.Hostname()
+
+type Controller struct {
+	Db *jdb.Conn
+}
+
+func (c *Controller) Version(ctx context.Context) (Json, error) {
+	company := EnvarStr("COMPANY")
+	web := EnvarStr("WEB")
+	version := EnvarStr("VERSION")
+
+	return Json{
+		"version": version,
+		"service": PackageName,
+		"host":    HostName,
+		"company": company,
+		"web":     web,
+		"help":    "",
+	}, nil
+}
+
+func (c *Controller) Init(ctx context.Context) {
+	initModels()
+}
+
+type Repository interface {
+	Version(ctx context.Context) (Json, error)
+	Init(ctx context.Context)
+}
 
 type Router struct {
 	Repository Repository

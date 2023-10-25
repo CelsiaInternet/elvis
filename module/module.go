@@ -13,7 +13,7 @@ import (
 var Modules *Model
 
 func DefineModules() error {
-	if err := DefineCoreSchema(); err != nil {
+	if err := defineSchema(); err != nil {
 		return console.PanicE(err)
 	}
 
@@ -21,7 +21,7 @@ func DefineModules() error {
 		return nil
 	}
 
-	Modules = NewModel(SchemaCore, "MODULES", "Tabla de modulos", 1)
+	Modules = NewModel(SchemaModule, "MODULES", "Tabla de modulos", 1)
 	Modules.DefineColum("date_make", "", "TIMESTAMP", "NOW()")
 	Modules.DefineColum("date_update", "", "TIMESTAMP", "NOW()")
 	Modules.DefineColum("_state", "", "VARCHAR(80)", ACTIVE)

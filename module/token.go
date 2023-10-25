@@ -41,7 +41,7 @@ func (n *Token) Scan(js *Json) error {
 var Tokens *Model
 
 func DefineTokens() error {
-	if err := DefineCoreSchema(); err != nil {
+	if err := defineSchema(); err != nil {
 		return console.PanicE(err)
 	}
 
@@ -49,7 +49,7 @@ func DefineTokens() error {
 		return nil
 	}
 
-	Tokens = NewModel(SchemaCore, "TOKENS", "Tabla de tokens", 1)
+	Tokens = NewModel(SchemaModule, "TOKENS", "Tabla de tokens", 1)
 	Tokens.DefineColum("date_make", "", "TIMESTAMP", "NOW()")
 	Tokens.DefineColum("date_update", "", "TIMESTAMP", "NOW()")
 	Tokens.DefineColum("_id", "", "VARCHAR(80)", "-1")

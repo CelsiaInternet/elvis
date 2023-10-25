@@ -9,7 +9,7 @@ import (
 var Historys *Model
 
 func DefineHistorys() error {
-	if err := DefineCoreSchema(); err != nil {
+	if err := defineSchema(); err != nil {
 		return console.PanicE(err)
 	}
 
@@ -17,7 +17,7 @@ func DefineHistorys() error {
 		return nil
 	}
 
-	Historys = NewModel(SchemaCore, "HISTORY", "Tabla de historicos", 1)
+	Historys = NewModel(SchemaModule, "HISTORY", "Tabla de historicos", 1)
 	Historys.DefineColum("date_make", "", "TIMESTAMP", "NOW()")
 	Historys.DefineColum("table_schema", "", "VARCHAR(80)", "")
 	Historys.DefineColum("table_name", "", "VARCHAR(80)", "")

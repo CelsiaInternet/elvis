@@ -13,7 +13,7 @@ var Profiles *Model
 var ProfileFolders *Model
 
 func DefineProfiles() error {
-	if err := DefineCoreSchema(); err != nil {
+	if err := defineSchema(); err != nil {
 		return console.PanicE(err)
 	}
 
@@ -21,7 +21,7 @@ func DefineProfiles() error {
 		return nil
 	}
 
-	Profiles = NewModel(SchemaCore, "PROFILES", "Tabla de perfiles", 1)
+	Profiles = NewModel(SchemaModule, "PROFILES", "Tabla de perfiles", 1)
 	Profiles.DefineColum("date_make", "", "TIMESTAMP", "NOW()")
 	Profiles.DefineColum("date_update", "", "TIMESTAMP", "NOW()")
 	Profiles.DefineColum("module_id", "", "VARCHAR(80)", "-1")
@@ -44,7 +44,7 @@ func DefineProfiles() error {
 }
 
 func DefineProfileFolders() error {
-	if err := DefineCoreSchema(); err != nil {
+	if err := defineSchema(); err != nil {
 		return console.PanicE(err)
 	}
 
@@ -52,7 +52,7 @@ func DefineProfileFolders() error {
 		return nil
 	}
 
-	ProfileFolders = NewModel(SchemaCore, "PROFILE_FOLDERS", "Tabla de carpetas por perfil", 1)
+	ProfileFolders = NewModel(SchemaModule, "PROFILE_FOLDERS", "Tabla de carpetas por perfil", 1)
 	ProfileFolders.DefineColum("date_make", "", "TIMESTAMP", "NOW()")
 	ProfileFolders.DefineColum("module_id", "", "VARCHAR(80)", "-1")
 	ProfileFolders.DefineColum("profile_tp", "", "VARCHAR(80)", "-1")

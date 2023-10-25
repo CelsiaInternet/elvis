@@ -12,7 +12,7 @@ import (
 var Types *Model
 
 func DefineTypes() error {
-	if err := DefineCoreSchema(); err != nil {
+	if err := defineSchema(); err != nil {
 		return console.PanicE(err)
 	}
 
@@ -20,7 +20,7 @@ func DefineTypes() error {
 		return nil
 	}
 
-	Types = NewModel(SchemaCore, "TYPES", "Tabla de tipo", 1)
+	Types = NewModel(SchemaModule, "TYPES", "Tabla de tipo", 1)
 	Types.DefineColum("date_make", "", "TIMESTAMP", "NOW()")
 	Types.DefineColum("date_update", "", "TIMESTAMP", "NOW()")
 	Types.DefineColum("_state", "", "VARCHAR(80)", ACTIVE)

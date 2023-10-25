@@ -15,7 +15,7 @@ import (
 var Users *Model
 
 func DefineUsers() error {
-	if err := DefineCoreSchema(); err != nil {
+	if err := defineSchema(); err != nil {
 		return console.PanicE(err)
 	}
 
@@ -23,7 +23,7 @@ func DefineUsers() error {
 		return nil
 	}
 
-	Users = NewModel(SchemaCore, "USERS", "Tabla de usuarios", 1)
+	Users = NewModel(SchemaModule, "USERS", "Tabla de usuarios", 1)
 	Users.DefineColum("date_make", "", "TIMESTAMP", "NOW()")
 	Users.DefineColum("date_update", "", "TIMESTAMP", "NOW()")
 	Users.DefineColum("_state", "", "VARCHAR(80)", ACTIVE)

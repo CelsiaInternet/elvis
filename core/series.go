@@ -25,45 +25,7 @@ func DefineSeries() error {
 		SERIE VARCHAR(250) DEFAULT '',
 		VALUE BIGINT DEFAULT 0,
 		PRIMARY KEY(SERIE)
-	);
-
-	CREATE OR REPLACE FUNCTION core.GET_SERIE(VSERIE VARCHAR(250))
-	RETURNS
-		BIGINT AS $$
-	DECLARE
-		RESULT BIGINT;
-	BEGIN
-		INSERT INTO core.SERIES AS A (SERIE, VALUE)
-		VALUES (VSERIE, 1)
-		ON CONFLICT(SERIE)
-		DO UPDATE SET
-		DATE_UPDATE=NOW(),
-		VALUE=A.VALUE + 1
-		RETURNING VALUE INTO RESULT;
-
-		RETURN RESULT;
-	END;
-	$$ LANGUAGE plpgsql;
-
-	CREATE OR REPLACE FUNCTION core.SET_SERIE(VSERIE VARCHAR(250), VAL BIGINT)
-	RETURNS
-		BIGINT AS $$
-	DECLARE
-		RESULT BIGINT;
-	BEGIN
-		INSERT INTO core.SERIES(SERIE, VALUE)
-		VALUES (VSERIE, VAL)
-		ON CONFLICT(SERIE)
-		DO UPDATE SET
-		DATE_UPDATE=NOW(),
-		VALUE=VAL
-		WHERE VALUE<VAL
-		RETURNING VALUE INTO RESULT;
-		
-		RETURN RESULT;
-	END;
-	$$ LANGUAGE plpgsql;
-  `
+	);`
 
 	_, err := QDDL(sql)
 	if err != nil {
@@ -80,7 +42,14 @@ func GetSerie(tag string) int {
 		db = MasterIdx
 	}
 
-	sql := `SELECT core.GET_SERIE($1) AS SERIE;`
+	sql := `
+		INSERT INTO core.SERIES AS A (SERIE, VALUE)
+		VALUES ($1, 1)
+		ON CONFLICT(SERIE) DO UPDATE SET
+		DATE_UPDATE = NOW(),
+		VALUE = A.VALUE + 1
+		RETURNING VALUE INTO SERIE;`
+
 	item, err := DBQueryOne(db, sql, tag)
 	if err != nil {
 		console.Error(err)
@@ -106,11 +75,11 @@ func GetSerieLast(tag string) int {
 		db = MasterIdx
 	}
 
-	query := `
+	sql := `
   SELECT VALUE AS SERIE
   FROM core.SERIES
   WHERE SERIE=$1 LIMIT 1;`
-	item, err := DBQueryOne(db, query, tag)
+	item, err := DBQueryOne(db, sql, tag)
 	if err != nil {
 		console.Error(err)
 		return 0
@@ -124,8 +93,17 @@ func GetSerieLast(tag string) int {
 }
 
 func SetSerieValue(db int, tag string, val int) (int, error) {
-	query := `SELECT core.SET_SERIE($1, $2) AS SERIE;`
-	item, err := DBQueryOne(db, query, tag, val)
+	sql := `
+	INSERT INTO core.SERIES(SERIE, VALUE)
+	VALUES ($1, $2)
+	ON CONFLICT(SERIE)
+	DO UPDATE SET
+	DATE_UPDATE = NOW(),
+	VALUE = $2
+	WHERE VALUE < $2
+	RETURNING VALUE INTO SERIE;`
+
+	item, err := DBQueryOne(db, sql, tag, val)
 	if err != nil {
 		return 0, err
 	}

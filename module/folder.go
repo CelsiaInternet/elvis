@@ -13,7 +13,7 @@ import (
 var Folders *Model
 
 func DefineFolders() error {
-	if err := DefineCoreSchema(); err != nil {
+	if err := defineSchema(); err != nil {
 		return console.PanicE(err)
 	}
 
@@ -21,7 +21,7 @@ func DefineFolders() error {
 		return nil
 	}
 
-	Folders = NewModel(SchemaCore, "FOLDERS", "Tabla de carpetas", 1)
+	Folders = NewModel(SchemaModule, "FOLDERS", "Tabla de carpetas", 1)
 	Folders.DefineColum("date_make", "", "TIMESTAMP", "NOW()")
 	Folders.DefineColum("date_update", "", "TIMESTAMP", "NOW()")
 	Folders.DefineColum("module_id", "", "VARCHAR(80)", "-1")

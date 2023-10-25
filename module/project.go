@@ -13,7 +13,7 @@ var Projects *Model
 var ProjectModules *Model
 
 func DefineProjects() error {
-	if err := DefineCoreSchema(); err != nil {
+	if err := defineSchema(); err != nil {
 		return console.PanicE(err)
 	}
 
@@ -21,7 +21,7 @@ func DefineProjects() error {
 		return nil
 	}
 
-	Projects = NewModel(SchemaCore, "PROJECTS", "Tabla de projectos", 1)
+	Projects = NewModel(SchemaModule, "PROJECTS", "Tabla de projectos", 1)
 	Projects.DefineColum("date_make", "", "TIMESTAMP", "NOW()")
 	Projects.DefineColum("date_update", "", "TIMESTAMP", "NOW()")
 	Projects.DefineColum("_state", "", "VARCHAR(80)", ACTIVE)
@@ -55,7 +55,7 @@ func DefineProjects() error {
 }
 
 func DefineProjectModules() error {
-	if err := DefineCoreSchema(); err != nil {
+	if err := defineSchema(); err != nil {
 		return console.PanicE(err)
 	}
 
@@ -63,7 +63,7 @@ func DefineProjectModules() error {
 		return nil
 	}
 
-	ProjectModules = NewModel(SchemaCore, "PROJECT_MODULES", "Tabla de moduloes por projecto", 1)
+	ProjectModules = NewModel(SchemaModule, "PROJECT_MODULES", "Tabla de moduloes por projecto", 1)
 	ProjectModules.DefineColum("date_make", "", "TIMESTAMP", "NOW()")
 	ProjectModules.DefineColum("project_id", "", "VARCHAR(80)", "-1")
 	ProjectModules.DefineColum("module_id", "", "VARCHAR(80)", "-1")

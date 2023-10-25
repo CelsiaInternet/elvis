@@ -12,11 +12,6 @@ func MakePkg(name, schema, schemaVar string) error {
 		return err
 	}
 
-	_, err = MakeFile(path, "controller.go", modelControllerGo, name)
-	if err != nil {
-		return err
-	}
-
 	_, err = MakeFile(path, "event.go", modelEventGo, name)
 	if err != nil {
 		return err
@@ -38,11 +33,6 @@ func MakePkg(name, schema, schemaVar string) error {
 	}
 
 	_, err = MakeFile(path, "msg.go", modelMsgGo, name)
-	if err != nil {
-		return err
-	}
-
-	_, err = MakeFile(path, "repository.go", modelRepositoryGo, name)
 	if err != nil {
 		return err
 	}

@@ -13,7 +13,7 @@ import (
 var Roles *Model
 
 func DefineRoles() error {
-	if err := DefineCoreSchema(); err != nil {
+	if err := defineSchema(); err != nil {
 		return console.PanicE(err)
 	}
 
@@ -21,7 +21,7 @@ func DefineRoles() error {
 		return nil
 	}
 
-	Roles = NewModel(SchemaCore, "ROLES", "Tabla de roles", 1)
+	Roles = NewModel(SchemaModule, "ROLES", "Tabla de roles", 1)
 	Roles.DefineColum("date_make", "", "TIMESTAMP", "NOW()")
 	Roles.DefineColum("date_update", "", "TIMESTAMP", "NOW()")
 	Roles.DefineColum("project_id", "", "VARCHAR(80)", "-1")
