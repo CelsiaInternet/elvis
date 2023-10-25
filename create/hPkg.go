@@ -22,15 +22,10 @@ func MakePkg(name, schema, schemaVar string) error {
 		return err
 	}
 
-	_, err = MakeFile(path, "hSchema.go", modelSchemaGo, name, schemaVar, schema)
-	if err != nil {
-		return err
-	}
-
 	_, err = MakeFile(path, "hRpc.go", modelhRpcGo, name)
 	if err != nil {
 		return err
-	}
+	}	
 
 	_, err = MakeFile(path, "msg.go", modelMsgGo, name)
 	if err != nil {
@@ -42,7 +37,12 @@ func MakePkg(name, schema, schemaVar string) error {
 		return err
 	}
 
-	return nil
+	_, err = MakeFile(path, "schema.go", modelSchemaGo, name, schemaVar, schema)
+	if err != nil {
+		return err
+	}
+
+	return MakeModel(name, name, schemaVar)
 }
 
 func MakeModel(name, modelo, schemaVar string) error {

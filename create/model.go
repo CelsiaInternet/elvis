@@ -406,7 +406,7 @@ func (rt *Router) Routes() http.Handler {
 	r := chi.NewRouter()
 
 	PublicRoute(r, Get, "/version", rt.Version)
-	// 
+	//
 
 	ctx := context.Background()
 	rt.Repository.Init(ctx)
