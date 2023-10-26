@@ -48,7 +48,7 @@ func GetSerie(tag string) int {
 		ON CONFLICT(SERIE) DO UPDATE SET
 		DATE_UPDATE = NOW(),
 		VALUE = A.VALUE + 1
-		RETURNING VALUE INTO SERIE;`
+		RETURNING VALUE AS SERIE;`
 
 	item, err := DBQueryOne(db, sql, tag)
 	if err != nil {
@@ -101,7 +101,7 @@ func SetSerieValue(db int, tag string, val int) (int, error) {
 	DATE_UPDATE = NOW(),
 	VALUE = $2
 	WHERE VALUE < $2
-	RETURNING VALUE INTO SERIE;`
+	RETURNING VALUE AS SERIE;`
 
 	item, err := DBQueryOne(db, sql, tag, val)
 	if err != nil {

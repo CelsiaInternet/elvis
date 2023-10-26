@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/cgalvisleon/elvis/logs"
 )
@@ -170,6 +171,10 @@ func (it *Item) Num(atribs ...string) float64 {
 
 func (it *Item) Bool(atribs ...string) bool {
 	return it.Result.Bool(atribs...)
+}
+
+func (it *Item) Time(atribs ...string) time.Time {	
+	return it.Result.Time(atribs...)
 }
 
 func (it *Item) Json(atribs ...string) Json {

@@ -47,8 +47,8 @@ func DefineUsers() error {
 	})
 	Users.DefineHidden([]string{"password"})
 	Users.Details("last_use", "", "", func(col *Column, data *Json) {
-		userId := data.Id()
-		collection, err := GetCollectionById("telemetry.token.last_use", userId)
+		id := data.Id()
+		collection, err := GetCollectionById("telemetry.token.last_use", id)
 		if err != nil {
 			return
 		}
@@ -56,8 +56,8 @@ func DefineUsers() error {
 		data.Set(col.Low(), collection.Str("last_use"))
 	})
 	Users.Details("projects", "", []Json{}, func(col *Column, data *Json) {
-		userId := data.Id()
-		projects, err := GetUserProjects(userId)
+		id := data.Id()
+		projects, err := GetUserProjects(id)
 		if err != nil {
 			return
 		}
@@ -65,8 +65,8 @@ func DefineUsers() error {
 		data.Set(col.Low(), projects)
 	})
 	Users.Details("modules", "", []Json{}, func(col *Column, data *Json) {
-		userId := data.Id()
-		modules, err := GetUserModules(userId)
+		id := data.Id()
+		modules, err := GetUserModules(id)
 		if err != nil {
 			return
 		}

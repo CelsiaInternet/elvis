@@ -69,6 +69,20 @@ func DefineTokens() error {
 		"device",
 		"index",
 	})
+	Tokens.Details("last_use", "", "", func(col *Column, data *Json) {
+		id := data.Id()
+		collection, err := GetCollectionById("telemetry.token.last_use", id)
+		if err != nil {
+			return
+		}
+
+		data.Set(col.Low(), collection.Str("last_use"))
+	})
+	Tokens.Details("token", "", "", func(col *Column, data *Json) {
+		token := data.Str("token")
+		newToken := token[0:6] + "..." + token[len(token)-6:]
+		data.Set(col.Low(), newToken)
+	})
 
 	if err := InitModel(Tokens); err != nil {
 		return console.PanicE(err)
@@ -113,18 +127,7 @@ func GetTokenById(id string) (Item, error) {
 	if err != nil {
 		return Item{}, err
 	}
-
-	if item.Ok {
-		collection, err := GetCollectionById("telemetry.token.last_use", id)
-		if err != nil {
-			return Item{}, err
-		}
-
-		token := item.Result["token"].(string)
-		item.Result["token"] = token[0:6] + "..." + token[len(token)-6:]
-		item.Result["last_use"] = collection.Str("last_use")
-	}
-
+	
 	return item, nil
 }
 
@@ -146,31 +149,17 @@ func UpSetToken(projeectId, id, app, device, name, userId string) (Item, error) 
 
 	if current.Ok {
 		id := current.Id()
-		now := Now()
+		data := Json{
+			"name": name,
+		}
 
-		sql := `
-		UPDATE core.TOKENS SET
-		DATE_UPDATE=$2,
-		NAME=$3
-		WHERE _ID=$1
-		RETURNING *;`
-
-		item, err := QueryOne(sql, id, now, name)
+		item, err := Tokens.Update(data).
+		Where(Tokens.Col("_id").Eq(id)).
+		Command()		
 		if err != nil {
 			return Item{}, err
 		}
-
-		if item.Ok {
-			collection, err := GetCollectionById("telemetry.token.last_use", id)
-			if err != nil {
-				return Item{}, err
-			}
-
-			token := item.Result["token"].(string)
-			item.Result["token"] = token[0:6] + "..." + token[len(token)-6:]
-			item.Result["last_use"] = collection.Str("last_use")
-		}
-
+		
 		return Item{
 			Ok: item.Ok,
 			Result: OkOrNotJson(item.Ok, item.Result, Json{
@@ -180,38 +169,39 @@ func UpSetToken(projeectId, id, app, device, name, userId string) (Item, error) 
 		}, nil
 	} else {
 		id := NewId()
-
 		token, err := claim.GenToken(id, app, name, "token", app, device, 0)
 		if err != nil {
 			return Item{}, console.Error(err)
 		}
+		
+		data := Json{}
+		data.Set("project_id", projeectId)
+		data.Set("_id", id)
+		data.Set("user_id", userId)
+		data.Set("app", app)
+		data.Set("device", device)
+		data.Set("name", name)
+		data.Set("token", token)
 
-		sql := `
-		INSERT INTO core.TOKENS(PROJECT_ID, _ID, USER_ID, APP, DEVICE, NAME, TOKEN)
-		VALUES($1, $2, $3, $4, $5, $6, $7)
-		RETURNING *;`
-
-		item, err := QueryOne(sql, projeectId, id, userId, app, device, name, token)
+		item, err := Tokens.Insert(data).
+		Command()
 		if err != nil {
 			return Item{}, console.Error(err)
 		}
 
-		var result Token
-		err = result.Scan(&item.Result)
+		err = loadToken(&Token{
+			Date_make: item.Time("date_make"),
+			Date_update: item.Time("date_update"),
+			Id: id,
+			Name: name,
+			App: app,
+			Device: device,
+			Token: token,
+			Index: item.Index(),
+		})
 		if err != nil {
 			return Item{}, console.Error(err)
-		}
-
-		err = loadToken(&result)
-		if err != nil {
-			return Item{}, console.Error(err)
-		}
-
-		if item.Ok {
-			token := item.Result["token"].(string)
-			item.Result["long_token"] = token
-			item.Result["token"] = token[0:6] + "..." + token[len(token)-6:]
-		}
+		}		
 
 		return Item{
 			Ok: item.Ok,
@@ -233,7 +223,7 @@ func LoadTokens() error {
 		offset := (page - 1) * rows
 		sql := Format(`
 		SELECT *
-		FROM core.TOKENS
+		FROM module.TOKENS
 		ORDER BY INDEX
 		LIMIT %d OFFSET %d;`, rows, offset)
 
@@ -273,7 +263,7 @@ func UnLoadTokens() error {
 		offset := (page - 1) * rows
 		sql := Format(`
 		SELECT APP, DEVICE, _ID
-		FROM core.TOKENS
+		FROM module.TOKENS
 		ORDER BY INDEX
 		LIMIT %d OFFSET %d;`, rows, offset)
 
@@ -303,7 +293,7 @@ func UnLoadTokens() error {
 func GetTokensByUserId(userId, search string, page, rows int) (List, error) {
 	sql := `
   SELECT COUNT(*) AS COUNT
-  FROM core.TOKENS A
+  FROM module.TOKENS A
   WHERE A.USER_ID=$1
 	AND CONCAT('NAME:', A.NAME, ':APP:', A.APP, ':DEVICE:', A.DEVICE, ':') ILIKE CONCAT('%', $2, '%');`
 
@@ -312,7 +302,7 @@ func GetTokensByUserId(userId, search string, page, rows int) (List, error) {
 	offset := (page - 1) * rows
 	sql = `
   SELECT A.*
-  FROM core.TOKENS A
+  FROM module.TOKENS A
 	WHERE A.USER_ID=$1
   AND CONCAT('NAME:', A.NAME, ':APP:', A.APP, ':DEVICE:', A.DEVICE, ':') ILIKE CONCAT('%', $2, '%')
 	ORDER BY A.APP, A.DEVICE, A.NAME
@@ -349,7 +339,7 @@ func DeleteToken(id string) (Item, error) {
 	}
 
 	sql := `
-  DELETE FROM core.TOKENS
+  DELETE FROM module.TOKENS
   WHERE _ID=$1
   RETURNING *;`
 

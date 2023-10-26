@@ -361,6 +361,18 @@ func TimeDifference(dateInt, dateEnd any) time.Duration {
 	return _dateInt.Sub(_dateEnd)
 }
 
+func StrToTime(val string) (time.Time, error) {
+	var result time.Time
+	layout := "2006-01-02T15:04:05.000Z"
+
+	result, err := time.Parse(layout, val)
+	if err != nil {
+		return result, err
+	}
+
+	return result, nil
+}
+
 func RemoveAcents(str string) string {
 	str = strings.ReplaceAll(str, "á", "a")
 	str = strings.ReplaceAll(str, "é", "e")
