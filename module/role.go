@@ -68,10 +68,10 @@ func GetUserRoleByIndex(idx int) (Item, error) {
 	C.NAME PROFILE,
 	A.USER_ID,
 	A.INDEX
-	FROM core.ROLES A
-	INNER JOIN core.MODULES B ON B._ID=A.MODULE_ID
-	INNER JOIN core.TYPES C ON C._ID=A.PROFILE_TP
-	INNER JOIN core.PROJECTS D ON D._ID=A.PROJECT_ID
+	FROM module.ROLES A
+	INNER JOIN module.MODULES B ON B._ID=A.MODULE_ID
+	INNER JOIN module.TYPES C ON C._ID=A.PROFILE_TP
+	INNER JOIN module.PROJECTS D ON D._ID=A.PROJECT_ID
 	WHERE A.INDEX=$1
 	LIMIT 1;`
 
@@ -89,8 +89,8 @@ func GetUserProjects(userId string) ([]Json, error) {
 	B._ID,
 	B.NAME,
 	MIN(A.INDEX) AS INDEX
-	FROM core.ROLES A	
-	INNER JOIN core.PROJECTS B ON B._ID=A.PROJECT_ID
+	FROM module.ROLES A	
+	INNER JOIN module.PROJECTS B ON B._ID=A.PROJECT_ID
 	WHERE A.USER_ID=$1
 	GROUP BY B._ID, B.NAME
 	ORDER BY B.NAME;`
@@ -114,10 +114,10 @@ func GetUserModules(userId string) ([]Json, error) {
 	C.NAME PROFILE,
 	A.USER_ID,
 	A.INDEX
-	FROM core.ROLES A
-	INNER JOIN core.MODULES B ON B._ID=A.MODULE_ID
-	INNER JOIN core.TYPES C ON C._ID=A.PROFILE_TP
-	INNER JOIN core.PROJECTS D ON D._ID=A.PROJECT_ID
+	FROM module.ROLES A
+	INNER JOIN module.MODULES B ON B._ID=A.MODULE_ID
+	INNER JOIN module.TYPES C ON C._ID=A.PROFILE_TP
+	INNER JOIN module.PROJECTS D ON D._ID=A.PROJECT_ID
 	WHERE A.USER_ID=$1
 	GROUP BY D._ID, D.NAME, B._ID, B.NAME, A.PROFILE_TP, C.NAME, USER_ID, A.INDEX
 	ORDER BY D.NAME, B.NAME, C.NAME;`
@@ -184,7 +184,7 @@ func CheckRole(projectId, moduleId, profileTp, userId string, chk bool) (Item, e
 		if current.Ok {
 			index := current.Index()
 			sql := `
-			UPDATE core.ROLES SET
+			UPDATE module.ROLES SET
 			DATE_UPDATE=$3,
 			PROFILE_TP=$2
 			WHERE INDEX=$1;`
@@ -208,10 +208,10 @@ func CheckRole(projectId, moduleId, profileTp, userId string, chk bool) (Item, e
 			}, nil
 		}
 
-		index := GetSerie("core.ROLES")
+		index := GetSerie("module.ROLES")
 
 		sql := `
-		INSERT INTO core.ROLES(DATE_MAKE, DATE_UPDATE, PROJECT_ID, MODULE_ID, USER_ID, PROFILE_TP, INDEX)
+		INSERT INTO module.ROLES(DATE_MAKE, DATE_UPDATE, PROJECT_ID, MODULE_ID, USER_ID, PROFILE_TP, INDEX)
 		VALUES($1, $1, $2, $3, $4, $5, $6)
 		RETURNING INDEX;`
 
@@ -234,7 +234,7 @@ func CheckRole(projectId, moduleId, profileTp, userId string, chk bool) (Item, e
 		}, nil
 	} else {
 		sql := `
-		DELETE FROM core.ROLES
+		DELETE FROM module.ROLES
 		WHERE PROJECT_ID=$1
 		AND MODULE_ID=$2
 		AND PROFILE_TP=$3

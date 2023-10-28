@@ -94,3 +94,15 @@ func MkMolue(name, modelo, schema string) error {
 
 	return nil
 }
+
+func MkRpc(name string) error {
+	progressNext(10)
+	err := MakeRpc(name)
+	if err != nil {
+		return err
+	}
+
+	progressNext(90)
+
+	return nil
+}

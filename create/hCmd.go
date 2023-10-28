@@ -13,7 +13,7 @@ func MakeCmd(packageName, name string) error {
 		return err
 	}
 
-	_, err = MakeFile(path, "main.go", modelMainGo, packageName, name)
+	_, err = MakeFile(path, "main.go", modelMain, packageName, name)
 	if err != nil {
 		return err
 	}

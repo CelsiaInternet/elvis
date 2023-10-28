@@ -12,32 +12,32 @@ func MakePkg(name, schema, schemaVar string) error {
 		return err
 	}
 
-	_, err = MakeFile(path, "event.go", modelEventGo, name)
+	_, err = MakeFile(path, "event.go", modelEvent, name)
 	if err != nil {
 		return err
 	}
 
-	_, err = MakeFile(path, "model.go", modelModelGo, name)
+	_, err = MakeFile(path, "model.go", modelModel, name)
 	if err != nil {
 		return err
 	}
 
-	_, err = MakeFile(path, "hRpc.go", modelhRpcGo, name)
-	if err != nil {
-		return err
-	}	
-
-	_, err = MakeFile(path, "msg.go", modelMsgGo, name)
+	_, err = MakeFile(path, "msg.go", modelMsg, name)
 	if err != nil {
 		return err
 	}
 
-	_, err = MakeFile(path, "router.go", modelRouterGo, name)
+	_, err = MakeFile(path, "controller.go", modelController, name)
 	if err != nil {
 		return err
 	}
 
-	_, err = MakeFile(path, "schema.go", modelSchemaGo, name, schemaVar, schema)
+	_, err = MakeFile(path, "router.go", modelRouter, name)
+	if err != nil {
+		return err
+	}
+
+	_, err = MakeFile(path, "schema.go", modelSchema, name, schemaVar, schema)
 	if err != nil {
 		return err
 	}
@@ -53,10 +53,24 @@ func MakeModel(name, modelo, schemaVar string) error {
 
 	modelo = Titlecase(modelo)
 	fileName := fmt.Sprintf(`h%s.go`, Titlecase(modelo))
-	_, err = MakeFile(path, fileName, modelHandlerGo, name, modelo, schemaVar, Uppcase(modelo))
+	_, err = MakeFile(path, fileName, modelHandler, name, modelo, schemaVar, Uppcase(modelo))
 	if err != nil {
 		return err
 	}
+
+	return nil
+}
+
+func MakeRpc(name string) error {
+	path, err := MakeFolder("pkg", name)
+	if err != nil {
+		return err
+	}
+
+	_, err = MakeFile(path, "hRpc.go", modelhRpc, name)
+	if err != nil {
+		return err
+	}	
 
 	return nil
 }

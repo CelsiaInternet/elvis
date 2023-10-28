@@ -13,7 +13,7 @@ func MakeInternal(packageName, name string) error {
 		return err
 	}
 
-	_, err = MakeFile(path, "service.go", modelServiceGo, packageName, name)
+	_, err = MakeFile(path, "service.go", modelService, packageName, name)
 	if err != nil {
 		return err
 	}
@@ -23,7 +23,7 @@ func MakeInternal(packageName, name string) error {
 		return err
 	}
 
-	_, err = MakeFile(path, "api.go", modelApiGo, packageName, name)
+	_, err = MakeFile(path, "api.go", modelApi, packageName, name)
 	if err != nil {
 		return err
 	}

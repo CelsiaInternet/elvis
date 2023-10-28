@@ -29,7 +29,7 @@ COPY --from=builder /src/$1 ./$1
 ENTRYPOINT ["./$1"]
 `
 
-const modelMainGo = `package main
+const modelMain = `package main
 
 import (
 	"os"
@@ -65,7 +65,7 @@ func main() {
 }
 `
 
-const modelServiceGo = `package module
+const modelService = `package module
 
 import (
 	"net"
@@ -163,7 +163,7 @@ func (serv *Server) Start() {
 }
 `
 
-const modelApiGo = `package v1
+const modelApi = `package v1
 
 import (
 	"fmt"
@@ -240,7 +240,7 @@ func Banner() {
 }
 `
 
-const modelEventGo = `package $1
+const modelEvent = `package $1
 
 import (
 	"github.com/cgalvisleon/elvis/console"
@@ -266,7 +266,7 @@ func eventAction(m event.CreatedEvenMessage) {
 }
 `
 
-const modelModelGo = `package $1
+const modelModel = `package $1
 
 import (
 	"github.com/cgalvisleon/elvis/console"
@@ -286,7 +286,7 @@ func initModels() error {
 }
 `
 
-const modelSchemaGo = `package $1
+const modelSchema = `package $1
 
 import . "github.com/cgalvisleon/elvis/linq"
 
@@ -303,7 +303,7 @@ func defineSchema() error {
 }
 `
 
-const modelhRpcGo = `package $1
+const modelhRpc = `package $1
 
 import (
 	"net/rpc"
@@ -341,7 +341,7 @@ func (c *Service) Version(require []byte, response *[]byte) error {
 }
 `
 
-const modelMsgGo = `package $1
+const modelMsg = `package $1
 
 const (
 	// MSG
@@ -349,26 +349,14 @@ const (
 )
 `
 
-const modelRouterGo = `package $1
-
+const modelController = `package $1
 import (
 	"context"
-	"net/http"
-	"os"
 
-	"github.com/cgalvisleon/elvis/console"
-	"github.com/cgalvisleon/elvis/response"
-	. "github.com/cgalvisleon/elvis/router"
-	. "github.com/cgalvisleon/elvis/json"
 	. "github.com/cgalvisleon/elvis/envar"
-	"github.com/go-chi/chi"
+	"github.com/cgalvisleon/elvis/jdb"
+	. "github.com/cgalvisleon/elvis/json"
 )
-
-var PackageName = "$1"
-var PackageTitle = "$1"
-var PackagePath = "/api/$1"
-var PackageVersion = EnvarStr("VERSION")
-var HostName, _ = os.Hostname()
 
 type Controller struct {
 	Db *jdb.Conn
@@ -397,6 +385,27 @@ type Repository interface {
 	Version(ctx context.Context) (Json, error)
 	Init(ctx context.Context)
 }
+`
+
+const modelRouter = `package $1
+
+import (
+	"context"
+	"net/http"
+	"os"
+
+	"github.com/cgalvisleon/elvis/console"
+	. "github.com/cgalvisleon/elvis/envar"
+	"github.com/cgalvisleon/elvis/response"
+	. "github.com/cgalvisleon/elvis/router"
+	"github.com/go-chi/chi"
+)
+
+var PackageName = "$1"
+var PackageTitle = "$1"
+var PackagePath = "/api/$1"
+var PackageVersion = EnvarStr("VERSION")
+var HostName, _ = os.Hostname()
 
 type Router struct {
 	Repository Repository
@@ -446,7 +455,7 @@ Content-Length: 227
 }
 `
 
-const modelHandlerGo = `package $1
+const modelHandler = `package $1
 
 import (
 	"github.com/cgalvisleon/elvis/console"

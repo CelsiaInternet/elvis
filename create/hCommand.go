@@ -203,3 +203,22 @@ var CmdModelo = &cobra.Command{
 		}
 	},
 }
+
+var CmdRpc = &cobra.Command{
+	Use:   "rpc [name]",
+	Short: "Create rpc model to microservice.",
+	Long:  "Template rpc model to microservice include function handler model.",
+	Run: func(cmd *cobra.Command, args []string) {
+		name, err := prompStr("Package")
+		if err != nil {
+			fmt.Printf("Prompt failed %v\n", err)
+			return
+		}
+		
+		err = MkRpc(name)
+		if err != nil {
+			fmt.Printf("Command failed %v\n", err)
+			return
+		}
+	},
+}
