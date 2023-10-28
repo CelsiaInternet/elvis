@@ -66,7 +66,7 @@ func MkMicroservice(packageName, name, schema string) error {
 	}
 
 	progressNext(10)
-	err = MakeRest(name)
+	err = MakeScripts(name)
 	if err != nil {
 		return err
 	}

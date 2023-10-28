@@ -6,8 +6,8 @@ import (
 	. "github.com/cgalvisleon/elvis/utilities"
 )
 
-func MakeRest(name string) error {
-	path, err := MakeFolder("rest")
+func MakeScripts(name string) error {
+	path, err := MakeFolder("scripts")
 	if err != nil {
 		return err
 	}
