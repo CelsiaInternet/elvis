@@ -11,7 +11,7 @@ import (
 func prompCreate() {
 	prompt := promptui.Select{
 		Label: "What do you want created?",
-		Items: []string{"Project", "Microservice", "Modelo"},
+		Items: []string{"Project", "Microservice", "Modelo", "Rpc"},
 	}
 
 	opt, _, err := prompt.Run()
