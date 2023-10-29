@@ -56,22 +56,22 @@ func SendMessage(clientId, channel string, message interface{}) bool {
 	return conn.hub.SendMessage(clientId, channel, message)
 }
 
-func Subcribe(clientId string, channel string) bool {
+func Subscribe(clientId string, channel string) bool {
 	if conn == nil {
 		logs.Errorm(ERR_NOT_WS_SERVICE)
 		return false
 	}
 
-	return conn.hub.Subcribe(clientId, channel)
+	return conn.hub.Subscribe(clientId, channel)
 }
 
-func Unsubcribe(clientId string, channel string) bool {
+func Unsubscribe(clientId string, channel string) bool {
 	if conn == nil {
 		logs.Errorm(ERR_NOT_WS_SERVICE)
 		return false
 	}
 
-	return conn.hub.Unsubcribe(clientId, channel)
+	return conn.hub.Unsubscribe(clientId, channel)
 }
 
 func GetChannels() []*Channel {

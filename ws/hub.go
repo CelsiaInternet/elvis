@@ -170,24 +170,30 @@ func (hub *Hub) SendMessage(clientId, channel string, message interface{}) bool 
 	return false
 }
 
-func (hub *Hub) Subcribe(clientId string, channel string) bool {
+func (hub *Hub) Subscribe(clientId string, channel string) bool {
 	idx := slices.IndexFunc(hub.clients, func(e *Client) bool { return e.Id == clientId })
 
 	if idx != -1 {
 		client := hub.clients[idx]
 		client.Subscribe(channel)
+
+		event.EventPublish("websocket/subscribe", Json{"hub": hub.Id, "client": client})
+		
 		return true
 	}
 
 	return false
 }
 
-func (hub *Hub) Unsubcribe(clientId string, channel string) bool {
+func (hub *Hub) Unsubscribe(clientId string, channel string) bool {
 	idx := slices.IndexFunc(hub.clients, func(e *Client) bool { return e.Id == clientId })
 
 	if idx != -1 {
 		client := hub.clients[idx]
 		client.Unsubscribe(channel)
+
+		event.EventPublish("websocket/unsubscribe", Json{"hub": hub.Id, "client": client})
+
 		return true
 	}
 
