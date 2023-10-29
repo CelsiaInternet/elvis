@@ -104,7 +104,9 @@ var CmdModelo = &cobra.Command{
 			return
 		}
 
-		fmt.Println("Remember, including the router in router.go")
+		title := utilities.Titlecase(name)
+		message := fmt.Sprintf(`Remember, including the router, that it is on the bottom of the h%s.go, in routers section of the router.go file`, title)
+		fmt.Println(message)
 	},
 }
 
