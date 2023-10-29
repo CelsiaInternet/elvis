@@ -3,14 +3,14 @@ package ws
 import (
 	"net/http"
 
-	"github.com/cgalvisleon/elvis/console"
+	"github.com/cgalvisleon/elvis/logs"
 	. "github.com/cgalvisleon/elvis/msg"
 	. "github.com/cgalvisleon/elvis/utilities"
 )
 
 func Connect(w http.ResponseWriter, r *http.Request) (*Client, error) {
 	if conn == nil {
-		return nil, console.ErrorM(ERR_NOT_WS_SERVICE)
+		return nil, logs.Errorm(ERR_NOT_WS_SERVICE)
 	}
 
 	ctx := r.Context()
@@ -33,7 +33,7 @@ func Connect(w http.ResponseWriter, r *http.Request) (*Client, error) {
 
 func Broadcast(message interface{}, ignoreId string) {
 	if conn == nil {
-		console.ErrorM(ERR_NOT_WS_SERVICE)
+		logs.Errorm(ERR_NOT_WS_SERVICE)
 	}
 
 	conn.hub.Broadcast(message, ignoreId)
@@ -41,7 +41,7 @@ func Broadcast(message interface{}, ignoreId string) {
 
 func Publish(channel string, message interface{}, ignoreId string) {
 	if conn == nil {
-		console.ErrorM(ERR_NOT_WS_SERVICE)
+		logs.Errorm(ERR_NOT_WS_SERVICE)
 	}
 
 	conn.hub.Publish(channel, message, ignoreId)
@@ -49,7 +49,7 @@ func Publish(channel string, message interface{}, ignoreId string) {
 
 func SendMessage(clientId, channel string, message interface{}) bool {
 	if conn == nil {
-		console.ErrorM(ERR_NOT_WS_SERVICE)
+		logs.Errorm(ERR_NOT_WS_SERVICE)
 		return false
 	}
 
@@ -58,7 +58,7 @@ func SendMessage(clientId, channel string, message interface{}) bool {
 
 func Subcribe(clientId string, channel string) bool {
 	if conn == nil {
-		console.ErrorM(ERR_NOT_WS_SERVICE)
+		logs.Errorm(ERR_NOT_WS_SERVICE)
 		return false
 	}
 
@@ -67,7 +67,7 @@ func Subcribe(clientId string, channel string) bool {
 
 func Unsubcribe(clientId string, channel string) bool {
 	if conn == nil {
-		console.ErrorM(ERR_NOT_WS_SERVICE)
+		logs.Errorm(ERR_NOT_WS_SERVICE)
 		return false
 	}
 
@@ -76,7 +76,7 @@ func Unsubcribe(clientId string, channel string) bool {
 
 func GetChannels() []*Channel {
 	if conn == nil {
-		console.ErrorM(ERR_NOT_WS_SERVICE)
+		logs.Errorm(ERR_NOT_WS_SERVICE)
 		return []*Channel{}
 	}
 
@@ -85,7 +85,7 @@ func GetChannels() []*Channel {
 
 func GetClients() []*Client {
 	if conn == nil {
-		console.ErrorM(ERR_NOT_WS_SERVICE)
+		logs.Errorm(ERR_NOT_WS_SERVICE)
 		return []*Client{}
 	}
 
@@ -94,7 +94,7 @@ func GetClients() []*Client {
 
 func GetSubscribers(channel string) []*Client {
 	if conn == nil {
-		console.ErrorM(ERR_NOT_WS_SERVICE)
+		logs.Errorm(ERR_NOT_WS_SERVICE)
 		return []*Client{}
 	}
 

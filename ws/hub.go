@@ -7,9 +7,9 @@ import (
 	"os"
 	"sync"
 
-	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/event"
 	. "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/logs"
 	. "github.com/cgalvisleon/elvis/msg"
 	. "github.com/cgalvisleon/elvis/utilities"
 	"github.com/gorilla/websocket"
@@ -51,7 +51,7 @@ func (hub *Hub) Run() {
 
 	hub.run = true
 	host, _ := os.Hostname()
-	console.LogKF("Websocket", "Run server host:%s", host)
+	logs.Logf("Websocket", "Run server host:%s", host)
 
 	for {
 		select {
@@ -82,7 +82,7 @@ func (hub *Hub) onConnect(client *Client) {
 
 	event.EventPublish("websocket/connect", Json{"hub": hub.Id, "client": client})
 
-	console.LogKF("Websocket", MSG_CLIENT_CONNECT, client.Id, hub.Id)	
+	logs.Logf("Websocket", MSG_CLIENT_CONNECT, client.Id, hub.Id)	
 }
 
 func (hub *Hub) onDisconnect(client *Client) {
@@ -99,7 +99,7 @@ func (hub *Hub) onDisconnect(client *Client) {
 
 	event.EventPublish("websocket/disconnect", Json{"hub": hub.Id, "client_id": client.Id})
 
-	console.LogKF("Websocket", MSG_CLIENT_DISCONNECT, client.Id, hub.Id)
+	logs.Logf("Websocket", MSG_CLIENT_DISCONNECT, client.Id, hub.Id)
 }
 
 func (hub *Hub) indexClient(clientId string) int {
