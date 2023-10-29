@@ -127,7 +127,7 @@ func GetTokenById(id string) (Item, error) {
 	if err != nil {
 		return Item{}, err
 	}
-	
+
 	return item, nil
 }
 
@@ -154,12 +154,12 @@ func UpSetToken(projeectId, id, app, device, name, userId string) (Item, error) 
 		}
 
 		item, err := Tokens.Update(data).
-		Where(Tokens.Col("_id").Eq(id)).
-		Command()		
+			Where(Tokens.Col("_id").Eq(id)).
+			Command()
 		if err != nil {
 			return Item{}, err
 		}
-		
+
 		return Item{
 			Ok: item.Ok,
 			Result: OkOrNotJson(item.Ok, item.Result, Json{
@@ -173,7 +173,7 @@ func UpSetToken(projeectId, id, app, device, name, userId string) (Item, error) 
 		if err != nil {
 			return Item{}, console.Error(err)
 		}
-		
+
 		data := Json{}
 		data.Set("project_id", projeectId)
 		data.Set("_id", id)
@@ -184,24 +184,24 @@ func UpSetToken(projeectId, id, app, device, name, userId string) (Item, error) 
 		data.Set("token", token)
 
 		item, err := Tokens.Insert(data).
-		Command()
+			Command()
 		if err != nil {
 			return Item{}, console.Error(err)
 		}
 
 		err = loadToken(&Token{
-			Date_make: item.Time("date_make"),
+			Date_make:   item.Time("date_make"),
 			Date_update: item.Time("date_update"),
-			Id: id,
-			Name: name,
-			App: app,
-			Device: device,
-			Token: token,
-			Index: item.Index(),
+			Id:          id,
+			Name:        name,
+			App:         app,
+			Device:      device,
+			Token:       token,
+			Index:       item.Index(),
 		})
 		if err != nil {
 			return Item{}, console.Error(err)
-		}		
+		}
 
 		return Item{
 			Ok: item.Ok,

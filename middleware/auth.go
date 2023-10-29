@@ -66,12 +66,12 @@ func Authorization(next http.Handler) http.Handler {
 		now := Now()
 		hostName, _ := os.Hostname()
 		data := Json{
-			"clientId": c.ID,
+			"clientId":  c.ID,
 			"last_use":  now,
 			"host_name": hostName,
 		}
 
-		event.EventPublish("telemetry.token.last_use", data)		
+		event.EventPublish("telemetry.token.last_use", data)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

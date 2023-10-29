@@ -8,13 +8,13 @@ import (
 )
 
 const (
-	Get     = "GET"
-	Post    = "POST"
-	Put     = "PUT"
-	Patch   = "PATCH"
-	Delete  = "DELETE"
-	Head    = "HEAD"
-	Options = "OPTIONS"
+	Get         = "GET"
+	Post        = "POST"
+	Put         = "PUT"
+	Patch       = "PATCH"
+	Delete      = "DELETE"
+	Head        = "HEAD"
+	Options     = "OPTIONS"
 	HandlerFunc = "HandlerFunc"
 )
 

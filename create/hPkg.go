@@ -71,7 +71,7 @@ func MakeRpc(name string) error {
 	_, err = MakeFile(path, "hRpc.go", modelhRpc, name)
 	if err != nil {
 		return err
-	}	
+	}
 
 	return nil
 }

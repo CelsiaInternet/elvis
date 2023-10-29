@@ -65,7 +65,7 @@ func Stack(channel string, f func(CreatedEvenMessage)) (err error) {
 
 	conn.eventCreatedSub, err = conn.conn.Subscribe(channel, func(m *nats.Msg) {
 		conn.decodeMessage(m.Data, &msg)
-		key := msg.Id		
+		key := msg.Id
 
 		ok := conn.LockStack(key)
 		if !ok {

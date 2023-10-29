@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/cgalvisleon/elvis/console"
 	. "github.com/cgalvisleon/elvis/envar"
 	. "github.com/cgalvisleon/elvis/json"
 	. "github.com/cgalvisleon/elvis/utilities"
@@ -51,7 +52,7 @@ func SendWhatsAppImage(country, phone, image, caption string) (Json, error) {
 	ultramsgID := EnvarStr("ULTRAMSG_ID")
 	ultramsgToken := EnvarStr("ULTRAMSG_TOKEN")
 	apiURL := Format(`https://api.ultramsg.com/%s/messages/chat`, ultramsgID)
-	to := Format(`%s%s:@g.us`, country, phone)
+	to := Format(`%s%s`, country, phone)
 	data := url.Values{}
 	data.Set("token", ultramsgToken)
 	data.Set("to", to)
@@ -87,7 +88,7 @@ func SendWhatsAppSticker(country, phone, sticker string) (Json, error) {
 	ultramsgID := EnvarStr("ULTRAMSG_ID")
 	ultramsgToken := EnvarStr("ULTRAMSG_TOKEN")
 	apiURL := Format(`https://api.ultramsg.com/%s/messages/chat`, ultramsgID)
-	to := Format(`%s%s:@g.us`, country, phone)
+	to := Format(`%s%s`, country, phone)
 	data := url.Values{}
 	data.Set("token", ultramsgToken)
 	data.Set("to", to)
@@ -122,7 +123,7 @@ func SendWhatsAppDocument(country, phone, filename, document, caption string) (J
 	ultramsgID := EnvarStr("ULTRAMSG_ID")
 	ultramsgToken := EnvarStr("ULTRAMSG_TOKEN")
 	apiURL := Format(`https://api.ultramsg.com/%s/messages/chat`, ultramsgID)
-	to := Format(`%s%s:@g.us`, country, phone)
+	to := Format(`%s%s`, country, phone)
 	data := url.Values{}
 	data.Set("token", ultramsgToken)
 	data.Set("to", to)
@@ -159,11 +160,11 @@ func SendWhatsAppAudio(country, phone, audio string) (Json, error) {
 	ultramsgID := EnvarStr("ULTRAMSG_ID")
 	ultramsgToken := EnvarStr("ULTRAMSG_TOKEN")
 	apiURL := Format(`https://api.ultramsg.com/%s/messages/chat`, ultramsgID)
-	to := Format(`%s%s:@g.us`, country, phone)
+	to := Format(`%s%s`, country, phone)
 	data := url.Values{}
 	data.Set("token", ultramsgToken)
 	data.Set("to", to)
-	data.Set("audio", audio)	
+	data.Set("audio", audio)
 
 	client := &http.Client{}
 	params := bytes.NewBufferString(data.Encode())
@@ -194,11 +195,11 @@ func SendWhatsAppVoice(country, phone, audio string) (Json, error) {
 	ultramsgID := EnvarStr("ULTRAMSG_ID")
 	ultramsgToken := EnvarStr("ULTRAMSG_TOKEN")
 	apiURL := Format(`https://api.ultramsg.com/%s/messages/chat`, ultramsgID)
-	to := Format(`%s%s:@g.us`, country, phone)
+	to := Format(`%s%s`, country, phone)
 	data := url.Values{}
 	data.Set("token", ultramsgToken)
 	data.Set("to", to)
-	data.Set("audio", audio)	
+	data.Set("audio", audio)
 
 	client := &http.Client{}
 	params := bytes.NewBufferString(data.Encode())
@@ -229,7 +230,7 @@ func SendWhatsAppVideo(country, phone, video, caption string) (Json, error) {
 	ultramsgID := EnvarStr("ULTRAMSG_ID")
 	ultramsgToken := EnvarStr("ULTRAMSG_TOKEN")
 	apiURL := Format(`https://api.ultramsg.com/%s/messages/chat`, ultramsgID)
-	to := Format(`%s%s:@g.us`, country, phone)
+	to := Format(`%s%s`, country, phone)
 	data := url.Values{}
 	data.Set("token", ultramsgToken)
 	data.Set("to", to)
@@ -251,6 +252,12 @@ func SendWhatsAppVideo(country, phone, video, caption string) (Json, error) {
 	}
 
 	defer resp.Body.Close()
+
+	console.Log(Json{
+		"to":     to,
+		"status": resp.Status,
+		"body":   resp.Body,
+	})
 
 	return Json{
 		"status": resp.Status,

@@ -120,7 +120,7 @@ var CmdRpc = &cobra.Command{
 			fmt.Printf("Prompt failed %v\n", err)
 			return
 		}
-		
+
 		err = MkRpc(name)
 		if err != nil {
 			fmt.Printf("Command failed %v\n", err)

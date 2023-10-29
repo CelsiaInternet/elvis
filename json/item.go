@@ -173,7 +173,7 @@ func (it *Item) Bool(atribs ...string) bool {
 	return it.Result.Bool(atribs...)
 }
 
-func (it *Item) Time(atribs ...string) time.Time {	
+func (it *Item) Time(atribs ...string) time.Time {
 	return it.Result.Time(atribs...)
 }
 

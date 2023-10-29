@@ -82,7 +82,7 @@ func (hub *Hub) onConnect(client *Client) {
 
 	event.EventPublish("websocket/connect", Json{"hub": hub.Id, "client": client})
 
-	logs.Logf("Websocket", MSG_CLIENT_CONNECT, client.Id, hub.Id)	
+	logs.Logf("Websocket", MSG_CLIENT_CONNECT, client.Id, hub.Id)
 }
 
 func (hub *Hub) onDisconnect(client *Client) {
@@ -178,7 +178,7 @@ func (hub *Hub) Subscribe(clientId string, channel string) bool {
 		client.Subscribe(channel)
 
 		event.EventPublish("websocket/subscribe", Json{"hub": hub.Id, "client": client})
-		
+
 		return true
 	}
 
