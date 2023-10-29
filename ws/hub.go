@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/cgalvisleon/elvis/console"
+	"github.com/cgalvisleon/elvis/event"
 	. "github.com/cgalvisleon/elvis/json"
 	. "github.com/cgalvisleon/elvis/msg"
 	. "github.com/cgalvisleon/elvis/utilities"
@@ -79,7 +80,9 @@ func (hub *Hub) onConnect(client *Client) {
 	client.Addr = client.socket.RemoteAddr().String()
 	client.isClose = false
 
-	console.LogKF("Websocket", MSG_CLIENT_CONNECT, client.Id, hub.Id)
+	event.EventPublish("websocket/connect", Json{"hub": hub.Id, "client": client})
+
+	console.LogKF("Websocket", MSG_CLIENT_CONNECT, client.Id, hub.Id)	
 }
 
 func (hub *Hub) onDisconnect(client *Client) {
@@ -93,6 +96,8 @@ func (hub *Hub) onDisconnect(client *Client) {
 	copy(hub.clients[idx:], hub.clients[idx+1:])
 	hub.clients[len(hub.clients)-1] = nil
 	hub.clients = hub.clients[:len(hub.clients)-1]
+
+	event.EventPublish("websocket/disconnect", Json{"hub": hub.Id, "client_id": client.Id})
 
 	console.LogKF("Websocket", MSG_CLIENT_DISCONNECT, client.Id, hub.Id)
 }

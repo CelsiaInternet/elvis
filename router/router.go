@@ -15,6 +15,7 @@ const (
 	Delete  = "DELETE"
 	Head    = "HEAD"
 	Options = "OPTIONS"
+	HandlerFunc = "HandlerFunc"
 )
 
 func ProtectRoute(r *chi.Mux, method, pattern string, h http.HandlerFunc) *chi.Mux {
@@ -33,6 +34,8 @@ func ProtectRoute(r *chi.Mux, method, pattern string, h http.HandlerFunc) *chi.M
 		r.With(middleware.Authorization).Head(pattern, h)
 	case "OPTIONS":
 		r.With(middleware.Authorization).Options(pattern, h)
+	case "HandlerFunc":
+		r.With(middleware.Authorization).HandleFunc(pattern, h)
 	}
 
 	return r
@@ -54,6 +57,8 @@ func PublicRoute(r *chi.Mux, method, pattern string, h http.HandlerFunc) *chi.Mu
 		r.Head(pattern, h)
 	case "OPTIONS":
 		r.Options(pattern, h)
+	case "HandlerFunc":
+		r.HandleFunc(pattern, h)
 	}
 
 	return r

@@ -11,7 +11,7 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 )
 
-func SendWhatsapp(country, phone, message string) (Json, error) {
+func SendWhatsApp(country, phone, message string) (Json, error) {
 	twilioSID := EnvarStr("TWILIO_SID")
 	twilioAUT := EnvarStr("TWILIO_AUT")
 	twilioFrom := EnvarStr("TWILIO_FROM")

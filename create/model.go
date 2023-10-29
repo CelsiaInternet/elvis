@@ -221,7 +221,6 @@ func Close() {
 }
 
 func NewRpc(port int) net.Listener {
-	pkg.InitRpc()
 	rpc.HandleHTTP()
 
 	result, err := net.Listen("tcp", Address("0.0.0.0", port))
@@ -379,6 +378,7 @@ func (c *Controller) Version(ctx context.Context) (Json, error) {
 
 func (c *Controller) Init(ctx context.Context) {
 	initModels()
+	initEvents()
 }
 
 type Repository interface {
@@ -420,7 +420,7 @@ func (rt *Router) Routes() http.Handler {
 	ctx := context.Background()
 	rt.Repository.Init(ctx)
 
-	console.LogK(PackageName, "Router start")
+	console.LogKF(PackageName, "Router version:%s", PackageVersion)
 	return r
 }
 

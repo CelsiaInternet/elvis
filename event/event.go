@@ -18,13 +18,13 @@ type Conn struct {
 	eventCreatedChan chan CreatedEvenMessage
 }
 
-func (c *Conn) LockStack(key, workerId string) bool {
+func (c *Conn) LockStack(key string) bool {	
 	val, err := cache.Del(key)
 	if err != nil {
 		return false
 	}
 
-	return val == 0
+	return val == 1
 }
 
 func Load() (*Conn, error) {
