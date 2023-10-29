@@ -415,7 +415,12 @@ func (rt *Router) Routes() http.Handler {
 	r := chi.NewRouter()
 
 	PublicRoute(r, Get, "/version", rt.Version)
-	//
+	// $2
+	ProtectRoute(r, Get, "/$1/{id}", rt.Get$2ById)
+	ProtectRoute(r, Post, "/$1", rt.UpSert$2)
+	ProtectRoute(r, Put, "/$1/state/{id}", rt.State$2)
+	ProtectRoute(r, Delete, "/$1/{id}", rt.Delete$2)
+	ProtectRoute(r, Get, "/$1/all", rt.All$2)
 
 	ctx := context.Background()
 	rt.Repository.Init(ctx)
@@ -458,12 +463,17 @@ Content-Length: 227
 const modelHandler = `package $1
 
 import (
+	"net/http"
+	"strconv"
+
 	"github.com/cgalvisleon/elvis/console"
 	. "github.com/cgalvisleon/elvis/core"
 	. "github.com/cgalvisleon/elvis/json"
 	. "github.com/cgalvisleon/elvis/linq"
 	. "github.com/cgalvisleon/elvis/msg"
+	"github.com/cgalvisleon/elvis/response"
 	. "github.com/cgalvisleon/elvis/utilities"
+	"github.com/go-chi/chi"
 )
 
 var $2 *Model
@@ -602,5 +612,89 @@ func All$2(projectId, state, search string, page, rows int, _select string) (Lis
 			OrderBy($2.Column("name"), true).
 			List(page, rows)
 	}
+}
+
+/**
+* Router
+**/
+func (rt *Router) UpSert$2(w http.ResponseWriter, r *http.Request) {
+	body, _ := response.GetBody(r)
+	projectId := body.Str("project_id")
+	id := body.Str("id")
+	name := body.Str("name")
+	data := body.Json("description")
+
+	result, err := UpSert$2(projectId, id, name, data)
+	if err != nil {
+		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	response.ITEM(w, r, http.StatusOK, result)
+}
+
+func (rt *Router) Get$2ById(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	result, err := Get$2ById(id)
+	if err != nil {
+		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	response.ITEM(w, r, http.StatusOK, result)
+}
+
+func (rt *Router) State$2(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	body, _ := response.GetBody(r)
+	state := body.Str("state")
+
+	result, err := State$2(id, state)
+	if err != nil {
+		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	response.ITEM(w, r, http.StatusOK, result)
+}
+
+func (rt *Router) Delete$2(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	result, err := Delete$2(id)
+	if err != nil {
+		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	response.ITEM(w, r, http.StatusOK, result)
+}
+
+func (rt *Router) All$2(w http.ResponseWriter, r *http.Request) {
+	project_id := r.URL.Query().Get("project_id")
+	state := r.URL.Query().Get("state")
+	search := r.URL.Query().Get("search")
+	pageStr := r.URL.Query().Get("page")
+	rowsStr := r.URL.Query().Get("rows")
+	_select := r.URL.Query().Get("select")
+
+	page, err := strconv.Atoi(pageStr)
+	if err != nil {
+		page = 1
+	}
+
+	rows, err := strconv.Atoi(rowsStr)
+	if err != nil {
+		rows = 10
+	}
+
+	result, err := All$2(project_id, state, search, page, rows, _select)
+	if err != nil {
+		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	response.JSON(w, r, http.StatusOK, result)
 }
 `

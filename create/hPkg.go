@@ -32,7 +32,8 @@ func MakePkg(name, schema, schemaVar string) error {
 		return err
 	}
 
-	_, err = MakeFile(path, "router.go", modelRouter, name)
+	title := Titlecase(name)
+	_, err = MakeFile(path, "router.go", modelRouter, name, title)
 	if err != nil {
 		return err
 	}
@@ -52,7 +53,7 @@ func MakeModel(name, modelo, schemaVar string) error {
 	}
 
 	modelo = Titlecase(modelo)
-	fileName := fmt.Sprintf(`h%s.go`, Titlecase(modelo))
+	fileName := fmt.Sprintf(`h%s.go`, modelo)
 	_, err = MakeFile(path, fileName, modelHandler, name, modelo, schemaVar, Uppcase(modelo))
 	if err != nil {
 		return err
