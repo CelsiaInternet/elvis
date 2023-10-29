@@ -697,4 +697,13 @@ func (rt *Router) All$2(w http.ResponseWriter, r *http.Request) {
 
 	response.JSON(w, r, http.StatusOK, result)
 }
+
+/**
+	// $2
+	ProtectRoute(r, Get, "/$1/{id}", rt.Get$2ById)
+	ProtectRoute(r, Post, "/$1", rt.UpSert$2)
+	ProtectRoute(r, Put, "/$1/state/{id}", rt.State$2)
+	ProtectRoute(r, Delete, "/$1/{id}", rt.Delete$2)
+	ProtectRoute(r, Get, "/$1/all", rt.All$2)
+**/
 `

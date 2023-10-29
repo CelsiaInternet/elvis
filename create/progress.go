@@ -1,6 +1,7 @@
 package create
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/schollz/progressbar/v3"
@@ -9,6 +10,8 @@ import (
 var bar *progressbar.ProgressBar
 
 func progressInit() *progressbar.ProgressBar {
+	fmt.Println("")
+	
 	if bar == nil {
 		bar = progressbar.Default(100)
 	}

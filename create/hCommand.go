@@ -103,6 +103,8 @@ var CmdModelo = &cobra.Command{
 			fmt.Printf("Command failed %v\n", err)
 			return
 		}
+
+		fmt.Println("Remember, including the router in router.go")
 	},
 }
 
