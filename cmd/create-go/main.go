@@ -13,7 +13,7 @@ func main() {
 		fmt.Println("This program is not aplicable for windows machine.")
 	} else {
 		var rootCmd = &cobra.Command{Use: "create-go"}
-		rootCmd.AddCommand(create.CmdCreate)
+		rootCmd.AddCommand(create.Create)
 		rootCmd.Execute()
 	}
 }
