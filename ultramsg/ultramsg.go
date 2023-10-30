@@ -2,8 +2,10 @@ package ultramsg
 
 import (
 	"bytes"
+	"io"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/cgalvisleon/elvis/console"
 	. "github.com/cgalvisleon/elvis/envar"
@@ -15,7 +17,7 @@ import (
 func SendWhatsApp(country, phone, message string) (Json, error) {
 	ultramsgID := EnvarStr("ULTRAMSG_ID")
 	ultramsgToken := EnvarStr("ULTRAMSG_TOKEN")
-	apiURL := Format(`https://api.ultramsg.com/%s/messages/chat`, ultramsgID)
+	apiurl := Format(`https://api.ultramsg.com/%s/messages/chat`, ultramsgID)
 	to := Format(`%s%s`, country, phone)
 	body := message
 	data := url.Values{}
@@ -25,7 +27,7 @@ func SendWhatsApp(country, phone, message string) (Json, error) {
 
 	client := &http.Client{}
 	params := bytes.NewBufferString(data.Encode())
-	req, err := http.NewRequest("POST", apiURL, params)
+	req, err := http.NewRequest("POST", apiurl, params)
 	if err != nil {
 		return Json{}, err
 	}
@@ -51,7 +53,7 @@ func SendWhatsApp(country, phone, message string) (Json, error) {
 func SendWhatsAppImage(country, phone, image, caption string) (Json, error) {
 	ultramsgID := EnvarStr("ULTRAMSG_ID")
 	ultramsgToken := EnvarStr("ULTRAMSG_TOKEN")
-	apiURL := Format(`https://api.ultramsg.com/%s/messages/chat`, ultramsgID)
+	apiurl := Format(`https://api.ultramsg.com/%s/messages/image`, ultramsgID)
 	to := Format(`%s%s`, country, phone)
 	data := url.Values{}
 	data.Set("token", ultramsgToken)
@@ -61,7 +63,7 @@ func SendWhatsAppImage(country, phone, image, caption string) (Json, error) {
 
 	client := &http.Client{}
 	params := bytes.NewBufferString(data.Encode())
-	req, err := http.NewRequest("POST", apiURL, params)
+	req, err := http.NewRequest("POST", apiurl, params)
 	if err != nil {
 		return Json{}, err
 	}
@@ -87,7 +89,7 @@ func SendWhatsAppImage(country, phone, image, caption string) (Json, error) {
 func SendWhatsAppSticker(country, phone, sticker string) (Json, error) {
 	ultramsgID := EnvarStr("ULTRAMSG_ID")
 	ultramsgToken := EnvarStr("ULTRAMSG_TOKEN")
-	apiURL := Format(`https://api.ultramsg.com/%s/messages/chat`, ultramsgID)
+	apiurl := Format(`https://api.ultramsg.com/%s/messages/chat`, ultramsgID)
 	to := Format(`%s%s`, country, phone)
 	data := url.Values{}
 	data.Set("token", ultramsgToken)
@@ -96,7 +98,7 @@ func SendWhatsAppSticker(country, phone, sticker string) (Json, error) {
 
 	client := &http.Client{}
 	params := bytes.NewBufferString(data.Encode())
-	req, err := http.NewRequest("POST", apiURL, params)
+	req, err := http.NewRequest("POST", apiurl, params)
 	if err != nil {
 		return Json{}, err
 	}
@@ -122,7 +124,7 @@ func SendWhatsAppSticker(country, phone, sticker string) (Json, error) {
 func SendWhatsAppDocument(country, phone, filename, document, caption string) (Json, error) {
 	ultramsgID := EnvarStr("ULTRAMSG_ID")
 	ultramsgToken := EnvarStr("ULTRAMSG_TOKEN")
-	apiURL := Format(`https://api.ultramsg.com/%s/messages/chat`, ultramsgID)
+	apiurl := Format(`https://api.ultramsg.com/%s/messages/chat`, ultramsgID)
 	to := Format(`%s%s`, country, phone)
 	data := url.Values{}
 	data.Set("token", ultramsgToken)
@@ -133,7 +135,7 @@ func SendWhatsAppDocument(country, phone, filename, document, caption string) (J
 
 	client := &http.Client{}
 	params := bytes.NewBufferString(data.Encode())
-	req, err := http.NewRequest("POST", apiURL, params)
+	req, err := http.NewRequest("POST", apiurl, params)
 	if err != nil {
 		return Json{}, err
 	}
@@ -159,7 +161,7 @@ func SendWhatsAppDocument(country, phone, filename, document, caption string) (J
 func SendWhatsAppAudio(country, phone, audio string) (Json, error) {
 	ultramsgID := EnvarStr("ULTRAMSG_ID")
 	ultramsgToken := EnvarStr("ULTRAMSG_TOKEN")
-	apiURL := Format(`https://api.ultramsg.com/%s/messages/chat`, ultramsgID)
+	apiurl := Format(`https://api.ultramsg.com/%s/messages/chat`, ultramsgID)
 	to := Format(`%s%s`, country, phone)
 	data := url.Values{}
 	data.Set("token", ultramsgToken)
@@ -168,7 +170,7 @@ func SendWhatsAppAudio(country, phone, audio string) (Json, error) {
 
 	client := &http.Client{}
 	params := bytes.NewBufferString(data.Encode())
-	req, err := http.NewRequest("POST", apiURL, params)
+	req, err := http.NewRequest("POST", apiurl, params)
 	if err != nil {
 		return Json{}, err
 	}
@@ -194,7 +196,8 @@ func SendWhatsAppAudio(country, phone, audio string) (Json, error) {
 func SendWhatsAppVoice(country, phone, audio string) (Json, error) {
 	ultramsgID := EnvarStr("ULTRAMSG_ID")
 	ultramsgToken := EnvarStr("ULTRAMSG_TOKEN")
-	apiURL := Format(`https://api.ultramsg.com/%s/messages/chat`, ultramsgID)
+	apiurl := Format(`https://api.ultramsg.com/%s/messages/voice`, ultramsgID)
+
 	to := Format(`%s%s`, country, phone)
 	data := url.Values{}
 	data.Set("token", ultramsgToken)
@@ -203,7 +206,7 @@ func SendWhatsAppVoice(country, phone, audio string) (Json, error) {
 
 	client := &http.Client{}
 	params := bytes.NewBufferString(data.Encode())
-	req, err := http.NewRequest("POST", apiURL, params)
+	req, err := http.NewRequest("POST", apiurl, params)
 	if err != nil {
 		return Json{}, err
 	}
@@ -229,38 +232,37 @@ func SendWhatsAppVoice(country, phone, audio string) (Json, error) {
 func SendWhatsAppVideo(country, phone, video, caption string) (Json, error) {
 	ultramsgID := EnvarStr("ULTRAMSG_ID")
 	ultramsgToken := EnvarStr("ULTRAMSG_TOKEN")
-	apiURL := Format(`https://api.ultramsg.com/%s/messages/chat`, ultramsgID)
+	apiurl := Format(`https://api.ultramsg.com/%s/messages/video`, ultramsgID)
 	to := Format(`%s%s`, country, phone)
+
 	data := url.Values{}
 	data.Set("token", ultramsgToken)
 	data.Set("to", to)
 	data.Set("video", video)
 	data.Set("caption", caption)
 
-	client := &http.Client{}
-	params := bytes.NewBufferString(data.Encode())
-	req, err := http.NewRequest("POST", apiURL, params)
+	payload := strings.NewReader(data.Encode())
+	req, err := http.NewRequest("POST", apiurl, payload)
 	if err != nil {
 		return Json{}, err
 	}
 
-	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-
-	resp, err := client.Do(req)
+	req.Header.Add("content-type", "application/x-www-form-urlencoded")
+	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return Json{}, err
 	}
+	defer res.Body.Close()
 
-	defer resp.Body.Close()
+	body, _ := io.ReadAll(res.Body)
 
-	console.Log(Json{
+	result := Json{
 		"to":     to,
-		"status": resp.Status,
-		"body":   resp.Body,
-	})
+		"status": res.Status,
+		"body":   string(body),
+	}
 
-	return Json{
-		"status": resp.Status,
-		"body":   resp.Body,
-	}, nil
+	console.Log(result.ToString())
+
+	return result, nil
 }
