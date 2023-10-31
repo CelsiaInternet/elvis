@@ -113,7 +113,7 @@ func Empty() error {
 func More(key string, second time.Duration) int {
 	n, err := Get(key)
 	if err != nil {
-		return 0
+		n = "0"
 	}
 
 	if n == "" {
