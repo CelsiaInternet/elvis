@@ -43,8 +43,8 @@ func Telemetry(next http.Handler) http.Handler {
 		endPoint := r.URL.Path
 		method := r.Method
 		t1 := time.Now()
-		hostName, _ := os.Hostname()
 		ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
+		hostName, _ := os.Hostname()
 		var mTotal uint64
 		var mUsed uint64
 		var mFree uint64
