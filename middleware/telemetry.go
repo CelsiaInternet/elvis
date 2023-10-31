@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"fmt"
+	"math"
 	"net/http"
 	"os"
 	"time"
@@ -12,7 +13,6 @@ import (
 	. "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/logs"
 	. "github.com/cgalvisleon/elvis/utilities"
-	"github.com/go-chi/chi/middleware"
 	"github.com/shirou/gopsutil/mem"
 )
 
@@ -57,27 +57,29 @@ func Telemetry(next http.Handler) http.Handler {
 		}
 		mTotal = memory.Total
 		mUsed = memory.Used
-		mFree = memory.Free
+		mFree = memory.Total - memory.Used
+		pFree := float64(mFree) / float64(mTotal) * 100
 		requests_host := CallRequests(hostName)
 		requests_endpoint := CallRequests(endPoint)
-		ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
 
 		defer func() {
 			summary := Json{
 				"_id":       _id,
-				"datetime":  t1,
+				"date_time": t1,
 				"host_name": hostName,
 				"method":    method,
 				"endpoint":  endPoint,
 				"status":    http.StatusOK,
-				"bytes": Json{
-					"writte": ww.BytesWritten(),
+				"since": Json{
+					"value": time.Since(t1).Milliseconds(),
+					"unity": "Milliseconds",
 				},
-				"since": fmt.Sprintf(`%d ms`, time.Since(t1).Milliseconds()),
 				"memory": Json{
-					"total": fmt.Sprintf(`%d MB`, mTotal/1024/1024),
-					"used":  fmt.Sprintf(`%d MB`, mUsed/1024/1024),
-					"free":  fmt.Sprintf(`%d MB`, mFree/1024/1024),
+					"unity":        "MB",
+					"total":        mTotal / 1024 / 1024,
+					"used":         mUsed / 1024 / 1024,
+					"free":         mFree / 1024 / 1024,
+					"percent_free": math.Floor(pFree*100) / 100,
 				},
 				"request_host": Json{
 					"host":   requests_host.Tag,
