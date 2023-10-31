@@ -3,6 +3,7 @@ package cache
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	. "github.com/cgalvisleon/elvis/json"
@@ -107,6 +108,27 @@ func Empty() error {
 	}
 
 	return nil
+}
+
+func More(key string, second time.Duration) int {
+	n, err := Get(key)
+	if err != nil {
+		return 0
+	}
+
+	if n == "" {
+		n = "0"
+	}
+
+	val, err := strconv.Atoi(n)
+	if err != nil {
+		return 0
+	}
+
+	val++
+	Set(key, fmt.Sprintf(`%d`, val), second)
+
+	return val
 }
 
 func HSet(key string, val map[string]string) error {
