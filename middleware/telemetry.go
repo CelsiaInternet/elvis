@@ -13,6 +13,7 @@ import (
 	. "github.com/cgalvisleon/elvis/utilities"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/shirou/gopsutil/mem"
 )
 
 type Request struct {
@@ -49,7 +50,18 @@ func Telemetry(next http.Handler) http.Handler {
 			for key, val := range ww.Header() {
 				headers[key] = val
 			}
-
+			var mTotal uint64
+			var mUsed uint64
+			var mFree uint64
+			memory, err := mem.VirtualMemory()
+			if err != nil {
+				mFree = 0
+				mTotal = 0
+				mUsed = 0
+			}
+			mTotal = memory.Total
+			mUsed = memory.Used
+			mFree = memory.Free
 			requests_host := CallRequests(hostName)
 			requests_endpoint := CallRequests(endPoint)
 
@@ -63,6 +75,11 @@ func Telemetry(next http.Handler) http.Handler {
 				"bytes_written": ww.BytesWritten(),
 				"header":        headers,
 				"since":         time.Since(t1),
+				"memory": Json{
+					"total": mTotal,
+					"used":  mUsed,
+					"free":  mFree,
+				},
 				"request_host": Json{
 					"day":    requests_host.Day,
 					"hour":   requests_host.Hour,
