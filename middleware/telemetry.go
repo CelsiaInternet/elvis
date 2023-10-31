@@ -16,6 +16,8 @@ import (
 	"github.com/shirou/gopsutil/mem"
 )
 
+var DefaultTelemetry func(next http.Handler) http.Handler
+
 type Request struct {
 	Tag     string
 	Day     int
@@ -37,13 +39,12 @@ func CallRequests(tag string) Request {
 }
 
 func Telemetry(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
+	fn := func(w http.ResponseWriter, r *http.Request) {
 		_id := NewId()
+		ctx := r.Context()
 		endPoint := r.URL.Path
 		method := r.Method
 		t1 := time.Now()
-		ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
 		hostName, _ := os.Hostname()
 		var mTotal uint64
 		var mUsed uint64
@@ -59,21 +60,24 @@ func Telemetry(next http.Handler) http.Handler {
 		mFree = memory.Free
 		requests_host := CallRequests(hostName)
 		requests_endpoint := CallRequests(endPoint)
+		ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
 
 		defer func() {
 			summary := Json{
-				"_id":           _id,
-				"datetime":      t1,
-				"host_name":     hostName,
-				"method":        method,
-				"endpoint":      endPoint,
-				"status":        ww.Status(),
-				"bytes_written": ww.BytesWritten(),
-				"since":         fmt.Sprintf(`%d ms`, time.Since(t1).Milliseconds()),
+				"_id":       _id,
+				"datetime":  t1,
+				"host_name": hostName,
+				"method":    method,
+				"endpoint":  endPoint,
+				"status":    http.StatusOK,
+				"bytes": Json{
+					"writte": ww.BytesWritten(),
+				},
+				"since": fmt.Sprintf(`%d ms`, time.Since(t1).Milliseconds()),
 				"memory": Json{
-					"total": mTotal,
-					"used":  mUsed,
-					"free":  mFree,
+					"total": fmt.Sprintf(`%d MB`, mTotal/1024/1024),
+					"used":  fmt.Sprintf(`%d MB`, mUsed/1024/1024),
+					"free":  fmt.Sprintf(`%d MB`, mFree/1024/1024),
 				},
 				"request_host": Json{
 					"host":   requests_host.Tag,
@@ -103,5 +107,7 @@ func Telemetry(next http.Handler) http.Handler {
 
 		w.Header().Set("_id", _id)
 		next.ServeHTTP(w, r.WithContext(ctx))
-	})
+	}
+
+	return http.HandlerFunc(fn)
 }
