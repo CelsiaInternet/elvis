@@ -11,7 +11,6 @@ import (
 	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/event"
 	. "github.com/cgalvisleon/elvis/json"
-	"github.com/cgalvisleon/elvis/logs"
 	. "github.com/cgalvisleon/elvis/utilities"
 	"github.com/shirou/gopsutil/mem"
 )
@@ -103,8 +102,6 @@ func Telemetry(next http.Handler) http.Handler {
 			if requests_host.Seccond >= requests_host.Limit {
 				event.EventPublish("requests/overflow", summary)
 			}
-
-			logs.Log("telemetry", summary.ToString())
 		}()
 
 		w.Header().Set("_id", _id)
