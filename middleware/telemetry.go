@@ -48,10 +48,6 @@ func Telemetry(next http.Handler) http.Handler {
 			t1 := time.Now()
 			hostName, _ := os.Hostname()
 			ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
-			headers := Json{}
-			for key, val := range ww.Header() {
-				headers[key] = val
-			}
 			var mTotal uint64
 			var mUsed uint64
 			var mFree uint64
@@ -67,45 +63,46 @@ func Telemetry(next http.Handler) http.Handler {
 			requests_host := CallRequests(hostName)
 			requests_endpoint := CallRequests(endPoint)
 
-			summary := Json{
-				"_id":           _id,
-				"datetime":      t1,
-				"host_name":     hostName,
-				"method":        method,
-				"endpoint":      endPoint,
-				"status":        ww.Status(),
-				"bytes_written": ww.BytesWritten(),
-				"header":        headers,
-				"since":         fmt.Sprintf(`%d ms`, time.Since(t1).Milliseconds()),
-				"memory": Json{
-					"total": mTotal,
-					"used":  mUsed,
-					"free":  mFree,
-				},
-				"request_host": Json{
-					"host":   requests_host.Tag,
-					"day":    requests_host.Day,
-					"hour":   requests_host.Hour,
-					"minute": requests_host.Minute,
-					"second": requests_host.Seccond,
-					"limit":  requests_host.Limit,
-				},
-				"requests_endpoint": Json{
-					"host":   requests_host.Tag,
-					"day":    requests_endpoint.Day,
-					"hour":   requests_endpoint.Hour,
-					"minute": requests_endpoint.Minute,
-					"second": requests_endpoint.Seccond,
-					"limit":  requests_endpoint.Limit,
-				},
-			}
-			event.EventPublish("telemetry", summary)
+			defer func() {
+				summary := Json{
+					"_id":           _id,
+					"datetime":      t1,
+					"host_name":     hostName,
+					"method":        method,
+					"endpoint":      endPoint,
+					"status":        ww.Status(),
+					"bytes_written": ww.BytesWritten(),
+					"since":         fmt.Sprintf(`%d ms`, time.Since(t1).Milliseconds()),
+					"memory": Json{
+						"total": mTotal,
+						"used":  mUsed,
+						"free":  mFree,
+					},
+					"request_host": Json{
+						"host":   requests_host.Tag,
+						"day":    requests_host.Day,
+						"hour":   requests_host.Hour,
+						"minute": requests_host.Minute,
+						"second": requests_host.Seccond,
+						"limit":  requests_host.Limit,
+					},
+					"requests_endpoint": Json{
+						"endpoint": requests_endpoint.Tag,
+						"day":      requests_endpoint.Day,
+						"hour":     requests_endpoint.Hour,
+						"minute":   requests_endpoint.Minute,
+						"second":   requests_endpoint.Seccond,
+						"limit":    requests_endpoint.Limit,
+					},
+				}
+				event.EventPublish("telemetry", summary)
 
-			if requests_host.Seccond >= requests_host.Limit {
-				event.EventPublish("requests/overflow", summary)
-			}
+				if requests_host.Seccond >= requests_host.Limit {
+					event.EventPublish("requests/overflow", summary)
+				}
 
-			logs.Log("telemetry", summary.ToString())
+				logs.Log("telemetry", summary.ToString())
+			}()
 		}
 
 		w.Header().Set("_id", _id)
