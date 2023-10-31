@@ -8,7 +8,7 @@ import (
 )
 
 func connect() {
-	host := EnvarStr("NATS_HOST")
+	host := EnvarStr("", "NATS_HOST")
 	if host == "" {
 		return
 	}

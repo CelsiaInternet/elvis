@@ -162,12 +162,12 @@ func JoinToMaster() error {
 		return err
 	}
 
-	driver = EnvarStr("DB_DRIVE")
-	host = EnvarStr("DB_HOST")
-	port = EnvarInt("DB_PORT")
-	dbname = EnvarStr("DB_NAME")
-	user = EnvarStr("DB_USER")
-	password = EnvarStr("DB_PASSWORD")
+	driver = EnvarStr("", "DB_DRIVE")
+	host = EnvarStr("", "DB_HOST")
+	port = EnvarInt(5432, "DB_PORT")
+	dbname = EnvarStr("", "DB_NAME")
+	user = EnvarStr("", "DB_USER")
+	password = EnvarStr("", "DB_PASSWORD")
 	_, err = UpSetMasterNode(idx, ModeId, ModeTp, driver, host, port, dbname, user, password)
 	if err != nil {
 		return err

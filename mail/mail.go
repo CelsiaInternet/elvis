@@ -13,12 +13,12 @@ import (
 )
 
 func Send(ctx context.Context, from string, to string, subject string, html string) (bool, error) {
-	port := EnvarInt("EMAIL_PORT")
+	port := EnvarInt(4200, "EMAIL_PORT")
 	server := mail.NewSMTPClient()
-	server.Host = EnvarStr("EMAIL_HOST")
+	server.Host = EnvarStr("", "EMAIL_HOST")
 	server.Port = port
-	server.Username = EnvarStr("EMAIL")
-	server.Password = EnvarStr("EMAIL_PASSWORD")
+	server.Username = EnvarStr("", "EMAIL")
+	server.Password = EnvarStr("", "EMAIL_PASSWORD")
 	server.Encryption = mail.EncryptionTLS
 
 	smtpClient, err := server.Connect()
@@ -44,9 +44,9 @@ func Send(ctx context.Context, from string, to string, subject string, html stri
 }
 
 func SendVerify(ctx context.Context, to string, subject string, title string, email string, code string) (bool, error) {
-	company := EnvarStr("COMPANY")
-	fromEmail := EnvarStr("EMAIL")
-	project := EnvarStr("PROJECT")
+	company := EnvarStr("", "COMPANY")
+	fromEmail := EnvarStr("", "EMAIL")
+	project := EnvarStr("", "PROJECT")
 	from := Format("%s account team <%s>", Titlecase(project), fromEmail)
 
 	css, err := os.ReadFile("./assets/template/style.txt")
@@ -64,9 +64,9 @@ func SendVerify(ctx context.Context, to string, subject string, title string, em
 }
 
 func SendAlert(ctx context.Context, to string, subject string, title string, subtitle string, message string, button string, href string, thanks string) (bool, error) {
-	company := EnvarStr("COMPANY")
-	fromEmail := EnvarStr("EMAIL")
-	project := EnvarStr("PROJECT")
+	company := EnvarStr("", "COMPANY")
+	fromEmail := EnvarStr("", "EMAIL")
+	project := EnvarStr("", "PROJECT")
 	from := Format("%s account team <%s>", Titlecase(project), fromEmail)
 
 	css, err := os.ReadFile("./assets/template/style.txt")
@@ -84,9 +84,9 @@ func SendAlert(ctx context.Context, to string, subject string, title string, sub
 }
 
 func SendAction(ctx context.Context, to string, subject string, title string, message string, button string, href string) (bool, error) {
-	company := EnvarStr("COMPANY")
-	fromEmail := EnvarStr("EMAIL")
-	project := EnvarStr("PROJECT")
+	company := EnvarStr("", "COMPANY")
+	fromEmail := EnvarStr("", "EMAIL")
+	project := EnvarStr("", "PROJECT")
 	from := Format("%s account team <%s>", Titlecase(project), fromEmail)
 
 	css, err := os.ReadFile("./assets/template/style.txt")

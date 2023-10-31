@@ -11,9 +11,9 @@ import (
 )
 
 func connect() {
-	host := EnvarStr("REDIS_HOST")
-	password := EnvarStr("REDIS_PASSWORD")
-	dbname := EnvarInt("REDIS_DB")
+	host := EnvarStr("", "REDIS_HOST")
+	password := EnvarStr("", "REDIS_PASSWORD")
+	dbname := EnvarInt(0, "REDIS_DB")
 
 	if host == "" {
 		logs.Errorf(ERR_ENV_REQUIRED, "REDIS_HOST")

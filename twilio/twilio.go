@@ -12,9 +12,9 @@ import (
 )
 
 func SendWhatsApp(country, phone, message string) (Json, error) {
-	twilioSID := EnvarStr("TWILIO_SID")
-	twilioAUT := EnvarStr("TWILIO_AUT")
-	twilioFrom := EnvarStr("TWILIO_FROM")
+	twilioSID := EnvarStr("", "TWILIO_SID")
+	twilioAUT := EnvarStr("", "TWILIO_AUT")
+	twilioFrom := EnvarStr("", "TWILIO_FROM")
 
 	apiURL := Format(`https://api.twilio.com/2010-04-01/Accounts/%s/Messages.json`, twilioSID)
 	from := Format(`whatsapp:%s`, twilioFrom)

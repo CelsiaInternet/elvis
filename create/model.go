@@ -93,7 +93,7 @@ func New() (*Server, error) {
 	/**
 	 * HTTP
 	 **/
-	port := EnvarInt("PORT")
+	port := EnvarInt(3300, "PORT")
 
 	if port != 0 {
 		r := chi.NewRouter()
@@ -120,7 +120,7 @@ func New() (*Server, error) {
 	/**
 	 * RPC
 	 **/
-	port = EnvarInt("RPC_PORT")
+	port = EnvarInt(4200, "RPC_PORT")
 
 	if port != 0 {
 		serv := v1.NewRpc(port)
@@ -362,9 +362,9 @@ type Controller struct {
 }
 
 func (c *Controller) Version(ctx context.Context) (Json, error) {
-	company := EnvarStr("COMPANY")
-	web := EnvarStr("WEB")
-	version := EnvarStr("VERSION")
+	company := EnvarStr("", "COMPANY")
+	web := EnvarStr("", "WEB")
+	version := EnvarStr("", "VERSION")
 
 	return Json{
 		"version": version,

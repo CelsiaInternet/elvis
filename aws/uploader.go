@@ -97,8 +97,8 @@ func UploaderFile(r *http.Request, folder, name string) (Json, error) {
 		filename = Format(`%s/%s`, folder, filename)
 	}
 
-	storageType := EnvarStr("STORAGE_TYPE")
-	bucket := EnvarStr("BUCKET")
+	storageType := EnvarStr("", "STORAGE_TYPE")
+	bucket := EnvarStr("", "BUCKET")
 	if storageType == "S3" {
 		contentFile, err := io.ReadAll(file)
 		if err != nil {
@@ -128,7 +128,7 @@ func UploaderFile(r *http.Request, folder, name string) (Json, error) {
 			return Json{}, err
 		}
 
-		hostname := EnvarStr("HOST")
+		hostname := EnvarStr("", "HOST")
 		url := Format(`%s/%s`, hostname, filename)
 
 		return Json{
@@ -150,8 +150,8 @@ func UploaderB64(b64, filename, contentType string) (Json, error) {
 		return Json{}, console.ErrorF(MSG_ATRIB_REQUIRED, "content-type")
 	}
 
-	storageType := EnvarStr("STORAGE_TYPE")
-	bucket := EnvarStr("BUCKET")
+	storageType := EnvarStr("", "STORAGE_TYPE")
+	bucket := EnvarStr("", "BUCKET")
 	if storageType == "S3" {
 		contentFile, err := base64.StdEncoding.DecodeString(b64)
 		if err != nil {
@@ -188,7 +188,7 @@ func UploaderB64(b64, filename, contentType string) (Json, error) {
 			return Json{}, err
 		}
 
-		hostname := EnvarStr("HOST")
+		hostname := EnvarStr("", "HOST")
 		url := Format(`%s/%s`, hostname, filename)
 
 		return Json{
@@ -198,9 +198,9 @@ func UploaderB64(b64, filename, contentType string) (Json, error) {
 }
 
 func DeleteFile(url string) (bool, error) {
-	storageType := EnvarStr("STORAGE_TYPE")
+	storageType := EnvarStr("", "STORAGE_TYPE")
 	if storageType == "S3" {
-		bucket := EnvarStr("BUCKET")
+		bucket := EnvarStr("", "BUCKET")
 		key := strings.ReplaceAll(url, Format(`https://%s.s3.amazonaws.com/`, bucket), ``)
 		_, err := DeleteS3(bucket, key)
 		if err != nil {
@@ -219,9 +219,9 @@ func DeleteFile(url string) (bool, error) {
 }
 
 func DownloaderFile(url string) (string, error) {
-	storageType := EnvarStr("STORAGE_TYPE")
+	storageType := EnvarStr("", "STORAGE_TYPE")
 	if storageType == "S3" {
-		bucket := EnvarStr("BUCKET")
+		bucket := EnvarStr("", "BUCKET")
 		key := strings.ReplaceAll(url, Format(`https://%s.s3.amazonaws.com/`, bucket), ``)
 		_, err := DownloadS3(bucket, key)
 		if err != nil {

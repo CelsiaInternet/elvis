@@ -69,7 +69,7 @@ func SetvarStr(name string, _default string, usage, _var string) string {
 	return MetavarStr("", name, _default, usage, _var)
 }
 
-func EnvarStr(args ...string) string {
+func EnvarStr(_default string, args ...string) string {
 	var _var string
 	if len(args) > 1 {
 		_var = appendStr(args[0], args[1])
@@ -78,11 +78,15 @@ func EnvarStr(args ...string) string {
 	}
 	result := os.Getenv(_var)
 
+	if result == "" {
+		result = _default
+	}
+
 	return result
 }
 
-func EnvarInt(args ...string) int {
-	_var := EnvarStr(args...)
+func EnvarInt(_default int, args ...string) int {
+	_var := EnvarStr(fmt.Sprintf(`%d`, _default), args...)
 	result, err := strconv.Atoi(_var)
 	if err != nil {
 		return 0

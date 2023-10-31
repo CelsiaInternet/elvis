@@ -83,17 +83,17 @@ func defineModule() error {
 	InitType("-1", "PROFILE.SUPORT", OF_SYSTEM, "PROFILE", "Suport", "")
 
 	// Initial project
-	app := EnvarStr("APP")
+	app := EnvarStr("", "APP")
 	_, err := InitProject("-1", app, "Initial project", Json{})
 	if err != nil {
 		return err
 	}
 
 	// User Admin
-	ADMIN_COUNTRY := EnvarStr("ADMIN_COUNTRY")
-	ADMIN_PHONE := EnvarStr("ADMIN_PHONE")
-	ADMIN_NAME := EnvarStr("ADMIN_NAME")
-	ADMIN_EMAIL := EnvarStr("ADMIN_EMAIL")
+	ADMIN_COUNTRY := EnvarStr("", "ADMIN_COUNTRY")
+	ADMIN_PHONE := EnvarStr("", "ADMIN_PHONE")
+	ADMIN_NAME := EnvarStr("", "ADMIN_NAME")
+	ADMIN_EMAIL := EnvarStr("", "ADMIN_EMAIL")
 
 	_, err = InitAdmin(ADMIN_NAME, ADMIN_COUNTRY, ADMIN_PHONE, ADMIN_EMAIL)
 	if err != nil {

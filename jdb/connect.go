@@ -11,12 +11,12 @@ import (
 )
 
 func connect() {
-	driver := EnvarStr("DB_DRIVE")
-	host := EnvarStr("DB_HOST")
-	port := EnvarInt("DB_PORT")
-	dbname := EnvarStr("DB_NAME")
-	user := EnvarStr("DB_USER")
-	password := EnvarStr("DB_PASSWORD")
+	driver := EnvarStr("", "DB_DRIVE")
+	host := EnvarStr("", "DB_HOST")
+	port := EnvarInt(5432, "DB_PORT")
+	dbname := EnvarStr("", "DB_NAME")
+	user := EnvarStr("", "DB_USER")
+	password := EnvarStr("", "DB_PASSWORD")
 
 	if driver == "" {
 		console.FatalF(ERR_ENV_REQUIRED, "DB_DRIVE")

@@ -29,7 +29,7 @@ type Claim struct {
 }
 
 func genToken(id, app, name, kind, username, device string, duration time.Duration) (token, key string, err error) {
-	secret := EnvarStr("SECRET")
+	secret := EnvarStr("", "SECRET")
 	c := Claim{}
 	c.ID = id
 	c.App = app
@@ -63,7 +63,7 @@ func DelTokenCtx(ctx context.Context, app, device, id string) error {
 }
 
 func DelTokeStrng(tokenString string) error {
-	secret := EnvarStr("SECRET")
+	secret := EnvarStr("", "SECRET")
 	token, err := jwt.Parse(tokenString, func(*jwt.Token) (interface{}, error) {
 		return []byte(secret), nil
 	})
@@ -102,7 +102,7 @@ func TokenKey(app, device, id string) string {
 }
 
 func ParceToken(tokenString string) (*Claim, error) {
-	secret := EnvarStr("SECRET")
+	secret := EnvarStr("", "SECRET")
 	token, err := jwt.Parse(tokenString, func(*jwt.Token) (interface{}, error) {
 		return []byte(secret), nil
 	})

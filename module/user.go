@@ -79,7 +79,7 @@ func DefineUsers() error {
 			fullName := new.Str("full_name")
 			country := new.Str("country")
 			phone := new.Str("phone")
-			APP := EnvarStr("APP")
+			APP := EnvarStr("", "APP")
 			message := Format(MSG_ADMIN_WELCOME, fullName, APP)
 			go aws.SendSMS(country, phone, message)
 		}
