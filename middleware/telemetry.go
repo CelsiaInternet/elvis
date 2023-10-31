@@ -44,6 +44,7 @@ func Telemetry(next http.Handler) http.Handler {
 
 		if rctx := chi.RouteContext(ctx); rctx != nil {
 			endPoint := r.URL.Path
+			method := r.Method
 			t1 := time.Now()
 			hostName, _ := os.Hostname()
 			ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
@@ -70,18 +71,19 @@ func Telemetry(next http.Handler) http.Handler {
 				"_id":           _id,
 				"datetime":      t1,
 				"host_name":     hostName,
-				"method":        rctx.RouteMethod,
+				"method":        method,
 				"endpoint":      endPoint,
 				"status":        ww.Status(),
 				"bytes_written": ww.BytesWritten(),
 				"header":        headers,
-				"since":         time.Since(t1),
+				"since":         fmt.Sprintf(`%d ms`, time.Since(t1).Milliseconds()),
 				"memory": Json{
 					"total": mTotal,
 					"used":  mUsed,
 					"free":  mFree,
 				},
 				"request_host": Json{
+					"host":   requests_host.Tag,
 					"day":    requests_host.Day,
 					"hour":   requests_host.Hour,
 					"minute": requests_host.Minute,
@@ -89,6 +91,7 @@ func Telemetry(next http.Handler) http.Handler {
 					"limit":  requests_host.Limit,
 				},
 				"requests_endpoint": Json{
+					"host":   requests_host.Tag,
 					"day":    requests_endpoint.Day,
 					"hour":   requests_endpoint.Hour,
 					"minute": requests_endpoint.Minute,
