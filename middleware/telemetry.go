@@ -33,7 +33,7 @@ func CallRequests(tag string) Request {
 		Hour:    cache.More(fmt.Sprintf(`%s-%d`, tag, time.Now().Unix()/3600), 3600),
 		Minute:  cache.More(fmt.Sprintf(`%s-%d`, tag, time.Now().Unix()/60), 60),
 		Seccond: cache.More(fmt.Sprintf(`%s-%d`, tag, time.Now().Unix()/2), 2),
-		Limit:   envar.EnvarInt(100, "REQUESTS_LIMIT"),
+		Limit:   envar.EnvarInt(10, "REQUESTS_LIMIT"),
 	}
 }
 

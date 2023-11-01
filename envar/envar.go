@@ -76,8 +76,8 @@ func EnvarStr(_default string, args ...string) string {
 	} else if len(args) > 0 {
 		_var = args[0]
 	}
-	result := os.Getenv(_var)
 
+	result := os.Getenv(_var)
 	if result == "" {
 		result = _default
 	}
