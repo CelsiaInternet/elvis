@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/cgalvisleon/elvis/logs"
@@ -15,6 +16,9 @@ func Connect(w http.ResponseWriter, r *http.Request) (*Client, error) {
 
 	ctx := r.Context()
 	clientId := NewAny(ctx.Value("clientId")).String()
+	if clientId == "<nil>" {
+		return nil, errors.New("Not defined clientId!")
+	}
 
 	idxC := conn.hub.indexClient(clientId)
 	if idxC != -1 {
