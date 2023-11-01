@@ -3,8 +3,9 @@
 # Public
 
 ```
-git update
-git tag v0.0.43
+git update &&
+git tag v0.0.45 &&
+git tags
 git push origin --tags
 
 go build ./cmd/create-go

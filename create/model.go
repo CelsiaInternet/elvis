@@ -353,7 +353,6 @@ import (
 	"context"
 
 	. "github.com/cgalvisleon/elvis/envar"
-	"github.com/cgalvisleon/elvis/event"
 	"github.com/cgalvisleon/elvis/jdb"
 	. "github.com/cgalvisleon/elvis/json"
 )
@@ -374,8 +373,6 @@ func (c *Controller) Version(ctx context.Context) (Json, error) {
 		"web":     web,
 		"help":    "",
 	}
-
-  event.EventPublish("service/starat", service)
 
 	return service, nil
 }
