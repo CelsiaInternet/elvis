@@ -10,3 +10,12 @@ var Create = &cobra.Command{
 		prompCreate()
 	},
 }
+
+var Delete = &cobra.Command{
+	Use:   "delete",
+	Short: "You can delete Microservice.",
+	Long:  "Delete microservice include required folders and basic files.",
+	Run: func(cmd *cobra.Command, args []string) {
+		prompDelete()
+	},
+}

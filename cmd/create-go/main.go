@@ -14,6 +14,7 @@ func main() {
 	} else {
 		var rootCmd = &cobra.Command{Use: "create-go"}
 		rootCmd.AddCommand(create.Create)
+		rootCmd.AddCommand(create.Delete)
 		rootCmd.Execute()
 	}
 }

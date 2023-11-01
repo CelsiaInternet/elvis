@@ -128,3 +128,25 @@ var CmdRpc = &cobra.Command{
 		}
 	},
 }
+
+/**
+*
+**/
+var DeleteMicro = &cobra.Command{
+	Use:   "micro [name]",
+	Short: "Delete microservice.",
+	Long:  "Delete microservice delete all foldres.",
+	Run: func(cmd *cobra.Command, args []string) {
+		packageName, err := utilities.ModuleName()
+		if err != nil {
+			fmt.Printf("Prompt failed %v\n", err)
+			return
+		}
+		
+		err = DeleteMicroservice(packageName)
+		if err != nil {
+			fmt.Printf("Command failed %v\n", err)
+			return
+		}
+	},
+}

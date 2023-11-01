@@ -106,3 +106,20 @@ func MkRpc(name string) error {
 
 	return nil
 }
+
+/**
+*
+**/
+func DeleteMicroservice(packageName string) error {
+	progressNext(10)
+	err := DeleteCmd(packageName)
+	if err != nil {
+		return err
+	}
+	
+	progressNext(80)
+	
+	progressNext(10)
+
+	return nil
+}

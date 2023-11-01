@@ -48,6 +48,34 @@ func prompCreate() {
 	}
 }
 
+func prompDelete() {
+	prompt := promptui.Select{
+		Label: "What do you want delete?",
+		Items: []string{"Microservice", "Modelo"},
+	}
+
+	opt, _, err := prompt.Run()
+	if err != nil {
+		fmt.Printf("Prompt failed %v\n", err)
+		return
+	}
+
+	switch opt {
+	case 0:		
+		err := DeleteMicro.Execute()
+		if err != nil {
+			fmt.Printf("Prompt failed %v\n", err)
+			return
+		}
+	case 1:
+		err := CmdModelo.Execute()
+		if err != nil {
+			fmt.Printf("Prompt failed %v\n", err)
+			return
+		}	
+	}
+}
+
 func prompStr(label string) (string, error) {
 	validate := func(input string) error {
 		if len(input) == 0 {
