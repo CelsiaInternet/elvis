@@ -4,7 +4,7 @@
 
 ```
 git update
-git tag V0.0.41
+git tag v0.0.43
 git push origin --tags
 
 go build ./cmd/create-go

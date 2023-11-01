@@ -12,7 +12,7 @@ import (
 	"github.com/cgalvisleon/elvis/event"
 	. "github.com/cgalvisleon/elvis/json"
 	. "github.com/cgalvisleon/elvis/utilities"
-	"github.com/shirou/gopsutil/mem"
+	"github.com/shirou/gopsutil/v3/mem"
 )
 
 var DefaultTelemetry func(next http.Handler) http.Handler
