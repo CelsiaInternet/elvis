@@ -248,7 +248,7 @@ import (
 )
 
 func initEvents() {
-	err := event.Stack("<channel>", HostName, eventAction)
+	err := event.Stack("<channel>", eventAction)
 	if err != nil {
 		console.Error(err)
 	}
@@ -349,6 +349,7 @@ const (
 `
 
 const modelController = `package $1
+
 import (
 	"context"
 
@@ -623,9 +624,9 @@ func (rt *Router) UpSert$2(w http.ResponseWriter, r *http.Request) {
 	projectId := body.Str("project_id")
 	id := body.Str("id")
 	name := body.Str("name")
-	data := body.Json("description")
+	description := body.Str("description")
 
-	result, err := UpSert$2(projectId, id, name, data)
+	result, err := UpSert$2(projectId, id, name, description)
 	if err != nil {
 		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
