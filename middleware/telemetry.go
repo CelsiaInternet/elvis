@@ -99,7 +99,7 @@ func Telemetry(next http.Handler) http.Handler {
 			}
 			go event.EventPublish("telemetry", summary)
 
-			if requests_host.Seccond >= requests_host.Limit {
+			if requests_host.Seccond > requests_host.Limit {
 				go event.EventPublish("requests/overflow", summary)
 			}
 		}()
