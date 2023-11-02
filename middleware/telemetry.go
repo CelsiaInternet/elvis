@@ -12,6 +12,7 @@ import (
 	"github.com/cgalvisleon/elvis/event"
 	. "github.com/cgalvisleon/elvis/json"
 	. "github.com/cgalvisleon/elvis/utilities"
+	"github.com/go-chi/chi/middleware"
 	"github.com/shirou/gopsutil/v3/mem"
 )
 
@@ -60,6 +61,7 @@ func Telemetry(next http.Handler) http.Handler {
 		pFree := float64(mFree) / float64(mTotal) * 100
 		requests_host := CallRequests(hostName)
 		requests_endpoint := CallRequests(endPoint)
+		ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
 
 		defer func() {
 			summary := Json{
@@ -69,6 +71,7 @@ func Telemetry(next http.Handler) http.Handler {
 				"method":    method,
 				"endpoint":  endPoint,
 				"status":    http.StatusOK,
+				"bytes_written": ww.BytesWritten(),
 				"since": Json{
 					"value": time.Since(t1).Milliseconds(),
 					"unity": "Milliseconds",
