@@ -176,16 +176,16 @@ func GetFromToken(ctx context.Context, tokenString string) (*Claim, error) {
 	key := TokenKey(result.App, result.Device, result.ID)
 	c, err := cache.GetCtx(ctx, key)
 	if err != nil {
-		return nil, console.ErrorM(MSG_TOKEN_INVALID)
+		return nil, console.Alert(MSG_TOKEN_INVALID)
 	}
 
 	if c != tokenString {
-		return nil, console.ErrorM(MSG_TOKEN_INVALID)
+		return nil, console.Alert(MSG_TOKEN_INVALID)
 	}
 
 	err = cache.SetCtx(ctx, key, c, result.Duration)
 	if err != nil {
-		return nil, console.ErrorM(MSG_TOKEN_INVALID)
+		return nil, console.Alert(MSG_TOKEN_INVALID)
 	}
 
 	return result, nil

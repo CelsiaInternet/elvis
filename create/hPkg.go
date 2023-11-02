@@ -54,7 +54,7 @@ func MakeModel(name, modelo, schemaVar string) error {
 
 	modelo = Titlecase(modelo)
 	fileName := fmt.Sprintf(`h%s.go`, modelo)
-	_, err = MakeFile(path, fileName, modelHandler, name, modelo, schemaVar, Uppcase(modelo))
+	_, err = MakeFile(path, fileName, modelHandler, name, modelo, schemaVar, Uppcase(modelo), Lowcase(modelo))
 	if err != nil {
 		return err
 	}
