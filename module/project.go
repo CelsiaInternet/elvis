@@ -108,7 +108,7 @@ func GetProjectByModule(projectId, moduleId string) (Item, error) {
 
 func InitProject(id, name, description string, data Json) (Item, error) {
 	if !ValidStr(name, 0, []string{""}) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "name")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "name")
 	}
 
 	id = GenId(id)
@@ -127,11 +127,11 @@ func InitProject(id, name, description string, data Json) (Item, error) {
 
 func UpSetProject(id, moduleId, name, description string, data Json) (Item, error) {
 	if !ValidId(moduleId) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "module_id")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "module_id")
 	}
 
 	if !ValidStr(name, 0, []string{""}) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "name")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "name")
 	}
 
 	current, err := GetProjectName(name)
@@ -165,7 +165,7 @@ func UpSetProject(id, moduleId, name, description string, data Json) (Item, erro
 
 func StateProject(id, state string) (Item, error) {
 	if !ValidId(state) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "state")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "state")
 	}
 
 	return Projects.Upsert(Json{
@@ -253,11 +253,11 @@ func GetProjectModules(projectId, state, search string, page, rows int) (List, e
 
 func CheckProjectModule(project_id, module_id string, chk bool) (Item, error) {
 	if !ValidId(project_id) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "project_id")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "project_id")
 	}
 
 	if !ValidId(module_id) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "module_id")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "module_id")
 	}
 
 	data := Json{}

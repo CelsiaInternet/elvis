@@ -166,7 +166,7 @@ func GetCollectionByIndex(collection string, idx int) (Item, error) {
 
 func UpSertCollection(collection, projectId, id string, data Json) (Item, error) {
 	if !ValidStr(collection, 0, []string{""}) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "collection")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "collection")
 	}
 
 	if projectId == "" {
@@ -186,7 +186,7 @@ func UpSertCollection(collection, projectId, id string, data Json) (Item, error)
 
 func StateCollection(collection, id, state string) (Item, error) {
 	if !ValidId(state) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "state")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "state")
 	}
 
 	return Collections.Upsert(Json{
@@ -207,11 +207,11 @@ func DeleteCollection(collection, id string) (Item, error) {
 
 func AllCollections(projectId, collection, state, search string, page, rows int) (List, error) {
 	if !ValidId(projectId) {
-		return List{}, console.ErrorF(MSG_ATRIB_REQUIRED, "project_id")
+		return List{}, console.AlertF(MSG_ATRIB_REQUIRED, "project_id")
 	}
 
 	if !ValidStr(collection, 0, []string{""}) {
-		return List{}, console.ErrorF(MSG_ATRIB_REQUIRED, "collection")
+		return List{}, console.AlertF(MSG_ATRIB_REQUIRED, "collection")
 	}
 
 	if state == "" {

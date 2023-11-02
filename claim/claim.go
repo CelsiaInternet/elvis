@@ -111,47 +111,47 @@ func ParceToken(tokenString string) (*Claim, error) {
 	}
 
 	if !token.Valid {
-		return nil, console.ErrorM(MSG_TOKEN_INVALID)
+		return nil, console.Alert(MSG_TOKEN_INVALID)
 	}
 
 	claim, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
-		return nil, console.ErrorM(MSG_REQUIRED_INVALID)
+		return nil, console.Alert(MSG_REQUIRED_INVALID)
 	}
 
 	app, ok := claim["app"].(string)
 	if !ok {
-		return nil, console.ErrorF(MSG_USER_INVALID, "app")
+		return nil, console.AlertF(MSG_USER_INVALID, "app")
 	}
 
 	id, ok := claim["id"].(string)
 	if !ok {
-		return nil, console.ErrorF(MSG_USER_INVALID, "id")
+		return nil, console.AlertF(MSG_USER_INVALID, "id")
 	}
 
 	name, ok := claim["name"].(string)
 	if !ok {
-		return nil, console.ErrorF(MSG_USER_INVALID, "name")
+		return nil, console.AlertF(MSG_USER_INVALID, "name")
 	}
 
 	kind, ok := claim["kind"].(string)
 	if !ok {
-		return nil, console.ErrorF(MSG_USER_INVALID, "kind")
+		return nil, console.AlertF(MSG_USER_INVALID, "kind")
 	}
 
 	username, ok := claim["username"].(string)
 	if !ok {
-		return nil, console.ErrorF(MSG_USER_INVALID, "username")
+		return nil, console.AlertF(MSG_USER_INVALID, "username")
 	}
 
 	device, ok := claim["device"].(string)
 	if !ok {
-		return nil, console.ErrorF(MSG_USER_INVALID, "device")
+		return nil, console.AlertF(MSG_USER_INVALID, "device")
 	}
 
 	second, ok := claim["duration"].(float64)
 	if !ok {
-		return nil, console.ErrorF(MSG_USER_INVALID, "duration")
+		return nil, console.AlertF(MSG_USER_INVALID, "duration")
 	}
 
 	duration := time.Duration(second)

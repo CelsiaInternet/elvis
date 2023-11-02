@@ -106,23 +106,23 @@ func GetMode() (Item, error) {
 
 func SetMode(mode int, driver, host string, port int, dbname, user, password string) (Item, error) {
 	if !ValidStr(driver, 0, []string{""}) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "driver")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "driver")
 	}
 
 	if !ValidStr(host, 0, []string{""}) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "host")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "host")
 	}
 
 	if !ValidStr(dbname, 0, []string{""}) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "dbname")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "dbname")
 	}
 
 	if !ValidStr(user, 0, []string{""}) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "user")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "user")
 	}
 
 	if !ValidStr(password, 0, []string{""}) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "password")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "password")
 	}
 
 	id := ModeId

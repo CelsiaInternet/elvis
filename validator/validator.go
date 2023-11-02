@@ -14,11 +14,11 @@ import (
 func validateChannel(v interface{}, param string) error {
 	st := reflect.ValueOf(v)
 	if st.Kind() != reflect.String {
-		return console.ErrorF("validateChannel only validates strings")
+		return console.AlertF("validateChannel only validates strings")
 	}
 	channelLower := strings.ToLower(st.String())
 	if channelLower != "whatsapp" && channelLower != "ivr" {
-		return console.ErrorF("Invalid (Only accept WhatsApp or IVR values)")
+		return console.AlertF("Invalid (Only accept WhatsApp or IVR values)")
 	}
 
 	return nil
@@ -27,11 +27,11 @@ func validateChannel(v interface{}, param string) error {
 func validateOnlyDigit(v interface{}, param string) error {
 	st := reflect.ValueOf(v)
 	if st.Kind() != reflect.String {
-		return console.ErrorF("validateChannel only validates strings")
+		return console.AlertF("validateChannel only validates strings")
 	}
 	matched, _ := regexp.MatchString(`\D+`, st.String())
 	if matched {
-		return console.ErrorF("Invalid (Only accept digits)")
+		return console.AlertF("Invalid (Only accept digits)")
 	}
 
 	return nil
@@ -40,11 +40,11 @@ func validateOnlyDigit(v interface{}, param string) error {
 func validatePhoneNumber(v interface{}, param string) error {
 	st := reflect.ValueOf(v)
 	if st.Kind() != reflect.String {
-		return console.ErrorF("validateChannel only validates strings")
+		return console.AlertF("validateChannel only validates strings")
 	}
 	matched, _ := regexp.MatchString(`^[0-9]{10,15}$`, st.String())
 	if !matched {
-		return console.ErrorF("Invalid (Only accept between 10 and 15 digits)")
+		return console.AlertF("Invalid (Only accept between 10 and 15 digits)")
 	}
 
 	return nil
@@ -52,20 +52,20 @@ func validatePhoneNumber(v interface{}, param string) error {
 
 func ValidateOnlyDigit(value string, min, max int, errorLabel string) error {
 	if reflect.TypeOf(value).Kind() != reflect.String {
-		return console.ErrorF("Invalid phone_number must be a string")
+		return console.AlertF("Invalid phone_number must be a string")
 	}
 
 	matched, _ := regexp.MatchString(`\D+`, value)
 	if matched {
-		return console.ErrorF("Invalid (%s Only accept digits)", errorLabel)
+		return console.AlertF("Invalid (%s Only accept digits)", errorLabel)
 	}
 
 	if min != -1 && len(value) < min {
-		return console.ErrorF("Invalid (%s is less than %d digits)", errorLabel, min)
+		return console.AlertF("Invalid (%s is less than %d digits)", errorLabel, min)
 	}
 
 	if max != -1 && len(value) > max {
-		return console.ErrorF("Invalid (%s is upper than %d digits)", errorLabel, max)
+		return console.AlertF("Invalid (%s is upper than %d digits)", errorLabel, max)
 	}
 
 	return nil
@@ -73,11 +73,11 @@ func ValidateOnlyDigit(value string, min, max int, errorLabel string) error {
 
 func ValidatePhoneNumber(phoneNumber string) error {
 	if reflect.TypeOf(phoneNumber).Kind() != reflect.String {
-		return console.ErrorF("Invalid phone_number must be a string")
+		return console.AlertF("Invalid phone_number must be a string")
 	}
 	matched, _ := regexp.MatchString(`^[0-9]{10,15}$`, phoneNumber)
 	if !matched {
-		return console.ErrorF("Invalid phone_number (Only accept between 10 and 15 digits)")
+		return console.AlertF("Invalid phone_number (Only accept between 10 and 15 digits)")
 	}
 
 	return nil
@@ -85,11 +85,11 @@ func ValidatePhoneNumber(phoneNumber string) error {
 
 func ValidateAccount(phoneNumber string) error {
 	if reflect.TypeOf(phoneNumber).Kind() != reflect.String {
-		return console.ErrorF("Invalid phone_number must be a string")
+		return console.AlertF("Invalid phone_number must be a string")
 	}
 	matched, _ := regexp.MatchString(`^[0-9]{8,15}$`, phoneNumber)
 	if !matched {
-		return console.ErrorF("Invalid account (Only accept between 8 and 15 digits)")
+		return console.AlertF("Invalid account (Only accept between 8 and 15 digits)")
 	}
 
 	return nil
@@ -102,11 +102,11 @@ func validateUUID(v interface{}, param string) error {
 	}
 
 	if st.Kind() != reflect.String {
-		return console.ErrorF("validateChannel only validates strings")
+		return console.AlertF("validateChannel only validates strings")
 	}
 	matched, _ := regexp.MatchString(`[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}`, st.String())
 	if !matched {
-		return console.ErrorF("Invalid UUID")
+		return console.AlertF("Invalid UUID")
 	}
 
 	return nil
@@ -114,11 +114,11 @@ func validateUUID(v interface{}, param string) error {
 
 func ValidateID(id string) error {
 	if reflect.TypeOf(id).Kind() != reflect.String {
-		return console.ErrorF("Invalid ID")
+		return console.AlertF("Invalid ID")
 	}
 	matched, _ := regexp.MatchString(`[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}`, id)
 	if !matched {
-		return console.ErrorF("Invalid ID")
+		return console.AlertF("Invalid ID")
 	}
 
 	return nil
@@ -127,7 +127,7 @@ func ValidateID(id string) error {
 func validRequired(v interface{}, param string) error {
 	st := reflect.ValueOf(v)
 	if !ValidStr(st.String(), 0, []string{"", "-1"}) {
-		return console.ErrorF("Required value")
+		return console.AlertF("Required value")
 	}
 	return nil
 }
@@ -135,11 +135,11 @@ func validRequired(v interface{}, param string) error {
 func validName(v interface{}, param string) error {
 	st := reflect.ValueOf(v)
 	if st.Kind() != reflect.String {
-		return console.ErrorF("only accept string values")
+		return console.AlertF("only accept string values")
 	}
 	matched, _ := regexp.MatchString(`^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$`, st.String())
 	if !matched {
-		return console.ErrorF("Invalid (Not accept special characters)")
+		return console.AlertF("Invalid (Not accept special characters)")
 	}
 
 	return nil
@@ -148,7 +148,7 @@ func validName(v interface{}, param string) error {
 func validateIntType(v interface{}, param string) error {
 	st := reflect.ValueOf(v)
 	if st.Kind() != reflect.Int {
-		return console.ErrorF("must be integer type")
+		return console.AlertF("must be integer type")
 	}
 
 	return nil

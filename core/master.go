@@ -39,11 +39,11 @@ func UpSetMasterNode(db int, id string, mode int, driver, host string, port int,
 	}
 
 	if !exist {
-		return Item{}, console.ErrorF(MARTER_NOT_FOUNT, host)
+		return Item{}, console.AlertF(MARTER_NOT_FOUNT, host)
 	}
 
 	if !ValidId(id) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "id")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "id")
 	}
 
 	current, err := GetMarterNodeById(db, id)
@@ -138,23 +138,23 @@ func JoinToMaster() error {
 	}
 
 	if driver == "" {
-		return console.ErrorF(MSG_ATRIB_REQUIRED, "driver")
+		return console.AlertF(MSG_ATRIB_REQUIRED, "driver")
 	}
 
 	if host == "" {
-		return console.ErrorF(MSG_ATRIB_REQUIRED, "host")
+		return console.AlertF(MSG_ATRIB_REQUIRED, "host")
 	}
 
 	if dbname == "" {
-		return console.ErrorF(MSG_ATRIB_REQUIRED, "dbname")
+		return console.AlertF(MSG_ATRIB_REQUIRED, "dbname")
 	}
 
 	if user == "" {
-		return console.ErrorF(MSG_ATRIB_REQUIRED, "user")
+		return console.AlertF(MSG_ATRIB_REQUIRED, "user")
 	}
 
 	if password == "" {
-		return console.ErrorF(MSG_ATRIB_REQUIRED, "password")
+		return console.AlertF(MSG_ATRIB_REQUIRED, "password")
 	}
 
 	idx, err := Connected(driver, host, port, dbname, user, password)

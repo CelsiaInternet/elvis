@@ -120,15 +120,15 @@ func GetUserById(id string) (Item, error) {
 
 func InitAdmin(fullName, country, phone, email string) (Item, error) {
 	if !ValidStr(country, 0, []string{""}) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "country")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "country")
 	}
 
 	if !ValidStr(phone, 9, []string{""}) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "phone")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "phone")
 	}
 
 	if !ValidStr(fullName, 0, []string{""}) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "full_name")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "full_name")
 	}
 
 	id := "USER.ADMIN"
@@ -153,15 +153,15 @@ func InitAdmin(fullName, country, phone, email string) (Item, error) {
 
 func UpSetAdmin(fullName, country, phone, email string) (Item, error) {
 	if !ValidStr(country, 0, []string{""}) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "country")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "country")
 	}
 
 	if !ValidStr(phone, 9, []string{""}) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "phone")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "phone")
 	}
 
 	if !ValidStr(fullName, 0, []string{""}) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "full_name")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "full_name")
 	}
 
 	id := "USER.ADMIN"
@@ -186,15 +186,15 @@ func UpSetAdmin(fullName, country, phone, email string) (Item, error) {
 
 func SetUser(name, password, fullName, phone, email string) (Item, error) {
 	if !ValidStr(name, 0, []string{""}) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "name")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "name")
 	}
 
 	if !ValidStr(phone, 3, []string{""}) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "phone")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "phone")
 	}
 
 	if !ValidStr(fullName, 3, []string{""}) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "full_name")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "full_name")
 	}
 
 	current, err := GetUserByName(name)
@@ -230,11 +230,11 @@ func SetUser(name, password, fullName, phone, email string) (Item, error) {
 
 func UpdateUser(id, fullName, phone, email string, data Json) (Item, error) {
 	if !ValidStr(fullName, 3, []string{""}) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "full_name")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "full_name")
 	}
 
 	if !ValidStr(phone, 3, []string{""}) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "phone")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "phone")
 	}
 
 	current, err := GetUserById(id)
@@ -269,7 +269,7 @@ func UpdateUser(id, fullName, phone, email string, data Json) (Item, error) {
 
 func StateUser(id, state string) (Item, error) {
 	if !ValidId(state) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "state")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "state")
 	}
 
 	return Users.Upsert(Json{

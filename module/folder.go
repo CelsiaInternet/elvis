@@ -78,15 +78,15 @@ func GetFolderByName(moduleId, mainId, name string) (Item, error) {
 
 func InitFolder(moduleId, mainId, id, name, description string, data Json) (Item, error) {
 	if !ValidId(moduleId) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "module_id")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "module_id")
 	}
 
 	if !ValidId(mainId) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "main_id")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "main_id")
 	}
 
 	if !ValidStr(name, 0, []string{""}) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "name")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "name")
 	}
 
 	module, err := GetModuleById(moduleId)
@@ -132,15 +132,15 @@ func InitFolder(moduleId, mainId, id, name, description string, data Json) (Item
 
 func UpSetFolder(moduleId, mainId, name, description string, data Json) (Item, error) {
 	if !ValidId(moduleId) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "module_id")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "module_id")
 	}
 
 	if !ValidId(mainId) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "main_id")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "main_id")
 	}
 
 	if !ValidStr(name, 0, []string{""}) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "name")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "name")
 	}
 
 	module, err := GetModuleById(moduleId)
@@ -187,7 +187,7 @@ func GetFolderById(id string) (Item, error) {
 
 func StateFolder(id, state string) (Item, error) {
 	if !ValidId(state) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "state")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "state")
 	}
 
 	item, err := Folders.Upsert(Json{

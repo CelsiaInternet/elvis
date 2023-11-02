@@ -80,13 +80,15 @@ func InfoF(format string, args ...any) {
 	Info(message)
 }
 
-func Alert(args ...any) {
-	LogC("Alert", "Yellow", args...)
+func Alert(message string) error {
+	err := NewError(message)
+	LogC("Alert", "Yellow", err)
+	return err
 }
 
-func AlertF(format string, args ...any) {
+func AlertF(format string, args ...any) error {
 	message := fmt.Sprintf(format, args...)
-	Alert(message)
+	return Alert(message)
 }
 
 func Error(err error) error {

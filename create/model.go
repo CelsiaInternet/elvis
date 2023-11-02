@@ -546,11 +546,11 @@ func Get$2ById(id string) (Item, error) {
 
 func UpSert$2(projectId, id, name, description string) (Item, error) {
 	if !ValidId(id) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "_id")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "_id")
 	}
 
 	if !ValidStr(name, 0, []string{""}) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "name")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "name")
 	}
 
 	id = GenId(id)
@@ -566,7 +566,7 @@ func UpSert$2(projectId, id, name, description string) (Item, error) {
 
 func State$2(id, state string) (Item, error) {
 	if !ValidId(state) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "state")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "state")
 	}
 
 	return $2.Upsert(Json{

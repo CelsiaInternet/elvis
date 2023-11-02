@@ -84,7 +84,7 @@ func IsInit() (Item, error) {
 
 func InitModule(id, name, description string, data Json) (Item, error) {
 	if !ValidStr(name, 0, []string{""}) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "name")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "name")
 	}
 
 	current, err := GetModuleByName(name)
@@ -117,7 +117,7 @@ func InitModule(id, name, description string, data Json) (Item, error) {
 
 func UpSetModule(id, name, description string, data Json) (Item, error) {
 	if !ValidStr(name, 0, []string{""}) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "name")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "name")
 	}
 
 	current, err := GetModuleByName(name)
@@ -149,7 +149,7 @@ func UpSetModule(id, name, description string, data Json) (Item, error) {
 
 func StateModule(id, state string) (Item, error) {
 	if !ValidId(state) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "state")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "state")
 	}
 
 	return Modules.Upsert(Json{

@@ -85,11 +85,11 @@ func GetProfileById(moduleId, profileTp string) (Item, error) {
 
 func InitProfile(moduleId, profileTp string, data Json) (Item, error) {
 	if !ValidId(moduleId) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "moduleId")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "moduleId")
 	}
 
 	if !ValidId(profileTp) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "profile_tp")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "profile_tp")
 	}
 
 	module, err := GetModuleById(moduleId)
@@ -125,11 +125,11 @@ func InitProfile(moduleId, profileTp string, data Json) (Item, error) {
 
 func UpSetProfile(moduleId, profileTp string, data Json) (Item, error) {
 	if !ValidId(moduleId) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "moduleId")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "moduleId")
 	}
 
 	if !ValidId(profileTp) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "profile_tp")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "profile_tp")
 	}
 
 	module, err := GetModuleById(moduleId)
@@ -151,7 +151,7 @@ func UpSetProfile(moduleId, profileTp string, data Json) (Item, error) {
 
 func UpSetProfileTp(projectId, moduleId, id, name, description string, data Json) (Item, error) {
 	if !ValidStr(name, 0, []string{""}) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "name")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "name")
 	}
 
 	profile, err := UpSetType(projectId, id, "PROFILE", name, description)
@@ -196,15 +196,15 @@ func GetProfileFolderById(moduleId, profileTp, folderId string) (Item, error) {
 
 func CheckProfileFolder(moduleId, profileTp, folderId string, chk bool) (Item, error) {
 	if !ValidId(moduleId) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "module_id")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "module_id")
 	}
 
 	if !ValidId(profileTp) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "profile_tp")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "profile_tp")
 	}
 
 	if !ValidId(folderId) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "folder_id")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "folder_id")
 	}
 
 	profile, err := GetTypeById(profileTp)
@@ -213,7 +213,7 @@ func CheckProfileFolder(moduleId, profileTp, folderId string, chk bool) (Item, e
 	}
 
 	if !profile.Ok {
-		return Item{}, console.ErrorF(PROFILE_NOT_FOUND, profileTp)
+		return Item{}, console.AlertF(PROFILE_NOT_FOUND, profileTp)
 	}
 
 	data := Json{}
@@ -265,11 +265,11 @@ func getProfileFolders(userId, projectId, mainId string) []Json {
 
 func GetProfileFolders(userId, projectId string) ([]Json, error) {
 	if !ValidId(userId) {
-		return []Json{}, console.ErrorF(MSG_ATRIB_REQUIRED, "clientId")
+		return []Json{}, console.AlertF(MSG_ATRIB_REQUIRED, "clientId")
 	}
 
 	if !ValidId(projectId) {
-		return []Json{}, console.ErrorF(MSG_ATRIB_REQUIRED, "project_id")
+		return []Json{}, console.AlertF(MSG_ATRIB_REQUIRED, "project_id")
 	}
 
 	mainId := "-1"

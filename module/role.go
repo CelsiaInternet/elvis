@@ -132,19 +132,19 @@ func GetUserModules(userId string) ([]Json, error) {
 
 func CheckRole(projectId, moduleId, profileTp, userId string, chk bool) (Item, error) {
 	if !ValidId(projectId) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "project_id")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "project_id")
 	}
 
 	if !ValidId(moduleId) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "module_id")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "module_id")
 	}
 
 	if !ValidId(userId) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "user_id")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "user_id")
 	}
 
 	if !ValidId(profileTp) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "profile_tp")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "profile_tp")
 	}
 
 	project, err := GetProjectById(projectId)
@@ -153,7 +153,7 @@ func CheckRole(projectId, moduleId, profileTp, userId string, chk bool) (Item, e
 	}
 
 	if !project.Ok {
-		return Item{}, console.ErrorF(PROJECT_NOT_FOUND, projectId)
+		return Item{}, console.AlertF(PROJECT_NOT_FOUND, projectId)
 	}
 
 	module, err := GetModuleById(moduleId)
@@ -162,7 +162,7 @@ func CheckRole(projectId, moduleId, profileTp, userId string, chk bool) (Item, e
 	}
 
 	if !module.Ok {
-		return Item{}, console.ErrorM(MODULE_NOT_FOUND)
+		return Item{}, console.Alert(MODULE_NOT_FOUND)
 	}
 
 	profile, err := GetProfileById(moduleId, profileTp)
@@ -171,7 +171,7 @@ func CheckRole(projectId, moduleId, profileTp, userId string, chk bool) (Item, e
 	}
 
 	if !profile.Ok {
-		return Item{}, console.ErrorF(PROFILE_NOT_FOUND, profileTp)
+		return Item{}, console.AlertF(PROFILE_NOT_FOUND, profileTp)
 	}
 
 	if chk {

@@ -195,7 +195,7 @@ func QueryDataOne(sql string, args ...any) (Item, error) {
 **/
 func HttpQuery(sql string, args []any) (Items, error) {
 	if !ValidStr(sql, 0, []string{""}) {
-		return Items{}, console.ErrorF(MSG_ATRIB_REQUIRED, "name")
+		return Items{}, console.AlertF(MSG_ATRIB_REQUIRED, "name")
 	}
 
 	return Query(sql, args...)

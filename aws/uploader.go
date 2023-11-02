@@ -139,15 +139,15 @@ func UploaderFile(r *http.Request, folder, name string) (Json, error) {
 
 func UploaderB64(b64, filename, contentType string) (Json, error) {
 	if !ValidStr(b64, 0, []string{""}) {
-		return Json{}, console.ErrorF(MSG_ATRIB_REQUIRED, "b64")
+		return Json{}, console.AlertF(MSG_ATRIB_REQUIRED, "b64")
 	}
 
 	if !ValidStr(filename, 0, []string{""}) {
-		return Json{}, console.ErrorF(MSG_ATRIB_REQUIRED, "filename")
+		return Json{}, console.AlertF(MSG_ATRIB_REQUIRED, "filename")
 	}
 
 	if !ValidStr(contentType, 0, []string{""}) {
-		return Json{}, console.ErrorF(MSG_ATRIB_REQUIRED, "content-type")
+		return Json{}, console.AlertF(MSG_ATRIB_REQUIRED, "content-type")
 	}
 
 	storageType := EnvarStr("", "STORAGE_TYPE")

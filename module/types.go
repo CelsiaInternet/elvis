@@ -74,11 +74,11 @@ func GetTypeByIndex(idx int) (Item, error) {
 
 func InitType(projectId, id, state, kind, name, description string) (Item, error) {
 	if !ValidId(kind) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "kind")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "kind")
 	}
 
 	if !ValidStr(name, 0, []string{""}) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "name")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "name")
 	}
 
 	current, err := GetTypeByName(kind, name)
@@ -109,15 +109,15 @@ func InitType(projectId, id, state, kind, name, description string) (Item, error
 
 func UpSetType(projectId, id, kind, name, description string) (Item, error) {
 	if !ValidId(id) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "_id")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "_id")
 	}
 
 	if !ValidId(kind) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "kind")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "kind")
 	}
 
 	if !ValidStr(name, 0, []string{""}) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "name")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "name")
 	}
 
 	current, err := GetTypeByName(kind, name)
@@ -150,7 +150,7 @@ func UpSetType(projectId, id, kind, name, description string) (Item, error) {
 
 func StateType(id, state string) (Item, error) {
 	if !ValidId(state) {
-		return Item{}, console.ErrorF(MSG_ATRIB_REQUIRED, "state")
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "state")
 	}
 
 	return Types.Upsert(Json{
@@ -167,7 +167,7 @@ func DeleteType(id string) (Item, error) {
 
 func AllTypes(projectId, kind, state, search string, page, rows int, _select string) (List, error) {
 	if !ValidId(kind) {
-		return List{}, console.ErrorF(MSG_ATRIB_REQUIRED, "kind")
+		return List{}, console.AlertF(MSG_ATRIB_REQUIRED, "kind")
 	}
 
 	if state == "" {
