@@ -74,10 +74,9 @@ import (
 	v1 "$1/internal/service/$2/v1"
 	"github.com/cgalvisleon/elvis/console"
 	. "github.com/cgalvisleon/elvis/envar"
-	mw "github.com/cgalvisleon/elvis/middleware"
+	"github.com/cgalvisleon/elvis/middleware"
 	. "github.com/cgalvisleon/elvis/utilities"
 	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/rs/cors"
 )
@@ -100,7 +99,6 @@ func New() (*Server, error) {
 
 		r.Use(middleware.Logger)
 		r.Use(middleware.Recoverer)
-		r.Use(mw.Telemetry)
 
 		latest := v1.New()
 
