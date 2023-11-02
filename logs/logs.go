@@ -41,25 +41,25 @@ func Logln(kind string, color string, args ...any) string {
 
 	switch color {
 	case "Reset":
-		result = now + Purple + fmt.Sprintf("[%s]: ", kind) + Reset + message + Reset
+		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + message + Reset
 	case "Red":
-		result = now + Purple + fmt.Sprintf("[%s]: ", kind) + Reset + Red + message + Reset
+		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Red + message + Reset
 	case "Green":
-		result = now + Purple + fmt.Sprintf("[%s]: ", kind) + Reset + Green + message + Reset
+		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Green + message + Reset
 	case "Yellow":
-		result = now + Purple + fmt.Sprintf("[%s]: ", kind) + Reset + Yellow + message + Reset
+		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Yellow + message + Reset
 	case "Blue":
-		result = now + Purple + fmt.Sprintf("[%s]: ", kind) + Reset + Blue + message + Reset
+		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Blue + message + Reset
 	case "Purple":
-		result = now + Purple + fmt.Sprintf("[%s]: ", kind) + Reset + Purple + message + Reset
+		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Purple + message + Reset
 	case "Cyan":
-		result = now + Purple + fmt.Sprintf("[%s]: ", kind) + Reset + Cyan + message + Reset
+		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Cyan + message + Reset
 	case "Gray":
-		result = now + Purple + fmt.Sprintf("[%s]: ", kind) + Reset + Gray + message + Reset
+		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Gray + message + Reset
 	case "White":
-		result = now + Purple + fmt.Sprintf("[%s]: ", kind) + Reset + White + message + Reset
+		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + White + message + Reset
 	default:
-		result = now + Purple + fmt.Sprintf("[%s]: ", kind) + Reset + Green + message + Reset
+		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Green + message + Reset
 	}
 
 	println(result)

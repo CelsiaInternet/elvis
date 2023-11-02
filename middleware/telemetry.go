@@ -11,8 +11,8 @@ import (
 	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/event"
 	. "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/logs"
 	. "github.com/cgalvisleon/elvis/utilities"
-	"github.com/go-chi/chi/middleware"
 	"github.com/shirou/gopsutil/v3/mem"
 )
 
@@ -40,7 +40,7 @@ func CallRequests(tag string) Request {
 
 func Telemetry(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
-		_id := NewId()
+		_idT := NewId()
 		ctx := r.Context()
 		endPoint := r.URL.Path
 		method := r.Method
@@ -61,19 +61,30 @@ func Telemetry(next http.Handler) http.Handler {
 		pFree := float64(mFree) / float64(mTotal) * 100
 		requests_host := CallRequests(hostName)
 		requests_endpoint := CallRequests(endPoint)
-		ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
+		scheme := "http"
+		if r.TLS != nil {
+			scheme = "https"
+		}
+		ww := NewWrapResponseWriter(w, r.ProtoMajor)
 
 		defer func() {
-			summary := Json{
-				"_id":       _id,
+			bytes := ww.BytesWritten()
+			time_since := time.Since(t1).Milliseconds()
+
+			telemetry := Json{
+				"_idT":      _idT,
 				"date_time": t1,
 				"host_name": hostName,
-				"method":    method,
-				"endpoint":  endPoint,
-				"status":    http.StatusOK,
-				"bytes_written": ww.BytesWritten(),
+				"request": Json{
+					"method":   method,
+					"endpoint": endPoint,
+					"status":   http.StatusOK,
+					"bytes":    bytes,
+					"scheme":   scheme,
+					"host":     r.Host,
+				},
 				"since": Json{
-					"value": time.Since(t1).Milliseconds(),
+					"value": time_since,
 					"unity": "Milliseconds",
 				},
 				"memory": Json{
@@ -100,14 +111,17 @@ func Telemetry(next http.Handler) http.Handler {
 					"limit":    requests_endpoint.Limit,
 				},
 			}
-			go event.EventPublish("telemetry", summary)
+
+			logs.Logf(method, `%s://%s%s %s %dB %s %dms`, scheme, r.Host, endPoint, r.Proto, bytes, r.RemoteAddr, time_since)
+
+			go event.EventPublish("telemetry", telemetry)
 
 			if requests_host.Seccond > requests_host.Limit {
-				go event.EventPublish("requests/overflow", summary)
+				go event.EventPublish("requests/overflow", telemetry)
 			}
 		}()
 
-		w.Header().Set("_id", _id)
+		w.Header().Set("_idT", _idT)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	}
 

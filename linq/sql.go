@@ -142,6 +142,9 @@ func (c *Linq) SqlCurrent() string {
 
 	if n > 0 {
 		result = c.SqlColumDef(cols...)
+		if c.Tp == TpData {
+			result = Format(`%s AS %s`, result, c.from[0].model.SourceField)
+		}
 	} else {
 		result = "*"
 	}
@@ -328,6 +331,9 @@ func (c *Linq) SqlIndex() string {
 	}
 
 	result = c.SqlColumDef(cols...)
+	if c.Tp == TpData {
+		result = Format(`%s AS %s`, result, c.from[0].model.SourceField)
+	}
 
 	if len(result) > 0 {
 		result = Format(`RETURNING %s`, result)

@@ -25,6 +25,14 @@ func GetBody(r *http.Request) (Json, error) {
 	return body, nil
 }
 
+func WriteResponse(w http.ResponseWriter, statusCode int, j []byte) error {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(statusCode)
+	w.Write(j)
+
+	return nil
+}
+
 func JSON(w http.ResponseWriter, r *http.Request, statusCode int, dt interface{}) error {
 	if dt == nil {
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -42,10 +50,7 @@ func JSON(w http.ResponseWriter, r *http.Request, statusCode int, dt interface{}
 		return err
 	}
 
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(statusCode)
-	w.Write(j)
-	return nil
+	return WriteResponse(w, statusCode, j)
 }
 
 func ITEM(w http.ResponseWriter, r *http.Request, statusCode int, dt Item) error {
@@ -60,10 +65,7 @@ func ITEM(w http.ResponseWriter, r *http.Request, statusCode int, dt Item) error
 		return err
 	}
 
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(statusCode)
-	w.Write(j)
-	return nil
+	return WriteResponse(w, statusCode, j)
 }
 
 func ITEMS(w http.ResponseWriter, r *http.Request, statusCode int, dt Items) error {
@@ -78,10 +80,7 @@ func ITEMS(w http.ResponseWriter, r *http.Request, statusCode int, dt Items) err
 		return err
 	}
 
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(statusCode)
-	w.Write(j)
-	return nil
+	return WriteResponse(w, statusCode, j)
 }
 
 func HTTPError(w http.ResponseWriter, r *http.Request, statusCode int, message string) error {
@@ -108,9 +107,7 @@ func Stream(w http.ResponseWriter, r *http.Request, statusCode int, dt interface
 		return err
 	}
 
-	w.Header().Set("Content-Type", "application/x-ndjson; charset=utf-8")
-	w.Header().Set("Transfer-Encoding", "chunked")
-	w.Write(j)
+	WriteResponse(w, statusCode, j)
 	if f, ok := w.(http.Flusher); ok {
 		f.Flush()
 	}

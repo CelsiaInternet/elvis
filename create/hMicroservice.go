@@ -116,9 +116,9 @@ func DeleteMicroservice(packageName string) error {
 	if err != nil {
 		return err
 	}
-	
+
 	progressNext(80)
-	
+
 	progressNext(10)
 
 	return nil

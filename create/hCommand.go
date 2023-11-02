@@ -128,4 +128,3 @@ var CmdRpc = &cobra.Command{
 		}
 	},
 }
-

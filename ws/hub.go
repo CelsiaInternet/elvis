@@ -177,7 +177,7 @@ func (hub *Hub) Subscribe(clientId string, channel string) bool {
 		client := hub.clients[idx]
 		client.Subscribe(channel)
 
-		event.EventPublish("websocket/subscribe", Json{"hub": hub.Id, "client": client})
+		event.EventPublish("websocket/subscribe", Json{"hub": hub.Id, "client": client, "channel": channel})
 
 		return true
 	}
@@ -192,7 +192,7 @@ func (hub *Hub) Unsubscribe(clientId string, channel string) bool {
 		client := hub.clients[idx]
 		client.Unsubscribe(channel)
 
-		event.EventPublish("websocket/unsubscribe", Json{"hub": hub.Id, "client": client})
+		event.EventPublish("websocket/unsubscribe", Json{"hub": hub.Id, "client": client, "channel": channel})
 
 		return true
 	}
