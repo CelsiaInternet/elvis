@@ -2,18 +2,11 @@ package middleware
 
 import (
 	"fmt"
-	"math"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/cgalvisleon/elvis/cache"
 	"github.com/cgalvisleon/elvis/envar"
-	"github.com/cgalvisleon/elvis/event"
-	. "github.com/cgalvisleon/elvis/json"
-	"github.com/cgalvisleon/elvis/logs"
-	. "github.com/cgalvisleon/elvis/utilities"
-	"github.com/shirou/gopsutil/v3/mem"
 )
 
 var DefaultTelemetry func(next http.Handler) http.Handler
@@ -36,94 +29,4 @@ func CallRequests(tag string) Request {
 		Seccond: cache.More(fmt.Sprintf(`%s-%d`, tag, time.Now().Unix()/1), 1),
 		Limit:   envar.EnvarInt(1000, "REQUESTS_LIMIT"),
 	}
-}
-
-func Telemetry(next http.Handler) http.Handler {
-	fn := func(w http.ResponseWriter, r *http.Request) {
-		_idT := NewId()
-		ctx := r.Context()
-		endPoint := r.URL.Path
-		method := r.Method
-		t1 := time.Now()
-		hostName, _ := os.Hostname()
-		var mTotal uint64
-		var mUsed uint64
-		var mFree uint64
-		memory, err := mem.VirtualMemory()
-		if err != nil {
-			mFree = 0
-			mTotal = 0
-			mUsed = 0
-		}
-		mTotal = memory.Total
-		mUsed = memory.Used
-		mFree = memory.Total - memory.Used
-		pFree := float64(mFree) / float64(mTotal) * 100
-		requests_host := CallRequests(hostName)
-		requests_endpoint := CallRequests(endPoint)
-		scheme := "http"
-		if r.TLS != nil {
-			scheme = "https"
-		}
-		ww := NewWrapResponseWriter(w, r.ProtoMajor)
-
-		defer func() {
-			bytes := ww.BytesWritten()
-			time_since := time.Since(t1).Milliseconds()
-
-			telemetry := Json{
-				"_idT":      _idT,
-				"date_time": t1,
-				"host_name": hostName,
-				"request": Json{
-					"method":   method,
-					"endpoint": endPoint,
-					"status":   http.StatusOK,
-					"bytes":    bytes,
-					"scheme":   scheme,
-					"host":     r.Host,
-				},
-				"since": Json{
-					"value": time_since,
-					"unity": "Milliseconds",
-				},
-				"memory": Json{
-					"unity":        "MB",
-					"total":        mTotal / 1024 / 1024,
-					"used":         mUsed / 1024 / 1024,
-					"free":         mFree / 1024 / 1024,
-					"percent_free": math.Floor(pFree*100) / 100,
-				},
-				"request_host": Json{
-					"host":   requests_host.Tag,
-					"day":    requests_host.Day,
-					"hour":   requests_host.Hour,
-					"minute": requests_host.Minute,
-					"second": requests_host.Seccond,
-					"limit":  requests_host.Limit,
-				},
-				"requests_endpoint": Json{
-					"endpoint": requests_endpoint.Tag,
-					"day":      requests_endpoint.Day,
-					"hour":     requests_endpoint.Hour,
-					"minute":   requests_endpoint.Minute,
-					"second":   requests_endpoint.Seccond,
-					"limit":    requests_endpoint.Limit,
-				},
-			}
-
-			logs.Logf(method, `%s://%s%s %s %dB %s %dms`, scheme, r.Host, endPoint, r.Proto, bytes, r.RemoteAddr, time_since)
-
-			go event.EventPublish("telemetry", telemetry)
-
-			if requests_host.Seccond > requests_host.Limit {
-				go event.EventPublish("requests/overflow", telemetry)
-			}
-		}()
-
-		w.Header().Set("_idT", _idT)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	}
-
-	return http.HandlerFunc(fn)
 }
