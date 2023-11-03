@@ -486,7 +486,7 @@ func Define$2() error {
 		return nil
 	}
 
-	$2 = NewModel($3, "$4", "Tabla de tipo", 1)
+	$2 = NewModel($3, "$4", "Tabla", 1)
 	$2.DefineColum("date_make", "", "TIMESTAMP", "NOW()")
 	$2.DefineColum("date_update", "", "TIMESTAMP", "NOW()")
 	$2.DefineColum("_state", "", "VARCHAR(80)", ACTIVE)
@@ -541,21 +541,18 @@ func Get$2ById(id string) (Item, error) {
 		First()
 }
 
-func UpSert$2(projectId, id, name, description string) (Item, error) {
+func UpSert$2(project_id, id string, data Json) (Item, error) {
+	if !ValidId(project_id) {
+		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "project_id")
+	}
+
 	if !ValidId(id) {
 		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "_id")
 	}
 
-	if !ValidStr(name, 0, []string{""}) {
-		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "name")
-	}
-
 	id = GenId(id)
-	data := Json{}
-	data["project_id"] = projectId
+	data["project_id"] = project_id
 	data["_id"] = id
-	data["name"] = name
-	data["description"] = description
 	return $2.Upsert(data).
 		Where($2.Column("_id").Eq(id)).
 		Command()
@@ -578,7 +575,7 @@ func Delete$2(id string) (Item, error) {
 	return State$2(id, FOR_DELETE)
 }
 
-func All$2(projectId, state, search string, page, rows int, _select string) (List, error) {	
+func All$2(project_id, state, search string, page, rows int, _select string) (List, error) {	
 	if state == "" {
 		state = ACTIVE
 	}
@@ -592,21 +589,21 @@ func All$2(projectId, state, search string, page, rows int, _select string) (Lis
 
 		return $2.Select(cols).
 			Where($2.Column("_state").Neg(state)).
-			And($2.Column("project_id").In("-1", projectId)).
+			And($2.Column("project_id").In("-1", project_id)).
 			And($2.Concat("NAME:", $2.Column("name"), ":DESCRIPTION", $2.Column("description"), ":DATA:", $2.Column("_data"), ":").Like("%"+search+"%")).
 			OrderBy($2.Column("name"), true).
 			List(page, rows)
 	} else if auxState == "0" {
 		return $2.Select(cols).
 			Where($2.Column("_state").In("-1", state)).
-			And($2.Column("project_id").In("-1", projectId)).
+			And($2.Column("project_id").In("-1", project_id)).
 			And($2.Concat("NAME:", $2.Column("name"), ":DESCRIPTION", $2.Column("description"), ":DATA:", $2.Column("_data"), ":").Like("%"+search+"%")).
 			OrderBy($2.Column("name"), true).
 			List(page, rows)
 	} else {
 		return $2.Select(cols).
 			Where($2.Column("_state").Eq(state)).
-			And($2.Column("project_id").In("-1", projectId)).
+			And($2.Column("project_id").In("-1", project_id)).
 			And($2.Concat("NAME:", $2.Column("name"), ":DESCRIPTION", $2.Column("description"), ":DATA:", $2.Column("_data"), ":").Like("%"+search+"%")).
 			OrderBy($2.Column("name"), true).
 			List(page, rows)
@@ -618,12 +615,10 @@ func All$2(projectId, state, search string, page, rows int, _select string) (Lis
 **/
 func (rt *Router) UpSert$2(w http.ResponseWriter, r *http.Request) {
 	body, _ := response.GetBody(r)
-	projectId := body.Str("project_id")
-	id := body.Str("id")
-	name := body.Str("name")
-	description := body.Str("description")
+	project_id := body.Str("project_id")
+	id := body.Str("id")	
 
-	result, err := UpSert$2(projectId, id, name, description)
+	result, err := UpSert$2(project_id, id, body)
 	if err != nil {
 		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return

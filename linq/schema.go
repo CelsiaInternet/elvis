@@ -9,11 +9,11 @@ import (
 var schemas []*Schema = []*Schema{}
 
 type Schema struct {
-	Db       int
-	Database *Db
-	// name            string
+	Db              int
+	Database        *Db
 	Name            string
 	Description     string
+	UseSync         bool
 	SourceField     string
 	DateMakeField   string
 	DateUpdateField string
@@ -29,6 +29,7 @@ func NewSchema(db int, name string) *Schema {
 		Db:              db,
 		Name:            Lowcase(name),
 		Database:        DB(db),
+		UseSync:         true,
 		SourceField:     "_DATA",
 		DateMakeField:   "DATE_MAKE",
 		DateUpdateField: "DATE_UPDATE",
@@ -125,4 +126,10 @@ func (c *Schema) Model(name string) *Model {
 	}
 
 	return nil
+}
+
+func (c *Schema) SetUseSync(val bool) *Schema {
+	c.UseSync = val
+
+	return c
 }

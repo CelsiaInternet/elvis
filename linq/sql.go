@@ -288,6 +288,16 @@ func (c *Linq) SqlOrderBy() string {
 	return result
 }
 
+func (c *Linq) SqlAll() string {
+	c.SqlSelect()
+
+	if c.debug {
+		console.Log(c.sql)
+	}
+
+	return c.sql
+}
+
 func (c *Linq) SqlLimit(limit int) string {
 	c.SqlSelect()
 

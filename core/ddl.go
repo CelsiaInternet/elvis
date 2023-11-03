@@ -15,7 +15,9 @@ func InitModel(model *Model) error {
 		return err
 	}
 
-	SetSyncTrigger(model.Schema, model.Table)
+	if model.UseSync {
+		SetSyncTrigger(model.Schema, model.Table)
+	}
 
 	if model.UseRecycle {
 		SetRecycligTrigger(model.Schema, model.Table)

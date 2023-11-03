@@ -44,6 +44,7 @@ type Model struct {
 	UseDateUpdate      bool
 	UseProject         bool
 	UseIndex           bool
+	UseSync            bool
 	UseRecycle         bool
 	BeforeInsert       []Trigger
 	AfterInsert        []Trigger
@@ -135,6 +136,7 @@ func NewModel(schema *Schema, table, description string, version int) *Model {
 		Name:            Append(Lowcase(schema.Name), Uppcase(table), "."),
 		Description:     description,
 		Table:           Uppcase(table),
+		UseSync:         schema.UseSync,
 		Version:         version,
 		SourceField:     schema.SourceField,
 		DateMakeField:   schema.DateMakeField,
@@ -185,6 +187,12 @@ func (c *Model) Init() error {
 	}
 
 	return nil
+}
+
+func (c *Model) SetUseSync(val bool) *Model {
+	c.UseSync = val
+
+	return c
 }
 
 func (c *Model) DDL() string {
