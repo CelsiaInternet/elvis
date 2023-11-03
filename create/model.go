@@ -403,7 +403,7 @@ import (
 var PackageName = "$1"
 var PackageTitle = "$1"
 var PackagePath = "/api/$1"
-var PackageVersion = EnvarStr("VERSION")
+var PackageVersion = EnvarStr("0.0.1", "VERSION")
 var HostName, _ = os.Hostname()
 
 type Router struct {
