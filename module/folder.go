@@ -13,7 +13,7 @@ import (
 var Folders *Model
 
 func DefineFolders() error {
-	if err := defineSchema(); err != nil {
+	if err := DefineSchemaModule(); err != nil {
 		return console.PanicE(err)
 	}
 

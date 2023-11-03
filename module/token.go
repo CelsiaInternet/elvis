@@ -41,7 +41,7 @@ func (n *Token) Scan(js *Json) error {
 var Tokens *Model
 
 func DefineTokens() error {
-	if err := defineSchema(); err != nil {
+	if err := DefineSchemaModule(); err != nil {
 		return console.PanicE(err)
 	}
 

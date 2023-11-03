@@ -13,7 +13,7 @@ var Profiles *Model
 var ProfileFolders *Model
 
 func DefineProfiles() error {
-	if err := defineSchema(); err != nil {
+	if err := DefineSchemaModule(); err != nil {
 		return console.PanicE(err)
 	}
 
@@ -44,7 +44,7 @@ func DefineProfiles() error {
 }
 
 func DefineProfileFolders() error {
-	if err := defineSchema(); err != nil {
+	if err := DefineSchemaModule(); err != nil {
 		return console.PanicE(err)
 	}
 

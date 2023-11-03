@@ -15,7 +15,7 @@ import (
 var Users *Model
 
 func DefineUsers() error {
-	if err := defineSchema(); err != nil {
+	if err := DefineSchemaModule(); err != nil {
 		return console.PanicE(err)
 	}
 

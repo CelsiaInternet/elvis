@@ -24,9 +24,6 @@ func InitModules() error {
 	if err := DefineUsers(); err != nil {
 		return console.PanicE(err)
 	}
-	if err := DefineStacks(); err != nil {
-		return console.PanicE(err)
-	}
 	if err := DefineHistorys(); err != nil {
 		return console.PanicE(err)
 	}

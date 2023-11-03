@@ -13,7 +13,7 @@ import (
 var Modules *Model
 
 func DefineModules() error {
-	if err := defineSchema(); err != nil {
+	if err := DefineSchemaModule(); err != nil {
 		return console.PanicE(err)
 	}
 

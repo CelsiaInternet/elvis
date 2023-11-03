@@ -13,7 +13,7 @@ var Projects *Model
 var ProjectModules *Model
 
 func DefineProjects() error {
-	if err := defineSchema(); err != nil {
+	if err := DefineSchemaModule(); err != nil {
 		return console.PanicE(err)
 	}
 
@@ -55,7 +55,7 @@ func DefineProjects() error {
 }
 
 func DefineProjectModules() error {
-	if err := defineSchema(); err != nil {
+	if err := DefineSchemaModule(); err != nil {
 		return console.PanicE(err)
 	}
 

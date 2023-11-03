@@ -6,7 +6,7 @@ import (
 
 var SchemaModule *Schema
 
-func defineSchema() error {
+func DefineSchemaModule() error {
 	if SchemaModule != nil {
 		return nil
 	}
