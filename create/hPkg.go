@@ -17,7 +17,8 @@ func MakePkg(name, schema, schemaVar string) error {
 		return err
 	}
 
-	_, err = MakeFile(path, "model.go", modelModel, name)
+	modelo := Titlecase(name)
+	_, err = MakeFile(path, "model.go", modelModel, name, modelo)
 	if err != nil {
 		return err
 	}

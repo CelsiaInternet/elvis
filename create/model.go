@@ -268,14 +268,13 @@ const modelModel = `package $1
 import (
 	"github.com/cgalvisleon/elvis/console"
 	. "github.com/cgalvisleon/elvis/core"
-	. "github.com/cgalvisleon/elvis/module"
 )
 
 func initModels() error {
 	if err := InitCore(); err != nil {
 		return console.PanicE(err)
 	}
-	if err := InitModules(); err != nil {
+	if err := Define$2(); err != nil {
 		return console.PanicE(err)
 	}
 
