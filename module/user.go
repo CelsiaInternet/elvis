@@ -73,7 +73,7 @@ func DefineUsers() error {
 
 		data.Set(col.Low(), modules)
 	})
-	Users.Trigger(AfterInsert, func(model *Model, old, new *Json, data Json) {
+	Users.Trigger(AfterInsert, func(model *Model, old, new *Json, data Json) error {
 		id := new.Key("_id")
 		if id == "USER.ADMIN" {
 			fullName := new.Str("full_name")
@@ -83,6 +83,8 @@ func DefineUsers() error {
 			message := Format(MSG_ADMIN_WELCOME, fullName, APP)
 			go aws.SendSMS(country, phone, message)
 		}
+
+		return nil
 	})
 
 	if err := InitModel(Users); err != nil {

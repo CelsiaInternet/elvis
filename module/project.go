@@ -38,13 +38,15 @@ func DefineProjects() error {
 		"name",
 		"index",
 	})
-	Projects.Trigger(AfterInsert, func(model *Model, old, new *Json, data Json) {
+	Projects.Trigger(AfterInsert, func(model *Model, old, new *Json, data Json) error {
 		moduleId := data.Key("module_id")
 		if moduleId != "" {
 			id := new.Id()
 			CheckProjectModule(id, moduleId, true)
 			CheckRole(id, moduleId, "PROFILE.ADMIN", "USER.ADMIN", true)
 		}
+
+		return nil
 	})
 
 	if err := InitModel(Projects); err != nil {

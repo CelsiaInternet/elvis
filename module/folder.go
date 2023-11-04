@@ -42,23 +42,29 @@ func DefineFolders() error {
 		"index",
 	})
 	Folders.DefineForeignKey("module_id", Modules.Column("_id"))
-	Folders.Trigger(AfterInsert, func(model *Model, old, new *Json, data Json) {
+	Folders.Trigger(AfterInsert, func(model *Model, old, new *Json, data Json) error {
 		id := new.Id()
 		moduleId := new.Key("module_id")
 		CheckProfileFolder(moduleId, "PROFILE.ADMIN", id, true)
 		CheckProfileFolder(moduleId, "PROFILE.DEV", id, true)
 		CheckProfileFolder(moduleId, "PROFILE.SUPORT", id, true)
+
+		return nil
 	})
-	Folders.Trigger(AfterUpdate, func(model *Model, old, new *Json, data Json) {
+	Folders.Trigger(AfterUpdate, func(model *Model, old, new *Json, data Json) error {
 		event.EventPublish("folder/update", *new)
 		oldState := old.Key("_state")
 		newState := old.Key("_state")
 		if oldState != newState {
 			event.EventPublish("folder/state", *new)
 		}
+
+		return nil
 	})
-	Folders.Trigger(AfterDelete, func(model *Model, old, new *Json, data Json) {
+	Folders.Trigger(AfterDelete, func(model *Model, old, new *Json, data Json) error {
 		event.EventPublish("folder/delete", *old)
+
+		return nil
 	})
 
 	return InitModel(Folders)

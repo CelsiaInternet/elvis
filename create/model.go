@@ -506,23 +506,23 @@ func Define$2() error {
 		"index",
 	})
 	$2.IntegrityAtrib(true)
-	$2.Trigger(BeforeInsert, func(model *Model, old, new *Json, data Json) {
-
+	$2.Trigger(BeforeInsert, func(model *Model, old, new *Json, data Json) error {
+		return nil
 	})
-	$2.Trigger(AfterInsert, func(model *Model, old, new *Json, data Json) {
-
+	$2.Trigger(AfterInsert, func(model *Model, old, new *Json, data Json) error {
+		return nil
 	})
-	$2.Trigger(BeforeUpdate, func(model *Model, old, new *Json, data Json) {
-
+	$2.Trigger(BeforeUpdate, func(model *Model, old, new *Json, data Json) error {
+		return nil
 	})
-	$2.Trigger(AfterUpdate, func(model *Model, old, new *Json, data Json) {
-
+	$2.Trigger(AfterUpdate, func(model *Model, old, new *Json, data Json) error {
+		return nil
 	})
-	$2.Trigger(BeforeDelete, func(model *Model, old, new *Json, data Json) {
-
+	$2.Trigger(BeforeDelete, func(model *Model, old, new *Json, data Json) error {
+		return nil
 	})
-	$2.Trigger(AfterDelete, func(model *Model, old, new *Json, data Json) {
-
+	$2.Trigger(AfterDelete, func(model *Model, old, new *Json, data Json) error {
+		return nil
 	})
 	
 	if err := InitModel($2); err != nil {

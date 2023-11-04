@@ -24,9 +24,11 @@ func InitModel(model *Model) error {
 	}
 
 	if model.UseIndex {
-		model.Trigger(BeforeInsert, func(model *Model, old, new *Json, data Json) {
+		model.Trigger(BeforeInsert, func(model *Model, old, new *Json, data Json) error {
 			index := GetSerie(model.Name)
 			new.Set("index", index)
+
+			return nil
 		})
 	}
 

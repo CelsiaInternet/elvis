@@ -45,11 +45,11 @@ func DefineCollection() error {
 		"expiration",
 		"index",
 	})
-	Collections.Trigger(AfterInsert, func(model *Model, old, new *Json, data Json) {
+	Collections.Trigger(AfterInsert, func(model *Model, old, new *Json, data Json) error {
 		collection := new.Str("collection")
 
 		if collection == "__telemetry" {
-			return
+			return nil
 		}
 
 		item, err := Collections.Select().
@@ -57,7 +57,7 @@ func DefineCollection() error {
 			And(Collections.Column("_id").Eq(collection)).
 			First()
 		if err != nil {
-			return
+			return err
 		}
 
 		projectId := new.Key("project_id")
@@ -74,14 +74,16 @@ func DefineCollection() error {
 			And(Collections.Column("_id").Eq(collection)).
 			Command()
 		if err != nil {
-			return
+			return err
 		}
+
+		return nil
 	})
-	Collections.Trigger(AfterDelete, func(model *Model, old, new *Json, data Json) {
+	Collections.Trigger(AfterDelete, func(model *Model, old, new *Json, data Json) error {
 		collection := old.Str("collection")
 
 		if collection == "__telemetry" {
-			return
+			return nil
 		}
 
 		item, err := Collections.Select().
@@ -89,7 +91,7 @@ func DefineCollection() error {
 			And(Collections.Column("_id").Eq(collection)).
 			First()
 		if err != nil {
-			return
+			return err
 		}
 
 		projectId := old.Key("project_id")
@@ -106,8 +108,10 @@ func DefineCollection() error {
 			And(Collections.Column("_id").Eq(collection)).
 			Command()
 		if err != nil {
-			return
+			return err
 		}
+
+		return nil
 	})
 
 	return InitModel(Collections)

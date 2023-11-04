@@ -15,7 +15,7 @@ const AfterUpdate = 4
 const BeforeDelete = 5
 const AfterDelete = 6
 
-type Trigger func(model *Model, old, new *Json, data Json)
+type Trigger func(model *Model, old, new *Json, data Json) error
 
 type Model struct {
 	Db                 int
