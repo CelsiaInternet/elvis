@@ -358,7 +358,7 @@ func (c *Linq) SqlInsert() string {
 	c.SqlReturn()
 
 	c.sql = Format(`%s;`, c.sql)
-	
+
 	return c.sql
 }
 
@@ -396,7 +396,7 @@ func (c *Linq) SqlUpdate() string {
 	c.SqlReturn()
 
 	c.sql = Format(`%s;`, c.sql)
-	
+
 	return c.sql
 }
 

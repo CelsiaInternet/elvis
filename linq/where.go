@@ -94,7 +94,7 @@ func (c *Where) Define(linq *Linq) *Where {
 
 	result := c.Str1()
 	where = Format(`%s %s`, result, c.operator)
-	result = c.Str2()	
+	result = c.Str2()
 	where = Format(`%s %s`, where, result)
 
 	c.where = where

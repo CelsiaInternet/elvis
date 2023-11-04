@@ -315,20 +315,20 @@ func (c *Linq) ToCols(sel ...any) []*Column {
 /**
 * Query
 **/
-func (c *Linq) Query() (Items, error) {	
+func (c *Linq) Query() (Items, error) {
 	if c.Tp == TpData {
 		result, err := DBQueryData(c.db, c.sql)
 		if err != nil {
-		return Items{}, err
+			return Items{}, err
+		}
+
+		if c.debug {
+			console.Log(c.sql)
+		}
+
+		return result, nil
 	}
 
-	if c.debug {
-		console.Log(c.sql)
-	}
-
-	return result, nil
-	} 
-	
 	result, err := DBQuery(c.db, c.sql)
 	if err != nil {
 		return Items{}, err

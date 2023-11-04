@@ -184,7 +184,7 @@ func (c *Linq) update(current Json) (Item, error) {
 	if err != nil {
 		return Item{}, err
 	}
-	
+
 	if !item.Ok {
 		return item, nil
 	}
@@ -229,7 +229,7 @@ func (c *Linq) delete(current Json) (Item, error) {
 	if !item.Ok {
 		return item, nil
 	}
-	
+
 	c.new = &item.Result
 
 	for _, trigger := range model.AfterDelete {

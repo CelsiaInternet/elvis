@@ -62,7 +62,7 @@ func (c *Model) Consolidate(linq *Linq) *Linq {
 		}
 	}
 
-	if c.UseSource {
+	if c.UseSource && len(source) > 0 {
 		result.Set(c.SourceField, source)
 	}
 
