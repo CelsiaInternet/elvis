@@ -52,17 +52,17 @@ func DefineFolders() error {
 		return nil
 	})
 	Folders.Trigger(AfterUpdate, func(model *Model, old, new *Json, data Json) error {
-		event.EventPublish("folder/update", *new)
+		event.Action("folder/update", *new)
 		oldState := old.Key("_state")
 		newState := old.Key("_state")
 		if oldState != newState {
-			event.EventPublish("folder/state", *new)
+			event.Action("folder/state", *new)
 		}
 
 		return nil
 	})
 	Folders.Trigger(AfterDelete, func(model *Model, old, new *Json, data Json) error {
-		event.EventPublish("folder/delete", *old)
+		event.Action("folder/delete", *old)
 
 		return nil
 	})

@@ -55,10 +55,6 @@ func (c *Linq) Find() (Items, error) {
 		c.Details(&data)
 	}
 
-	if c.debug {
-		console.Log(c.sql)
-	}
-
 	return items, nil
 }
 

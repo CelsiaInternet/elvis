@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/cgalvisleon/elvis/cache"
+	. "github.com/cgalvisleon/elvis/json"
 	"github.com/google/uuid"
 	"github.com/nats-io/nats.go"
 )
@@ -34,8 +35,23 @@ func Publish(clientId, channel string, data map[string]interface{}) error {
 	return conn.conn.Publish(msg.Type(), dt)
 }
 
-func EventPublish(channel string, data map[string]interface{}) {
-	go Publish("event/publish", channel, data)
+func Event(project_id, event string, data map[string]interface{}) {
+	go Publish("event", "event/publish", Json{
+		"project_id": project_id,
+		"event":      event,
+		"data":       data,
+	})
+}
+
+func Action(action string, data map[string]interface{}) {
+	go Publish("action", action, data)
+}
+
+func Work(work, work_id string, data map[string]interface{}) {
+	go Publish("work", work, Json{
+		"work_id": work_id,
+		"data":    data,
+	})
 }
 
 func Subscribe(channel string, f func(CreatedEvenMessage)) (err error) {

@@ -10,7 +10,7 @@ func beforeInsert(model *Model, old, new *Json, data Json) error {
 }
 
 func afterInsert(model *Model, old, new *Json, data Json) error {
-	event.EventPublish("model/insert", Json{
+	event.Action("model/insert", Json{
 		"table": model.Name,
 		"old":   old,
 		"new":   new,
@@ -24,7 +24,7 @@ func beforeUpdate(model *Model, old, new *Json, data Json) error {
 }
 
 func afterUpdate(model *Model, old, new *Json, data Json) error {
-	event.EventPublish("model/update", Json{
+	event.Action("model/update", Json{
 		"table": model.Name,
 		"old":   old,
 		"new":   new,
@@ -38,7 +38,7 @@ func beforeDelete(model *Model, old, new *Json, data Json) error {
 }
 
 func afterDelete(model *Model, old, new *Json, data Json) error {
-	event.EventPublish("model/delete", Json{
+	event.Action("model/delete", Json{
 		"table": model.Name,
 		"old":   old,
 		"new":   new,

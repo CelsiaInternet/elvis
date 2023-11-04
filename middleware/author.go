@@ -71,7 +71,7 @@ func Authorization(next http.Handler) http.Handler {
 			"host_name": hostName,
 		}
 
-		event.EventPublish("telemetry.token.last_use", data)
+		event.Action("telemetry.token.last_use", data)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

@@ -34,7 +34,7 @@ func FuncName() string {
 }
 
 func LogC(kind string, color string, args ...any) string {
-	event.EventPublish("logs", map[string]interface{}{
+	event.Action("logs", map[string]interface{}{
 		"kind": kind,
 		"args": args,
 	})

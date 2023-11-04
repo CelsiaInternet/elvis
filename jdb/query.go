@@ -63,7 +63,7 @@ func DBQDDL(db int, sql string, args ...any) (Items, error) {
 
 	items := rowsItems(rows)
 
-	event.EventPublish("sql/ddl", Json{
+	event.Action("sql/ddl", Json{
 		"sql": sql,
 	})
 
@@ -80,7 +80,7 @@ func DBQuery(db int, sql string, args ...any) (Items, error) {
 
 	items := rowsItems(rows)
 
-	event.EventPublish("sql/query", Json{
+	event.Action("sql/query", Json{
 		"sql": sql,
 	})
 

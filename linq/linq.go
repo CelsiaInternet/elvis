@@ -3,6 +3,7 @@ package linq
 import (
 	"strings"
 
+	"github.com/cgalvisleon/elvis/console"
 	. "github.com/cgalvisleon/elvis/jdb"
 	. "github.com/cgalvisleon/elvis/json"
 	. "github.com/cgalvisleon/elvis/utilities"
@@ -326,24 +327,44 @@ func (c *Linq) Query() (Items, error) {
 		return Items{}, err
 	}
 
+	if c.debug {
+		console.Log(c.sql)
+	}
+
 	return result, nil
 }
 
 func (c *Linq) QueryOne() (Item, error) {
-	var result Item
-	var err error
 	if c.Tp == TpData {
-		result, err = DBQueryDataOne(c.db, c.sql)
-	} else {
-		result, err = DBQueryOne(c.db, c.sql)
+		result, err := DBQueryDataOne(c.db, c.sql)
+		if err != nil {
+			return Item{}, err
+		}
+		if c.debug {
+			console.Log(c.sql)
+		}
+
+		return result, nil
 	}
+
+	result, err := DBQueryOne(c.db, c.sql)
 	if err != nil {
 		return Item{}, err
+	}
+
+	if c.debug {
+		console.Log(c.sql)
 	}
 
 	return result, nil
 }
 
 func (c *Linq) QueryCount() int {
-	return DBQueryCount(c.db, c.sql)
+	result := DBQueryCount(c.db, c.sql)
+
+	if c.debug {
+		console.Log(c.sql)
+	}
+
+	return result
 }

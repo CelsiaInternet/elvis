@@ -80,7 +80,7 @@ func (hub *Hub) onConnect(client *Client) {
 	client.Addr = client.socket.RemoteAddr().String()
 	client.isClose = false
 
-	event.EventPublish("websocket/connect", Json{"hub": hub.Id, "client": client})
+	event.Action("websocket/connect", Json{"hub": hub.Id, "client": client})
 
 	logs.Logf("Websocket", MSG_CLIENT_CONNECT, client.Id, hub.Id)
 }
@@ -97,7 +97,7 @@ func (hub *Hub) onDisconnect(client *Client) {
 	hub.clients[len(hub.clients)-1] = nil
 	hub.clients = hub.clients[:len(hub.clients)-1]
 
-	event.EventPublish("websocket/disconnect", Json{"hub": hub.Id, "client_id": client.Id})
+	event.Action("websocket/disconnect", Json{"hub": hub.Id, "client_id": client.Id})
 
 	logs.Logf("Websocket", MSG_CLIENT_DISCONNECT, client.Id, hub.Id)
 }
@@ -177,7 +177,7 @@ func (hub *Hub) Subscribe(clientId string, channel string) bool {
 		client := hub.clients[idx]
 		client.Subscribe(channel)
 
-		event.EventPublish("websocket/subscribe", Json{"hub": hub.Id, "client": client, "channel": channel})
+		event.Action("websocket/subscribe", Json{"hub": hub.Id, "client": client, "channel": channel})
 
 		return true
 	}
@@ -192,7 +192,7 @@ func (hub *Hub) Unsubscribe(clientId string, channel string) bool {
 		client := hub.clients[idx]
 		client.Unsubscribe(channel)
 
-		event.EventPublish("websocket/unsubscribe", Json{"hub": hub.Id, "client": client, "channel": channel})
+		event.Action("websocket/unsubscribe", Json{"hub": hub.Id, "client": client, "channel": channel})
 
 		return true
 	}
