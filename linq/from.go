@@ -27,14 +27,14 @@ func (c *Linq) From(model *Model, as ...string) *Linq {
 	return c
 }
 
-func (c *Linq) Where(where *Where) *Linq {
+func (c *Linq) Where(where *Where) *Linq {	
 	where.linq = c
 	c.where = append(c.where, where)
 
 	return c
 }
 
-func (c *Linq) And(where *Where) *Linq {
+func (c *Linq) And(where *Where) *Linq {	
 	where.linq = c
 	where.connector = "AND"
 	c.where = append(c.where, where)

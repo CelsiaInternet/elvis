@@ -584,27 +584,30 @@ func All$2(project_id, state, search string, page, rows int, _select string) (Li
 
 	cols := StrToColN(_select)
 
-	if auxState == "*" {
+	if search != "" {
+		return $2.Select(cols).
+			Where($2.Column("project_id").In("-1", project_id)).
+			And($2.Concat("NAME:", $2.Column("name"), "DESCRIPTION:", $2.Column("description"), "DATA:", $2.Column("_data"), ":").Like("%"+search+"%")).
+			OrderBy($2.Column("name"), true).
+			List(page, rows)
+	} else if auxState == "*" {
 		state = FOR_DELETE
 
 		return $2.Select(cols).
 			Where($2.Column("_state").Neg(state)).
 			And($2.Column("project_id").In("-1", project_id)).
-			And($2.Concat("NAME:", $2.Column("name"), ":DESCRIPTION", $2.Column("description"), ":DATA:", $2.Column("_data"), ":").Like("%"+search+"%")).
 			OrderBy($2.Column("name"), true).
 			List(page, rows)
 	} else if auxState == "0" {
 		return $2.Select(cols).
 			Where($2.Column("_state").In("-1", state)).
 			And($2.Column("project_id").In("-1", project_id)).
-			And($2.Concat("NAME:", $2.Column("name"), ":DESCRIPTION", $2.Column("description"), ":DATA:", $2.Column("_data"), ":").Like("%"+search+"%")).
 			OrderBy($2.Column("name"), true).
 			List(page, rows)
 	} else {
 		return $2.Select(cols).
 			Where($2.Column("_state").Eq(state)).
 			And($2.Column("project_id").In("-1", project_id)).
-			And($2.Concat("NAME:", $2.Column("name"), ":DESCRIPTION", $2.Column("description"), ":DATA:", $2.Column("_data"), ":").Like("%"+search+"%")).
 			OrderBy($2.Column("name"), true).
 			List(page, rows)
 	}
@@ -680,7 +683,7 @@ func (rt *Router) All$2(w http.ResponseWriter, r *http.Request) {
 
 	rows, err := strconv.Atoi(rowsStr)
 	if err != nil {
-		rows = 10
+		rows = 30
 	}
 
 	result, err := All$2(project_id, state, search, page, rows, _select)

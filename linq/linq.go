@@ -329,7 +329,7 @@ func (c *Linq) Query() (Items, error) {
 	return result, nil
 	} 
 	
-	result, err = DBQuery(c.db, c.sql)
+	result, err := DBQuery(c.db, c.sql)
 	if err != nil {
 		return Items{}, err
 	}

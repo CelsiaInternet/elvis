@@ -1,7 +1,6 @@
 package linq
 
 import (
-	"github.com/cgalvisleon/elvis/console"
 	. "github.com/cgalvisleon/elvis/json"
 	. "github.com/cgalvisleon/elvis/utilities"
 )
@@ -155,10 +154,6 @@ func (c *Linq) SqlCurrent() string {
 
 	c.SqlKey()
 
-	if c.debug {
-		console.Log(c.sql)
-	}
-
 	return c.sql
 }
 
@@ -291,10 +286,6 @@ func (c *Linq) SqlOrderBy() string {
 func (c *Linq) SqlAll() string {
 	c.SqlSelect()
 
-	if c.debug {
-		console.Log(c.sql)
-	}
-
 	return c.sql
 }
 
@@ -305,10 +296,6 @@ func (c *Linq) SqlLimit(limit int) string {
 
 	c.sql = Append(c.sql, result, "\n")
 
-	if c.debug {
-		console.Log(c.sql)
-	}
-
 	return c.sql
 }
 
@@ -318,10 +305,6 @@ func (c *Linq) SqlOffset(limit, offset int) string {
 	result := Format(`LIMIT %d OFFSET %d;`, limit, offset)
 
 	c.sql = Append(c.sql, result, "\n")
-
-	if c.debug {
-		console.Log(c.sql)
-	}
 
 	return c.sql
 }
@@ -375,11 +358,7 @@ func (c *Linq) SqlInsert() string {
 	c.SqlReturn()
 
 	c.sql = Format(`%s;`, c.sql)
-
-	if c.debug {
-		console.Log(c.sql)
-	}
-
+	
 	return c.sql
 }
 
@@ -417,11 +396,7 @@ func (c *Linq) SqlUpdate() string {
 	c.SqlReturn()
 
 	c.sql = Format(`%s;`, c.sql)
-
-	if c.debug {
-		console.Log(c.sql)
-	}
-
+	
 	return c.sql
 }
 
@@ -435,10 +410,6 @@ func (c *Linq) SqlDelete() string {
 	c.SqlIndex()
 
 	c.sql = Format(`%s;`, c.sql)
-
-	if c.debug {
-		console.Log(c.sql)
-	}
 
 	return c.sql
 }

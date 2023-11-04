@@ -16,6 +16,38 @@ type Where struct {
 	val2      any
 }
 
+func (c *Where) Str1() string {
+	result := ""
+	switch v := c.val1.(type) {
+	case []any:
+		for _, vl := range v {
+			def := c.Def(vl)
+			result = Append(result, def, ",")
+		}
+		result = Format(`(%s)`, result)
+	default:
+		result = c.Def(v)
+	}
+
+	return result
+}
+
+func (c *Where) Str2() string {
+	result := ""
+	switch v := c.val2.(type) {
+	case []any:
+		for _, vl := range v {
+			def := c.Def(vl)
+			result = Append(result, def, ",")
+		}
+		result = Format(`(%s)`, result)
+	default:
+		result = c.Def(v)
+	}
+
+	return result
+}
+
 func StrToColN(str string) []string {
 	str = ReplaceAll(str, []string{" "}, "")
 	cols := strings.Split(str, ",")
@@ -60,30 +92,9 @@ func (c *Where) Def(val any) string {
 func (c *Where) Define(linq *Linq) *Where {
 	var where string
 
-	result := ""
-	switch v := c.val1.(type) {
-	case []any:
-		for _, vl := range v {
-			def := c.Def(vl)
-			result = Append(result, def, ",")
-		}
-		result = Format(`(%s)`, result)
-	default:
-		result = c.Def(v)
-	}
+	result := c.Str1()
 	where = Format(`%s %s`, result, c.operator)
-
-	result = ""
-	switch v := c.val2.(type) {
-	case []any:
-		for _, vl := range v {
-			def := c.Def(vl)
-			result = Append(result, def, ",")
-		}
-		result = Format(`(%s)`, result)
-	default:
-		result = c.Def(v)
-	}
+	result = c.Str2()	
 	where = Format(`%s %s`, where, result)
 
 	c.where = where

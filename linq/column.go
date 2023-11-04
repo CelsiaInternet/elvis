@@ -379,6 +379,11 @@ func (c *Column) Like(val any) *Where {
 	if c.Tp == TpFunction {
 		c.Cast("TEXT")
 	}
+
+	if val == "%"+"%" {
+		val = "%"
+	}
+
 	return NewWhere(c, "ILIKE", val)
 }
 
