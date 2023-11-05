@@ -35,10 +35,11 @@ func Publish(clientId, channel string, data map[string]interface{}) error {
 	return conn.conn.Publish(msg.Type(), dt)
 }
 
-func Event(project_id, event string, data map[string]interface{}) {
+func Event(project_id, event string, single bool, data map[string]interface{}) {
 	go Publish("event", "event/publish", Json{
 		"project_id": project_id,
 		"event":      event,
+		"single":     single,
 		"data":       data,
 	})
 }
