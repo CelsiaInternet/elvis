@@ -139,7 +139,7 @@ func SetSyncTrigger(schema, table string) error {
 	if created {
 		tableName := Append(Lowcase(schema), Uppcase(table), ".")
 		sql := SQLDDL(`
-    CREATE UNIQUE INDEX IF NOT EXISTS $2_IDT_IDX ON $1(_IDT);
+    CREATE INDEX IF NOT EXISTS $2_IDT_IDX ON $1(_IDT);
 
     DROP TRIGGER IF EXISTS SYNC_INSERT ON $1 CASCADE;
     CREATE TRIGGER SYNC_INSERT
