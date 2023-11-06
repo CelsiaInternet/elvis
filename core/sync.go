@@ -6,14 +6,16 @@ import (
 	. "github.com/cgalvisleon/elvis/utilities"
 )
 
+var existSyncs bool
+
 func DefineSync() error {
-	if err := DefineCoreSchema(); err != nil {
-		return console.PanicE(err)
+	existSyncs, _ := ExistTable(0, "core", "SYNCS")
+	if existSyncs {
+		return nil
 	}
 
-	exist, _ := ExistTable(0, "core", "SYNCS")
-	if exist {
-		return nil
+	if err := DefineCoreSchema(); err != nil {
+		return console.PanicE(err)
 	}
 
 	sql := `

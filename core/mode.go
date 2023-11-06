@@ -21,9 +21,15 @@ var (
 	ModeId    string
 	ModeTp    int
 	MasterIdx int
+	existMode bool
 )
 
 func DefineMode() error {
+	existMode, _ := ExistTable(0, "core", "MODE")
+	if existMode {
+		return nil
+	}
+
 	if err := DefineCoreSchema(); err != nil {
 		return console.PanicE(err)
 	}

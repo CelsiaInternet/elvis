@@ -6,14 +6,19 @@ import (
 	. "github.com/cgalvisleon/elvis/utilities"
 )
 
+var (
+	existSeries bool
+	series      map[string]int = make(map[string]int)
+)
+
 func DefineSeries() error {
-	if err := DefineCoreSchema(); err != nil {
-		return console.PanicE(err)
+	existSeries, _ := ExistTable(0, "core", "SERIES")
+	if existSeries {
+		return nil
 	}
 
-	exist, _ := ExistTable(0, "core", "SERIES")
-	if exist {
-		return nil
+	if err := DefineCoreSchema(); err != nil {
+		return console.PanicE(err)
 	}
 
 	sql := `  
@@ -35,8 +40,39 @@ func DefineSeries() error {
 	return nil
 }
 
+func NextVal(tag string) int {
+	sql := `SELECT nextval($1) AS SERIE;`
+
+	item, err := DBQueryOne(0, sql, tag)
+	if err != nil {
+		console.Error(err)
+		return 0
+	}
+
+	return item.Int("serie")
+}
+
 // Serires
 func GetSerie(tag string) int {
+	if !existSeries {
+		var result int
+		tag = Replace(tag, ".", "")
+		if _, ok := series[tag]; ok {
+			result = NextVal(tag)
+		} else {
+			ok, _ := ExistSerie(0, "public", tag)
+			if !ok {
+				CreateSerie(0, "public", tag)
+				result = NextVal(tag)
+			} else {
+				result = NextVal(tag)
+			}
+		}
+
+		series[tag] = result
+		return result
+	}
+
 	db := 0
 	if MasterIdx != db {
 		db = MasterIdx

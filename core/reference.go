@@ -6,18 +6,19 @@ import (
 	. "github.com/cgalvisleon/elvis/linq"
 )
 
+var existReferences bool
+
 func DefineReference() error {
+	existReferences, _ := ExistTable(0, "core", "REFERENCES")
+	if existReferences {
+		return nil
+	}
+
 	if err := DefineCoreSchema(); err != nil {
 		return console.PanicE(err)
 	}
 
-	exist, _ := ExistTable(0, "core", "REFERENCES")
-	if exist {
-		return nil
-	}
-
-	sql := `  
-  -- DROP SCHEMA IF EXISTS core CASCADE;
+	sql := `
   -- DROP TABLE IF EXISTS core.REFERENCES CASCADE;
 
   CREATE TABLE IF NOT EXISTS core.REFERENCES(
@@ -42,6 +43,10 @@ func DefineReference() error {
 * After reference
 **/
 func SetReferences(references []*ReferenceValue) {
+	if !existReferences {
+		return
+	}
+
 	for _, ref := range references {
 		if ref.Key == "" {
 			continue

@@ -35,24 +35,37 @@ func Publish(clientId, channel string, data map[string]interface{}) error {
 	return conn.conn.Publish(msg.Type(), dt)
 }
 
-func Event(project_id, event string, single bool, data map[string]interface{}) {
+func Event(event, group string, data map[string]interface{}) {
 	go Publish("event", "event/publish", Json{
-		"project_id": project_id,
-		"event":      event,
-		"single":     single,
-		"data":       data,
+		"event": event,
+		"group": group,
+		"data":  data,
+	})
+}
+
+func Work(work, work_id string, data map[string]interface{}) {
+	go Publish("event", work, Json{
+		"work":    work,
+		"work_id": work_id,
+		"data":    data,
+	})
+}
+
+func Working(worker, work_id string) {
+	go Publish("event", "event/working", Json{
+		"worker":  worker,
+		"work_id": work_id,
+	})
+}
+
+func Done(work_id string) {
+	go Publish("event", "event/done", Json{
+		"work_id": work_id,
 	})
 }
 
 func Action(action string, data map[string]interface{}) {
 	go Publish("action", action, data)
-}
-
-func Work(work, work_id string, data map[string]interface{}) {
-	go Publish("work", work, Json{
-		"work_id": work_id,
-		"data":    data,
-	})
 }
 
 func Subscribe(channel string, f func(CreatedEvenMessage)) (err error) {

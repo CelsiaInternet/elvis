@@ -28,6 +28,7 @@ const APPROVAL = "5"
 const REFUSED = "6"
 const STOP = "Stop"
 const CACHE_TIME = 60 * 60 * 24 * 1
+const DAY_SECOND = 60 * 60 * 24 * 1
 const SELECt = "SELECT"
 const INSERT = "INSERT"
 const UPDATE = "UPDATE"

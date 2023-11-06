@@ -141,6 +141,22 @@ func ExistIndex(db int, schema, table, field string) (bool, error) {
 	return item.Bool("exists"), nil
 }
 
+func ExistSerie(db int, schema, name string) (bool, error) {
+	sql := `
+	SELECT EXISTS(
+		SELECT 1
+		FROM pg_sequences
+		WHERE UPPER(schemaname) = UPPER($1)
+		AND UPPER(sequencename) = UPPER($2));`
+
+	item, err := DBQueryOne(db, sql, schema, name)
+	if err != nil {
+		return false, err
+	}
+
+	return item.Bool("exists"), nil
+}
+
 /**
 *
 **/
@@ -269,6 +285,24 @@ func CreateIndex(db int, schema, table, field string) (bool, error) {
 		sql := SQLDDL(`CREATE INDEX IF NOT EXISTS $2_$3_IDX ON $1.$2($3);`, Uppcase(schema), Uppcase(table), Uppcase(field))
 
 		_, err := QDDL(sql)
+		if err != nil {
+			return false, err
+		}
+	}
+
+	return !exists, nil
+}
+
+func CreateSerie(db int, schema, tag string) (bool, error) {
+	exists, err := ExistSerie(db, schema, tag)
+	if err != nil {
+		return false, err
+	}
+
+	if !exists {
+		sql := Format(`CREATE SEQUENCE IF NOT EXISTS %s START 1;`, tag)
+
+		_, err := Query(sql)
 		if err != nil {
 			return false, err
 		}

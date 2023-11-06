@@ -107,8 +107,8 @@ func UpSetMasterNode(db int, id string, mode int, driver, host string, port int,
 }
 
 func JoinToMaster() error {
-	if err := DefineCoreSchema(); err != nil {
-		return console.PanicE(err)
+	if !existMode {
+		return nil
 	}
 
 	sql := `

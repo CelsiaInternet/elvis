@@ -6,14 +6,16 @@ import (
 	. "github.com/cgalvisleon/elvis/utilities"
 )
 
+var existRecicling bool
+
 func DefineRecycling() error {
-	if err := DefineCoreSchema(); err != nil {
-		return console.PanicE(err)
+	existRecicling, _ := ExistTable(0, "core", "RECYCLING")
+	if existRecicling {
+		return nil
 	}
 
-	exist, _ := ExistTable(0, "core", "RECYCLING")
-	if exist {
-		return nil
+	if err := DefineCoreSchema(); err != nil {
+		return console.PanicE(err)
 	}
 
 	sql := `  
