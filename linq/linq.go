@@ -321,7 +321,6 @@ func (c *Linq) ToCols(sel ...any) []*Column {
 **/
 func (c *Linq) Query() (Items, error) {
 	if c.debug {
-		console.Log(c.dta.ToString())
 		console.Log(c.sql)
 	}
 
@@ -366,7 +365,6 @@ func (c *Linq) QueryOne() (Item, error) {
 
 func (c *Linq) QueryCount() int {
 	if c.debug {
-		console.Log(c.dta.ToString())
 		console.Log(c.sql)
 	}
 

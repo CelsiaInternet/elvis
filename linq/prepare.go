@@ -8,11 +8,11 @@ import (
 /**
 *
 **/
-func (c *Model) Consolidate(linq *Linq) *Linq {
+func (c *Model) Consolidate(current Json, linq *Linq) *Linq {
 	var col *Column
 	var source Json = Json{}
 	var dta Json = Json{}
-	var new Json = c.Model()
+	var new Json = current
 
 	setValue := func(key string, val interface{}) {
 		dta.Set(key, val)
@@ -80,11 +80,7 @@ func (c *Model) Consolidate(linq *Linq) *Linq {
 
 func (c *Model) Changue(current Json, linq *Linq) *Linq {
 	var change bool
-	dta := c.Consolidate(linq).dta
-
-	for k, v := range current {
-		linq.new.Set(k, v)
-	}
+	dta := c.Consolidate(current, linq).dta
 
 	for k, v := range *dta {
 		k = Lowcase(k)
@@ -115,7 +111,7 @@ func (c *Model) Changue(current Json, linq *Linq) *Linq {
 **/
 func (c *Linq) PrepareInsert() {
 	model := c.from[0].model
-	model.Consolidate(c)
+	model.Consolidate(model.Model(), c)
 	now := Now()
 
 	if model.UseDateMake {
