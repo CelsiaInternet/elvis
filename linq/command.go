@@ -123,7 +123,7 @@ func (c *Linq) insert() (Item, error) {
 	model := c.from[0].model
 
 	for _, trigger := range model.BeforeInsert {
-		err := trigger(model, nil, c.new, c.data)
+		err := trigger(model, nil, &c.new, c.data)
 		if err != nil {
 			return Item{}, err
 		}
@@ -141,7 +141,7 @@ func (c *Linq) insert() (Item, error) {
 	}
 
 	for _, trigger := range model.AfterInsert {
-		err := trigger(model, nil, c.new, c.data)
+		err := trigger(model, nil, &c.new, c.data)
 		if err != nil {
 			return Item{}, err
 		}
@@ -170,7 +170,7 @@ func (c *Linq) update(current Json) (Item, error) {
 	model := c.from[0].model
 
 	for _, trigger := range model.BeforeUpdate {
-		err := trigger(model, &current, c.new, c.data)
+		err := trigger(model, &current, &c.new, c.data)
 		if err != nil {
 			return Item{}, err
 		}
@@ -188,7 +188,7 @@ func (c *Linq) update(current Json) (Item, error) {
 	}
 
 	for _, trigger := range model.AfterUpdate {
-		err := trigger(model, &current, c.new, c.data)
+		err := trigger(model, &current, &c.new, c.data)
 		if err != nil {
 			return Item{}, err
 		}

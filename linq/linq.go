@@ -109,7 +109,7 @@ type Linq struct {
 	details    []*Column
 	data       Json
 	dta        *Json
-	new        *Json
+	new        Json
 	change     bool
 	references []*ReferenceValue
 	debug      bool
@@ -174,7 +174,7 @@ func NewLinq(tp int, act int, model *Model, as ...string) *Linq {
 		groupBy: []*Column{},
 		details: []*Column{},
 		data:    Json{},
-		new:     &Json{},
+		new:     Json{},
 		dta:     &Json{},
 		as:      1,
 	}

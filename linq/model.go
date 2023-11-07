@@ -116,6 +116,12 @@ func (c *Model) Model() Json {
 			}
 		} else if col.name == c.SourceField {
 			continue
+		} else if col.Type == "JSON" && col.Default == "[]" {
+			result.Set(col.name, []Json{})
+		} else if col.Type == "JSON" {
+			result.Set(col.name, Json{})
+		} else if col.Type == "JSONB" && col.Default == "[]" {
+			result.Set(col.name, []Json{})
 		} else if col.Type == "JSONB" {
 			result.Set(col.name, Json{})
 		} else if col.Type == "TIMESTAMP" && col.Default == "NOW()" {

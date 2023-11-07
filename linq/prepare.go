@@ -73,7 +73,7 @@ func (c *Model) Consolidate(linq *Linq) *Linq {
 	}
 
 	linq.dta = &dta
-	linq.new = &new
+	linq.new = new
 
 	return linq
 }
@@ -83,7 +83,7 @@ func (c *Model) Changue(current Json, linq *Linq) *Linq {
 	dta := c.Consolidate(linq).dta
 
 	for k, v := range current {
-		linq.dta.Set(k, v)
+		linq.new.Set(k, v)
 	}
 
 	for k, v := range *dta {
@@ -96,7 +96,6 @@ func (c *Model) Changue(current Json, linq *Linq) *Linq {
 				change = ch
 			}
 			if ch {
-				linq.dta.Set(k, v)
 				col := c.Column(k)
 				if col.PrimaryKey || col.ForeignKey {
 					linq.references = append(linq.references, &ReferenceValue{c.Schema, c.Table, current.Str(k), -1})
