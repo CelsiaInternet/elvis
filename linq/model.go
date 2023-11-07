@@ -114,7 +114,8 @@ func (c *Model) Model() Json {
 			for _, atr := range col.Atribs {
 				result.Set(atr.name, atr.Default)
 			}
-
+		} else if col.name == c.SourceField {
+			continue
 		} else if col.Type == "JSONB" {
 			result.Set(col.name, Json{})
 		} else if col.Type == "TIMESTAMP" && col.Default == "NOW()" {

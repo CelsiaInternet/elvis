@@ -140,8 +140,6 @@ func (c *Linq) insert() (Item, error) {
 		return item, nil
 	}
 
-	c.new = &item.Result
-
 	for _, trigger := range model.AfterInsert {
 		err := trigger(model, nil, c.new, c.data)
 		if err != nil {
@@ -149,7 +147,7 @@ func (c *Linq) insert() (Item, error) {
 		}
 	}
 
-	c.Details(c.new)
+	c.Details(&item.Result)
 
 	if model.AfterReferences != nil {
 		go model.AfterReferences(c.references)
@@ -189,8 +187,6 @@ func (c *Linq) update(current Json) (Item, error) {
 		return item, nil
 	}
 
-	c.new = &item.Result
-
 	for _, trigger := range model.AfterUpdate {
 		err := trigger(model, &current, c.new, c.data)
 		if err != nil {
@@ -198,7 +194,7 @@ func (c *Linq) update(current Json) (Item, error) {
 		}
 	}
 
-	c.Details(c.new)
+	c.Details(&item.Result)
 
 	if model.AfterReferences != nil {
 		go model.AfterReferences(c.references)
@@ -209,11 +205,10 @@ func (c *Linq) update(current Json) (Item, error) {
 
 func (c *Linq) delete(current Json) (Item, error) {
 	c.PrepareDelete(current)
-
 	model := c.from[0].model
 
 	for _, trigger := range model.BeforeDelete {
-		err := trigger(model, &current, c.new, c.data)
+		err := trigger(model, &current, nil, c.data)
 		if err != nil {
 			return Item{}, err
 		}
@@ -230,16 +225,14 @@ func (c *Linq) delete(current Json) (Item, error) {
 		return item, nil
 	}
 
-	c.new = &item.Result
-
 	for _, trigger := range model.AfterDelete {
-		err := trigger(model, &current, c.new, c.data)
+		err := trigger(model, &current, nil, c.data)
 		if err != nil {
 			return Item{}, err
 		}
 	}
 
-	c.Details(c.new)
+	c.Details(&item.Result)
 
 	if model.AfterReferences != nil {
 		go model.AfterReferences(c.references)

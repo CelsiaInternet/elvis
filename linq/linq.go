@@ -108,8 +108,8 @@ type Linq struct {
 	as         int
 	details    []*Column
 	data       Json
-	new        *Json
 	dta        *Json
+	new        *Json
 	change     bool
 	references []*ReferenceValue
 	debug      bool
@@ -173,6 +173,7 @@ func NewLinq(tp int, act int, model *Model, as ...string) *Linq {
 		orderBy: []*OrderBy{},
 		groupBy: []*Column{},
 		details: []*Column{},
+		data:    Json{},
 		new:     &Json{},
 		dta:     &Json{},
 		as:      1,
@@ -343,7 +344,6 @@ func (c *Linq) Query() (Items, error) {
 
 func (c *Linq) QueryOne() (Item, error) {
 	if c.debug {
-		console.Log(c.dta.ToString())
 		console.Log(c.sql)
 	}
 
