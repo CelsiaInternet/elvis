@@ -12,6 +12,12 @@ func (c *Model) Consolidate(linq *Linq) *Linq {
 	var result Json = Json{}
 	var source Json = Json{}
 	var col *Column
+	var dta Json = c.Model()
+
+	setValue := func(key string, val interface{}) {
+		result.Set(key, val)
+		dta.Set(key, val)
+	}
 
 	for k, v := range linq.data {
 		k = Lowcase(k)
@@ -22,7 +28,7 @@ func (c *Model) Consolidate(linq *Linq) *Linq {
 			if idx != -1 && ContainsInt([]int{TpReference}, c.Definition[idx].Tp) {
 				col = c.Definition[idx]
 				reference := linq.data.Json(k)
-				result.Set(col.name, reference.Key(col.Reference.Key))
+				setValue(col.name, reference.Key(col.Reference.Key))
 				continue
 			}
 		}
@@ -52,7 +58,7 @@ func (c *Model) Consolidate(linq *Linq) *Linq {
 				source = atribs
 			}
 		} else if ContainsInt([]int{TpColumn}, col.Tp) {
-			result.Set(k, v)
+			setValue(k, v)
 			col := c.Column(k)
 			if col.PrimaryKey || col.ForeignKey {
 				linq.references = append(linq.references, &ReferenceValue{c.Schema, c.Table, v, 1})
@@ -63,18 +69,22 @@ func (c *Model) Consolidate(linq *Linq) *Linq {
 	}
 
 	if c.UseSource && len(source) > 0 {
-		result.Set(c.SourceField, source)
+		setValue(c.SourceField, source)
 	}
 
 	linq.new = &result
+	linq.dta = &dta
 
 	return linq
 }
 
 func (c *Model) Changue(current Json, linq *Linq) *Linq {
-	var result Json = Json{}
 	var change bool
 	new := c.Consolidate(linq).new
+
+	for k, v := range current {
+		linq.dta.Set(k, v)
+	}
 
 	for k, v := range *new {
 		k = Lowcase(k)
@@ -86,7 +96,7 @@ func (c *Model) Changue(current Json, linq *Linq) *Linq {
 				change = ch
 			}
 			if ch {
-				result.Set(k, v)
+				linq.dta.Set(k, v)
 				col := c.Column(k)
 				if col.PrimaryKey || col.ForeignKey {
 					linq.references = append(linq.references, &ReferenceValue{c.Schema, c.Table, current.Str(k), -1})
@@ -97,6 +107,7 @@ func (c *Model) Changue(current Json, linq *Linq) *Linq {
 	}
 
 	linq.change = change
+
 	return linq
 }
 

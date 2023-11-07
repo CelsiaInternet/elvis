@@ -109,6 +109,7 @@ type Linq struct {
 	details    []*Column
 	data       Json
 	new        *Json
+	dta        *Json
 	change     bool
 	references []*ReferenceValue
 	debug      bool
@@ -172,6 +173,8 @@ func NewLinq(tp int, act int, model *Model, as ...string) *Linq {
 		orderBy: []*OrderBy{},
 		groupBy: []*Column{},
 		details: []*Column{},
+		new:     &Json{},
+		dta:     &Json{},
 		as:      1,
 	}
 }
@@ -316,14 +319,15 @@ func (c *Linq) ToCols(sel ...any) []*Column {
 * Query
 **/
 func (c *Linq) Query() (Items, error) {
+	if c.debug {
+		console.Log(c.dta.ToString())
+		console.Log(c.sql)
+	}
+
 	if c.Tp == TpData {
 		result, err := DBQueryData(c.db, c.sql)
 		if err != nil {
 			return Items{}, err
-		}
-
-		if c.debug {
-			console.Log(c.sql)
 		}
 
 		return result, nil
@@ -334,22 +338,19 @@ func (c *Linq) Query() (Items, error) {
 		return Items{}, err
 	}
 
-	if c.debug {
-		console.Log(c.sql)
-	}
-
 	return result, nil
 }
 
 func (c *Linq) QueryOne() (Item, error) {
+	if c.debug {
+		console.Log(c.dta.ToString())
+		console.Log(c.sql)
+	}
+
 	if c.Tp == TpData {
 		result, err := DBQueryDataOne(c.db, c.sql)
 		if err != nil {
 			return Item{}, err
-		}
-
-		if c.debug {
-			console.Log(c.sql)
 		}
 
 		return result, nil
@@ -360,19 +361,16 @@ func (c *Linq) QueryOne() (Item, error) {
 		return Item{}, err
 	}
 
-	if c.debug {
-		console.Log(c.sql)
-	}
-
 	return result, nil
 }
 
 func (c *Linq) QueryCount() int {
-	result := DBQueryCount(c.db, c.sql)
-
 	if c.debug {
+		console.Log(c.dta.ToString())
 		console.Log(c.sql)
 	}
+
+	result := DBQueryCount(c.db, c.sql)
 
 	return result
 }

@@ -117,6 +117,14 @@ func (c *Model) Model() Json {
 
 		} else if col.Type == "JSONB" {
 			result.Set(col.name, Json{})
+		} else if col.Type == "TIMESTAMP" && col.Default == "NOW()" {
+			result.Set(col.name, Now())
+		} else if col.Type == "TIMESTAMP" && col.Default == "NULL" {
+			result.Set(col.name, nil)
+		} else if col.Type == "BOOLEAN" && col.Default == "TRUE" {
+			result.Set(col.name, true)
+		} else if col.Type == "BOOLEAN" && col.Default == "FALSE" {
+			result.Set(col.name, false)
 		} else {
 			result.Set(col.name, col.Default)
 		}
