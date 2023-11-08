@@ -12,7 +12,11 @@ func (c *Model) Consolidate(current Json, linq *Linq) *Linq {
 	var col *Column
 	var source Json = Json{}
 	var dta Json = Json{}
-	var new Json = current
+	var new Json = Json{}
+	
+	for k, v := range current {
+		new.Set(k, v)
+	}
 
 	setValue := func(key string, val interface{}) {
 		dta.Set(key, val)
@@ -79,7 +83,7 @@ func (c *Model) Consolidate(current Json, linq *Linq) *Linq {
 }
 
 func (c *Model) Changue(current Json, linq *Linq) *Linq {
-	var change bool
+	var change bool	
 	dta := c.Consolidate(current, linq).dta
 
 	for k, v := range *dta {
