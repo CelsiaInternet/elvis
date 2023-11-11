@@ -2,8 +2,8 @@ package linq
 
 import (
 	"github.com/cgalvisleon/elvis/jdb"
-	"github.com/cgalvisleon/elvis/json"
-	"github.com/cgalvisleon/elvis/utilities"
+	ej "github.com/cgalvisleon/elvis/json"
+	utl "github.com/cgalvisleon/elvis/utilities"
 )
 
 const TpColumn = 0
@@ -25,11 +25,11 @@ type Col struct {
 }
 
 func (c *Col) Up() string {
-	return utilities.Uppcase(c.name)
+	return utl.Uppcase(c.name)
 }
 
 func (c *Col) Low() string {
-	return utilities.Lowcase(c.name)
+	return utl.Lowcase(c.name)
 }
 
 func (c *Col) Cast(cast string) *Col {
@@ -47,17 +47,17 @@ func (c *Col) As() string {
 }
 
 func (c *Col) AsUp() string {
-	return utilities.Uppcase(c.As())
+	return utl.Uppcase(c.As())
 }
 
 func (c *Col) AsLow() string {
-	return utilities.Lowcase(c.As())
+	return utl.Lowcase(c.As())
 }
 
 /**
 *
 **/
-type Details func(col *Column, data *json.Json)
+type Details func(col *Column, data *ej.Json)
 
 type Column struct {
 	Model       *Model
@@ -83,8 +83,8 @@ type Column struct {
 	cast        string
 }
 
-func (c *Column) describe() json.Json {
-	return json.Json{
+func (c *Column) describe() ej.Json {
+	return ej.Json{
 		"name":        c.name,
 		"description": c.Description,
 		"type":        c.Type,
@@ -99,18 +99,18 @@ func (c *Column) describe() json.Json {
 	}
 }
 
-func (c *Column) Describe() json.Json {
-	var atribs []json.Json = []json.Json{}
+func (c *Column) Describe() ej.Json {
+	var atribs []ej.Json = []ej.Json{}
 	for _, atrib := range c.Atribs {
 		atribs = append(atribs, atrib.describe())
 	}
 
-	reference := json.Json{}
+	reference := ej.Json{}
 	if c.Reference != nil {
 		reference = c.Reference.Describe()
 	}
 
-	return json.Json{
+	return ej.Json{
 		"name":        c.name,
 		"description": c.Description,
 		"type":        c.Type,
@@ -129,7 +129,7 @@ func NewColumn(model *Model, name, description, _type string, _default any) *Col
 	result := &Column{
 		Model:       model,
 		Tp:          TpColumn,
-		name:        utilities.Uppcase(name),
+		name:        utl.Uppcase(name),
 		Description: description,
 		Type:        _type,
 		Default:     _default,
@@ -138,31 +138,31 @@ func NewColumn(model *Model, name, description, _type string, _default any) *Col
 	}
 
 	if !model.UseDateMake {
-		model.UseDateMake = utilities.Uppcase(result.name) == utilities.Uppcase(model.DateMakeField)
+		model.UseDateMake = utl.Uppcase(result.name) == utl.Uppcase(model.DateMakeField)
 	}
 
 	if !model.UseDateUpdate {
-		model.UseDateUpdate = utilities.Uppcase(result.name) == utilities.Uppcase(model.DateUpdateField)
+		model.UseDateUpdate = utl.Uppcase(result.name) == utl.Uppcase(model.DateUpdateField)
 	}
 
 	if !model.UseState {
-		model.UseState = utilities.Uppcase(result.name) == utilities.Uppcase(model.StateField)
+		model.UseState = utl.Uppcase(result.name) == utl.Uppcase(model.StateField)
 	}
 
 	if !model.UseRecycle {
-		model.UseRecycle = utilities.Uppcase(result.name) == utilities.Uppcase(model.StateField)
+		model.UseRecycle = utl.Uppcase(result.name) == utl.Uppcase(model.StateField)
 	}
 
 	if !model.UseProject {
-		model.UseProject = utilities.Uppcase(result.name) == utilities.Uppcase(model.ProjectField)
+		model.UseProject = utl.Uppcase(result.name) == utl.Uppcase(model.ProjectField)
 	}
 
 	if !model.UseIndex {
-		model.UseIndex = utilities.Uppcase(result.name) == utilities.Uppcase(model.IndexField)
+		model.UseIndex = utl.Uppcase(result.name) == utl.Uppcase(model.IndexField)
 	}
 
 	if !model.UseSource {
-		model.UseSource = utilities.Uppcase(result.name) == utilities.Uppcase(model.SourceField)
+		model.UseSource = utl.Uppcase(result.name) == utl.Uppcase(model.SourceField)
 	}
 
 	model.Definition = append(model.Definition, result)
@@ -173,7 +173,7 @@ func NewVirtualAtrib(model *Model, name, description, _type string, _default any
 	result := &Column{
 		Model:       model,
 		Tp:          TpColumn,
-		name:        utilities.Uppcase(name),
+		name:        utl.Uppcase(name),
 		Description: description,
 		Type:        _type,
 		Default:     _default,
@@ -194,37 +194,37 @@ func (c *Column) DDL() string {
 		result = c.Reference.DDL()
 	}
 
-	_default := utilities.NewAny(c.Default)
+	_default := utl.NewAny(c.Default)
 
 	if _default.String() == "NOW()" {
-		result = utilities.Append(`DEFAULT NOW()`, result, " ")
+		result = utl.Append(`DEFAULT NOW()`, result, " ")
 	} else {
-		result = utilities.Append(utilities.Format(`DEFAULT %v`, json.Quoted(c.Default)), result, " ")
+		result = utl.Append(utl.Format(`DEFAULT %v`, ej.Quoted(c.Default)), result, " ")
 	}
 
 	if len(c.Type) > 0 {
-		result = utilities.Append(utilities.Uppcase(c.Type), result, " ")
+		result = utl.Append(utl.Uppcase(c.Type), result, " ")
 	}
 	if len(c.name) > 0 {
-		result = utilities.Append(utilities.Uppcase(c.name), result, " ")
+		result = utl.Append(utl.Uppcase(c.name), result, " ")
 	}
 
 	return result
 }
 
 func (c *Column) DDLIndex() string {
-	return jdb.SQLDDL(`CREATE INDEX IF NOT EXISTS $2_$3_IDX ON $1($3);`, utilities.Lowcase(c.Model.Name), utilities.Uppcase(c.Model.Table), utilities.Uppcase(c.name))
+	return jdb.SQLDDL(`CREATE INDEX IF NOT EXISTS $2_$3_IDX ON $1($3);`, utl.Lowcase(c.Model.Name), utl.Uppcase(c.Model.Table), utl.Uppcase(c.name))
 }
 
 /**
 *
 **/
 func (c *Column) Up() string {
-	return utilities.Uppcase(c.name)
+	return utl.Uppcase(c.name)
 }
 
 func (c *Column) Low() string {
-	return utilities.Lowcase(c.name)
+	return utl.Lowcase(c.name)
 }
 
 /**
@@ -234,36 +234,36 @@ func (c *Column) As(linq *Linq) string {
 	switch c.Tp {
 	case TpColumn:
 		from := linq.GetFrom(c)
-		return utilities.Append(from.As(), c.Up(), ".")
+		return utl.Append(from.As(), c.Up(), ".")
 	case TpAtrib:
 		from := linq.GetFrom(c)
-		col := utilities.Append(from.As(), c.Column.Up(), ".")
-		return utilities.Format(`%s#>>'{%s}'`, col, c.Low())
+		col := utl.Append(from.As(), c.Column.Up(), ".")
+		return utl.Format(`%s#>>'{%s}'`, col, c.Low())
 	case TpClone:
-		return utilities.Append(utilities.Uppcase(c.from), c.Up(), ".")
+		return utl.Append(utl.Uppcase(c.from), c.Up(), ".")
 	case TpReference:
 		from := linq.GetFrom(c)
 		as := linq.GetAs()
-		as = utilities.Format(`A%s`, as)
-		fn := utilities.Format(`%s.%s`, as, c.Reference.Reference.Up())
-		fm := utilities.Format(`%s AS %s`, c.Reference.Reference.Model.Name, as)
-		key := utilities.Format(`%s.%s`, as, c.Reference.Key)
-		Fkey := utilities.Append(from.As(), c.Reference.Fkey, ".")
-		return utilities.Format(`(SELECT %s FROM %s WHERE %s=%v LIMIT 1)`, fn, fm, key, Fkey)
+		as = utl.Format(`A%s`, as)
+		fn := utl.Format(`%s.%s`, as, c.Reference.Reference.Up())
+		fm := utl.Format(`%s AS %s`, c.Reference.Reference.Model.Name, as)
+		key := utl.Format(`%s.%s`, as, c.Reference.Key)
+		Fkey := utl.Append(from.As(), c.Reference.Fkey, ".")
+		return utl.Format(`(SELECT %s FROM %s WHERE %s=%v LIMIT 1)`, fn, fm, key, Fkey)
 	case TpDetail:
-		return utilities.Format(`%v`, json.Quoted(c.Default))
+		return utl.Format(`%v`, ej.Quoted(c.Default))
 	case TpFunction:
 		def := FunctionDef(linq, c)
-		return utilities.Append(def, c.Up(), " AS ")
+		return utl.Append(def, c.Up(), " AS ")
 	case TpField:
 		as := linq.As(c)
 		if len(as) > 0 {
-			as = utilities.Format(`%s.`, as)
+			as = utl.Format(`%s.`, as)
 		}
-		def := utilities.Format(`(%v)`, c.Definition)
-		return utilities.ReplaceAll(def, []string{"{AS}.", "{as}.", "{AS}", "{as}"}, as)
+		def := utl.Format(`(%v)`, c.Definition)
+		return utl.ReplaceAll(def, []string{"{AS}.", "{as}.", "{AS}", "{as}"}, as)
 	default:
-		return utilities.Format(`%s`, c.Up())
+		return utl.Format(`%s`, c.Up())
 	}
 }
 
@@ -277,57 +277,57 @@ func (c *Column) Def(linq *Linq) string {
 		switch c.Tp {
 		case TpColumn:
 			def := c.As(linq)
-			return utilities.Format(`'%s', %s`, c.Low(), def)
+			return utl.Format(`'%s', %s`, c.Low(), def)
 		case TpAtrib:
 			def := c.As(linq)
-			def = utilities.Format(`COALESCE(%s, %v)`, def, json.Quoted(c.Default))
-			return utilities.Format(`'%s', %s`, c.Low(), def)
+			def = utl.Format(`COALESCE(%s, %v)`, def, ej.Quoted(c.Default))
+			return utl.Format(`'%s', %s`, c.Low(), def)
 		case TpClone:
 			return c.As(linq)
 		case TpReference:
-			Fkey := utilities.Append(from.As(), c.Reference.Fkey, ".")
+			Fkey := utl.Append(from.As(), c.Reference.Fkey, ".")
 			def := c.As(linq)
-			def = utilities.Format(`jsonb_build_object('_id', %s, 'name', %s)`, Fkey, def)
-			return utilities.Format(`'%s', %s`, c.Title, def)
+			def = utl.Format(`jsonb_build_object('_id', %s, 'name', %s)`, Fkey, def)
+			return utl.Format(`'%s', %s`, c.Title, def)
 		case TpDetail:
-			def := json.Quoted(c.Default)
-			return utilities.Format(`'%s', %s`, c.Low(), def)
+			def := ej.Quoted(c.Default)
+			return utl.Format(`'%s', %s`, c.Low(), def)
 		case TpFunction:
 			def := FunctionDef(linq, c)
-			return utilities.Format(`'%s', %s`, c.Low(), def)
+			return utl.Format(`'%s', %s`, c.Low(), def)
 		case TpField:
 			def := c.As(linq)
-			return utilities.Format(`'%s', %s`, c.Low(), def)
+			return utl.Format(`'%s', %s`, c.Low(), def)
 		default:
-			def := json.Quoted(c.Default)
-			return utilities.Format(`'%s', %s`, c.Low(), def)
+			def := ej.Quoted(c.Default)
+			return utl.Format(`'%s', %s`, c.Low(), def)
 		}
 	}
 
 	switch c.Tp {
 	case TpColumn:
-		return utilities.Append(from.As(), c.Up(), ".")
+		return utl.Append(from.As(), c.Up(), ".")
 	case TpAtrib:
-		col := utilities.Append(from.As(), c.Column.Up(), ".")
-		def := utilities.Format(`%s#>>'{%s}'`, col, c.Low())
-		def = utilities.Format(`COALESCE(%s, %v)`, def, json.Quoted(c.Default))
-		return utilities.Format(`%s AS %s`, def, c.Up())
+		col := utl.Append(from.As(), c.Column.Up(), ".")
+		def := utl.Format(`%s#>>'{%s}'`, col, c.Low())
+		def = utl.Format(`COALESCE(%s, %v)`, def, ej.Quoted(c.Default))
+		return utl.Format(`%s AS %s`, def, c.Up())
 	case TpClone:
-		return utilities.Append(utilities.Uppcase(c.from), c.Up(), ".")
+		return utl.Append(utl.Uppcase(c.from), c.Up(), ".")
 	case TpReference:
 		def := c.As(linq)
-		return utilities.Format(`%s AS %s`, def, utilities.Uppcase(c.Title))
+		return utl.Format(`%s AS %s`, def, utl.Uppcase(c.Title))
 	case TpDetail:
-		def := json.Quoted(c.Default)
-		return utilities.Format(`%v AS %s`, def, c.Up())
+		def := ej.Quoted(c.Default)
+		return utl.Format(`%v AS %s`, def, c.Up())
 	case TpFunction:
 		def := FunctionDef(linq, c)
-		return utilities.Format(`%s AS %s`, def, c.Up())
+		return utl.Format(`%s AS %s`, def, c.Up())
 	case TpField:
 		def := c.As(linq)
-		return utilities.Format(`%s AS %s`, def, c.Up())
+		return utl.Format(`%s AS %s`, def, c.Up())
 	default:
-		return utilities.Format(`%s`, c.Up())
+		return utl.Format(`%s`, c.Up())
 	}
 }
 

@@ -74,7 +74,7 @@ import (
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/middleware"
-	"github.com/cgalvisleon/elvis/utilities"
+	utl "github.com/cgalvisleon/elvis/utilities"
 	"github.com/go-chi/chi"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/rs/cors"
@@ -105,7 +105,7 @@ func New() (*Server, error) {
 		r.Mount("/v1", latest)
 
 		handler := cors.AllowAll().Handler(r)
-		addr := utilities.Format(":%d", port)
+		addr := utl.Format(":%d", port)
 		serv := &http.Server{
 			Addr:    addr,
 			Handler: handler,
@@ -173,7 +173,7 @@ import (
 	"github.com/cgalvisleon/elvis/cache"
 	"github.com/cgalvisleon/elvis/event"
 	"github.com/cgalvisleon/elvis/jdb"
-	"github.com/cgalvisleon/elvis/utilities"
+	utl "github.com/cgalvisleon/elvis/utilities"
 	"github.com/cgalvisleon/elvis/ws"
 	"github.com/dimiro1/banner"
 	"github.com/go-chi/chi"
@@ -220,7 +220,7 @@ func Close() {
 func NewRpc(port int) net.Listener {
 	rpc.HandleHTTP()
 
-	result, err := net.Listen("tcp", utilities.Address("0.0.0.0", port))
+	result, err := net.Listen("tcp", utl.Address("0.0.0.0", port))
 	if err != nil {
 		panic(err)
 	}
@@ -230,7 +230,7 @@ func NewRpc(port int) net.Listener {
 
 func Banner() {
 	time.Sleep(3 * time.Second)
-	templ := utilities.BannerTitle(pkg.PackageName, pkg.PackageVersion, 4)
+	templ := utl.BannerTitle(pkg.PackageName, pkg.PackageVersion, 4)
 	banner.InitString(colorable.NewColorableStdout(), true, true, templ)
 	fmt.Println()
 }
@@ -241,7 +241,7 @@ const modelEvent = `package $1
 import (
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/event"
-	"github.com/cgalvisleon/elvis/json"
+	ej "github.com/cgalvisleon/elvis/json"
 )
 
 func initEvents() {
@@ -253,7 +253,7 @@ func initEvents() {
 }
 
 func eventAction(m event.CreatedEvenMessage) {
-	data, err := json.ToJson(m.Data)
+	data, err := ej.ToJson(m.Data)
 	if err != nil {
 		console.Error(err)
 	}
@@ -300,10 +300,10 @@ import (
 	"net/rpc"
 
 	"github.com/cgalvisleon/elvis/console"
-	"github.com/cgalvisleon/elvis/json"
+	ej "github.com/cgalvisleon/elvis/json"
 )
 
-type Service json.Item
+type Service ej.Item
 
 func InitRpc() error {
 	service := new(Service)
@@ -317,9 +317,9 @@ func InitRpc() error {
 }
 
 func (c *Service) Version(require []byte, response *[]byte) error {
-	result := json.Item{
+	result := ej.Item{
 		Ok: true,
-		Result: json.Json{
+		Result: ej.Json{
 			"service": PackageName,
 			"host":    HostName,
 			"help":    "",
@@ -347,18 +347,18 @@ import (
 
 	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/jdb"
-	"github.com/cgalvisleon/elvis/json"
+	ej "github.com/cgalvisleon/elvis/json"
 )
 
 type Controller struct {
 	Db *jdb.Conn
 }
 
-func (c *Controller) Version(ctx context.Context) (json.Json, error) {
+func (c *Controller) Version(ctx context.Context) (ej.Json, error) {
 	company := envar.EnvarStr("", "COMPANY")
 	web := envar.EnvarStr("", "WEB")
 	version := envar.EnvarStr("", "VERSION")
-  service := json.Json{
+  service := ej.Json{
 		"version": version,
 		"service": PackageName,
 		"host":    HostName,
@@ -376,7 +376,7 @@ func (c *Controller) Init(ctx context.Context) {
 }
 
 type Repository interface {
-	Version(ctx context.Context) (json.Json, error)
+	Version(ctx context.Context) (ej.Json, error)
 	Init(ctx context.Context)
 }
 `
@@ -466,7 +466,7 @@ import (
 	"github.com/cgalvisleon/elvis/linq"
 	"github.com/cgalvisleon/elvis/msg"
 	"github.com/cgalvisleon/elvis/response"
-	"github.com/cgalvisleon/elvis/utilities"
+	utl "github.com/cgalvisleon/elvis/utilities"
 	"github.com/go-chi/chi"
 )
 
@@ -501,22 +501,22 @@ func Define$2() error {
 		"index",
 	})
 	$2.IntegrityAtrib(true)
-	$2.Trigger(linq.BeforeInsert, func(model *linq.Model, old, new *json.Json, data json.Json) error {
+	$2.Trigger(linq.BeforeInsert, func(model *linq.Model, old, new *ej.Json, data ej.Json) error {
 		return nil
 	})
-	$2.Trigger(linq.AfterInsert, func(model *linq.Model, old, new *json.Json, data json.Json) error {
+	$2.Trigger(linq.AfterInsert, func(model *linq.Model, old, new *ej.Json, data ej.Json) error {
 		return nil
 	})
-	$2.Trigger(linq.BeforeUpdate, func(model *linq.Model, old, new *json.Json, data json.Json) error {
+	$2.Trigger(linq.BeforeUpdate, func(model *linq.Model, old, new *ej.Json, data ej.Json) error {
 		return nil
 	})
-	$2.Trigger(linq.AfterUpdate, func(model *linq.Model, old, new *json.Json, data json.Json) error {
+	$2.Trigger(linq.AfterUpdate, func(model *linq.Model, old, new *ej.Json, data ej.Json) error {
 		return nil
 	})
-	$2.Trigger(linq.BeforeDelete, func(model *linq.Model, old, new *json.Json, data json.Json) error {
+	$2.Trigger(linq.BeforeDelete, func(model *linq.Model, old, new *ej.Json, data ej.Json) error {
 		return nil
 	})
-	$2.Trigger(linq.AfterDelete, func(model *linq.Model, old, new *json.Json, data json.Json) error {
+	$2.Trigger(linq.AfterDelete, func(model *linq.Model, old, new *ej.Json, data ej.Json) error {
 		return nil
 	})
 	
@@ -530,22 +530,22 @@ func Define$2() error {
 /**
 *	Handler for CRUD data
  */
-func Get$2ById(id string) (json.Item, error) {
+func Get$2ById(id string) (ej.Item, error) {
 	return $2.Select().
 		Where($2.Column("_id").Eq(id)).
 		First()
 }
 
-func UpSert$2(project_id, id string, data json.Json) (json.Item, error) {
-	if !utilities.ValidId(project_id) {
-		return json.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "project_id")
+func UpSert$2(project_id, id string, data ej.Json) (ej.Item, error) {
+	if !utl.ValidId(project_id) {
+		return ej.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "project_id")
 	}
 
-	if !utilities.ValidId(id) {
-		return json.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "_id")
+	if !utl.ValidId(id) {
+		return ej.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "_id")
 	}
 
-	id = utilities.GenId(id)
+	id = utl.GenId(id)
 	data["project_id"] = project_id
 	data["_id"] = id
 	return $2.Upsert(data).
@@ -553,12 +553,12 @@ func UpSert$2(project_id, id string, data json.Json) (json.Item, error) {
 		Command()
 }
 
-func State$2(id, state string) (json.Item, error) {
-	if !utilities.ValidId(state) {
-		return json.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "state")
+func State$2(id, state string) (ej.Item, error) {
+	if !utl.ValidId(state) {
+		return ej.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "state")
 	}
 
-	return $2.Upsert(json.Json{
+	return $2.Upsert(ej.Json{
 		"_state": state,
 	}).
 		Where($2.Column("_id").Eq(id)).
@@ -566,11 +566,11 @@ func State$2(id, state string) (json.Item, error) {
 		Command()
 }
 
-func Delete$2(id string) (json.Item, error) {
-	return State$2(id, utilities.FOR_DELETE)
+func Delete$2(id string) (ej.Item, error) {
+	return State$2(id, utl.FOR_DELETE)
 }
 
-func All$2(project_id, state, search string, page, rows int, _select string) (json.List, error) {	
+func All$2(project_id, state, search string, page, rows int, _select string) (ej.List, error) {	
 	if state == "" {
 		state = ACTIVE
 	}

@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	. "github.com/cgalvisleon/elvis/json"
+	ej "github.com/cgalvisleon/elvis/json"
 	"github.com/go-chi/chi"
 )
 
@@ -14,11 +14,11 @@ type Result struct {
 	Result interface{} `json:"result"`
 }
 
-func GetBody(r *http.Request) (Json, error) {
-	var body Json
+func GetBody(r *http.Request) (ej.Json, error) {
+	var body ej.Json
 	err := json.NewDecoder(r.Body).Decode(&body)
 	if err != nil {
-		return Json{}, err
+		return ej.Json{}, err
 	}
 	defer r.Body.Close()
 
@@ -53,8 +53,8 @@ func JSON(w http.ResponseWriter, r *http.Request, statusCode int, dt interface{}
 	return WriteResponse(w, statusCode, j)
 }
 
-func ITEM(w http.ResponseWriter, r *http.Request, statusCode int, dt Item) error {
-	if &dt == (&Item{}) {
+func ITEM(w http.ResponseWriter, r *http.Request, statusCode int, dt ej.Item) error {
+	if &dt == (&ej.Item{}) {
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(statusCode)
 		return nil
@@ -68,8 +68,8 @@ func ITEM(w http.ResponseWriter, r *http.Request, statusCode int, dt Item) error
 	return WriteResponse(w, statusCode, j)
 }
 
-func ITEMS(w http.ResponseWriter, r *http.Request, statusCode int, dt Items) error {
-	if &dt == (&Items{}) {
+func ITEMS(w http.ResponseWriter, r *http.Request, statusCode int, dt ej.Items) error {
+	if &dt == (&ej.Items{}) {
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(statusCode)
 		return nil
@@ -84,7 +84,7 @@ func ITEMS(w http.ResponseWriter, r *http.Request, statusCode int, dt Items) err
 }
 
 func HTTPError(w http.ResponseWriter, r *http.Request, statusCode int, message string) error {
-	msg := Json{
+	msg := ej.Json{
 		"message": message,
 	}
 

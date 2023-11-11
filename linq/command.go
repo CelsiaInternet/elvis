@@ -1,7 +1,7 @@
 package linq
 
 import (
-	"github.com/cgalvisleon/elvis/json"
+	ej "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/msg"
 )
 
@@ -14,7 +14,7 @@ func (c *Linq) Debug() *Linq {
 /**
 * Executors
 **/
-func (c *Linq) Command() (json.Item, error) {
+func (c *Linq) Command() (ej.Item, error) {
 	if c.Act == ActInsert {
 		return c.commandInsert()
 	}
@@ -31,23 +31,23 @@ func (c *Linq) Command() (json.Item, error) {
 		return c.commandUpsert()
 	}
 
-	return json.Item{}, nil
+	return ej.Item{}, nil
 }
 
 /**
 * Exec
 **/
-func (c *Linq) commandInsert() (json.Item, error) {
+func (c *Linq) commandInsert() (ej.Item, error) {
 	if len(c.where) > 0 {
 		current, err := c.Current()
 		if err != nil {
-			return json.Item{}, err
+			return ej.Item{}, err
 		}
 
 		if current.Ok {
-			return json.Item{
+			return ej.Item{
 				Ok: !current.Ok,
-				Result: json.Json{
+				Result: ej.Json{
 					"message": msg.RECORD_FOUND,
 				},
 			}, nil
@@ -57,16 +57,16 @@ func (c *Linq) commandInsert() (json.Item, error) {
 	return c.insert()
 }
 
-func (c *Linq) commandUpdate() (json.Item, error) {
+func (c *Linq) commandUpdate() (ej.Item, error) {
 	current, err := c.Current()
 	if err != nil {
-		return json.Item{}, err
+		return ej.Item{}, err
 	}
 
 	if !current.Ok {
-		return json.Item{
+		return ej.Item{
 			Ok: current.Ok,
-			Result: json.Json{
+			Result: ej.Json{
 				"message": msg.RECORD_NOT_FOUND,
 			},
 		}, nil
@@ -75,16 +75,16 @@ func (c *Linq) commandUpdate() (json.Item, error) {
 	return c.update(current.Result)
 }
 
-func (c *Linq) commandDelete() (json.Item, error) {
+func (c *Linq) commandDelete() (ej.Item, error) {
 	current, err := c.Current()
 	if err != nil {
-		return json.Item{}, err
+		return ej.Item{}, err
 	}
 
 	if !current.Ok {
-		return json.Item{
+		return ej.Item{
 			Ok: current.Ok,
-			Result: json.Json{
+			Result: ej.Json{
 				"message": msg.RECORD_NOT_FOUND,
 			},
 		}, nil
@@ -93,10 +93,10 @@ func (c *Linq) commandDelete() (json.Item, error) {
 	return c.delete(current.Result)
 }
 
-func (c *Linq) commandUpsert() (json.Item, error) {
+func (c *Linq) commandUpsert() (ej.Item, error) {
 	current, err := c.Current()
 	if err != nil {
-		return json.Item{}, err
+		return ej.Item{}, err
 	}
 
 	if current.Ok {
@@ -109,7 +109,7 @@ func (c *Linq) commandUpsert() (json.Item, error) {
 /**
 *
 **/
-func (c *Linq) Current() (json.Item, error) {
+func (c *Linq) Current() (ej.Item, error) {
 	c.sql = c.SqlCurrent()
 
 	return c.QueryOne()
@@ -118,14 +118,14 @@ func (c *Linq) Current() (json.Item, error) {
 /**
 * Basic operation
 **/
-func (c *Linq) insert() (json.Item, error) {
+func (c *Linq) insert() (ej.Item, error) {
 	c.PrepareInsert()
 	model := c.from[0].model
 
 	for _, trigger := range model.BeforeInsert {
 		err := trigger(model, nil, c.new, c.data)
 		if err != nil {
-			return json.Item{}, err
+			return ej.Item{}, err
 		}
 	}
 
@@ -133,7 +133,7 @@ func (c *Linq) insert() (json.Item, error) {
 
 	item, err := c.QueryOne()
 	if err != nil {
-		return json.Item{}, err
+		return ej.Item{}, err
 	}
 
 	if !item.Ok {
@@ -145,7 +145,7 @@ func (c *Linq) insert() (json.Item, error) {
 	for _, trigger := range model.AfterInsert {
 		err := trigger(model, nil, c.new, c.data)
 		if err != nil {
-			return json.Item{}, err
+			return ej.Item{}, err
 		}
 	}
 
@@ -158,12 +158,12 @@ func (c *Linq) insert() (json.Item, error) {
 	return item, nil
 }
 
-func (c *Linq) update(current json.Json) (json.Item, error) {
+func (c *Linq) update(current ej.Json) (ej.Item, error) {
 	changue := c.PrepareUpdate(current)
 	if !changue {
-		return json.Item{
+		return ej.Item{
 			Ok: changue,
-			Result: json.Json{
+			Result: ej.Json{
 				"message": msg.RECORD_NOT_CHANGE,
 			},
 		}, nil
@@ -174,7 +174,7 @@ func (c *Linq) update(current json.Json) (json.Item, error) {
 	for _, trigger := range model.BeforeUpdate {
 		err := trigger(model, &current, c.new, c.data)
 		if err != nil {
-			return json.Item{}, err
+			return ej.Item{}, err
 		}
 	}
 
@@ -182,7 +182,7 @@ func (c *Linq) update(current json.Json) (json.Item, error) {
 
 	item, err := c.QueryOne()
 	if err != nil {
-		return json.Item{}, err
+		return ej.Item{}, err
 	}
 
 	if !item.Ok {
@@ -194,7 +194,7 @@ func (c *Linq) update(current json.Json) (json.Item, error) {
 	for _, trigger := range model.AfterUpdate {
 		err := trigger(model, &current, c.new, c.data)
 		if err != nil {
-			return json.Item{}, err
+			return ej.Item{}, err
 		}
 	}
 
@@ -207,14 +207,14 @@ func (c *Linq) update(current json.Json) (json.Item, error) {
 	return item, nil
 }
 
-func (c *Linq) delete(current json.Json) (json.Item, error) {
+func (c *Linq) delete(current ej.Json) (ej.Item, error) {
 	c.PrepareDelete(current)
 	model := c.from[0].model
 
 	for _, trigger := range model.BeforeDelete {
 		err := trigger(model, &current, nil, c.data)
 		if err != nil {
-			return json.Item{}, err
+			return ej.Item{}, err
 		}
 	}
 
@@ -222,7 +222,7 @@ func (c *Linq) delete(current json.Json) (json.Item, error) {
 
 	item, err := c.QueryOne()
 	if err != nil {
-		return json.Item{}, err
+		return ej.Item{}, err
 	}
 
 	if !item.Ok {
@@ -232,7 +232,7 @@ func (c *Linq) delete(current json.Json) (json.Item, error) {
 	for _, trigger := range model.AfterDelete {
 		err := trigger(model, &current, nil, c.data)
 		if err != nil {
-			return json.Item{}, err
+			return ej.Item{}, err
 		}
 	}
 

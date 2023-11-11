@@ -1,9 +1,9 @@
 package create
 
-import "github.com/cgalvisleon/elvis/utilities"
+import utl "github.com/cgalvisleon/elvis/utilities"
 
 func MakeWeb(name string) error {
-	_, err := utilities.MakeFolder(name, "web")
+	_, err := utl.MakeFolder(name, "web")
 	if err != nil {
 		return err
 	}
