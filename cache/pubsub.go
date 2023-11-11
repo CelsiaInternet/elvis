@@ -5,12 +5,12 @@ import (
 	"fmt"
 
 	"github.com/cgalvisleon/elvis/logs"
-	. "github.com/cgalvisleon/elvis/msg"
+	"github.com/cgalvisleon/elvis/msg"
 )
 
 func PubCtx(ctx context.Context, channel string, message interface{}) error {
 	if conn == nil {
-		return logs.Errorm(ERR_NOT_CACHE_SERVICE)
+		return logs.Errorm(msg.ERR_NOT_CACHE_SERVICE)
 	}
 
 	err := conn.db.Publish(ctx, channel, message).Err()

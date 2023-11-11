@@ -6,14 +6,14 @@ import (
 	"strconv"
 	"time"
 
-	. "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/logs"
-	. "github.com/cgalvisleon/elvis/msg"
+	"github.com/cgalvisleon/elvis/msg"
 )
 
 func SetCtx(ctx context.Context, key, val string, second time.Duration) error {
 	if conn == nil {
-		return logs.Errorm(ERR_NOT_CACHE_SERVICE)
+		return logs.Errorm(msg.ERR_NOT_CACHE_SERVICE)
 	}
 
 	duration := second * time.Second
@@ -28,7 +28,7 @@ func SetCtx(ctx context.Context, key, val string, second time.Duration) error {
 
 func GetCtx(ctx context.Context, key string) (string, error) {
 	if conn == nil {
-		return "", logs.Errorm(ERR_NOT_CACHE_SERVICE)
+		return "", logs.Errorm(msg.ERR_NOT_CACHE_SERVICE)
 	}
 
 	result, err := conn.db.Get(ctx, key).Result()
@@ -41,7 +41,7 @@ func GetCtx(ctx context.Context, key string) (string, error) {
 
 func DelCtx(ctx context.Context, key string) (int64, error) {
 	if conn == nil {
-		return 0, logs.Errorm(ERR_NOT_CACHE_SERVICE)
+		return 0, logs.Errorm(msg.ERR_NOT_CACHE_SERVICE)
 	}
 
 	intCmd := conn.db.Del(ctx, key)
@@ -51,7 +51,7 @@ func DelCtx(ctx context.Context, key string) (int64, error) {
 
 func HSetCtx(ctx context.Context, key string, val map[string]string) error {
 	if conn == nil {
-		return logs.Errorm(ERR_NOT_CACHE_SERVICE)
+		return logs.Errorm(msg.ERR_NOT_CACHE_SERVICE)
 	}
 
 	for k, v := range val {
@@ -66,7 +66,7 @@ func HSetCtx(ctx context.Context, key string, val map[string]string) error {
 
 func HGetCtx(ctx context.Context, key string) (map[string]string, error) {
 	if conn == nil {
-		return map[string]string{}, logs.Errorm(ERR_NOT_CACHE_SERVICE)
+		return map[string]string{}, logs.Errorm(msg.ERR_NOT_CACHE_SERVICE)
 	}
 
 	result := conn.db.HGetAll(ctx, key).Val()
@@ -76,7 +76,7 @@ func HGetCtx(ctx context.Context, key string) (map[string]string, error) {
 
 func HDelCtx(ctx context.Context, key, atr string) error {
 	if conn == nil {
-		return logs.Errorm(ERR_NOT_CACHE_SERVICE)
+		return logs.Errorm(msg.ERR_NOT_CACHE_SERVICE)
 	}
 
 	err := conn.db.Do(ctx, "HDEL", key, atr).Err()
@@ -158,11 +158,11 @@ func DelVerify(device string, key string) (int64, error) {
 	return Del(key)
 }
 
-func AllCache(search string, page, rows int) (List, error) {
+func AllCache(search string, page, rows int) (json.List, error) {
 	ctx := context.Background()
 	var cursor uint64
 	var count int64
-	var items Items = Items{}
+	var items json.Items = json.Items{}
 	offset := (page - 1) * rows
 	cursor = uint64(offset)
 	count = int64(rows)
@@ -170,7 +170,7 @@ func AllCache(search string, page, rows int) (List, error) {
 	iter := conn.db.Scan(ctx, cursor, search, count).Iterator()
 	for iter.Next(ctx) {
 		key := iter.Val()
-		items.Result = append(items.Result, Json{"key": key})
+		items.Result = append(items.Result, json.Json{"key": key})
 		items.Count++
 	}
 
