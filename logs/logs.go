@@ -36,7 +36,7 @@ func init() {
 func Logln(kind string, color string, args ...any) string {
 	kind = strings.ToUpper(kind)
 	message := fmt.Sprint(args...)
-	now := time.Now().Format("2006-01-02 15:04:05")
+	now := time.Now().Format("2006/01/02 15:04:05")
 	var result string
 
 	switch color {

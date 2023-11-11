@@ -1,14 +1,13 @@
 package create
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 
 	"github.com/manifoldco/promptui"
 )
 
-func prompCreate() {
+func PrompCreate() {
 	prompt := promptui.Select{
 		Label: "What do you want created?",
 		Items: []string{"Project", "Microservice", "Modelo", "Rpc"},
@@ -48,10 +47,10 @@ func prompCreate() {
 	}
 }
 
-func prompStr(label string) (string, error) {
+func PrompStr(label string) (string, error) {
 	validate := func(input string) error {
 		if len(input) == 0 {
-			return errors.New(fmt.Sprintf("Invalid %s", label))
+			return fmt.Errorf("invalid %s", label)
 		}
 
 		return nil
@@ -71,11 +70,11 @@ func prompStr(label string) (string, error) {
 	return result, nil
 }
 
-func prompInt(label string) (int, error) {
+func PrompInt(label string) (int, error) {
 	validate := func(input string) error {
 		_, err := strconv.Atoi(input)
 		if err != nil {
-			return errors.New(fmt.Sprintf("Invalid %s", label))
+			return fmt.Errorf("invalid %s", label)
 		}
 
 		return nil

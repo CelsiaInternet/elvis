@@ -11,15 +11,9 @@ import (
 func (c *Model) Consolidate(current Json, linq *Linq) *Linq {
 	var col *Column
 	var source Json = Json{}
-	var dta Json = Json{}
 	var new Json = Json{}
-	
-	for k, v := range current {
-		new.Set(k, v)
-	}
 
 	setValue := func(key string, val interface{}) {
-		dta.Set(key, val)
 		new.Set(key, val)
 	}
 
@@ -76,22 +70,21 @@ func (c *Model) Consolidate(current Json, linq *Linq) *Linq {
 		setValue(c.SourceField, source)
 	}
 
-	linq.dta = &dta
-	linq.new = new
+	linq.new = &new
 
 	return linq
 }
 
 func (c *Model) Changue(current Json, linq *Linq) *Linq {
-	var change bool	
-	dta := c.Consolidate(current, linq).dta
+	var change bool
+	new := c.Consolidate(current, linq).new
 
-	for k, v := range *dta {
+	for k, v := range *new {
 		k = Lowcase(k)
 		idxCol := c.ColIdx(k)
 
 		if idxCol != -1 {
-			ch := current.Str(k) != dta.Str(k)
+			ch := current.Str(k) != new.Str(k)
 			if !change {
 				change = ch
 			}
@@ -119,11 +112,11 @@ func (c *Linq) PrepareInsert() {
 	now := Now()
 
 	if model.UseDateMake {
-		c.dta.Set(model.DateMakeField, now)
+		c.new.Set(model.DateMakeField, now)
 	}
 
 	if model.UseDateUpdate {
-		c.dta.Set(model.DateUpdateField, now)
+		c.new.Set(model.DateUpdateField, now)
 	}
 }
 
@@ -136,12 +129,12 @@ func (c *Linq) PrepareUpdate(current Json) bool {
 	}
 
 	if model.UseDateMake {
-		delete(*c.dta, Lowcase(model.DateMakeField))
+		delete(*c.new, Lowcase(model.DateMakeField))
 	}
 
 	now := Now()
 	if model.UseDateUpdate {
-		c.dta.Set(model.DateUpdateField, now)
+		c.new.Set(model.DateUpdateField, now)
 	}
 
 	return c.change

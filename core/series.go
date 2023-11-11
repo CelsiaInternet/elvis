@@ -8,7 +8,7 @@ import (
 
 var (
 	existSeries bool
-	series      map[string]int = make(map[string]int)
+	series      map[string]int
 )
 
 func DefineSeries() error {
@@ -40,6 +40,19 @@ func DefineSeries() error {
 	return nil
 }
 
+/**
+*
+**/
+func EnabledSeries() bool {
+	if series == nil {
+		series = make(map[string]int)
+		existSeries, _ := ExistTable(0, "core", "SERIES")
+		return existSeries
+	}
+
+	return existSeries
+}
+
 func NextVal(tag string) int {
 	sql := `SELECT nextval($1) AS SERIE;`
 
@@ -48,13 +61,16 @@ func NextVal(tag string) int {
 		console.Error(err)
 		return 0
 	}
+	result := item.Int("serie")
 
-	return item.Int("serie")
+	return result
 }
 
-// Serires
+/**
+*
+**/
 func GetSerie(tag string) int {
-	if !existSeries {
+	if !EnabledSeries() {
 		var result int
 		tag = Replace(tag, ".", "")
 		if _, ok := series[tag]; ok {

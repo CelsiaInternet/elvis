@@ -345,7 +345,7 @@ func (c *Linq) SqlInsert() string {
 	var fields string
 	var values string
 
-	for key, val := range *c.dta {
+	for key, val := range *c.new {
 		field := Uppcase(key)
 		value := Quoted(val)
 
@@ -366,13 +366,13 @@ func (c *Linq) SqlUpdate() string {
 	model := c.from[0].model
 	var fieldValues string
 
-	for key, val := range *c.dta {
+	for key, val := range *c.new {
 		field := Uppcase(key)
 		value := Quoted(val)
 
 		if model.UseSource && field == Uppcase(model.SourceField) {
 			vals := Uppcase(model.SourceField)
-			atribs := c.dta.Json(Lowcase(field))
+			atribs := c.new.Json(Lowcase(field))
 
 			for ak, av := range atribs {
 				ak = Lowcase(ak)

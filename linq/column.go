@@ -1,9 +1,9 @@
 package linq
 
 import (
-	. "github.com/cgalvisleon/elvis/jdb"
-	. "github.com/cgalvisleon/elvis/json"
-	. "github.com/cgalvisleon/elvis/utilities"
+	"github.com/cgalvisleon/elvis/jdb"
+	"github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/utilities"
 )
 
 const TpColumn = 0
@@ -25,11 +25,11 @@ type Col struct {
 }
 
 func (c *Col) Up() string {
-	return Uppcase(c.name)
+	return utilities.Uppcase(c.name)
 }
 
 func (c *Col) Low() string {
-	return Lowcase(c.name)
+	return utilities.Lowcase(c.name)
 }
 
 func (c *Col) Cast(cast string) *Col {
@@ -47,17 +47,17 @@ func (c *Col) As() string {
 }
 
 func (c *Col) AsUp() string {
-	return Uppcase(c.As())
+	return utilities.Uppcase(c.As())
 }
 
 func (c *Col) AsLow() string {
-	return Lowcase(c.As())
+	return utilities.Lowcase(c.As())
 }
 
 /**
 *
 **/
-type Details func(col *Column, data *Json)
+type Details func(col *Column, data *json.Json)
 
 type Column struct {
 	Model       *Model
@@ -83,8 +83,8 @@ type Column struct {
 	cast        string
 }
 
-func (c *Column) describe() Json {
-	return Json{
+func (c *Column) describe() json.Json {
+	return json.Json{
 		"name":        c.name,
 		"description": c.Description,
 		"type":        c.Type,
@@ -99,18 +99,18 @@ func (c *Column) describe() Json {
 	}
 }
 
-func (c *Column) Describe() Json {
-	var atribs []Json = []Json{}
+func (c *Column) Describe() json.Json {
+	var atribs []json.Json = []json.Json{}
 	for _, atrib := range c.Atribs {
 		atribs = append(atribs, atrib.describe())
 	}
 
-	reference := Json{}
+	reference := json.Json{}
 	if c.Reference != nil {
 		reference = c.Reference.Describe()
 	}
 
-	return Json{
+	return json.Json{
 		"name":        c.name,
 		"description": c.Description,
 		"type":        c.Type,
@@ -129,7 +129,7 @@ func NewColumn(model *Model, name, description, _type string, _default any) *Col
 	result := &Column{
 		Model:       model,
 		Tp:          TpColumn,
-		name:        Uppcase(name),
+		name:        utilities.Uppcase(name),
 		Description: description,
 		Type:        _type,
 		Default:     _default,
@@ -138,31 +138,31 @@ func NewColumn(model *Model, name, description, _type string, _default any) *Col
 	}
 
 	if !model.UseDateMake {
-		model.UseDateMake = Uppcase(result.name) == Uppcase(model.DateMakeField)
+		model.UseDateMake = utilities.Uppcase(result.name) == utilities.Uppcase(model.DateMakeField)
 	}
 
 	if !model.UseDateUpdate {
-		model.UseDateUpdate = Uppcase(result.name) == Uppcase(model.DateUpdateField)
+		model.UseDateUpdate = utilities.Uppcase(result.name) == utilities.Uppcase(model.DateUpdateField)
 	}
 
 	if !model.UseState {
-		model.UseState = Uppcase(result.name) == Uppcase(model.StateField)
+		model.UseState = utilities.Uppcase(result.name) == utilities.Uppcase(model.StateField)
 	}
 
 	if !model.UseRecycle {
-		model.UseRecycle = Uppcase(result.name) == Uppcase(model.StateField)
+		model.UseRecycle = utilities.Uppcase(result.name) == utilities.Uppcase(model.StateField)
 	}
 
 	if !model.UseProject {
-		model.UseProject = Uppcase(result.name) == Uppcase(model.ProjectField)
+		model.UseProject = utilities.Uppcase(result.name) == utilities.Uppcase(model.ProjectField)
 	}
 
 	if !model.UseIndex {
-		model.UseIndex = Uppcase(result.name) == Uppcase(model.IndexField)
+		model.UseIndex = utilities.Uppcase(result.name) == utilities.Uppcase(model.IndexField)
 	}
 
 	if !model.UseSource {
-		model.UseSource = Uppcase(result.name) == Uppcase(model.SourceField)
+		model.UseSource = utilities.Uppcase(result.name) == utilities.Uppcase(model.SourceField)
 	}
 
 	model.Definition = append(model.Definition, result)
@@ -173,7 +173,7 @@ func NewVirtualAtrib(model *Model, name, description, _type string, _default any
 	result := &Column{
 		Model:       model,
 		Tp:          TpColumn,
-		name:        Uppcase(name),
+		name:        utilities.Uppcase(name),
 		Description: description,
 		Type:        _type,
 		Default:     _default,
@@ -194,37 +194,37 @@ func (c *Column) DDL() string {
 		result = c.Reference.DDL()
 	}
 
-	_default := NewAny(c.Default)
+	_default := utilities.NewAny(c.Default)
 
 	if _default.String() == "NOW()" {
-		result = Append(`DEFAULT NOW()`, result, " ")
+		result = utilities.Append(`DEFAULT NOW()`, result, " ")
 	} else {
-		result = Append(Format(`DEFAULT %v`, Quoted(c.Default)), result, " ")
+		result = utilities.Append(utilities.Format(`DEFAULT %v`, json.Quoted(c.Default)), result, " ")
 	}
 
 	if len(c.Type) > 0 {
-		result = Append(Uppcase(c.Type), result, " ")
+		result = utilities.Append(utilities.Uppcase(c.Type), result, " ")
 	}
 	if len(c.name) > 0 {
-		result = Append(Uppcase(c.name), result, " ")
+		result = utilities.Append(utilities.Uppcase(c.name), result, " ")
 	}
 
 	return result
 }
 
 func (c *Column) DDLIndex() string {
-	return SQLDDL(`CREATE INDEX IF NOT EXISTS $2_$3_IDX ON $1($3);`, Lowcase(c.Model.Name), Uppcase(c.Model.Table), Uppcase(c.name))
+	return jdb.SQLDDL(`CREATE INDEX IF NOT EXISTS $2_$3_IDX ON $1($3);`, utilities.Lowcase(c.Model.Name), utilities.Uppcase(c.Model.Table), utilities.Uppcase(c.name))
 }
 
 /**
 *
 **/
 func (c *Column) Up() string {
-	return Uppcase(c.name)
+	return utilities.Uppcase(c.name)
 }
 
 func (c *Column) Low() string {
-	return Lowcase(c.name)
+	return utilities.Lowcase(c.name)
 }
 
 /**
@@ -234,36 +234,36 @@ func (c *Column) As(linq *Linq) string {
 	switch c.Tp {
 	case TpColumn:
 		from := linq.GetFrom(c)
-		return Append(from.As(), c.Up(), ".")
+		return utilities.Append(from.As(), c.Up(), ".")
 	case TpAtrib:
 		from := linq.GetFrom(c)
-		col := Append(from.As(), c.Column.Up(), ".")
-		return Format(`%s#>>'{%s}'`, col, c.Low())
+		col := utilities.Append(from.As(), c.Column.Up(), ".")
+		return utilities.Format(`%s#>>'{%s}'`, col, c.Low())
 	case TpClone:
-		return Append(Uppcase(c.from), c.Up(), ".")
+		return utilities.Append(utilities.Uppcase(c.from), c.Up(), ".")
 	case TpReference:
 		from := linq.GetFrom(c)
 		as := linq.GetAs()
-		as = Format(`A%s`, as)
-		fn := Format(`%s.%s`, as, c.Reference.Reference.Up())
-		fm := Format(`%s AS %s`, c.Reference.Reference.Model.Name, as)
-		key := Format(`%s.%s`, as, c.Reference.Key)
-		Fkey := Append(from.As(), c.Reference.Fkey, ".")
-		return Format(`(SELECT %s FROM %s WHERE %s=%v LIMIT 1)`, fn, fm, key, Fkey)
+		as = utilities.Format(`A%s`, as)
+		fn := utilities.Format(`%s.%s`, as, c.Reference.Reference.Up())
+		fm := utilities.Format(`%s AS %s`, c.Reference.Reference.Model.Name, as)
+		key := utilities.Format(`%s.%s`, as, c.Reference.Key)
+		Fkey := utilities.Append(from.As(), c.Reference.Fkey, ".")
+		return utilities.Format(`(SELECT %s FROM %s WHERE %s=%v LIMIT 1)`, fn, fm, key, Fkey)
 	case TpDetail:
-		return Format(`%v`, Quoted(c.Default))
+		return utilities.Format(`%v`, json.Quoted(c.Default))
 	case TpFunction:
 		def := FunctionDef(linq, c)
-		return Append(def, c.Up(), " AS ")
+		return utilities.Append(def, c.Up(), " AS ")
 	case TpField:
 		as := linq.As(c)
 		if len(as) > 0 {
-			as = Format(`%s.`, as)
+			as = utilities.Format(`%s.`, as)
 		}
-		def := Format(`(%v)`, c.Definition)
-		return ReplaceAll(def, []string{"{AS}.", "{as}.", "{AS}", "{as}"}, as)
+		def := utilities.Format(`(%v)`, c.Definition)
+		return utilities.ReplaceAll(def, []string{"{AS}.", "{as}.", "{AS}", "{as}"}, as)
 	default:
-		return Format(`%s`, c.Up())
+		return utilities.Format(`%s`, c.Up())
 	}
 }
 
@@ -277,57 +277,57 @@ func (c *Column) Def(linq *Linq) string {
 		switch c.Tp {
 		case TpColumn:
 			def := c.As(linq)
-			return Format(`'%s', %s`, c.Low(), def)
+			return utilities.Format(`'%s', %s`, c.Low(), def)
 		case TpAtrib:
 			def := c.As(linq)
-			def = Format(`COALESCE(%s, %v)`, def, Quoted(c.Default))
-			return Format(`'%s', %s`, c.Low(), def)
+			def = utilities.Format(`COALESCE(%s, %v)`, def, json.Quoted(c.Default))
+			return utilities.Format(`'%s', %s`, c.Low(), def)
 		case TpClone:
 			return c.As(linq)
 		case TpReference:
-			Fkey := Append(from.As(), c.Reference.Fkey, ".")
+			Fkey := utilities.Append(from.As(), c.Reference.Fkey, ".")
 			def := c.As(linq)
-			def = Format(`jsonb_build_object('_id', %s, 'name', %s)`, Fkey, def)
-			return Format(`'%s', %s`, c.Title, def)
+			def = utilities.Format(`jsonb_build_object('_id', %s, 'name', %s)`, Fkey, def)
+			return utilities.Format(`'%s', %s`, c.Title, def)
 		case TpDetail:
-			def := Quoted(c.Default)
-			return Format(`'%s', %s`, c.Low(), def)
+			def := json.Quoted(c.Default)
+			return utilities.Format(`'%s', %s`, c.Low(), def)
 		case TpFunction:
 			def := FunctionDef(linq, c)
-			return Format(`'%s', %s`, c.Low(), def)
+			return utilities.Format(`'%s', %s`, c.Low(), def)
 		case TpField:
 			def := c.As(linq)
-			return Format(`'%s', %s`, c.Low(), def)
+			return utilities.Format(`'%s', %s`, c.Low(), def)
 		default:
-			def := Quoted(c.Default)
-			return Format(`'%s', %s`, c.Low(), def)
+			def := json.Quoted(c.Default)
+			return utilities.Format(`'%s', %s`, c.Low(), def)
 		}
 	}
 
 	switch c.Tp {
 	case TpColumn:
-		return Append(from.As(), c.Up(), ".")
+		return utilities.Append(from.As(), c.Up(), ".")
 	case TpAtrib:
-		col := Append(from.As(), c.Column.Up(), ".")
-		def := Format(`%s#>>'{%s}'`, col, c.Low())
-		def = Format(`COALESCE(%s, %v)`, def, Quoted(c.Default))
-		return Format(`%s AS %s`, def, c.Up())
+		col := utilities.Append(from.As(), c.Column.Up(), ".")
+		def := utilities.Format(`%s#>>'{%s}'`, col, c.Low())
+		def = utilities.Format(`COALESCE(%s, %v)`, def, json.Quoted(c.Default))
+		return utilities.Format(`%s AS %s`, def, c.Up())
 	case TpClone:
-		return Append(Uppcase(c.from), c.Up(), ".")
+		return utilities.Append(utilities.Uppcase(c.from), c.Up(), ".")
 	case TpReference:
 		def := c.As(linq)
-		return Format(`%s AS %s`, def, Uppcase(c.Title))
+		return utilities.Format(`%s AS %s`, def, utilities.Uppcase(c.Title))
 	case TpDetail:
-		def := Quoted(c.Default)
-		return Format(`%v AS %s`, def, c.Up())
+		def := json.Quoted(c.Default)
+		return utilities.Format(`%v AS %s`, def, c.Up())
 	case TpFunction:
 		def := FunctionDef(linq, c)
-		return Format(`%s AS %s`, def, c.Up())
+		return utilities.Format(`%s AS %s`, def, c.Up())
 	case TpField:
 		def := c.As(linq)
-		return Format(`%s AS %s`, def, c.Up())
+		return utilities.Format(`%s AS %s`, def, c.Up())
 	default:
-		return Format(`%s`, c.Up())
+		return utilities.Format(`%s`, c.Up())
 	}
 }
 

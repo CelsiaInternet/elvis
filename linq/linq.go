@@ -93,23 +93,23 @@ type Rerences func(references []*ReferenceValue)
 *
 **/
 type Linq struct {
-	Tp         int
-	Act        int
-	db         int
-	_select    []*Column
-	from       []*FRom
-	where      []*Where
-	_join      []*Join
-	orderBy    []*OrderBy
-	groupBy    []*Column
-	_return    []*Column
-	concat     string
-	fromAs     []*FRom
-	as         int
-	details    []*Column
-	data       Json
-	dta        *Json
-	new        Json
+	Tp      int
+	Act     int
+	db      int
+	_select []*Column
+	from    []*FRom
+	where   []*Where
+	_join   []*Join
+	orderBy []*OrderBy
+	groupBy []*Column
+	_return []*Column
+	concat  string
+	fromAs  []*FRom
+	as      int
+	details []*Column
+	data    Json
+	// dta        *Json
+	new        *Json
 	change     bool
 	references []*ReferenceValue
 	debug      bool
@@ -174,10 +174,17 @@ func NewLinq(tp int, act int, model *Model, as ...string) *Linq {
 		groupBy: []*Column{},
 		details: []*Column{},
 		data:    Json{},
-		new:     Json{},
-		dta:     &Json{},
+		new:     &Json{},
 		as:      1,
 	}
+}
+
+/**
+*
+**/
+func (c *Linq) SetTp(tp int) *Linq {
+	c.Tp = tp
+	return c
 }
 
 /**

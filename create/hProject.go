@@ -1,9 +1,9 @@
 package create
 
-import . "github.com/cgalvisleon/elvis/utilities"
+import "github.com/cgalvisleon/elvis/utilities"
 
 func MakeProject(name string) error {
-	_, err := MakeFolder(name)
+	_, err := utilities.MakeFolder(name)
 	if err != nil {
 		return err
 	}

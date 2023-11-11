@@ -90,9 +90,7 @@ func (jb Json) ToQuoted() string {
 		return ""
 	}
 
-	result := fmt.Sprintf(`%s`, s)
-
-	return result
+	return string(s)
 }
 
 func (jb Json) ToItem(src interface{}) Item {
@@ -361,6 +359,9 @@ func (jb Json) IsChange(new Json) bool {
 	return IsChange(jb, new)
 }
 
+/**
+*
+**/
 func (jb Json) Get(key string) interface{} {
 	v, ok := jb[key]
 	if !ok {

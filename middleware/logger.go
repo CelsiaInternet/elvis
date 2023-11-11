@@ -133,6 +133,7 @@ func RequestLogger(f LogFormatter) func(next http.Handler) http.Handler {
 			w.Header().Set("_idT", _idT)
 			next.ServeHTTP(ww, WithLogEntry(r, entry))
 		}
+
 		return http.HandlerFunc(fn)
 	}
 }

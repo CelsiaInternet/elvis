@@ -350,20 +350,20 @@ const modelController = `package $1
 import (
 	"context"
 
-	. "github.com/cgalvisleon/elvis/envar"
+	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/jdb"
-	. "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/json"
 )
 
 type Controller struct {
 	Db *jdb.Conn
 }
 
-func (c *Controller) Version(ctx context.Context) (Json, error) {
-	company := EnvarStr("", "COMPANY")
-	web := EnvarStr("", "WEB")
-	version := EnvarStr("", "VERSION")
-  service := Json{
+func (c *Controller) Version(ctx context.Context) (json.Json, error) {
+	company := envar.EnvarStr("", "COMPANY")
+	web := envar.EnvarStr("", "WEB")
+	version := envar.EnvarStr("", "VERSION")
+  service := json.Json{
 		"version": version,
 		"service": PackageName,
 		"host":    HostName,
@@ -381,7 +381,7 @@ func (c *Controller) Init(ctx context.Context) {
 }
 
 type Repository interface {
-	Version(ctx context.Context) (Json, error)
+	Version(ctx context.Context) (json.Json, error)
 	Init(ctx context.Context)
 }
 `

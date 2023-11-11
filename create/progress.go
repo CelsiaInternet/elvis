@@ -9,7 +9,7 @@ import (
 
 var bar *progressbar.ProgressBar
 
-func progressInit() *progressbar.ProgressBar {
+func ProgressInit() *progressbar.ProgressBar {
 	fmt.Println("")
 
 	if bar == nil {
@@ -19,7 +19,7 @@ func progressInit() *progressbar.ProgressBar {
 	return bar
 }
 
-func progressNext(step int) *progressbar.ProgressBar {
+func ProgressNext(step int) *progressbar.ProgressBar {
 	if bar == nil {
 		bar = progressbar.Default(100)
 	}

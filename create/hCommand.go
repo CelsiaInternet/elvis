@@ -18,19 +18,19 @@ var CmdProject = &cobra.Command{
 			return
 		}
 
-		name, err := prompStr("Name")
+		name, err := PrompStr("Name")
 		if err != nil {
 			fmt.Printf("Prompt failed %v\n", err)
 			return
 		}
 
-		author, err := prompStr("Author")
+		author, err := PrompStr("Author")
 		if err != nil {
 			fmt.Printf("Prompt failed %v\n", err)
 			return
 		}
 
-		schema, err := prompStr("Schema")
+		schema, err := PrompStr("Schema")
 		if err != nil {
 			fmt.Printf("Prompt failed %v\n", err)
 			return
@@ -55,13 +55,13 @@ var CmdMicro = &cobra.Command{
 			return
 		}
 
-		name, err := prompStr("Name")
+		name, err := PrompStr("Name")
 		if err != nil {
 			fmt.Printf("Prompt failed %v\n", err)
 			return
 		}
 
-		schema, err := prompStr("Schema")
+		schema, err := PrompStr("Schema")
 		if err != nil {
 			fmt.Printf("Prompt failed %v\n", err)
 			return
@@ -80,19 +80,19 @@ var CmdModelo = &cobra.Command{
 	Short: "Create model to microservice.",
 	Long:  "Template model to microservice include function handler model.",
 	Run: func(cmd *cobra.Command, args []string) {
-		name, err := prompStr("Package")
+		name, err := PrompStr("Package")
 		if err != nil {
 			fmt.Printf("Prompt failed %v\n", err)
 			return
 		}
 
-		modelo, err := prompStr("Model")
+		modelo, err := PrompStr("Model")
 		if err != nil {
 			fmt.Printf("Prompt failed %v\n", err)
 			return
 		}
 
-		schema, err := prompStr("Schema")
+		schema, err := PrompStr("Schema")
 		if err != nil {
 			fmt.Printf("Prompt failed %v\n", err)
 			return
@@ -115,7 +115,7 @@ var CmdRpc = &cobra.Command{
 	Short: "Create rpc model to microservice.",
 	Long:  "Template rpc model to microservice include function handler model.",
 	Run: func(cmd *cobra.Command, args []string) {
-		name, err := prompStr("Package")
+		name, err := PrompStr("Package")
 		if err != nil {
 			fmt.Printf("Prompt failed %v\n", err)
 			return
