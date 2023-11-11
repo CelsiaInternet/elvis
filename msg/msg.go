@@ -3,8 +3,6 @@ package msg
 const (
 	MSG_ATRIB_REQUIRED      = "Atributo requerido (%s)"
 	MSG_VALUE_REQUIRED      = "Atributo requerido (%s) value:%s"
-	MSG_CLIENT_CONNECT      = "Client connected %s to Hub:%s"
-	MSG_CLIENT_DISCONNECT   = "Client disconnected %s to Hub:%s"
 	MSG_USER_INVALID        = "Usuario no valido, atrib (%s)"
 	MSG_MAIL_001            = "Verifica tu dirección de correo electrónico"
 	MSG_MAIL_002            = "Código de validación"
@@ -18,7 +16,6 @@ const (
 	ERR_RECORS_STATE        = "Not edit for register state. (%s)"
 	ERR_ENV_REQUIRED        = "Variables de entorno requerida (%s)"
 	ERR_NOT_CACHE_SERVICE   = "Not cache service"
-	ERR_NOT_WS_SERVICE      = "Not ws service"
 	NOT_SELECT_DRIVE        = "Not select drive"
 	NOT_CONNECT_DB          = "Not connect db"
 	NOT_INIT_CORE           = "Not init core schema"

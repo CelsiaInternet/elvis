@@ -5,8 +5,7 @@ import (
 	"net/http"
 
 	"github.com/cgalvisleon/elvis/logs"
-	. "github.com/cgalvisleon/elvis/msg"
-	. "github.com/cgalvisleon/elvis/utilities"
+	utl "github.com/cgalvisleon/elvis/utilities"
 )
 
 func Connect(w http.ResponseWriter, r *http.Request) (*Client, error) {
@@ -15,9 +14,9 @@ func Connect(w http.ResponseWriter, r *http.Request) (*Client, error) {
 	}
 
 	ctx := r.Context()
-	clientId := NewAny(ctx.Value("clientId")).String()
+	clientId := utl.NewAny(ctx.Value("clientId")).String()
 	if clientId == "<nil>" {
-		return nil, errors.New("Not defined clientId!")
+		return nil, errors.New(ERR_NOT_DEFINE_CLIENTID)
 	}
 
 	idxC := conn.hub.indexClient(clientId)
@@ -30,7 +29,7 @@ func Connect(w http.ResponseWriter, r *http.Request) (*Client, error) {
 		return nil, err
 	}
 
-	userName := NewAny(ctx.Value("username")).String()
+	userName := utl.NewAny(ctx.Value("username")).String()
 
 	return conn.hub.connect(socket, clientId, userName)
 }
