@@ -8,9 +8,9 @@ import (
 
 	"github.com/cgalvisleon/elvis/cache"
 	"github.com/cgalvisleon/elvis/console"
-	. "github.com/cgalvisleon/elvis/envar"
+	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/event"
-	. "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/json"
 	. "github.com/cgalvisleon/elvis/msg"
 	. "github.com/cgalvisleon/elvis/utilities"
 	"github.com/golang-jwt/jwt/v4"
@@ -29,7 +29,7 @@ type Claim struct {
 }
 
 func genToken(id, app, name, kind, username, device string, duration time.Duration) (token, key string, err error) {
-	secret := EnvarStr("", "SECRET")
+	secret := envar.EnvarStr("", "SECRET")
 	c := Claim{}
 	c.ID = id
 	c.App = app
@@ -55,7 +55,7 @@ func DelTokenCtx(ctx context.Context, app, device, id string) error {
 		return err
 	}
 
-	event.Publish(key, "token/delete", Json{
+	event.Publish(key, "token/delete", json.Json{
 		"key": key,
 	})
 
@@ -63,7 +63,7 @@ func DelTokenCtx(ctx context.Context, app, device, id string) error {
 }
 
 func DelTokeStrng(tokenString string) error {
-	secret := EnvarStr("", "SECRET")
+	secret := envar.EnvarStr("", "SECRET")
 	token, err := jwt.Parse(tokenString, func(*jwt.Token) (interface{}, error) {
 		return []byte(secret), nil
 	})
@@ -102,7 +102,7 @@ func TokenKey(app, device, id string) string {
 }
 
 func ParceToken(tokenString string) (*Claim, error) {
-	secret := EnvarStr("", "SECRET")
+	secret := envar.EnvarStr("", "SECRET")
 	token, err := jwt.Parse(tokenString, func(*jwt.Token) (interface{}, error) {
 		return []byte(secret), nil
 	})
@@ -202,7 +202,7 @@ func GenTokenCtx(ctx context.Context, id, app, name, kind, username, device stri
 		return "", err
 	}
 
-	event.Publish(key, "token/create", Json{
+	event.Publish(key, "token/create", json.Json{
 		"key":  key,
 		"toke": token,
 	})
@@ -215,10 +215,10 @@ func GenToken(id, app, name, kind, username, device string, duration time.Durati
 	return GenTokenCtx(ctx, id, app, name, kind, username, device, duration)
 }
 
-func GetClient(r *http.Request) Json {
+func GetClient(r *http.Request) json.Json {
 	now := Now()
 	ctx := r.Context()
-	return Json{
+	return json.Json{
 		"date_of":   now,
 		"client_id": NewAny(ctx.Value("clientId")).String(),
 		"username":  NewAny(ctx.Value("username")).String(),
