@@ -11,8 +11,7 @@ import (
 	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/event"
 	"github.com/cgalvisleon/elvis/json"
-	. "github.com/cgalvisleon/elvis/msg"
-	. "github.com/cgalvisleon/elvis/utilities"
+	"github.com/cgalvisleon/elvis/utilities"
 	"github.com/golang-jwt/jwt/v4"
 	_ "github.com/joho/godotenv/autoload"
 )
@@ -96,8 +95,8 @@ func DelTokeStrng(tokenString string) error {
 }
 
 func TokenKey(app, device, id string) string {
-	str := Append(app, device, "-")
-	str = Append(str, id, "-")
+	str := utilities.Append(app, device, "-")
+	str = utilities.Append(str, id, "-")
 	return fmt.Sprintf(`token:%s`, str)
 }
 
@@ -121,37 +120,37 @@ func ParceToken(tokenString string) (*Claim, error) {
 
 	app, ok := claim["app"].(string)
 	if !ok {
-		return nil, console.AlertF(MSG_USER_INVALID, "app")
+		return nil, console.AlertF(MSG_TOKEN_INVALID_ATRIB, "app")
 	}
 
 	id, ok := claim["id"].(string)
 	if !ok {
-		return nil, console.AlertF(MSG_USER_INVALID, "id")
+		return nil, console.AlertF(MSG_TOKEN_INVALID_ATRIB, "id")
 	}
 
 	name, ok := claim["name"].(string)
 	if !ok {
-		return nil, console.AlertF(MSG_USER_INVALID, "name")
+		return nil, console.AlertF(MSG_TOKEN_INVALID_ATRIB, "name")
 	}
 
 	kind, ok := claim["kind"].(string)
 	if !ok {
-		return nil, console.AlertF(MSG_USER_INVALID, "kind")
+		return nil, console.AlertF(MSG_TOKEN_INVALID_ATRIB, "kind")
 	}
 
 	username, ok := claim["username"].(string)
 	if !ok {
-		return nil, console.AlertF(MSG_USER_INVALID, "username")
+		return nil, console.AlertF(MSG_TOKEN_INVALID_ATRIB, "username")
 	}
 
 	device, ok := claim["device"].(string)
 	if !ok {
-		return nil, console.AlertF(MSG_USER_INVALID, "device")
+		return nil, console.AlertF(MSG_TOKEN_INVALID_ATRIB, "device")
 	}
 
 	second, ok := claim["duration"].(float64)
 	if !ok {
-		return nil, console.AlertF(MSG_USER_INVALID, "duration")
+		return nil, console.AlertF(MSG_TOKEN_INVALID_ATRIB, "duration")
 	}
 
 	duration := time.Duration(second)
@@ -216,12 +215,12 @@ func GenToken(id, app, name, kind, username, device string, duration time.Durati
 }
 
 func GetClient(r *http.Request) json.Json {
-	now := Now()
+	now := utilities.Now()
 	ctx := r.Context()
 	return json.Json{
 		"date_of":   now,
-		"client_id": NewAny(ctx.Value("clientId")).String(),
-		"username":  NewAny(ctx.Value("username")).String(),
-		"name":      NewAny(ctx.Value("name")).String(),
+		"client_id": utilities.NewAny(ctx.Value("clientId")).String(),
+		"username":  utilities.NewAny(ctx.Value("username")).String(),
+		"name":      utilities.NewAny(ctx.Value("name")).String(),
 	}
 }

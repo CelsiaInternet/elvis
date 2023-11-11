@@ -5,8 +5,6 @@ const (
 	MSG_VALUE_REQUIRED      = "Atributo requerido (%s) value:%s"
 	MSG_CLIENT_CONNECT      = "Client connected %s to Hub:%s"
 	MSG_CLIENT_DISCONNECT   = "Client disconnected %s to Hub:%s"
-	MSG_TOKEN_INVALID       = "Token invalido"
-	MSG_REQUIRED_INVALID    = "Solicitud invalida"
 	MSG_USER_INVALID        = "Usuario no valido, atrib (%s)"
 	MSG_MAIL_001            = "Verifica tu dirección de correo electrónico"
 	MSG_MAIL_002            = "Código de validación"
