@@ -1,16 +1,18 @@
-package utility
+package generic
 
 import (
+	"fmt"
 	"log"
 	"reflect"
 	"strconv"
+	"time"
 )
 
 type Any struct {
 	value any
 }
 
-func NewAny(val any) *Any {
+func New(val any) *Any {
 	return &Any{
 		value: val,
 	}
@@ -25,8 +27,8 @@ func (an *Any) Val() any {
 	return an.value
 }
 
-func (an *Any) String() string {
-	result := Format(`%v`, an.value)
+func (an *Any) Str() string {
+	result := fmt.Sprintf(`%v`, an.value)
 
 	return result
 }
@@ -48,12 +50,12 @@ func (an *Any) Int() int {
 	case string:
 		i, err := strconv.Atoi(v)
 		if err != nil {
-			log.Println("Int value int not conver", reflect.TypeOf(v), v)
+			log.Println("Generic value int not conver:", reflect.TypeOf(v), "value:", v)
 			return 0
 		}
 		return i
 	default:
-		log.Println("Int value is not int, type:", reflect.TypeOf(v), "value:", v)
+		log.Println("Generic value int not conver:", reflect.TypeOf(v), "value:", v)
 		return 0
 	}
 }
@@ -73,7 +75,7 @@ func (an *Any) Num() float64 {
 	case int64:
 		return float64(v)
 	default:
-		log.Println("Json value number not conver", reflect.TypeOf(v))
+		log.Println("Generic value number not conver:", reflect.TypeOf(v), "value:", v)
 		return 0
 	}
 }
@@ -83,7 +85,27 @@ func (an *Any) Bool() bool {
 	case bool:
 		return v
 	default:
-		log.Println("Json value boolean not conver", reflect.TypeOf(v))
+		log.Println("Generic value boolean not conver:", reflect.TypeOf(v), "value:", v)
 		return false
+	}
+}
+
+func (an *Any) Time() time.Time {	
+	_default := time.Now()	
+	switch v := an.value.(type) {
+	case int:
+		return _default
+	case string:
+		layout := "2006-01-02T15:04:05.000Z"
+		result, err := time.Parse(layout, v)
+		if err != nil {
+			return _default
+		}
+		return result
+	case time.Time:
+		return v
+	default:
+		log.Println("Generic value time not conver:", reflect.TypeOf(v), "value:", v)
+		return _default
 	}
 }

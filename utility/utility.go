@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/cgalvisleon/elvis/console"
+	"github.com/cgalvisleon/elvis/generic"
 	"github.com/cgalvisleon/elvis/logs"
 	"github.com/google/uuid"
 	"golang.org/x/exp/slices"
@@ -70,6 +71,14 @@ func GetCodeVerify(length int) string {
 	}
 
 	return string(b)
+}
+
+func ValId(id string) string {
+	if map[string]bool{"": true, "-1": true, "*": true, "new": true}[id] {
+		return uuid.NewString()
+	}
+
+	return id
 }
 
 func GenId(id string) string {
@@ -199,6 +208,18 @@ func ValidIn(val string, min int, in []string) bool {
 	return ok
 }
 
+func ValidNotIn(val string, min int, notin []string) bool {
+	v := Replace(val, " ", "")
+	ok := len(v) <= min
+	if ok {
+		return !ok
+	}
+
+	ok = Contains(notin, val)
+
+	return !ok
+}
+
 func ValidId(val string) bool {
 	return !Contains([]string{"", "*", "new"}, val)
 }
@@ -292,14 +313,14 @@ func Append(str1, str2, sp string) string {
 }
 
 func AppendAny(val1, val2 any, sp string) string {
-	any1 := NewAny(val1)
-	any2 := NewAny(val2)
+	any1 := generic.New(val1)
+	any2 := generic.New(val2)
 
-	if len(any1.String()) == 0 {
-		return any2.String()
+	if len(any1.Str()) == 0 {
+		return any2.Str()
 	}
-	if len(any2.String()) == 0 {
-		return any1.String()
+	if len(any2.Str()) == 0 {
+		return any1.Str()
 	}
 
 	return Format(`%v%s%v`, any1, sp, any2)

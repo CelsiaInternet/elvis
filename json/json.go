@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cgalvisleon/elvis/generic"
 	"github.com/cgalvisleon/elvis/logs"
 )
 
@@ -217,6 +218,11 @@ func (jb Json) ValTime(atribs ...string) time.Time {
 		log.Println("ValTime value is not time, type:", reflect.TypeOf(v), "value:", v)
 		return _default
 	}
+}
+
+func (jb Json) Any(_default any, atribs ...string) *generic.Any {
+	result := Val(jb, _default, atribs...)
+	return generic.New(result)
 }
 
 func (jb Json) Id() string {

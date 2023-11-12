@@ -88,6 +88,10 @@ func (it *Item) ValBool(_default bool, atribs ...string) bool {
 	return it.Result.ValBool(_default, atribs...)
 }
 
+func (it *Item) ValTime(atribs ...string) time.Time {
+	return it.Result.ValTime(atribs...)
+}
+
 func (it *Item) Uppcase(_default string, atribs ...string) string {
 	result := Val(it.Result, _default, atribs...)
 
