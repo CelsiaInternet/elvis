@@ -1,4 +1,4 @@
-package utilities
+package utility
 
 import (
 	"fmt"
@@ -33,7 +33,6 @@ const SELECt = "SELECT"
 const INSERT = "INSERT"
 const UPDATE = "UPDATE"
 const DELETE = "DELETE"
-const _STATE = "_STATE"
 const BEFORE_INSERT = "BEFORE_INSERT"
 const AFTER_INSERT = "AFTER_INSERT"
 const BEFORE_UPDATE = "BEFORE_UPDATE"
@@ -86,8 +85,7 @@ func NewId() string {
 }
 
 func Format(format string, args ...any) string {
-	var result string
-	result = fmt.Sprintf(format, args...)
+	result := fmt.Sprintf(format, args...)
 
 	return result
 }
@@ -492,7 +490,7 @@ func Quote(val interface{}) any {
 		}
 		return fmt.Sprintf(`'[%s]'`, r)
 	case nil:
-		return fmt.Sprintf(`%s`, "NULL")
+		return "NULL"
 	default:
 		logs.Errorf("Not quote type:%v value:%v", reflect.TypeOf(v), v)
 		return val

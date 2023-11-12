@@ -4,7 +4,7 @@ import (
 	"database/sql"
 
 	. "github.com/cgalvisleon/elvis/json"
-	. "github.com/cgalvisleon/elvis/utilities"
+	. "github.com/cgalvisleon/elvis/utility"
 )
 
 const Postgres = "postgres"

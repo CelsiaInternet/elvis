@@ -5,7 +5,7 @@ import (
 
 	"github.com/cgalvisleon/elvis/console"
 	. "github.com/cgalvisleon/elvis/json"
-	. "github.com/cgalvisleon/elvis/utilities"
+	. "github.com/cgalvisleon/elvis/utility"
 	"github.com/lib/pq"
 )
 

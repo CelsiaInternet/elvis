@@ -6,7 +6,7 @@ import (
 	. "github.com/cgalvisleon/elvis/json"
 	. "github.com/cgalvisleon/elvis/linq"
 	. "github.com/cgalvisleon/elvis/msg"
-	. "github.com/cgalvisleon/elvis/utilities"
+	. "github.com/cgalvisleon/elvis/utility"
 )
 
 var Projects *Model
@@ -189,7 +189,7 @@ func AllProjects(state, search string, page, rows int, _select string) (List, er
 
 	auxState := state
 
-	cols := StrToColN(_select)
+	cols := StrToCols(_select)
 
 	if auxState == "*" {
 		state = FOR_DELETE

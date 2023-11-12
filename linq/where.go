@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	. "github.com/cgalvisleon/elvis/json"
-	. "github.com/cgalvisleon/elvis/utilities"
+	. "github.com/cgalvisleon/elvis/utility"
 )
 
 type Where struct {
@@ -48,7 +48,7 @@ func (c *Where) Str2() string {
 	return result
 }
 
-func StrToColN(str string) []string {
+func StrToCols(str string) []string {
 	str = ReplaceAll(str, []string{" "}, "")
 	cols := strings.Split(str, ",")
 

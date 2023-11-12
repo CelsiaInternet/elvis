@@ -3,7 +3,7 @@ package master
 import (
 	. "github.com/cgalvisleon/elvis/jdb"
 	. "github.com/cgalvisleon/elvis/json"
-	. "github.com/cgalvisleon/elvis/utilities"
+	. "github.com/cgalvisleon/elvis/utility"
 )
 
 func (c *Node) SyncNode() error {

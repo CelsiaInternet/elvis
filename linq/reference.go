@@ -2,7 +2,7 @@ package linq
 
 import (
 	. "github.com/cgalvisleon/elvis/json"
-	. "github.com/cgalvisleon/elvis/utilities"
+	. "github.com/cgalvisleon/elvis/utility"
 )
 
 type Reference struct {

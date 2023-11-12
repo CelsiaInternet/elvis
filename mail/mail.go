@@ -7,7 +7,7 @@ import (
 	"github.com/cgalvisleon/elvis/cache"
 	. "github.com/cgalvisleon/elvis/envar"
 	. "github.com/cgalvisleon/elvis/msg"
-	. "github.com/cgalvisleon/elvis/utilities"
+	. "github.com/cgalvisleon/elvis/utility"
 	_ "github.com/joho/godotenv/autoload"
 	mail "github.com/xhit/go-simple-mail/v2"
 )

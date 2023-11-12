@@ -6,7 +6,7 @@ import (
 	. "github.com/cgalvisleon/elvis/json"
 	. "github.com/cgalvisleon/elvis/linq"
 	. "github.com/cgalvisleon/elvis/msg"
-	. "github.com/cgalvisleon/elvis/utilities"
+	. "github.com/cgalvisleon/elvis/utility"
 	_ "github.com/joho/godotenv/autoload"
 )
 
@@ -173,7 +173,7 @@ func AllModules(state, search string, page, rows int, _select string) (List, err
 
 	auxState := state
 
-	cols := StrToColN(_select)
+	cols := StrToCols(_select)
 
 	if auxState == "*" {
 		state = FOR_DELETE

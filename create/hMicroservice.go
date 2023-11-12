@@ -3,7 +3,7 @@ package create
 import (
 	"fmt"
 
-	utl "github.com/cgalvisleon/elvis/utilities"
+	"github.com/cgalvisleon/elvis/utility"
 )
 
 func MkPMicroservice(packageName, name, author, schema string) error {
@@ -59,7 +59,7 @@ func MkMicroservice(packageName, name, schema string) error {
 	}
 
 	ProgressNext(10)
-	schemaVar := utl.Format(`Schema%s`, utl.Titlecase(schema))
+	schemaVar := utility.Format(`Schema%s`, utility.Titlecase(schema))
 	err = MakePkg(name, schema, schemaVar)
 	if err != nil {
 		return err
@@ -84,7 +84,7 @@ func MkMicroservice(packageName, name, schema string) error {
 
 func MkMolue(name, modelo, schema string) error {
 	ProgressNext(10)
-	schemaVar := utl.Format(`Schema%s`, utl.Titlecase(schema))
+	schemaVar := utility.Format(`Schema%s`, utility.Titlecase(schema))
 	err := MakeModel(name, modelo, schemaVar)
 	if err != nil {
 		return err

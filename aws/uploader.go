@@ -16,7 +16,7 @@ import (
 	. "github.com/cgalvisleon/elvis/envar"
 	. "github.com/cgalvisleon/elvis/json"
 	. "github.com/cgalvisleon/elvis/msg"
-	. "github.com/cgalvisleon/elvis/utilities"
+	. "github.com/cgalvisleon/elvis/utility"
 )
 
 func UploaderS3(bucket, filename, contentType string, contentFile []byte) (*s3manager.UploadOutput, error) {

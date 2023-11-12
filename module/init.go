@@ -5,7 +5,7 @@ import (
 	. "github.com/cgalvisleon/elvis/core"
 	. "github.com/cgalvisleon/elvis/envar"
 	. "github.com/cgalvisleon/elvis/json"
-	. "github.com/cgalvisleon/elvis/utilities"
+	. "github.com/cgalvisleon/elvis/utility"
 )
 
 var initModules bool

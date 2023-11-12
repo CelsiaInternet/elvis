@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	ej "github.com/cgalvisleon/elvis/json"
+	js "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/logs"
 	"github.com/cgalvisleon/elvis/msg"
 )
@@ -158,11 +158,11 @@ func DelVerify(device string, key string) (int64, error) {
 	return Del(key)
 }
 
-func AllCache(search string, page, rows int) (ej.List, error) {
+func AllCache(search string, page, rows int) (js.List, error) {
 	ctx := context.Background()
 	var cursor uint64
 	var count int64
-	var items ej.Items = ej.Items{}
+	var items js.Items = js.Items{}
 	offset := (page - 1) * rows
 	cursor = uint64(offset)
 	count = int64(rows)
@@ -170,7 +170,7 @@ func AllCache(search string, page, rows int) (ej.List, error) {
 	iter := conn.db.Scan(ctx, cursor, search, count).Iterator()
 	for iter.Next(ctx) {
 		key := iter.Val()
-		items.Result = append(items.Result, ej.Json{"key": key})
+		items.Result = append(items.Result, js.Json{"key": key})
 		items.Count++
 	}
 

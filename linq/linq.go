@@ -6,7 +6,7 @@ import (
 	"github.com/cgalvisleon/elvis/console"
 	. "github.com/cgalvisleon/elvis/jdb"
 	. "github.com/cgalvisleon/elvis/json"
-	. "github.com/cgalvisleon/elvis/utilities"
+	. "github.com/cgalvisleon/elvis/utility"
 )
 
 const TpSelect = 1

@@ -12,7 +12,7 @@ import (
 
 	"github.com/cgalvisleon/elvis/event"
 	. "github.com/cgalvisleon/elvis/json"
-	. "github.com/cgalvisleon/elvis/utilities"
+	. "github.com/cgalvisleon/elvis/utility"
 	"github.com/shirou/gopsutil/v3/mem"
 )
 

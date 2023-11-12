@@ -11,7 +11,7 @@ import (
 	"github.com/cgalvisleon/elvis/event"
 	. "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/response"
-	. "github.com/cgalvisleon/elvis/utilities"
+	. "github.com/cgalvisleon/elvis/utility"
 )
 
 func tokenFromAuthorization(authorization string) (string, error) {

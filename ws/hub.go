@@ -8,9 +8,9 @@ import (
 	"sync"
 
 	"github.com/cgalvisleon/elvis/event"
-	ej "github.com/cgalvisleon/elvis/json"
+	js "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/logs"
-	utl "github.com/cgalvisleon/elvis/utilities"
+	"github.com/cgalvisleon/elvis/utility"
 	"github.com/gorilla/websocket"
 	"golang.org/x/exp/slices"
 )
@@ -33,7 +33,7 @@ type Hub struct {
 
 func NewHub() *Hub {
 	return &Hub{
-		Id:         utl.NewId(),
+		Id:         utility.NewId(),
 		clients:    make([]*Client, 0),
 		channels:   make([]*Channel, 0),
 		register:   make(chan *Client),
@@ -79,7 +79,7 @@ func (hub *Hub) onConnect(client *Client) {
 	client.Addr = client.socket.RemoteAddr().String()
 	client.isClose = false
 
-	event.Action("websocket/connect", ej.Json{"hub": hub.Id, "client": client})
+	event.Action("websocket/connect", js.Json{"hub": hub.Id, "client": client})
 
 	logs.Logf("Websocket", MSG_CLIENT_CONNECT, client.Id, hub.Id)
 }
@@ -96,7 +96,7 @@ func (hub *Hub) onDisconnect(client *Client) {
 	hub.clients[len(hub.clients)-1] = nil
 	hub.clients = hub.clients[:len(hub.clients)-1]
 
-	event.Action("websocket/disconnect", ej.Json{"hub": hub.Id, "client_id": client.Id})
+	event.Action("websocket/disconnect", js.Json{"hub": hub.Id, "client_id": client.Id})
 
 	logs.Logf("Websocket", MSG_CLIENT_DISCONNECT, client.Id, hub.Id)
 }
@@ -118,9 +118,9 @@ func (hub *Hub) connect(socket *websocket.Conn, id, name string) (*Client, error
 }
 
 func (hub *Hub) listen(client *Client, messageType int, message []byte) {
-	data, err := ej.ToJson(message)
+	data, err := js.ToJson(message)
 	if err != nil {
-		data = ej.Json{
+		data = js.Json{
 			"type":    messageType,
 			"message": bytes.NewBuffer(message).String(),
 		}
@@ -176,7 +176,7 @@ func (hub *Hub) Subscribe(clientId string, channel string) bool {
 		client := hub.clients[idx]
 		client.Subscribe(channel)
 
-		event.Action("websocket/subscribe", ej.Json{"hub": hub.Id, "client": client, "channel": channel})
+		event.Action("websocket/subscribe", js.Json{"hub": hub.Id, "client": client, "channel": channel})
 
 		return true
 	}
@@ -191,7 +191,7 @@ func (hub *Hub) Unsubscribe(clientId string, channel string) bool {
 		client := hub.clients[idx]
 		client.Unsubscribe(channel)
 
-		event.Action("websocket/unsubscribe", ej.Json{"hub": hub.Id, "client": client, "channel": channel})
+		event.Action("websocket/unsubscribe", js.Json{"hub": hub.Id, "client": client, "channel": channel})
 
 		return true
 	}

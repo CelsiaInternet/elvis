@@ -3,7 +3,7 @@ package create
 import (
 	"fmt"
 
-	utl "github.com/cgalvisleon/elvis/utilities"
+	"github.com/cgalvisleon/elvis/utility"
 	"github.com/spf13/cobra"
 )
 
@@ -12,7 +12,7 @@ var CmdProject = &cobra.Command{
 	Short: "Create project base type microservice.",
 	Long:  "Template project to microservice include folder cmd, deployments, pkg, rest, test and web, with files .go required for making a microservice.",
 	Run: func(cmd *cobra.Command, args []string) {
-		packageName, err := utl.ModuleName()
+		packageName, err := utility.ModuleName()
 		if err != nil {
 			fmt.Printf("Prompt failed %v\n", err)
 			return
@@ -49,7 +49,7 @@ var CmdMicro = &cobra.Command{
 	Short: "Create project base type microservice.",
 	Long:  "Template project to microservice include folder cmd, deployments, pkg, rest, test and web, with files .go required for making a microservice.",
 	Run: func(cmd *cobra.Command, args []string) {
-		packageName, err := utl.ModuleName()
+		packageName, err := utility.ModuleName()
 		if err != nil {
 			fmt.Printf("Prompt failed %v\n", err)
 			return
@@ -104,7 +104,7 @@ var CmdModelo = &cobra.Command{
 			return
 		}
 
-		title := utl.Titlecase(name)
+		title := utility.Titlecase(name)
 		message := fmt.Sprintf(`Remember, including the router, that it is on the bottom of the h%s.go, in routers section of the router.go file`, title)
 		fmt.Println(message)
 	},

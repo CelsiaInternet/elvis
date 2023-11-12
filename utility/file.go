@@ -1,4 +1,4 @@
-package utilities
+package utility
 
 import (
 	"errors"
@@ -21,7 +21,7 @@ func MakeFile(folder, name, model string, args ...any) (string, error) {
 	path := Format(`%s/%s`, folder, name)
 
 	if ExistPath(path) {
-		return "", errors.New("File found")
+		return "", errors.New("file found")
 	}
 
 	_content := Params(model, args...)

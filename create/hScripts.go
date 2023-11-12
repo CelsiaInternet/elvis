@@ -3,16 +3,16 @@ package create
 import (
 	"fmt"
 
-	utl "github.com/cgalvisleon/elvis/utilities"
+	"github.com/cgalvisleon/elvis/utility"
 )
 
 func MakeScripts(name string) error {
-	path, err := utl.MakeFolder("scripts")
+	path, err := utility.MakeFolder("scripts")
 	if err != nil {
 		return err
 	}
 
-	_, err = utl.MakeFile(path, fmt.Sprintf("%s.http", name), restHttp, name)
+	_, err = utility.MakeFile(path, fmt.Sprintf("%s.http", name), restHttp, name)
 	if err != nil {
 		return err
 	}

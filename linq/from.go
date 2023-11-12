@@ -1,7 +1,7 @@
 package linq
 
 import (
-	utl "github.com/cgalvisleon/elvis/utilities"
+	"github.com/cgalvisleon/elvis/utility"
 )
 
 /**
@@ -20,7 +20,7 @@ func (c *Linq) From(model *Model, as ...string) *Linq {
 	if len(as) == 0 {
 		as = []string{""}
 	}
-	from := &FRom{model: model, as: utl.Uppcase(as[0])}
+	from := &FRom{model: model, as: utility.Uppcase(as[0])}
 	c.from = append(c.from, from)
 	c.fromAs = append(c.fromAs, from)
 

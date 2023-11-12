@@ -1,19 +1,19 @@
 package create
 
-import utl "github.com/cgalvisleon/elvis/utilities"
+import "github.com/cgalvisleon/elvis/utility"
 
 func MakeDeployments(name string) error {
-	_, err := utl.MakeFolder("deployments", "dev")
+	_, err := utility.MakeFolder("deployments", "dev")
 	if err != nil {
 		return err
 	}
 
-	_, err = utl.MakeFolder("deployments", "local")
+	_, err = utility.MakeFolder("deployments", "local")
 	if err != nil {
 		return err
 	}
 
-	_, err = utl.MakeFolder("deployments", "prd")
+	_, err = utility.MakeFolder("deployments", "prd")
 	if err != nil {
 		return err
 	}

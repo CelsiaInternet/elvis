@@ -7,7 +7,7 @@ import (
 
 	. "github.com/cgalvisleon/elvis/envar"
 	. "github.com/cgalvisleon/elvis/json"
-	. "github.com/cgalvisleon/elvis/utilities"
+	. "github.com/cgalvisleon/elvis/utility"
 	_ "github.com/joho/godotenv/autoload"
 )
 

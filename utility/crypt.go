@@ -1,4 +1,4 @@
-package utilities
+package utility
 
 import (
 	"crypto/aes"
@@ -8,12 +8,12 @@ import (
 	"fmt"
 	"io"
 
-	. "github.com/cgalvisleon/elvis/envar"
+	"github.com/cgalvisleon/elvis/envar"
 	_ "github.com/joho/godotenv/autoload"
 )
 
 func EncryptMessage(message string) (string, error) {
-	secret := EnvarStr("", "SECRET")
+	secret := envar.EnvarStr("", "SECRET")
 	key := []byte(secret)
 	byteMsg := []byte(message)
 	block, err := aes.NewCipher(key)
@@ -34,7 +34,7 @@ func EncryptMessage(message string) (string, error) {
 }
 
 func DecryptMessage(message string) (string, error) {
-	secret := EnvarStr("", "SECRET")
+	secret := envar.EnvarStr("", "SECRET")
 	key := []byte(secret)
 	cipherText, err := base64.StdEncoding.DecodeString(message)
 	if err != nil {

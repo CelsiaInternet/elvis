@@ -4,29 +4,25 @@ import (
 	"net/rpc"
 
 	"github.com/cgalvisleon/elvis/console"
-	. "github.com/cgalvisleon/elvis/json"
-	. "github.com/cgalvisleon/elvis/utilities"
+	js "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/utility"
 )
 
-type Args struct {
-	require Json
-}
-
-func RpcCall(host string, port int, method string, args []byte) (Item, error) {
+func RpcCall(host string, port int, method string, args []byte) (js.Item, error) {
 	var reply *[]byte
 
-	client, err := rpc.DialHTTP("tcp", Format(`%s:%d`, host, port))
+	client, err := rpc.DialHTTP("tcp", utility.Format(`%s:%d`, host, port))
 	if err != nil {
-		return Item{}, console.Error(err)
+		return js.Item{}, console.Error(err)
 	}
 	defer client.Close()
 
 	err = client.Call(method, args, &reply)
 	if err != nil {
-		return Item{}, console.Error(err)
+		return js.Item{}, console.Error(err)
 	}
 
-	result := Json{}.ToItem(*reply)
+	result := js.Json{}.ToItem(*reply)
 
 	return result, nil
 }

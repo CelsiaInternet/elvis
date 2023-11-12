@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/cgalvisleon/elvis/console"
-	. "github.com/cgalvisleon/elvis/utilities"
+	. "github.com/cgalvisleon/elvis/utility"
 	"gopkg.in/validator.v2"
 )
 

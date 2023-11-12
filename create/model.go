@@ -74,7 +74,7 @@ import (
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/middleware"
-	utl "github.com/cgalvisleon/elvis/utilities"
+	"github.com/cgalvisleon/elvis/utility"
 	"github.com/go-chi/chi"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/rs/cors"
@@ -105,7 +105,7 @@ func New() (*Server, error) {
 		r.Mount("/v1", latest)
 
 		handler := cors.AllowAll().Handler(r)
-		addr := utl.Format(":%d", port)
+		addr := utility.Format(":%d", port)
 		serv := &http.Server{
 			Addr:    addr,
 			Handler: handler,
@@ -173,7 +173,7 @@ import (
 	"github.com/cgalvisleon/elvis/cache"
 	"github.com/cgalvisleon/elvis/event"
 	"github.com/cgalvisleon/elvis/jdb"
-	utl "github.com/cgalvisleon/elvis/utilities"
+	"github.com/cgalvisleon/elvis/utility"
 	"github.com/cgalvisleon/elvis/ws"
 	"github.com/dimiro1/banner"
 	"github.com/go-chi/chi"
@@ -220,7 +220,7 @@ func Close() {
 func NewRpc(port int) net.Listener {
 	rpc.HandleHTTP()
 
-	result, err := net.Listen("tcp", utl.Address("0.0.0.0", port))
+	result, err := net.Listen("tcp", utility.Address("0.0.0.0", port))
 	if err != nil {
 		panic(err)
 	}
@@ -230,7 +230,7 @@ func NewRpc(port int) net.Listener {
 
 func Banner() {
 	time.Sleep(3 * time.Second)
-	templ := utl.BannerTitle(pkg.PackageName, pkg.PackageVersion, 4)
+	templ := utility.BannerTitle(pkg.PackageName, pkg.PackageVersion, 4)
 	banner.InitString(colorable.NewColorableStdout(), true, true, templ)
 	fmt.Println()
 }
@@ -241,7 +241,7 @@ const modelEvent = `package $1
 import (
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/event"
-	ej "github.com/cgalvisleon/elvis/json"
+	js "github.com/cgalvisleon/elvis/json"
 )
 
 func initEvents() {
@@ -253,7 +253,7 @@ func initEvents() {
 }
 
 func eventAction(m event.CreatedEvenMessage) {
-	data, err := ej.ToJson(m.Data)
+	data, err := js.ToJson(m.Data)
 	if err != nil {
 		console.Error(err)
 	}
@@ -281,7 +281,7 @@ const modelSchema = `package $1
 
 import "github.com/cgalvisleon/elvis/linq"
 
-var $2 *Schema
+var $2 *linq.Schema
 
 func defineSchema() error {
 	if $2 != nil {
@@ -300,10 +300,10 @@ import (
 	"net/rpc"
 
 	"github.com/cgalvisleon/elvis/console"
-	ej "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/json"
 )
 
-type Service ej.Item
+type Service json.Item
 
 func InitRpc() error {
 	service := new(Service)
@@ -317,12 +317,15 @@ func InitRpc() error {
 }
 
 func (c *Service) Version(require []byte, response *[]byte) error {
-	result := ej.Item{
+	rq := json.ByteToJson(require)
+	help := rq.Str("help")
+
+	result := json.Item{
 		Ok: true,
-		Result: ej.Json{
+		Result: json.Json{
 			"service": PackageName,
 			"host":    HostName,
-			"help":    "",
+			"help":    help,
 		},
 	}
 
@@ -336,7 +339,8 @@ const modelMsg = `package $1
 
 const (
 	// MSG
-	MSG = "Message"
+	MSG_ATRIB_REQUIRED      = "Atributo requerido (%s)"
+	MSG_VALUE_REQUIRED      = "Atributo requerido (%s) value:%s"
 )
 `
 
@@ -347,18 +351,18 @@ import (
 
 	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/jdb"
-	ej "github.com/cgalvisleon/elvis/json"
+	js "github.com/cgalvisleon/elvis/json"
 )
 
 type Controller struct {
 	Db *jdb.Conn
 }
 
-func (c *Controller) Version(ctx context.Context) (ej.Json, error) {
+func (c *Controller) Version(ctx context.Context) (js.Json, error) {
 	company := envar.EnvarStr("", "COMPANY")
 	web := envar.EnvarStr("", "WEB")
 	version := envar.EnvarStr("", "VERSION")
-  service := ej.Json{
+  service := js.Json{
 		"version": version,
 		"service": PackageName,
 		"host":    HostName,
@@ -376,7 +380,7 @@ func (c *Controller) Init(ctx context.Context) {
 }
 
 type Repository interface {
-	Version(ctx context.Context) (ej.Json, error)
+	Version(ctx context.Context) (js.Json, error)
 	Init(ctx context.Context)
 }
 `
@@ -391,7 +395,7 @@ import (
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/response"
-	. "github.com/cgalvisleon/elvis/router"
+	er "github.com/cgalvisleon/elvis/router"
 	"github.com/go-chi/chi"
 )
 
@@ -408,13 +412,13 @@ type Router struct {
 func (rt *Router) Routes() http.Handler {
 	r := chi.NewRouter()
 
-	PublicRoute(r, Get, "/version", rt.Version)
+	er.PublicRoute(r, er.Get, "/version", rt.Version)
 	// $2
-	ProtectRoute(r, Get, "/$1/{id}", rt.Get$2ById)
-	ProtectRoute(r, Post, "/$1", rt.UpSert$2)
-	ProtectRoute(r, Put, "/$1/state/{id}", rt.State$2)
-	ProtectRoute(r, Delete, "/$1/{id}", rt.Delete$2)
-	ProtectRoute(r, Get, "/$1/all", rt.All$2)
+	er.ProtectRoute(r, er.Get, "/$1/{id}", rt.Get$2ById)
+	er.ProtectRoute(r, er.Post, "/$1", rt.UpSert$2)
+	er.ProtectRoute(r, er.Put, "/$1/state/{id}", rt.State$2)
+	er.ProtectRoute(r, er.Delete, "/$1/{id}", rt.Delete$2)
+	er.ProtectRoute(r, er.Get, "/$1/all", rt.All$2)
 
 	ctx := context.Background()
 	rt.Repository.Init(ctx)
@@ -462,11 +466,11 @@ import (
 
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/core"
-	"github.com/cgalvisleon/elvis/json"
+	js "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/linq"
 	"github.com/cgalvisleon/elvis/msg"
 	"github.com/cgalvisleon/elvis/response"
-	utl "github.com/cgalvisleon/elvis/utilities"
+	"github.com/cgalvisleon/elvis/utility"
 	"github.com/go-chi/chi"
 )
 
@@ -484,7 +488,7 @@ func Define$2() error {
 	$2 = linq.NewModel($3, "$4", "Tabla", 1)
 	$2.DefineColum("date_make", "", "TIMESTAMP", "NOW()")
 	$2.DefineColum("date_update", "", "TIMESTAMP", "NOW()")
-	$2.DefineColum("_state", "", "VARCHAR(80)", ACTIVE)
+	$2.DefineColum("_state", "", "VARCHAR(80)", utility.ACTIVE)
 	$2.DefineColum("_id", "", "VARCHAR(80)", "-1")
 	$2.DefineColum("project_id", "", "VARCHAR(80)", "-1")
 	$2.DefineColum("name", "", "VARCHAR(250)", "")
@@ -501,22 +505,22 @@ func Define$2() error {
 		"index",
 	})
 	$2.IntegrityAtrib(true)
-	$2.Trigger(linq.BeforeInsert, func(model *linq.Model, old, new *ej.Json, data ej.Json) error {
+	$2.Trigger(linq.BeforeInsert, func(model *linq.Model, old, new *js.Json, data js.Json) error {
 		return nil
 	})
-	$2.Trigger(linq.AfterInsert, func(model *linq.Model, old, new *ej.Json, data ej.Json) error {
+	$2.Trigger(linq.AfterInsert, func(model *linq.Model, old, new *js.Json, data js.Json) error {
 		return nil
 	})
-	$2.Trigger(linq.BeforeUpdate, func(model *linq.Model, old, new *ej.Json, data ej.Json) error {
+	$2.Trigger(linq.BeforeUpdate, func(model *linq.Model, old, new *js.Json, data js.Json) error {
 		return nil
 	})
-	$2.Trigger(linq.AfterUpdate, func(model *linq.Model, old, new *ej.Json, data ej.Json) error {
+	$2.Trigger(linq.AfterUpdate, func(model *linq.Model, old, new *js.Json, data js.Json) error {
 		return nil
 	})
-	$2.Trigger(linq.BeforeDelete, func(model *linq.Model, old, new *ej.Json, data ej.Json) error {
+	$2.Trigger(linq.BeforeDelete, func(model *linq.Model, old, new *js.Json, data js.Json) error {
 		return nil
 	})
-	$2.Trigger(linq.AfterDelete, func(model *linq.Model, old, new *ej.Json, data ej.Json) error {
+	$2.Trigger(linq.AfterDelete, func(model *linq.Model, old, new *js.Json, data js.Json) error {
 		return nil
 	})
 	
@@ -530,22 +534,22 @@ func Define$2() error {
 /**
 *	Handler for CRUD data
  */
-func Get$2ById(id string) (ej.Item, error) {
+func Get$2ById(id string) (js.Item, error) {
 	return $2.Select().
 		Where($2.Column("_id").Eq(id)).
 		First()
 }
 
-func UpSert$2(project_id, id string, data ej.Json) (ej.Item, error) {
-	if !utl.ValidId(project_id) {
-		return ej.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "project_id")
+func UpSert$2(project_id, id string, data js.Json) (js.Item, error) {
+	if !utility.ValidId(project_id) {
+		return js.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "project_id")
 	}
 
-	if !utl.ValidId(id) {
-		return ej.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "_id")
+	if !utility.ValidId(id) {
+		return js.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "_id")
 	}
 
-	id = utl.GenId(id)
+	id = utility.GenId(id)
 	data["project_id"] = project_id
 	data["_id"] = id
 	return $2.Upsert(data).
@@ -553,12 +557,12 @@ func UpSert$2(project_id, id string, data ej.Json) (ej.Item, error) {
 		Command()
 }
 
-func State$2(id, state string) (ej.Item, error) {
-	if !utl.ValidId(state) {
-		return ej.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "state")
+func State$2(id, state string) (js.Item, error) {
+	if !utility.ValidId(state) {
+		return js.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "state")
 	}
 
-	return $2.Upsert(ej.Json{
+	return $2.Upsert(js.Json{
 		"_state": state,
 	}).
 		Where($2.Column("_id").Eq(id)).
@@ -566,18 +570,18 @@ func State$2(id, state string) (ej.Item, error) {
 		Command()
 }
 
-func Delete$2(id string) (ej.Item, error) {
-	return State$2(id, utl.FOR_DELETE)
+func Delete$2(id string) (js.Item, error) {
+	return State$2(id, utility.FOR_DELETE)
 }
 
-func All$2(project_id, state, search string, page, rows int, _select string) (ej.List, error) {	
+func All$2(project_id, state, search string, page, rows int, _select string) (js.List, error) {	
 	if state == "" {
-		state = ACTIVE
+		state = utility.ACTIVE
 	}
 
 	auxState := state
 
-	cols := StrToColN(_select)
+	cols := linq.StrToCols(_select)
 
 	if search != "" {
 		return $2.Select(cols).
@@ -586,7 +590,7 @@ func All$2(project_id, state, search string, page, rows int, _select string) (ej
 			OrderBy($2.Column("name"), true).
 			List(page, rows)
 	} else if auxState == "*" {
-		state = FOR_DELETE
+		state = utility.FOR_DELETE
 
 		return $2.Select(cols).
 			Where($2.Column("_state").Neg(state)).
@@ -692,10 +696,10 @@ func (rt *Router) All$2(w http.ResponseWriter, r *http.Request) {
 
 /**
 	// $2
-	ProtectRoute(r, Get, "/$5/{id}", rt.Get$2ById)
-	ProtectRoute(r, Post, "/$5", rt.UpSert$2)
-	ProtectRoute(r, Put, "/$5/state/{id}", rt.State$2)
-	ProtectRoute(r, Delete, "/$5/{id}", rt.Delete$2)
-	ProtectRoute(r, Get, "/$5/all", rt.All$2)
+	er.ProtectRoute(r, er.Get, "/$5/{id}", rt.Get$2ById)
+	er.ProtectRoute(r, er.Post, "/$5", rt.UpSert$2)
+	er.ProtectRoute(r, er.Put, "/$5/state/{id}", rt.State$2)
+	er.ProtectRoute(r, er.Delete, "/$5/{id}", rt.Delete$2)
+	er.ProtectRoute(r, er.Get, "/$5/all", rt.All$2)
 **/
 `
