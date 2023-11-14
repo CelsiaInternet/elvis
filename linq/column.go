@@ -3,7 +3,7 @@ package linq
 import (
 	"github.com/cgalvisleon/elvis/generic"
 	"github.com/cgalvisleon/elvis/jdb"
-	js "github.com/cgalvisleon/elvis/json"
+	j "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/utility"
 )
 
@@ -58,7 +58,7 @@ func (c *Col) AsLow() string {
 /**
 *
 **/
-type Details func(col *Column, data *js.Json)
+type Details func(col *Column, data *j.Json)
 
 type Column struct {
 	Model       *Model
@@ -84,8 +84,8 @@ type Column struct {
 	cast        string
 }
 
-func (c *Column) describe() js.Json {
-	return js.Json{
+func (c *Column) describe() j.Json {
+	return j.Json{
 		"name":        c.name,
 		"description": c.Description,
 		"type":        c.Type,
@@ -100,18 +100,18 @@ func (c *Column) describe() js.Json {
 	}
 }
 
-func (c *Column) Describe() js.Json {
-	var atribs []js.Json = []js.Json{}
+func (c *Column) Describe() j.Json {
+	var atribs []j.Json = []j.Json{}
 	for _, atrib := range c.Atribs {
 		atribs = append(atribs, atrib.describe())
 	}
 
-	reference := js.Json{}
+	reference := j.Json{}
 	if c.Reference != nil {
 		reference = c.Reference.Describe()
 	}
 
-	return js.Json{
+	return j.Json{
 		"name":        c.name,
 		"description": c.Description,
 		"type":        c.Type,
@@ -200,7 +200,7 @@ func (c *Column) DDL() string {
 	if _default.Str() == "NOW()" {
 		result = utility.Append(`DEFAULT NOW()`, result, " ")
 	} else {
-		result = utility.Append(utility.Format(`DEFAULT %v`, js.Quoted(c.Default)), result, " ")
+		result = utility.Append(utility.Format(`DEFAULT %v`, j.Quoted(c.Default)), result, " ")
 	}
 
 	if len(c.Type) > 0 {
@@ -252,7 +252,7 @@ func (c *Column) As(linq *Linq) string {
 		Fkey := utility.Append(from.As(), c.Reference.Fkey, ".")
 		return utility.Format(`(SELECT %s FROM %s WHERE %s=%v LIMIT 1)`, fn, fm, key, Fkey)
 	case TpDetail:
-		return utility.Format(`%v`, js.Quoted(c.Default))
+		return utility.Format(`%v`, j.Quoted(c.Default))
 	case TpFunction:
 		def := FunctionDef(linq, c)
 		return utility.Append(def, c.Up(), " AS ")
@@ -281,7 +281,7 @@ func (c *Column) Def(linq *Linq) string {
 			return utility.Format(`'%s', %s`, c.Low(), def)
 		case TpAtrib:
 			def := c.As(linq)
-			def = utility.Format(`COALESCE(%s, %v)`, def, js.Quoted(c.Default))
+			def = utility.Format(`COALESCE(%s, %v)`, def, j.Quoted(c.Default))
 			return utility.Format(`'%s', %s`, c.Low(), def)
 		case TpClone:
 			return c.As(linq)
@@ -291,7 +291,7 @@ func (c *Column) Def(linq *Linq) string {
 			def = utility.Format(`jsonb_build_object('_id', %s, 'name', %s)`, Fkey, def)
 			return utility.Format(`'%s', %s`, c.Title, def)
 		case TpDetail:
-			def := js.Quoted(c.Default)
+			def := j.Quoted(c.Default)
 			return utility.Format(`'%s', %s`, c.Low(), def)
 		case TpFunction:
 			def := FunctionDef(linq, c)
@@ -300,7 +300,7 @@ func (c *Column) Def(linq *Linq) string {
 			def := c.As(linq)
 			return utility.Format(`'%s', %s`, c.Low(), def)
 		default:
-			def := js.Quoted(c.Default)
+			def := j.Quoted(c.Default)
 			return utility.Format(`'%s', %s`, c.Low(), def)
 		}
 	}
@@ -311,7 +311,7 @@ func (c *Column) Def(linq *Linq) string {
 	case TpAtrib:
 		col := utility.Append(from.As(), c.Column.Up(), ".")
 		def := utility.Format(`%s#>>'{%s}'`, col, c.Low())
-		def = utility.Format(`COALESCE(%s, %v)`, def, js.Quoted(c.Default))
+		def = utility.Format(`COALESCE(%s, %v)`, def, j.Quoted(c.Default))
 		return utility.Format(`%s AS %s`, def, c.Up())
 	case TpClone:
 		return utility.Append(utility.Uppcase(c.from), c.Up(), ".")
@@ -319,7 +319,7 @@ func (c *Column) Def(linq *Linq) string {
 		def := c.As(linq)
 		return utility.Format(`%s AS %s`, def, utility.Uppcase(c.Title))
 	case TpDetail:
-		def := js.Quoted(c.Default)
+		def := j.Quoted(c.Default)
 		return utility.Format(`%v AS %s`, def, c.Up())
 	case TpFunction:
 		def := FunctionDef(linq, c)

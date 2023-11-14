@@ -1,17 +1,17 @@
 package linq
 
 import (
-	js "github.com/cgalvisleon/elvis/json"
+	j "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/utility"
 )
 
 /**
 *
 **/
-func (c *Model) Consolidate(current js.Json, linq *Linq) *Linq {
+func (c *Model) Consolidate(current j.Json, linq *Linq) *Linq {
 	var col *Column
-	var source js.Json = js.Json{}
-	var new js.Json = js.Json{}
+	var source j.Json = j.Json{}
+	var new j.Json = j.Json{}
 
 	setValue := func(key string, val interface{}) {
 		new.Set(key, val)
@@ -75,7 +75,7 @@ func (c *Model) Consolidate(current js.Json, linq *Linq) *Linq {
 	return linq
 }
 
-func (c *Model) Changue(current js.Json, linq *Linq) *Linq {
+func (c *Model) Changue(current j.Json, linq *Linq) *Linq {
 	var change bool
 	new := c.Consolidate(current, linq).new
 
@@ -120,7 +120,7 @@ func (c *Linq) PrepareInsert() {
 	}
 }
 
-func (c *Linq) PrepareUpdate(current js.Json) bool {
+func (c *Linq) PrepareUpdate(current j.Json) bool {
 	model := c.from[0].model
 	model.Changue(current, c)
 
@@ -140,7 +140,7 @@ func (c *Linq) PrepareUpdate(current js.Json) bool {
 	return c.change
 }
 
-func (c *Linq) PrepareDelete(current js.Json) {
+func (c *Linq) PrepareDelete(current j.Json) {
 	model := c.from[0].model
 
 	for k, v := range current {

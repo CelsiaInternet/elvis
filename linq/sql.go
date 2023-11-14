@@ -1,7 +1,7 @@
 package linq
 
 import (
-	js "github.com/cgalvisleon/elvis/json"
+	j "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/utility"
 )
 
@@ -347,7 +347,7 @@ func (c *Linq) SqlInsert() string {
 
 	for key, val := range *c.new {
 		field := utility.Uppcase(key)
-		value := js.Quoted(val)
+		value := j.Quoted(val)
 
 		fields = utility.Append(fields, field, ", ")
 		values = utility.Append(values, utility.Format(`%v`, value), ", ")
@@ -368,7 +368,7 @@ func (c *Linq) SqlUpdate() string {
 
 	for key, val := range *c.new {
 		field := utility.Uppcase(key)
-		value := js.Quoted(val)
+		value := j.Quoted(val)
 
 		if model.UseSource && field == utility.Uppcase(model.SourceField) {
 			vals := utility.Uppcase(model.SourceField)
@@ -376,7 +376,7 @@ func (c *Linq) SqlUpdate() string {
 
 			for ak, av := range atribs {
 				ak = utility.Lowcase(ak)
-				av = js.DoubleQuoted(av)
+				av = j.DoubleQuoted(av)
 
 				vals = utility.Format(`jsonb_set(%s, '{%s}', '%v', true)`, vals, ak, av)
 			}

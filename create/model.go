@@ -242,7 +242,7 @@ const modelEvent = `package $1
 import (
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/event"
-	js "github.com/cgalvisleon/elvis/json"
+	j "github.com/cgalvisleon/elvis/json"
 )
 
 func initEvents() {
@@ -254,7 +254,7 @@ func initEvents() {
 }
 
 func eventAction(m event.CreatedEvenMessage) {
-	data, err := js.ToJson(m.Data)
+	data, err := j.ToJson(m.Data)
 	if err != nil {
 		console.Error(err)
 	}
@@ -352,18 +352,18 @@ import (
 
 	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/jdb"
-	js "github.com/cgalvisleon/elvis/json"
+	j "github.com/cgalvisleon/elvis/json"
 )
 
 type Controller struct {
 	Db *jdb.Conn
 }
 
-func (c *Controller) Version(ctx context.Context) (js.Json, error) {
+func (c *Controller) Version(ctx context.Context) (j.Json, error) {
 	company := envar.EnvarStr("", "COMPANY")
 	web := envar.EnvarStr("", "WEB")
 	version := envar.EnvarStr("", "VERSION")
-  service := js.Json{
+  service := j.Json{
 		"version": version,
 		"service": PackageName,
 		"host":    HostName,
@@ -381,7 +381,7 @@ func (c *Controller) Init(ctx context.Context) {
 }
 
 type Repository interface {
-	Version(ctx context.Context) (js.Json, error)
+	Version(ctx context.Context) (j.Json, error)
 	Init(ctx context.Context)
 }
 `
@@ -467,7 +467,7 @@ import (
 
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/core"
-	js "github.com/cgalvisleon/elvis/json"
+	j "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/linq"
 	"github.com/cgalvisleon/elvis/msg"
 	"github.com/cgalvisleon/elvis/response"
@@ -506,22 +506,22 @@ func Define$2() error {
 		"index",
 	})
 	$2.IntegrityAtrib(true)
-	$2.Trigger(linq.BeforeInsert, func(model *linq.Model, old, new *js.Json, data js.Json) error {
+	$2.Trigger(linq.BeforeInsert, func(model *linq.Model, old, new *j.Json, data j.Json) error {
 		return nil
 	})
-	$2.Trigger(linq.AfterInsert, func(model *linq.Model, old, new *js.Json, data js.Json) error {
+	$2.Trigger(linq.AfterInsert, func(model *linq.Model, old, new *j.Json, data j.Json) error {
 		return nil
 	})
-	$2.Trigger(linq.BeforeUpdate, func(model *linq.Model, old, new *js.Json, data js.Json) error {
+	$2.Trigger(linq.BeforeUpdate, func(model *linq.Model, old, new *j.Json, data j.Json) error {
 		return nil
 	})
-	$2.Trigger(linq.AfterUpdate, func(model *linq.Model, old, new *js.Json, data js.Json) error {
+	$2.Trigger(linq.AfterUpdate, func(model *linq.Model, old, new *j.Json, data j.Json) error {
 		return nil
 	})
-	$2.Trigger(linq.BeforeDelete, func(model *linq.Model, old, new *js.Json, data js.Json) error {
+	$2.Trigger(linq.BeforeDelete, func(model *linq.Model, old, new *j.Json, data j.Json) error {
 		return nil
 	})
-	$2.Trigger(linq.AfterDelete, func(model *linq.Model, old, new *js.Json, data js.Json) error {
+	$2.Trigger(linq.AfterDelete, func(model *linq.Model, old, new *j.Json, data j.Json) error {
 		return nil
 	})
 	
@@ -535,19 +535,19 @@ func Define$2() error {
 /**
 *	Handler for CRUD data
  */
-func Get$2ById(id string) (js.Item, error) {
+func Get$2ById(id string) (j.Item, error) {
 	return $2.Select().
 		Where($2.Column("_id").Eq(id)).
 		First()
 }
 
-func UpSert$2(project_id, id string, data js.Json) (js.Item, error) {
+func UpSert$2(project_id, id string, data j.Json) (j.Item, error) {
 	if !utility.ValidId(project_id) {
-		return js.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "project_id")
+		return j.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "project_id")
 	}
 
 	if !utility.ValidId(id) {
-		return js.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "_id")
+		return j.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "_id")
 	}
 
 	id = utility.GenId(id)
@@ -558,12 +558,12 @@ func UpSert$2(project_id, id string, data js.Json) (js.Item, error) {
 		Command()
 }
 
-func State$2(id, state string) (js.Item, error) {
+func State$2(id, state string) (j.Item, error) {
 	if !utility.ValidId(state) {
-		return js.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "state")
+		return j.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "state")
 	}
 
-	return $2.Upsert(js.Json{
+	return $2.Upsert(j.Json{
 		"_state": state,
 	}).
 		Where($2.Column("_id").Eq(id)).
@@ -571,11 +571,11 @@ func State$2(id, state string) (js.Item, error) {
 		Command()
 }
 
-func Delete$2(id string) (js.Item, error) {
+func Delete$2(id string) (j.Item, error) {
 	return State$2(id, utility.FOR_DELETE)
 }
 
-func All$2(project_id, state, search string, page, rows int, _select string) (js.List, error) {	
+func All$2(project_id, state, search string, page, rows int, _select string) (j.List, error) {	
 	if state == "" {
 		state = utility.ACTIVE
 	}

@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/cgalvisleon/elvis/jdb"
-	js "github.com/cgalvisleon/elvis/json"
+	j "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/utility"
 )
 
@@ -15,7 +15,7 @@ const AfterUpdate = 4
 const BeforeDelete = 5
 const AfterDelete = 6
 
-type Trigger func(model *Model, old, new *js.Json, data js.Json) error
+type Trigger func(model *Model, old, new *j.Json, data j.Json) error
 
 type Model struct {
 	Db                 int
@@ -56,13 +56,13 @@ type Model struct {
 	Version            int
 }
 
-func (c *Model) Describe() js.Json {
-	var colums []js.Json = []js.Json{}
+func (c *Model) Describe() j.Json {
+	var colums []j.Json = []j.Json{}
 	for _, atrib := range c.Definition {
 		colums = append(colums, atrib.Describe())
 	}
 
-	var foreignKey []js.Json = []js.Json{}
+	var foreignKey []j.Json = []j.Json{}
 	for _, atrib := range c.ForeignKey {
 		foreignKey = append(foreignKey, atrib.Describe())
 	}
@@ -70,7 +70,7 @@ func (c *Model) Describe() js.Json {
 	var primaryKeys []string = append([]string{}, c.PrimaryKeys...)
 	var index []string = append([]string{}, c.Index...)
 	
-	return js.Json{
+	return j.Json{
 		"name":               c.Name,
 		"description":        c.Description,
 		"schema":             c.Schema,
@@ -96,8 +96,8 @@ func (c *Model) Describe() js.Json {
 	}
 }
 
-func (c *Model) Model() js.Json {
-	var result js.Json = js.Json{}
+func (c *Model) Model() j.Json {
+	var result j.Json = j.Json{}
 	for _, col := range c.Definition {
 		if !utility.ContainsInt([]int{TpColumn, TpAtrib, TpDetail}, col.Tp) {
 			continue
@@ -110,13 +110,13 @@ func (c *Model) Model() js.Json {
 		} else if col.name == c.SourceField {
 			continue
 		} else if col.Type == "JSON" && col.Default == "[]" {
-			result.Set(col.name, []js.Json{})
+			result.Set(col.name, []j.Json{})
 		} else if col.Type == "JSON" {
-			result.Set(col.name, js.Json{})
+			result.Set(col.name, j.Json{})
 		} else if col.Type == "JSONB" && col.Default == "[]" {
-			result.Set(col.name, []js.Json{})
+			result.Set(col.name, []j.Json{})
 		} else if col.Type == "JSONB" {
-			result.Set(col.name, js.Json{})
+			result.Set(col.name, j.Json{})
 		} else if col.Type == "TIMESTAMP" && col.Default == "NOW()" {
 			result.Set(col.name, utility.Now())
 		} else if col.Type == "TIMESTAMP" && col.Default == "NULL" {
@@ -454,7 +454,7 @@ func (c *Model) DefineReference(thisKey, name, otherKey string, column *Column) 
 	}
 	col := c.Col(name)
 	if col == nil {
-		col = NewColumn(c, name, "", "REFERENCE", js.Json{"_id": "", "name": ""})
+		col = NewColumn(c, name, "", "REFERENCE", j.Json{"_id": "", "name": ""})
 		col.Tp = TpReference
 	}
 	col.Title = name
@@ -497,7 +497,7 @@ func (c *Model) Select(sel ...any) *Linq {
 	return result
 }
 
-func (c *Model) Insert(data js.Json) *Linq {
+func (c *Model) Insert(data j.Json) *Linq {
 	tp := TpSelect
 	if c.UseSource {
 		tp = TpData
@@ -509,7 +509,7 @@ func (c *Model) Insert(data js.Json) *Linq {
 	return result
 }
 
-func (c *Model) Update(data js.Json) *Linq {
+func (c *Model) Update(data j.Json) *Linq {
 	tp := TpSelect
 	if c.UseSource {
 		tp = TpData
@@ -530,7 +530,7 @@ func (c *Model) Delete() *Linq {
 	return result
 }
 
-func (c *Model) Upsert(data js.Json) *Linq {
+func (c *Model) Upsert(data j.Json) *Linq {
 	tp := TpSelect
 	if c.UseSource {
 		tp = TpData
