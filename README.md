@@ -4,7 +4,7 @@
 
 ```
 git update &&
-git tag v0.0.59 &&
+git tag v0.0.61 &&
 git tags
 git push origin --tags
 
