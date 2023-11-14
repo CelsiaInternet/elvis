@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cgalvisleon/elvis/generic"
 	"github.com/cgalvisleon/elvis/logs"
 )
 
@@ -143,6 +144,10 @@ func (it *Item) IsDiferent(new Json) bool {
 
 func (it *Item) IsChange(new Json) bool {
 	return IsChange(it.Result, new)
+}
+
+func (it *Item) Any(_default any, atribs ...string) *generic.Any {
+	return it.Result.Any(_default, atribs...)
 }
 
 func (it *Item) Id() string {

@@ -35,14 +35,15 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/cgalvisleon/elvis/console"
-	_ "github.com/joho/godotenv/autoload"
 	serv "$1/internal/service/$2"
+	"github.com/cgalvisleon/elvis/console"
+	"github.com/cgalvisleon/elvis/envar"
+	_ "github.com/joho/godotenv/autoload"	
 )
 
 func main() {
 	envar.SetvarInt("port", 3000, "Port server", "PORT")
-	envar.SetvarInt("rpc", 0, "Port rpc server", "RPC_PORT")
+	envar.SetvarInt("rpc", 4200, "Port rpc server", "RPC_PORT")
 	envar.SetvarStr("dbhost", "localhost", "Database host", "DB_HOST")
 	envar.SetvarInt("dbport", 5432, "Database port", "DB_PORT")
 	envar.SetvarStr("dbname", "", "Database name", "DB_NAME")

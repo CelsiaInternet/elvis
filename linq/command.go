@@ -23,12 +23,12 @@ func (c *Linq) Command() (js.Item, error) {
 		return c.commandUpdate()
 	}
 
-	if c.Act == ActDelete {
-		return c.commandDelete()
-	}
-
 	if c.Act == ActUpsert {
 		return c.commandUpsert()
+	}
+
+	if c.Act == ActDelete {
+		return c.commandDelete()
 	}
 
 	return js.Item{}, nil
@@ -236,11 +236,14 @@ func (c *Linq) delete(current js.Json) (js.Item, error) {
 		}
 	}
 
-	c.Details(&item.Result)
+	c.Details(&current)
 
 	if model.AfterReferences != nil {
 		go model.AfterReferences(c.references)
 	}
 
-	return item, nil
+	return js.Item{
+		Ok: true,
+		Result: current,
+	}, nil
 }
