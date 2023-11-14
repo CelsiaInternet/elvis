@@ -10,6 +10,7 @@ import (
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/event"
+	"github.com/cgalvisleon/elvis/generic"
 	js "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/utility"
 	"github.com/golang-jwt/jwt/v4"
@@ -219,8 +220,8 @@ func GetClient(r *http.Request) js.Json {
 	ctx := r.Context()
 	return js.Json{
 		"date_of":   now,
-		"client_id": utility.NewAny(ctx.Value("clientId")).String(),
-		"username":  utility.NewAny(ctx.Value("username")).String(),
-		"name":      utility.NewAny(ctx.Value("name")).String(),
+		"client_id": generic.New(ctx.Value("clientId")).Str(),
+		"username":  generic.New(ctx.Value("username")).Str(),
+		"name":      generic.New(ctx.Value("name")).Str(),
 	}
 }

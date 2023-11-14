@@ -2,15 +2,15 @@ package linq
 
 import (
 	"github.com/cgalvisleon/elvis/event"
-	. "github.com/cgalvisleon/elvis/json"
+	js "github.com/cgalvisleon/elvis/json"
 )
 
-func beforeInsert(model *Model, old, new *Json, data Json) error {
+func beforeInsert(model *Model, old, new *js.Json, data js.Json) error {
 	return nil
 }
 
-func afterInsert(model *Model, old, new *Json, data Json) error {
-	event.Action("model/insert", Json{
+func afterInsert(model *Model, old, new *js.Json, data js.Json) error {
+	event.Action("model/insert", js.Json{
 		"table": model.Name,
 		"old":   old,
 		"new":   new,
@@ -19,12 +19,12 @@ func afterInsert(model *Model, old, new *Json, data Json) error {
 	return nil
 }
 
-func beforeUpdate(model *Model, old, new *Json, data Json) error {
+func beforeUpdate(model *Model, old, new *js.Json, data js.Json) error {
 	return nil
 }
 
-func afterUpdate(model *Model, old, new *Json, data Json) error {
-	event.Action("model/update", Json{
+func afterUpdate(model *Model, old, new *js.Json, data js.Json) error {
+	event.Action("model/update", js.Json{
 		"table": model.Name,
 		"old":   old,
 		"new":   new,
@@ -33,12 +33,12 @@ func afterUpdate(model *Model, old, new *Json, data Json) error {
 	return nil
 }
 
-func beforeDelete(model *Model, old, new *Json, data Json) error {
+func beforeDelete(model *Model, old, new *js.Json, data js.Json) error {
 	return nil
 }
 
-func afterDelete(model *Model, old, new *Json, data Json) error {
-	event.Action("model/delete", Json{
+func afterDelete(model *Model, old, new *js.Json, data js.Json) error {
+	event.Action("model/delete", js.Json{
 		"table": model.Name,
 		"old":   old,
 		"new":   new,

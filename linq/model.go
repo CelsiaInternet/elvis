@@ -3,9 +3,9 @@ package linq
 import (
 	"strings"
 
-	. "github.com/cgalvisleon/elvis/jdb"
-	. "github.com/cgalvisleon/elvis/json"
-	. "github.com/cgalvisleon/elvis/utility"
+	"github.com/cgalvisleon/elvis/jdb"
+	js "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/utility"
 )
 
 const BeforeInsert = 1
@@ -15,11 +15,11 @@ const AfterUpdate = 4
 const BeforeDelete = 5
 const AfterDelete = 6
 
-type Trigger func(model *Model, old, new *Json, data Json) error
+type Trigger func(model *Model, old, new *js.Json, data js.Json) error
 
 type Model struct {
 	Db                 int
-	Database           *Db
+	Database           *jdb.Db
 	Name               string
 	Description        string
 	Schema             string
@@ -56,28 +56,21 @@ type Model struct {
 	Version            int
 }
 
-func (c *Model) Describe() Json {
-	var colums []Json = []Json{}
+func (c *Model) Describe() js.Json {
+	var colums []js.Json = []js.Json{}
 	for _, atrib := range c.Definition {
 		colums = append(colums, atrib.Describe())
 	}
 
-	var foreignKey []Json = []Json{}
+	var foreignKey []js.Json = []js.Json{}
 	for _, atrib := range c.ForeignKey {
 		foreignKey = append(foreignKey, atrib.Describe())
 	}
 
-	var primaryKeys []string = []string{}
-	for _, key := range c.PrimaryKeys {
-		primaryKeys = append(primaryKeys, key)
-	}
-
-	var index []string = []string{}
-	for _, key := range c.Index {
-		index = append(index, key)
-	}
-
-	return Json{
+	var primaryKeys []string = append([]string{}, c.PrimaryKeys...)
+	var index []string = append([]string{}, c.Index...)
+	
+	return js.Json{
 		"name":               c.Name,
 		"description":        c.Description,
 		"schema":             c.Schema,
@@ -103,10 +96,10 @@ func (c *Model) Describe() Json {
 	}
 }
 
-func (c *Model) Model() Json {
-	var result Json = Json{}
+func (c *Model) Model() js.Json {
+	var result js.Json = js.Json{}
 	for _, col := range c.Definition {
-		if !ContainsInt([]int{TpColumn, TpAtrib, TpDetail}, col.Tp) {
+		if !utility.ContainsInt([]int{TpColumn, TpAtrib, TpDetail}, col.Tp) {
 			continue
 		}
 
@@ -117,15 +110,15 @@ func (c *Model) Model() Json {
 		} else if col.name == c.SourceField {
 			continue
 		} else if col.Type == "JSON" && col.Default == "[]" {
-			result.Set(col.name, []Json{})
+			result.Set(col.name, []js.Json{})
 		} else if col.Type == "JSON" {
-			result.Set(col.name, Json{})
+			result.Set(col.name, js.Json{})
 		} else if col.Type == "JSONB" && col.Default == "[]" {
-			result.Set(col.name, []Json{})
+			result.Set(col.name, []js.Json{})
 		} else if col.Type == "JSONB" {
-			result.Set(col.name, Json{})
+			result.Set(col.name, js.Json{})
 		} else if col.Type == "TIMESTAMP" && col.Default == "NOW()" {
-			result.Set(col.name, Now())
+			result.Set(col.name, utility.Now())
 		} else if col.Type == "TIMESTAMP" && col.Default == "NULL" {
 			result.Set(col.name, nil)
 		} else if col.Type == "BOOLEAN" && col.Default == "TRUE" {
@@ -148,9 +141,9 @@ func NewModel(schema *Schema, table, description string, version int) *Model {
 		Db:              schema.Db,
 		Database:        schema.Database,
 		Schema:          schema.Name,
-		Name:            Append(Lowcase(schema.Name), Uppcase(table), "."),
+		Name:            utility.Append(utility.Lowcase(schema.Name), utility.Uppcase(table), "."),
 		Description:     description,
-		Table:           Uppcase(table),
+		Table:           utility.Uppcase(table),
 		UseSync:         schema.UseSync,
 		Version:         version,
 		SourceField:     schema.SourceField,
@@ -185,7 +178,7 @@ func (c *Model) Init() error {
 		WHERE table_schema = $1
 		AND table_name = $2);`
 
-	item, err := DBQueryOne(c.Db, sql, c.Schema, c.Table)
+	item, err := jdb.DBQueryOne(c.Db, sql, c.Schema, c.Table)
 	if err != nil {
 		return err
 	}
@@ -195,7 +188,7 @@ func (c *Model) Init() error {
 	if !exists {
 		sql = c.DDL()
 
-		_, err := DBQDDL(c.Db, sql)
+		_, err := jdb.DBQDDL(c.Db, sql)
 		if err != nil {
 			return err
 		}
@@ -225,24 +218,24 @@ func (c *Model) DDL() string {
 	}
 
 	if len(c.PrimaryKeys) > 0 {
-		keys := Format(`PRIMARY KEY (%s)`, strings.Join(c.PrimaryKeys, ", "))
-		fields = append(fields, Uppcase(keys))
+		keys := utility.Format(`PRIMARY KEY (%s)`, strings.Join(c.PrimaryKeys, ", "))
+		fields = append(fields, utility.Uppcase(keys))
 	}
 
 	for _, def := range index {
-		result = Append(result, def, "\n")
+		result = utility.Append(result, def, "\n")
 	}
 
 	_fields := ""
 	for i, def := range fields {
 		if i == 0 {
-			def = Format("\n%s", def)
+			def = utility.Format("\n%s", def)
 		}
-		_fields = Append(_fields, def, ",\n")
+		_fields =utility.Append(_fields, def, ",\n")
 	}
 
-	str := Format(`CREATE TABLE IF NOT EXISTS %s(%s);`, c.Name, _fields)
-	result = Append(str, result, "\n")
+	str := utility.Format(`CREATE TABLE IF NOT EXISTS %s(%s);`, c.Name, _fields)
+	result = utility.Append(str, result, "\n")
 
 	c.Ddl = result
 
@@ -254,26 +247,26 @@ func (c *Model) DDLMigration() string {
 
 	table := c.Name
 	c.Table = "NEW_TABLE"
-	c.Name = Append(c.Schema, c.Table, ",")
+	c.Name = utility.Append(c.Schema, c.Table, ",")
 	ddl := c.DDL()
 
 	for _, column := range c.Definition {
 		fields = append(fields, column.name)
 	}
 
-	insert := Format(`INSERT INTO %s(%s) SELECT %s FROM %s;`, c.Name, strings.Join(fields, ", "), strings.Join(fields, ", "), table)
+	insert := utility.Format(`INSERT INTO %s(%s) SELECT %s FROM %s;`, c.Name, strings.Join(fields, ", "), strings.Join(fields, ", "), table)
 
-	drop := Format(`DROP TABLE %s CASCADE;`, c.Name)
+	drop := utility.Format(`DROP TABLE %s CASCADE;`, c.Name)
 
-	alter := Format(`ALTER TABLE %s RENAME TO %s;`, c.Name, table)
+	alter := utility.Format(`ALTER TABLE %s RENAME TO %s;`, c.Name, table)
 
-	result := Format(`%s %s %s %s`, ddl, insert, drop, alter)
+	result := utility.Format(`%s %s %s %s`, ddl, insert, drop, alter)
 
 	return result
 }
 
 func (c *Model) DropDDL() string {
-	return Format(`DROP TABLE IF EXISTS %s CASCADE;`, c.Name)
+	return utility.Format(`DROP TABLE IF EXISTS %s CASCADE;`, c.Name)
 }
 
 /**
@@ -309,16 +302,16 @@ func (c *Model) Details(name, description string, _default any, details Details)
 *
 **/
 func (c *Model) Up() string {
-	return Uppcase(c.Name)
+	return utility.Uppcase(c.Name)
 }
 
 func (c *Model) Low() string {
-	return Lowcase(c.Name)
+	return utility.Lowcase(c.Name)
 }
 
 func (c *Model) ColIdx(name string) int {
 	for i, item := range c.Definition {
-		if item.Up() == Uppcase(name) {
+		if item.Up() == utility.Uppcase(name) {
 			return i
 		}
 	}
@@ -350,7 +343,7 @@ func (c *Model) Column(name string) *Column {
 
 func (c *Model) TitleIdx(name string) int {
 	for i, item := range c.Definition {
-		if Uppcase(item.Title) == Uppcase(name) {
+		if utility.Uppcase(item.Title) == utility.Uppcase(name) {
 			return i
 		}
 	}
@@ -365,7 +358,7 @@ func (c *Model) AtribIdx(name string) int {
 	}
 
 	for i, item := range source.Atribs {
-		if Lowcase(item.name) == Lowcase(name) {
+		if utility.Lowcase(item.name) == utility.Lowcase(name) {
 			return i
 		}
 	}
@@ -402,7 +395,7 @@ func (c *Model) DefineAtrib(name, description, _type string, _default any) *Mode
 	result := NewColumn(c, name, description, _type, _default)
 	result.Tp = TpAtrib
 	result.Column = source
-	result.name = Lowcase(name)
+	result.name = utility.Lowcase(name)
 	source.Atribs = append(source.Atribs, result)
 
 	return c
@@ -461,7 +454,7 @@ func (c *Model) DefineReference(thisKey, name, otherKey string, column *Column) 
 	}
 	col := c.Col(name)
 	if col == nil {
-		col = NewColumn(c, name, "", "REFERENCE", Json{"_id": "", "name": ""})
+		col = NewColumn(c, name, "", "REFERENCE", js.Json{"_id": "", "name": ""})
 		col.Tp = TpReference
 	}
 	col.Title = name
@@ -504,7 +497,7 @@ func (c *Model) Select(sel ...any) *Linq {
 	return result
 }
 
-func (c *Model) Insert(data Json) *Linq {
+func (c *Model) Insert(data js.Json) *Linq {
 	tp := TpSelect
 	if c.UseSource {
 		tp = TpData
@@ -516,7 +509,7 @@ func (c *Model) Insert(data Json) *Linq {
 	return result
 }
 
-func (c *Model) Update(data Json) *Linq {
+func (c *Model) Update(data js.Json) *Linq {
 	tp := TpSelect
 	if c.UseSource {
 		tp = TpData
@@ -537,7 +530,7 @@ func (c *Model) Delete() *Linq {
 	return result
 }
 
-func (c *Model) Upsert(data Json) *Linq {
+func (c *Model) Upsert(data js.Json) *Linq {
 	tp := TpSelect
 	if c.UseSource {
 		tp = TpData

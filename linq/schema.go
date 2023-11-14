@@ -1,16 +1,16 @@
 package linq
 
 import (
-	. "github.com/cgalvisleon/elvis/jdb"
-	. "github.com/cgalvisleon/elvis/json"
-	. "github.com/cgalvisleon/elvis/utility"
+	"github.com/cgalvisleon/elvis/jdb"
+	js "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/utility"
 )
 
 var schemas []*Schema = []*Schema{}
 
 type Schema struct {
 	Db              int
-	Database        *Db
+	Database        *jdb.Db
 	Name            string
 	Description     string
 	UseSync         bool
@@ -27,8 +27,8 @@ type Schema struct {
 func NewSchema(db int, name string) *Schema {
 	result := &Schema{
 		Db:              db,
-		Name:            Lowcase(name),
-		Database:        DB(db),
+		Name:            utility.Lowcase(name),
+		Database:        jdb.DB(db),
 		UseSync:         true,
 		SourceField:     "_DATA",
 		DateMakeField:   "DATE_MAKE",
@@ -48,7 +48,7 @@ func NewSchema(db int, name string) *Schema {
 
 func GetSchema(name string) *Schema {
 	for _, item := range schemas {
-		if Uppcase(item.Name) == Uppcase(name) {
+		if utility.Uppcase(item.Name) == utility.Uppcase(name) {
 			return item
 		}
 	}
@@ -59,13 +59,13 @@ func GetSchema(name string) *Schema {
 /**
 *
 **/
-func (c *Schema) Describe() Json {
-	var models []Json = []Json{}
+func (c *Schema) Describe() js.Json {
+	var models []js.Json = []js.Json{}
 	for _, model := range c.Models {
 		models = append(models, model.Describe())
 	}
 
-	return Json{
+	return js.Json{
 		"name":            c.Name,
 		"description":     c.Description,
 		"database":        c.Database.Dbname,
@@ -86,7 +86,7 @@ func (c *Schema) Init() error {
 		FROM pg_namespace
 		WHERE nspname = $1);`
 
-	item, err := DBQueryOne(c.Db, sql, c.Name)
+	item, err := jdb.DBQueryOne(c.Db, sql, c.Name)
 	if err != nil {
 		return err
 	}
@@ -96,7 +96,7 @@ func (c *Schema) Init() error {
 	if !exists {
 		sql := c.DDL()
 
-		_, err := DBQDDL(c.Db, sql)
+		_, err := jdb.DBQDDL(c.Db, sql)
 		if err != nil {
 			return err
 		}
@@ -109,7 +109,7 @@ func (c *Schema) DDL() string {
 	var result string
 
 	if len(c.Name) > 0 {
-		result = Format(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"; CREATE SCHEMA IF NOT EXISTS "%s";`, c.Name)
+		result = utility.Format(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"; CREATE SCHEMA IF NOT EXISTS "%s";`, c.Name)
 	}
 
 	return result
@@ -120,7 +120,7 @@ func (c *Schema) DDL() string {
 **/
 func (c *Schema) Model(name string) *Model {
 	for _, item := range c.Models {
-		if Uppcase(item.Name) == Uppcase(name) {
+		if utility.Uppcase(item.Name) == utility.Uppcase(name) {
 			return item
 		}
 	}

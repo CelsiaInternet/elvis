@@ -4,8 +4,8 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/cgalvisleon/elvis/generic"
 	"github.com/cgalvisleon/elvis/logs"
-	"github.com/cgalvisleon/elvis/utility"
 )
 
 func Connect(w http.ResponseWriter, r *http.Request) (*Client, error) {
@@ -14,7 +14,7 @@ func Connect(w http.ResponseWriter, r *http.Request) (*Client, error) {
 	}
 
 	ctx := r.Context()
-	clientId := utility.NewAny(ctx.Value("clientId")).String()
+	clientId := generic.New(ctx.Value("clientId")).Str()
 	if clientId == "<nil>" {
 		return nil, errors.New(ERR_NOT_DEFINE_CLIENTID)
 	}
@@ -29,7 +29,7 @@ func Connect(w http.ResponseWriter, r *http.Request) (*Client, error) {
 		return nil, err
 	}
 
-	userName := utility.NewAny(ctx.Value("username")).String()
+	userName := generic.New(ctx.Value("username")).Str()
 
 	return conn.hub.connect(socket, clientId, userName)
 }

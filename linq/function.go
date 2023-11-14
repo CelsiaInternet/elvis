@@ -4,8 +4,8 @@ import (
 	"reflect"
 
 	"github.com/cgalvisleon/elvis/console"
-	. "github.com/cgalvisleon/elvis/json"
-	. "github.com/cgalvisleon/elvis/utility"
+	js "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/utility"
 )
 
 func FunctionDef(linq *Linq, col *Column) string {
@@ -18,31 +18,31 @@ func FunctionDef(linq *Linq, col *Column) string {
 			switch v := arg.(type) {
 			case Column:
 				def = v.As(linq)
-				def = Append(def, v.cast, "::")
+				def = utility.Append(def, v.cast, "::")
 			case *Column:
 				def = v.As(linq)
-				def = Append(def, v.cast, "::")
+				def = utility.Append(def, v.cast, "::")
 			case Col:
 				def = v.from
-				def = Append(def, v.Up(), ".")
-				def = Append(def, v.cast, "::")
+				def = utility.Append(def, v.Up(), ".")
+				def = utility.Append(def, v.cast, "::")
 			case *Col:
 				def = v.from
-				def = Append(def, v.Up(), ".")
-				def = Append(def, v.cast, "::")
+				def = utility.Append(def, v.Up(), ".")
+				def = utility.Append(def, v.cast, "::")
 			case string:
-				def = Format(`%v`, Quoted(v))
+				def = utility.Format(`%v`, js.Quoted(v))
 			default:
 				console.ErrorF(`FunctionDef:%s; value:%v`, reflect.TypeOf(v), v)
 			}
-			result = Append(result, def, ", ")
+			result = utility.Append(result, def, ", ")
 		}
 	default:
 		console.ErrorF(`FunctionDef:%s; value:%v`, reflect.TypeOf(args), args)
 	}
 
 	if len(result) > 0 {
-		result = Format(`%s(%s)`, col.Function, result)
+		result = utility.Format(`%s(%s)`, col.Function, result)
 	}
 
 	return result

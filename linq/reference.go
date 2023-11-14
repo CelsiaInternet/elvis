@@ -1,8 +1,8 @@
 package linq
 
 import (
-	. "github.com/cgalvisleon/elvis/json"
-	. "github.com/cgalvisleon/elvis/utility"
+	js "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/utility"
 )
 
 type Reference struct {
@@ -12,8 +12,8 @@ type Reference struct {
 	Reference *Column
 }
 
-func (c *Reference) Describe() Json {
-	return Json{
+func (c *Reference) Describe() js.Json {
+	return js.Json{
 		"foreignKey": c.Fkey,
 		"title":      c.Name,
 		"key":        c.Key,
@@ -23,7 +23,7 @@ func (c *Reference) Describe() Json {
 
 func (c *Reference) DDL() string {
 	table := c.Reference.Model.Name
-	return Format(`REFERENCES %s(%s)`, table, c.Reference.Up())
+	return utility.Format(`REFERENCES %s(%s)`, table, c.Reference.Up())
 }
 
 func NewForeignKey(fKey string, reference *Column) *Reference {

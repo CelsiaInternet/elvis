@@ -1,29 +1,29 @@
 package linq
 
 import (
-	. "github.com/cgalvisleon/elvis/json"
-	. "github.com/cgalvisleon/elvis/utility"
+	js "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/utility"
 )
 
 /**
 *
 **/
-func (c *Model) Consolidate(current Json, linq *Linq) *Linq {
+func (c *Model) Consolidate(current js.Json, linq *Linq) *Linq {
 	var col *Column
-	var source Json = Json{}
-	var new Json = Json{}
+	var source js.Json = js.Json{}
+	var new js.Json = js.Json{}
 
 	setValue := func(key string, val interface{}) {
 		new.Set(key, val)
 	}
 
 	for k, v := range linq.data {
-		k = Lowcase(k)
+		k = utility.Lowcase(k)
 		idxCol := c.ColIdx(k)
 
 		if idxCol == -1 {
 			idx := c.TitleIdx(k)
-			if idx != -1 && ContainsInt([]int{TpReference}, c.Definition[idx].Tp) {
+			if idx != -1 && utility.ContainsInt([]int{TpReference}, c.Definition[idx].Tp) {
 				col = c.Definition[idx]
 				reference := linq.data.Json(k)
 				setValue(col.name, reference.Key(col.Reference.Key))
@@ -40,14 +40,14 @@ func (c *Model) Consolidate(current Json, linq *Linq) *Linq {
 			col = c.Definition[idxCol]
 		}
 
-		if ContainsInt([]int{TpField, TpFunction, TpDetail}, col.Tp) {
+		if utility.ContainsInt([]int{TpField, TpFunction, TpDetail}, col.Tp) {
 			continue
-		} else if k == Lowcase(c.SourceField) {
+		} else if k == utility.Lowcase(c.SourceField) {
 			atribs := linq.data.Json(k)
 
 			if c.integrityAtrib {
 				for ak, av := range atribs {
-					ak = Lowcase(ak)
+					ak = utility.Lowcase(ak)
 					if idx := c.AtribIdx(ak); idx != -1 {
 						source[ak] = av
 					}
@@ -55,13 +55,13 @@ func (c *Model) Consolidate(current Json, linq *Linq) *Linq {
 			} else {
 				source = atribs
 			}
-		} else if ContainsInt([]int{TpColumn}, col.Tp) {
+		} else if utility.ContainsInt([]int{TpColumn}, col.Tp) {
 			setValue(k, v)
 			col := c.Column(k)
 			if col.PrimaryKey || col.ForeignKey {
 				linq.references = append(linq.references, &ReferenceValue{c.Schema, c.Table, v, 1})
 			}
-		} else if ContainsInt([]int{TpAtrib}, col.Tp) {
+		} else if utility.ContainsInt([]int{TpAtrib}, col.Tp) {
 			source.Set(k, v)
 		}
 	}
@@ -75,12 +75,12 @@ func (c *Model) Consolidate(current Json, linq *Linq) *Linq {
 	return linq
 }
 
-func (c *Model) Changue(current Json, linq *Linq) *Linq {
+func (c *Model) Changue(current js.Json, linq *Linq) *Linq {
 	var change bool
 	new := c.Consolidate(current, linq).new
 
 	for k, v := range *new {
-		k = Lowcase(k)
+		k = utility.Lowcase(k)
 		idxCol := c.ColIdx(k)
 
 		if idxCol != -1 {
@@ -109,7 +109,7 @@ func (c *Model) Changue(current Json, linq *Linq) *Linq {
 func (c *Linq) PrepareInsert() {
 	model := c.from[0].model
 	model.Consolidate(model.Model(), c)
-	now := Now()
+	now := utility.Now()
 
 	if model.UseDateMake {
 		c.new.Set(model.DateMakeField, now)
@@ -120,7 +120,7 @@ func (c *Linq) PrepareInsert() {
 	}
 }
 
-func (c *Linq) PrepareUpdate(current Json) bool {
+func (c *Linq) PrepareUpdate(current js.Json) bool {
 	model := c.from[0].model
 	model.Changue(current, c)
 
@@ -129,10 +129,10 @@ func (c *Linq) PrepareUpdate(current Json) bool {
 	}
 
 	if model.UseDateMake {
-		delete(*c.new, Lowcase(model.DateMakeField))
+		delete(*c.new, utility.Lowcase(model.DateMakeField))
 	}
 
-	now := Now()
+	now := utility.Now()
 	if model.UseDateUpdate {
 		c.new.Set(model.DateUpdateField, now)
 	}
@@ -140,7 +140,7 @@ func (c *Linq) PrepareUpdate(current Json) bool {
 	return c.change
 }
 
-func (c *Linq) PrepareDelete(current Json) {
+func (c *Linq) PrepareDelete(current js.Json) {
 	model := c.from[0].model
 
 	for k, v := range current {

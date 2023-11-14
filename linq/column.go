@@ -1,6 +1,7 @@
 package linq
 
 import (
+	"github.com/cgalvisleon/elvis/generic"
 	"github.com/cgalvisleon/elvis/jdb"
 	js "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/utility"
@@ -194,9 +195,9 @@ func (c *Column) DDL() string {
 		result = c.Reference.DDL()
 	}
 
-	_default := utility.NewAny(c.Default)
+	_default := generic.New(c.Default)
 
-	if _default.String() == "NOW()" {
+	if _default.Str() == "NOW()" {
 		result = utility.Append(`DEFAULT NOW()`, result, " ")
 	} else {
 		result = utility.Append(utility.Format(`DEFAULT %v`, js.Quoted(c.Default)), result, " ")

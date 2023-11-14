@@ -4,9 +4,9 @@ import (
 	"strings"
 
 	"github.com/cgalvisleon/elvis/console"
-	. "github.com/cgalvisleon/elvis/jdb"
-	. "github.com/cgalvisleon/elvis/json"
-	. "github.com/cgalvisleon/elvis/utility"
+	"github.com/cgalvisleon/elvis/jdb"
+	js "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/utility"
 )
 
 const TpSelect = 1
@@ -22,7 +22,6 @@ const ActUpsert = 7
 *
 **/
 type SQL struct {
-	linq *Linq
 	val  string
 }
 
@@ -39,7 +38,7 @@ func (c *FRom) As() string {
 }
 
 func (c *FRom) NameAs() string {
-	return Append(c.model.Name, c.as, " AS ")
+	return utility.Append(c.model.Name, c.as, " AS ")
 }
 
 func (c *FRom) Col(name string, cast ...string) *Col {
@@ -103,13 +102,12 @@ type Linq struct {
 	orderBy []*OrderBy
 	groupBy []*Column
 	_return []*Column
-	concat  string
 	fromAs  []*FRom
 	as      int
 	details []*Column
-	data    Json
+	data    js.Json
 	// dta        *Json
-	new        *Json
+	new        *js.Json
 	change     bool
 	references []*ReferenceValue
 	debug      bool
@@ -133,20 +131,20 @@ func GetAs(n int) string {
 		a = 65 + a
 		b = 65 + b - 1
 		c = 65 + c - 1
-		as = Format(`A%c%c%c`, rune(c), rune(b), rune(a))
+		as = utility.Format(`A%c%c%c`, rune(c), rune(b), rune(a))
 	} else if b > base {
 		b = b / base
 		a = 65 + a
 		b = 65 + b - 1
 		c = 65 + c - 1
-		as = Format(`%c%c%c`, rune(c), rune(b), rune(a))
+		as = utility.Format(`%c%c%c`, rune(c), rune(b), rune(a))
 	} else if b > 0 {
 		a = 65 + a
 		b = 65 + b - 1
-		as = Format(`%c%c`, rune(b), rune(a))
+		as = utility.Format(`%c%c`, rune(b), rune(a))
 	} else {
 		a = 65 + a
-		as = Format(`%c`, rune(a))
+		as = utility.Format(`%c`, rune(a))
 	}
 
 	return as
@@ -161,7 +159,7 @@ func NewLinq(tp int, act int, model *Model, as ...string) *Linq {
 	} else if len(as) == 0 {
 		as = []string{""}
 	}
-	from := &FRom{model: model, as: Uppcase(as[0])}
+	from := &FRom{model: model, as: utility.Uppcase(as[0])}
 	return &Linq{
 		Tp:      tp,
 		Act:     act,
@@ -173,8 +171,8 @@ func NewLinq(tp int, act int, model *Model, as ...string) *Linq {
 		orderBy: []*OrderBy{},
 		groupBy: []*Column{},
 		details: []*Column{},
-		data:    Json{},
-		new:     &Json{},
+		data:    js.Json{},
+		new:     &js.Json{},
 		as:      1,
 	}
 }
@@ -197,7 +195,7 @@ func (c *Linq) GetAs() string {
 	return result
 }
 
-func (c *Linq) Details(data *Json) *Json {
+func (c *Linq) Details(data *js.Json) *js.Json {
 	for _, col := range c.details {
 		col.Details(col, data)
 	}
@@ -279,7 +277,7 @@ func (c *Linq) As(val any) string {
 }
 
 func (c *Linq) GetCol(name string) *Column {
-	if f := ReplaceAll(name, []string{" "}, ""); len(f) == 0 {
+	if f := utility.ReplaceAll(name, []string{" "}, ""); len(f) == 0 {
 		return nil
 	}
 
@@ -288,7 +286,7 @@ func (c *Linq) GetCol(name string) *Column {
 		modelN := pars[0]
 		colN := pars[0]
 		for _, item := range c.fromAs {
-			if item.model.Up() == Uppcase(modelN) {
+			if item.model.Up() == utility.Uppcase(modelN) {
 				return item.model.Column(colN)
 			}
 		}
@@ -326,45 +324,45 @@ func (c *Linq) ToCols(sel ...any) []*Column {
 /**
 * Query
 **/
-func (c *Linq) Query() (Items, error) {
+func (c *Linq) Query() (js.Items, error) {
 	if c.debug {
 		console.Log(c.sql)
 	}
 
 	if c.Tp == TpData {
-		result, err := DBQueryData(c.db, c.sql)
+		result, err := jdb.DBQueryData(c.db, c.sql)
 		if err != nil {
-			return Items{}, err
+			return js.Items{}, err
 		}
 
 		return result, nil
 	}
 
-	result, err := DBQuery(c.db, c.sql)
+	result, err := jdb.DBQuery(c.db, c.sql)
 	if err != nil {
-		return Items{}, err
+		return js.Items{}, err
 	}
 
 	return result, nil
 }
 
-func (c *Linq) QueryOne() (Item, error) {
+func (c *Linq) QueryOne() (js.Item, error) {
 	if c.debug {
 		console.Log(c.sql)
 	}
 
 	if c.Tp == TpData {
-		result, err := DBQueryDataOne(c.db, c.sql)
+		result, err := jdb.DBQueryDataOne(c.db, c.sql)
 		if err != nil {
-			return Item{}, err
+			return js.Item{}, err
 		}
 
 		return result, nil
 	}
 
-	result, err := DBQueryOne(c.db, c.sql)
+	result, err :=jdb.DBQueryOne(c.db, c.sql)
 	if err != nil {
-		return Item{}, err
+		return js.Item{}, err
 	}
 
 	return result, nil
@@ -375,7 +373,7 @@ func (c *Linq) QueryCount() int {
 		console.Log(c.sql)
 	}
 
-	result := DBQueryCount(c.db, c.sql)
+	result := jdb.DBQueryCount(c.db, c.sql)
 
 	return result
 }

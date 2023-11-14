@@ -4,8 +4,8 @@ import (
 	"reflect"
 
 	"github.com/cgalvisleon/elvis/console"
-	. "github.com/cgalvisleon/elvis/json"
-	. "github.com/cgalvisleon/elvis/utility"
+	js "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/utility"
 )
 
 func (c *Linq) Select(sel ...any) *Linq {
@@ -41,14 +41,14 @@ func (c *Linq) Select(sel ...any) *Linq {
 /**
 *
 **/
-func (c *Linq) Find() (Items, error) {
+func (c *Linq) Find() (js.Items, error) {
 	c.SqlSelect()
 
-	c.sql = Format(`%s;`, c.sql)
+	c.sql = utility.Format(`%s;`, c.sql)
 
 	items, err := c.Query()
 	if err != nil {
-		return Items{}, err
+		return js.Items{}, err
 	}
 
 	for _, data := range items.Result {
@@ -58,12 +58,12 @@ func (c *Linq) Find() (Items, error) {
 	return items, nil
 }
 
-func (c *Linq) All() (Items, error) {
+func (c *Linq) All() (js.Items, error) {
 	c.sql = c.SqlAll()
 
 	items, err := c.Query()
 	if err != nil {
-		return Items{}, err
+		return js.Items{}, err
 	}
 
 	for _, data := range items.Result {
@@ -73,12 +73,12 @@ func (c *Linq) All() (Items, error) {
 	return items, nil
 }
 
-func (c *Linq) First() (Item, error) {
+func (c *Linq) First() (js.Item, error) {
 	c.sql = c.SqlLimit(1)
 
 	item, err := c.QueryOne()
 	if err != nil {
-		return Item{}, err
+		return js.Item{}, err
 	}
 
 	c.Details(&item.Result)
@@ -86,12 +86,12 @@ func (c *Linq) First() (Item, error) {
 	return item, nil
 }
 
-func (c *Linq) Limit(limit int) (Items, error) {
+func (c *Linq) Limit(limit int) (js.Items, error) {
 	c.sql = c.SqlLimit(limit)
 
 	items, err := c.Query()
 	if err != nil {
-		return Items{}, err
+		return js.Items{}, err
 	}
 
 	for _, data := range items.Result {
@@ -101,13 +101,13 @@ func (c *Linq) Limit(limit int) (Items, error) {
 	return items, nil
 }
 
-func (c *Linq) Page(page, rows int) (Items, error) {
+func (c *Linq) Page(page, rows int) (js.Items, error) {
 	offset := (page - 1) * rows
 	c.sql = c.SqlOffset(rows, offset)
 
 	items, err := c.Query()
 	if err != nil {
-		return Items{}, err
+		return js.Items{}, err
 	}
 
 	for _, data := range items.Result {
@@ -123,12 +123,12 @@ func (c *Linq) Count() int {
 	return c.QueryCount()
 }
 
-func (c *Linq) List(page, rows int) (List, error) {
+func (c *Linq) List(page, rows int) (js.List, error) {
 	all := c.Count()
 
 	items, err := c.Page(page, rows)
 	if err != nil {
-		return List{}, err
+		return js.List{}, err
 	}
 
 	return items.ToList(all, page, rows), nil
