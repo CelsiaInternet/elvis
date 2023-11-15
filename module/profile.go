@@ -2,15 +2,15 @@ package module
 
 import (
 	"github.com/cgalvisleon/elvis/console"
-	. "github.com/cgalvisleon/elvis/core"
-	. "github.com/cgalvisleon/elvis/json"
-	. "github.com/cgalvisleon/elvis/linq"
-	. "github.com/cgalvisleon/elvis/msg"
-	. "github.com/cgalvisleon/elvis/utility"
+	"github.com/cgalvisleon/elvis/core"
+	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/linq"
+	"github.com/cgalvisleon/elvis/msg"
+	"github.com/cgalvisleon/elvis/utility"
 )
 
-var Profiles *Model
-var ProfileFolders *Model
+var Profiles *linq.Model
+var ProfileFolders *linq.Model
 
 func DefineProfiles() error {
 	if err := DefineSchemaModule(); err != nil {
@@ -21,7 +21,7 @@ func DefineProfiles() error {
 		return nil
 	}
 
-	Profiles = NewModel(SchemaModule, "PROFILES", "Tabla de perfiles", 1)
+	Profiles = linq.NewModel(SchemaModule, "PROFILES", "Tabla de perfiles", 1)
 	Profiles.DefineColum("date_make", "", "TIMESTAMP", "NOW()")
 	Profiles.DefineColum("date_update", "", "TIMESTAMP", "NOW()")
 	Profiles.DefineColum("module_id", "", "VARCHAR(80)", "-1")
@@ -36,7 +36,7 @@ func DefineProfiles() error {
 	})
 	Profiles.DefineForeignKey("module_id", Modules.Column("_id"))
 
-	if err := InitModel(Profiles); err != nil {
+	if err := core.InitModel(Profiles); err != nil {
 		return console.PanicE(err)
 	}
 
@@ -52,7 +52,7 @@ func DefineProfileFolders() error {
 		return nil
 	}
 
-	ProfileFolders = NewModel(SchemaModule, "PROFILE_FOLDERS", "Tabla de carpetas por perfil", 1)
+	ProfileFolders = linq.NewModel(SchemaModule, "PROFILE_FOLDERS", "Tabla de carpetas por perfil", 1)
 	ProfileFolders.DefineColum("date_make", "", "TIMESTAMP", "NOW()")
 	ProfileFolders.DefineColum("module_id", "", "VARCHAR(80)", "-1")
 	ProfileFolders.DefineColum("profile_tp", "", "VARCHAR(80)", "-1")
@@ -65,7 +65,7 @@ func DefineProfileFolders() error {
 	})
 	ProfileFolders.DefineForeignKey("module_id", Modules.Column("_id"))
 
-	if err := InitModel(ProfileFolders); err != nil {
+	if err := core.InitModel(ProfileFolders); err != nil {
 		return console.PanicE(err)
 	}
 
@@ -76,41 +76,41 @@ func DefineProfileFolders() error {
 * Profile
 *	Handler for CRUD data
 **/
-func GetProfileById(moduleId, profileTp string) (Item, error) {
+func GetProfileById(moduleId, profileTp string) (e.Item, error) {
 	return Profiles.Select().
 		Where(Profiles.Column("module_id").Eq(moduleId)).
 		And(Profiles.Column("profile_tp").Eq(profileTp)).
 		First()
 }
 
-func InitProfile(moduleId, profileTp string, data Json) (Item, error) {
-	if !ValidId(moduleId) {
-		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "moduleId")
+func InitProfile(moduleId, profileTp string, data e.Json) (e.Item, error) {
+	if !utility.ValidId(moduleId) {
+		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "moduleId")
 	}
 
-	if !ValidId(profileTp) {
-		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "profile_tp")
+	if !utility.ValidId(profileTp) {
+		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "profile_tp")
 	}
 
 	module, err := GetModuleById(moduleId)
 	if err != nil {
-		return Item{}, err
+		return e.Item{}, err
 	}
 
 	if !module.Ok {
-		return Item{}, console.ErrorM(MODULE_NOT_FOUND)
+		return e.Item{}, console.ErrorM(msg.MODULE_NOT_FOUND)
 	}
 
 	current, err := GetProfileById(moduleId, profileTp)
 	if err != nil {
-		return Item{}, err
+		return e.Item{}, err
 	}
 
 	if current.Ok {
-		return Item{
+		return e.Item{
 			Ok: current.Ok,
-			Result: Json{
-				"message": RECORD_FOUND,
+			Result: e.Json{
+				"message": msg.RECORD_FOUND,
 				"_id":     current.Id(),
 				"index":   current.Index(),
 			},
@@ -123,22 +123,22 @@ func InitProfile(moduleId, profileTp string, data Json) (Item, error) {
 		Command()
 }
 
-func UpSetProfile(moduleId, profileTp string, data Json) (Item, error) {
-	if !ValidId(moduleId) {
-		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "moduleId")
+func UpSetProfile(moduleId, profileTp string, data e.Json) (e.Item, error) {
+	if !utility.ValidId(moduleId) {
+		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "moduleId")
 	}
 
-	if !ValidId(profileTp) {
-		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "profile_tp")
+	if !utility.ValidId(profileTp) {
+		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "profile_tp")
 	}
 
 	module, err := GetModuleById(moduleId)
 	if err != nil {
-		return Item{}, err
+		return e.Item{}, err
 	}
 
 	if !module.Ok {
-		return Item{}, console.ErrorM(MODULE_NOT_FOUND)
+		return e.Item{}, console.ErrorM(msg.MODULE_NOT_FOUND)
 	}
 
 	data["module_id"] = moduleId
@@ -149,20 +149,20 @@ func UpSetProfile(moduleId, profileTp string, data Json) (Item, error) {
 		Command()
 }
 
-func UpSetProfileTp(projectId, moduleId, id, name, description string, data Json) (Item, error) {
-	if !ValidStr(name, 0, []string{""}) {
-		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "name")
+func UpSetProfileTp(projectId, moduleId, id, name, description string, data e.Json) (e.Item, error) {
+	if !utility.ValidStr(name, 0, []string{""}) {
+		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "name")
 	}
 
 	profile, err := UpSetType(projectId, id, "PROFILE", name, description)
 	if err != nil {
-		return Item{}, err
+		return e.Item{}, err
 	}
 
 	profileTp := profile.Id()
 	_, err = UpSetProfile(moduleId, profileTp, data)
 	if err != nil {
-		return Item{}, err
+		return e.Item{}, err
 	}
 
 	profile.Set("project_id", projectId)
@@ -170,14 +170,14 @@ func UpSetProfileTp(projectId, moduleId, id, name, description string, data Json
 	return profile, nil
 }
 
-func DeleteProfile(moduleId, profileTp string) (Item, error) {
+func DeleteProfile(moduleId, profileTp string) (e.Item, error) {
 	current, err := GetProfileById(moduleId, profileTp)
 	if err != nil {
-		return Item{}, err
+		return e.Item{}, err
 	}
 
 	if !current.Ok {
-		return Item{}, console.ErrorM(RECORD_NOT_FOUND)
+		return e.Item{}, console.ErrorM(msg.RECORD_NOT_FOUND)
 	}
 
 	return Profiles.Delete().
@@ -186,7 +186,7 @@ func DeleteProfile(moduleId, profileTp string) (Item, error) {
 		Command()
 }
 
-func GetProfileFolderById(moduleId, profileTp, folderId string) (Item, error) {
+func GetProfileFolderById(moduleId, profileTp, folderId string) (e.Item, error) {
 	return ProfileFolders.Select().
 		Where(ProfileFolders.Column("module_id").Eq(moduleId)).
 		And(ProfileFolders.Column("profile_tp").Eq(profileTp)).
@@ -194,29 +194,29 @@ func GetProfileFolderById(moduleId, profileTp, folderId string) (Item, error) {
 		First()
 }
 
-func CheckProfileFolder(moduleId, profileTp, folderId string, chk bool) (Item, error) {
-	if !ValidId(moduleId) {
-		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "module_id")
+func CheckProfileFolder(moduleId, profileTp, folderId string, chk bool) (e.Item, error) {
+	if !utility.ValidId(moduleId) {
+		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "module_id")
 	}
 
-	if !ValidId(profileTp) {
-		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "profile_tp")
+	if !utility.ValidId(profileTp) {
+		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "profile_tp")
 	}
 
-	if !ValidId(folderId) {
-		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "folder_id")
+	if !utility.ValidId(folderId) {
+		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "folder_id")
 	}
 
 	profile, err := GetTypeById(profileTp)
 	if err != nil {
-		return Item{}, err
+		return e.Item{}, err
 	}
 
 	if !profile.Ok {
-		return Item{}, console.AlertF(PROFILE_NOT_FOUND, profileTp)
+		return e.Item{}, console.AlertF(msg.PROFILE_NOT_FOUND, profileTp)
 	}
 
-	data := Json{}
+	data := e.Json{}
 	data.Set("module_id", moduleId)
 	data.Set("profile_tp", profileTp)
 	data.Set("folder_id", folderId)
@@ -236,40 +236,39 @@ func CheckProfileFolder(moduleId, profileTp, folderId string, chk bool) (Item, e
 	}
 }
 
-func getProfileFolders(userId, projectId, mainId string) []Json {
-	items, err := From(Folders, "A").
+func getProfileFolders(userId, projectId, mainId string) []e.Json {
+	items, err := linq.From(Folders, "A").
 		Join(Folders.As("A"), ProfileFolders.As("B"), ProfileFolders.Column("folder_id").Eq(Folders.Column("_id"))).
 		Where(Folders.Column("main_id").Eq(mainId)).
 		And(Folders.Column("module_id").In(
-			From(ProjectModules, "C").
+			linq.From(ProjectModules, "C").
 				Where(ProjectModules.Column("project_id").Eq(projectId)).
 				Select(ProjectModules.Column("module_id")).SQL())).
 		And(ProfileFolders.Column("profile_tp").In(
-			From(Roles, "D").
+			linq.From(Roles, "D").
 				Where(Roles.Column("project_id").Eq(projectId)).
 				And(Roles.Column("user_id").Eq(userId)).
 				Select(Roles.Column("profile_tp")).SQL())).
 		OrderBy(Folders.Column("index"), true).
 		Find()
 	if err != nil {
-		return []Json{}
+		return []e.Json{}
 	}
 
 	for _, item := range items.Result {
-		mainId = item.Id()
 		item["project_id"] = projectId
 	}
 
 	return items.Result
 }
 
-func GetProfileFolders(userId, projectId string) ([]Json, error) {
-	if !ValidId(userId) {
-		return []Json{}, console.AlertF(MSG_ATRIB_REQUIRED, "clientId")
+func GetProfileFolders(userId, projectId string) ([]e.Json, error) {
+	if !utility.ValidId(userId) {
+		return []e.Json{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "clientId")
 	}
 
-	if !ValidId(projectId) {
-		return []Json{}, console.AlertF(MSG_ATRIB_REQUIRED, "project_id")
+	if !utility.ValidId(projectId) {
+		return []e.Json{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "project_id")
 	}
 
 	mainId := "-1"
@@ -282,9 +281,9 @@ func GetProfileFolders(userId, projectId string) ([]Json, error) {
 	return result, nil
 }
 
-func AllModuleProfiles(projectId, moduleId, state, search string, page, rows int) (List, error) {
+func AllModuleProfiles(projectId, moduleId, state, search string, page, rows int) (e.List, error) {
 	if state == "" {
-		state = ACTIVE
+		state = utility.ACTIVE
 	}
 
 	auxState := state
@@ -293,9 +292,9 @@ func AllModuleProfiles(projectId, moduleId, state, search string, page, rows int
 	_select = append(_select, Types.Column("_state"), Types.Column("_id"), Types.Column("name"), Types.Column("description"))
 
 	if auxState == "*" {
-		state = FOR_DELETE
+		state = utility.FOR_DELETE
 
-		return From(Profiles, "A").
+		return linq.From(Profiles, "A").
 			Join(Profiles.As("A"), Types.As("B"), Types.Col("_id").Eq(Profiles.Col("profile_tp"))).
 			Where(Types.Column("_state").Neg(state)).
 			And(Types.Column("project_id").In("-1", projectId)).
@@ -305,7 +304,7 @@ func AllModuleProfiles(projectId, moduleId, state, search string, page, rows int
 			Select(_select).
 			List(page, rows)
 	} else if auxState == "0" {
-		return From(Profiles, "A").
+		return linq.From(Profiles, "A").
 			Join(Profiles.As("A"), Types.As("B"), Types.Col("_id").Eq(Profiles.Col("profile_tp"))).
 			Where(Types.Column("_state").In("-1", state)).
 			And(Types.Column("project_id").In("-1", projectId)).
@@ -315,7 +314,7 @@ func AllModuleProfiles(projectId, moduleId, state, search string, page, rows int
 			Select(_select).
 			List(page, rows)
 	} else {
-		return From(Profiles, "A").
+		return linq.From(Profiles, "A").
 			Join(Profiles.As("A"), Types.As("B"), Types.Col("_id").Eq(Profiles.Col("profile_tp"))).
 			Where(Types.Column("_state").Eq(state)).
 			And(Types.Column("project_id").In("-1", projectId)).

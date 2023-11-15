@@ -2,15 +2,15 @@ package module
 
 import (
 	"github.com/cgalvisleon/elvis/console"
-	. "github.com/cgalvisleon/elvis/core"
-	. "github.com/cgalvisleon/elvis/json"
-	. "github.com/cgalvisleon/elvis/linq"
-	. "github.com/cgalvisleon/elvis/msg"
-	. "github.com/cgalvisleon/elvis/utility"
+	"github.com/cgalvisleon/elvis/core"
+	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/linq"
+	"github.com/cgalvisleon/elvis/msg"
+	"github.com/cgalvisleon/elvis/utility"
 	_ "github.com/joho/godotenv/autoload"
 )
 
-var Modules *Model
+var Modules *linq.Model
 
 func DefineModules() error {
 	if err := DefineSchemaModule(); err != nil {
@@ -21,10 +21,10 @@ func DefineModules() error {
 		return nil
 	}
 
-	Modules = NewModel(SchemaModule, "MODULES", "Tabla de modulos", 1)
+	Modules = linq.NewModel(SchemaModule, "MODULES", "Tabla de modulos", 1)
 	Modules.DefineColum("date_make", "", "TIMESTAMP", "NOW()")
 	Modules.DefineColum("date_update", "", "TIMESTAMP", "NOW()")
-	Modules.DefineColum("_state", "", "VARCHAR(80)", ACTIVE)
+	Modules.DefineColum("_state", "", "VARCHAR(80)", utility.ACTIVE)
 	Modules.DefineColum("_id", "", "VARCHAR(80)", "-1")
 	Modules.DefineColum("name", "", "VARCHAR(250)", "")
 	Modules.DefineColum("description", "", "VARCHAR(250)", "")
@@ -38,18 +38,18 @@ func DefineModules() error {
 		"name",
 		"index",
 	})
-	Modules.Trigger(AfterInsert, func(model *Model, old, new *Json, data Json) error {
+	Modules.Trigger(linq.AfterInsert, func(model *linq.Model, old, new *e.Json, data e.Json) error {
 		id := new.Id()
-		InitProfile(id, "PROFILE.ADMIN", Json{})
-		InitProfile(id, "PROFILE.DEV", Json{})
-		InitProfile(id, "PROFILE.SUPORT", Json{})
+		InitProfile(id, "PROFILE.ADMIN", e.Json{})
+		InitProfile(id, "PROFILE.DEV", e.Json{})
+		InitProfile(id, "PROFILE.SUPORT", e.Json{})
 		CheckProjectModule("-1", id, true)
 		CheckRole("-1", id, "PROFILE.ADMIN", "USER.ADMIN", true)
 
 		return nil
 	})
 
-	if err := InitModel(Modules); err != nil {
+	if err := core.InitModel(Modules); err != nil {
 		return console.PanicE(err)
 	}
 
@@ -60,50 +60,50 @@ func DefineModules() error {
 * Module
 *	Handler for CRUD data
  */
-func GetModuleByName(name string) (Item, error) {
+func GetModuleByName(name string) (e.Item, error) {
 	return Modules.Select().
 		Where(Modules.Column("name").Eq(name)).
 		First()
 }
 
-func GetModuleById(id string) (Item, error) {
+func GetModuleById(id string) (e.Item, error) {
 	return Modules.Select().
 		Where(Modules.Column("_id").Eq(id)).
 		First()
 }
 
-func IsInit() (Item, error) {
+func IsInit() (e.Item, error) {
 	count := Users.Select().
 		Count()
 
-	return Item{
+	return e.Item{
 		Ok: count > 0,
-		Result: Json{
-			"message": OkOrNot(count > 0, SYSTEM_HAVE_ADMIN, SYSTEM_NOT_HAVE_ADMIN),
+		Result: e.Json{
+			"message": utility.OkOrNot(count > 0, msg.SYSTEM_HAVE_ADMIN, msg.SYSTEM_NOT_HAVE_ADMIN),
 		},
 	}, nil
 }
 
-func InitModule(id, name, description string, data Json) (Item, error) {
-	if !ValidStr(name, 0, []string{""}) {
-		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "name")
+func InitModule(id, name, description string, data e.Json) (e.Item, error) {
+	if !utility.ValidStr(name, 0, []string{""}) {
+		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "name")
 	}
 
 	current, err := GetModuleByName(name)
 	if err != nil {
-		return Item{}, err
+		return e.Item{}, err
 	}
 
 	if current.Ok && current.Id() != id {
-		return Item{
+		return e.Item{
 			Ok: current.Ok,
-			Result: Json{
-				"message": RECORD_FOUND,
+			Result: e.Json{
+				"message": msg.RECORD_FOUND,
 			},
 		}, nil
 	}
 
-	id = GenId(id)
+	id = utility.GenId(id)
 	data.Set("_id", id)
 	data.Set("name", name)
 	data.Set("description", description)
@@ -111,50 +111,53 @@ func InitModule(id, name, description string, data Json) (Item, error) {
 		Where(Modules.Column("_id").Eq(id)).
 		Command()
 	if err != nil {
-		return Item{}, err
+		return e.Item{}, err
 	}
 
 	return item, nil
 }
 
-func UpSetModule(id, name, description string, data Json) (Item, error) {
-	if !ValidStr(name, 0, []string{""}) {
-		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "name")
+func UpSetModule(id, name, description string, data e.Json) (e.Item, error) {
+	if !utility.ValidStr(name, 0, []string{""}) {
+		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "name")
 	}
 
 	current, err := GetModuleByName(name)
 	if err != nil {
-		return Item{}, err
+		return e.Item{}, err
 	}
 
 	if current.Ok && current.Id() != id {
-		return Item{
+		return e.Item{
 			Ok: current.Ok,
-			Result: Json{
-				"message": RECORD_FOUND,
+			Result: e.Json{
+				"message": msg.RECORD_FOUND,
 				"_id":     current.Id(),
 				"index":   current.Index(),
 			},
 		}, nil
 	}
 
-	id = GenId(id)
+	id = utility.GenId(id)
 	data.Set("_id", id)
 	data.Set("name", name)
 	data.Set("description", description)
 	item, err := Modules.Upsert(data).
 		Where(Modules.Column("_id").Eq(id)).
 		Command()
+	if err != nil {
+		return e.Item{}, err
+	}
 
 	return item, nil
 }
 
-func StateModule(id, state string) (Item, error) {
-	if !ValidId(state) {
-		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "state")
+func StateModule(id, state string) (e.Item, error) {
+	if !utility.ValidId(state) {
+		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "state")
 	}
 
-	return Modules.Upsert(Json{
+	return Modules.Upsert(e.Json{
 		"_state": state,
 	}).
 		Where(Modules.Column("_id").Eq(id)).
@@ -162,21 +165,21 @@ func StateModule(id, state string) (Item, error) {
 		Command()
 }
 
-func DeleteModule(id string) (Item, error) {
-	return StateModule(id, FOR_DELETE)
+func DeleteModule(id string) (e.Item, error) {
+	return StateModule(id, utility.FOR_DELETE)
 }
 
-func AllModules(state, search string, page, rows int, _select string) (List, error) {
+func AllModules(state, search string, page, rows int, _select string) (e.List, error) {
 	if state == "" {
-		state = ACTIVE
+		state = utility.ACTIVE
 	}
 
 	auxState := state
 
-	cols := StrToCols(_select)
+	cols := linq.StrToCols(_select)
 
 	if auxState == "*" {
-		state = FOR_DELETE
+		state = utility.FOR_DELETE
 
 		return Modules.Select(cols).
 			Where(Modules.Column("_state").Neg(state)).

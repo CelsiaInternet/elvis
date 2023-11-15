@@ -2,11 +2,11 @@ package module
 
 import (
 	"github.com/cgalvisleon/elvis/console"
-	. "github.com/cgalvisleon/elvis/core"
-	. "github.com/cgalvisleon/elvis/linq"
+	"github.com/cgalvisleon/elvis/core"
+	"github.com/cgalvisleon/elvis/linq"
 )
 
-var Historys *Model
+var Historys *linq.Model
 
 func DefineHistorys() error {
 	if err := DefineSchemaModule(); err != nil {
@@ -17,7 +17,7 @@ func DefineHistorys() error {
 		return nil
 	}
 
-	Historys = NewModel(SchemaModule, "HISTORY", "Tabla de historicos", 1)
+	Historys = linq.NewModel(SchemaModule, "HISTORY", "Tabla de historicos", 1)
 	Historys.DefineColum("date_make", "", "TIMESTAMP", "NOW()")
 	Historys.DefineColum("table_schema", "", "VARCHAR(80)", "")
 	Historys.DefineColum("table_name", "", "VARCHAR(80)", "")
@@ -33,5 +33,5 @@ func DefineHistorys() error {
 	})
 	Historys.UseRecycle = false
 
-	return InitModel(Historys)
+	return core.InitModel(Historys)
 }

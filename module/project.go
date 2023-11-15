@@ -2,15 +2,15 @@ package module
 
 import (
 	"github.com/cgalvisleon/elvis/console"
-	. "github.com/cgalvisleon/elvis/core"
-	. "github.com/cgalvisleon/elvis/json"
-	. "github.com/cgalvisleon/elvis/linq"
-	. "github.com/cgalvisleon/elvis/msg"
-	. "github.com/cgalvisleon/elvis/utility"
+	"github.com/cgalvisleon/elvis/core"
+	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/linq"
+	"github.com/cgalvisleon/elvis/msg"
+	"github.com/cgalvisleon/elvis/utility"
 )
 
-var Projects *Model
-var ProjectModules *Model
+var Projects *linq.Model
+var ProjectModules *linq.Model
 
 func DefineProjects() error {
 	if err := DefineSchemaModule(); err != nil {
@@ -21,10 +21,10 @@ func DefineProjects() error {
 		return nil
 	}
 
-	Projects = NewModel(SchemaModule, "PROJECTS", "Tabla de projectos", 1)
+	Projects = linq.NewModel(SchemaModule, "PROJECTS", "Tabla de projectos", 1)
 	Projects.DefineColum("date_make", "", "TIMESTAMP", "NOW()")
 	Projects.DefineColum("date_update", "", "TIMESTAMP", "NOW()")
-	Projects.DefineColum("_state", "", "VARCHAR(80)", ACTIVE)
+	Projects.DefineColum("_state", "", "VARCHAR(80)", utility.ACTIVE)
 	Projects.DefineColum("_id", "", "VARCHAR(80)", "-1")
 	Projects.DefineColum("name", "", "VARCHAR(250)", "")
 	Projects.DefineColum("description", "", "VARCHAR(250)", "")
@@ -38,7 +38,7 @@ func DefineProjects() error {
 		"name",
 		"index",
 	})
-	Projects.Trigger(AfterInsert, func(model *Model, old, new *Json, data Json) error {
+	Projects.Trigger(linq.AfterInsert, func(model *linq.Model, old, new *e.Json, data e.Json) error {
 		moduleId := data.Key("module_id")
 		if moduleId != "" {
 			id := new.Id()
@@ -49,7 +49,7 @@ func DefineProjects() error {
 		return nil
 	})
 
-	if err := InitModel(Projects); err != nil {
+	if err := core.InitModel(Projects); err != nil {
 		return console.PanicE(err)
 	}
 
@@ -65,7 +65,7 @@ func DefineProjectModules() error {
 		return nil
 	}
 
-	ProjectModules = NewModel(SchemaModule, "PROJECT_MODULES", "Tabla de moduloes por projecto", 1)
+	ProjectModules = linq.NewModel(SchemaModule, "PROJECT_MODULES", "Tabla de moduloes por projecto", 1)
 	ProjectModules.DefineColum("date_make", "", "TIMESTAMP", "NOW()")
 	ProjectModules.DefineColum("project_id", "", "VARCHAR(80)", "-1")
 	ProjectModules.DefineColum("module_id", "", "VARCHAR(80)", "-1")
@@ -78,7 +78,7 @@ func DefineProjectModules() error {
 	ProjectModules.DefineForeignKey("project_id", Projects.Column("_id"))
 	ProjectModules.DefineForeignKey("module_id", Modules.Column("_id"))
 
-	if err := InitModel(ProjectModules); err != nil {
+	if err := core.InitModel(ProjectModules); err != nil {
 		return console.PanicE(err)
 	}
 
@@ -89,31 +89,31 @@ func DefineProjectModules() error {
 * Project
 *	Handler for CRUD data
  */
-func GetProjectById(id string) (Item, error) {
+func GetProjectById(id string) (e.Item, error) {
 	return Projects.Select().
 		Where(Projects.Column("_id").Eq(id)).
 		First()
 }
 
-func GetProjectName(name string) (Item, error) {
+func GetProjectName(name string) (e.Item, error) {
 	return Projects.Select().
 		Where(Projects.Column("name").Eq(name)).
 		First()
 }
 
-func GetProjectByModule(projectId, moduleId string) (Item, error) {
+func GetProjectByModule(projectId, moduleId string) (e.Item, error) {
 	return ProjectModules.Select(ProjectModules.Column("index")).
 		Where(ProjectModules.Column("project_id").Eq(projectId)).
 		And(ProjectModules.Column("module_id").Eq(moduleId)).
 		First()
 }
 
-func InitProject(id, name, description string, data Json) (Item, error) {
-	if !ValidStr(name, 0, []string{""}) {
-		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "name")
+func InitProject(id, name, description string, data e.Json) (e.Item, error) {
+	if !utility.ValidStr(name, 0, []string{""}) {
+		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "name")
 	}
 
-	id = GenId(id)
+	id = utility.GenId(id)
 	data.Set("_id", id)
 	data.Set("name", name)
 	data.Set("description", description)
@@ -121,36 +121,36 @@ func InitProject(id, name, description string, data Json) (Item, error) {
 		Where(Projects.Column("_id").Eq(id)).
 		Command()
 	if err != nil {
-		return Item{}, err
+		return e.Item{}, err
 	}
 
 	return item, nil
 }
 
-func UpSetProject(id, moduleId, name, description string, data Json) (Item, error) {
-	if !ValidId(moduleId) {
-		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "module_id")
+func UpSetProject(id, moduleId, name, description string, data e.Json) (e.Item, error) {
+	if !utility.ValidId(moduleId) {
+		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "module_id")
 	}
 
-	if !ValidStr(name, 0, []string{""}) {
-		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "name")
+	if !utility.ValidStr(name, 0, []string{""}) {
+		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "name")
 	}
 
 	current, err := GetProjectName(name)
 	if err != nil {
-		return Item{}, err
+		return e.Item{}, err
 	}
 
 	if current.Ok && current.Id() != id {
-		return Item{
+		return e.Item{
 			Ok: current.Ok,
-			Result: Json{
-				"message": RECORD_FOUND,
+			Result: e.Json{
+				"message": msg.RECORD_FOUND,
 			},
 		}, nil
 	}
 
-	id = GenId(id)
+	id = utility.GenId(id)
 	data.Set("_id", id)
 	data.Set("name", name)
 	data.Set("description", description)
@@ -159,18 +159,18 @@ func UpSetProject(id, moduleId, name, description string, data Json) (Item, erro
 		Where(Projects.Column("_id").Eq(id)).
 		Command()
 	if err != nil {
-		return Item{}, err
+		return e.Item{}, err
 	}
 
 	return item, nil
 }
 
-func StateProject(id, state string) (Item, error) {
-	if !ValidId(state) {
-		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "state")
+func StateProject(id, state string) (e.Item, error) {
+	if !utility.ValidId(state) {
+		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "state")
 	}
 
-	return Projects.Upsert(Json{
+	return Projects.Upsert(e.Json{
 		"_state": state,
 	}).
 		Where(Projects.Column("_id").Eq(id)).
@@ -178,21 +178,21 @@ func StateProject(id, state string) (Item, error) {
 		Command()
 }
 
-func DeleteProject(id string) (Item, error) {
-	return StateProject(id, FOR_DELETE)
+func DeleteProject(id string) (e.Item, error) {
+	return StateProject(id, utility.FOR_DELETE)
 }
 
-func AllProjects(state, search string, page, rows int, _select string) (List, error) {
+func AllProjects(state, search string, page, rows int, _select string) (e.List, error) {
 	if state == "" {
-		state = ACTIVE
+		state = utility.ACTIVE
 	}
 
 	auxState := state
 
-	cols := StrToCols(_select)
+	cols := linq.StrToCols(_select)
 
 	if auxState == "*" {
-		state = FOR_DELETE
+		state = utility.FOR_DELETE
 
 		return Projects.Select(cols).
 			Where(Projects.Column("_state").Neg(state)).
@@ -214,17 +214,17 @@ func AllProjects(state, search string, page, rows int, _select string) (List, er
 	}
 }
 
-func GetProjectModules(projectId, state, search string, page, rows int) (List, error) {
+func GetProjectModules(projectId, state, search string, page, rows int) (e.List, error) {
 	if state == "" {
-		state = ACTIVE
+		state = utility.ACTIVE
 	}
 
 	auxState := state
 
 	if auxState == "*" {
-		state = FOR_DELETE
+		state = utility.FOR_DELETE
 
-		return From(Modules, "A").
+		return linq.From(Modules, "A").
 			Join(Modules.As("A"), ProjectModules.As("B"), ProjectModules.Col("module_id").Eq(Modules.Col("_id"))).
 			Where(Modules.Column("_state").Neg(state)).
 			And(ProjectModules.Column("project_id").Eq(projectId)).
@@ -233,7 +233,7 @@ func GetProjectModules(projectId, state, search string, page, rows int) (List, e
 			Select().
 			List(page, rows)
 	} else if auxState == "0" {
-		return From(Modules, "A").
+		return linq.From(Modules, "A").
 			Join(Modules.As("A"), ProjectModules.As("B"), ProjectModules.Col("module_id").Eq(Modules.Col("_id"))).
 			Where(Modules.Column("_state").In("-1", state)).
 			And(ProjectModules.Column("project_id").Eq(projectId)).
@@ -242,7 +242,7 @@ func GetProjectModules(projectId, state, search string, page, rows int) (List, e
 			Select().
 			List(page, rows)
 	} else {
-		return From(Modules, "A").
+		return linq.From(Modules, "A").
 			Join(Modules.As("A"), ProjectModules.As("B"), ProjectModules.Col("module_id").Eq(Modules.Col("_id"))).
 			Where(Modules.Column("_state").Eq(state)).
 			And(ProjectModules.Column("project_id").Eq(projectId)).
@@ -253,16 +253,16 @@ func GetProjectModules(projectId, state, search string, page, rows int) (List, e
 	}
 }
 
-func CheckProjectModule(project_id, module_id string, chk bool) (Item, error) {
-	if !ValidId(project_id) {
-		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "project_id")
+func CheckProjectModule(project_id, module_id string, chk bool) (e.Item, error) {
+	if !utility.ValidId(project_id) {
+		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "project_id")
 	}
 
-	if !ValidId(module_id) {
-		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "module_id")
+	if !utility.ValidId(module_id) {
+		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "module_id")
 	}
 
-	data := Json{}
+	data := e.Json{}
 	data.Set("project_id", project_id)
 	data.Set("module_id", module_id)
 	if chk {
