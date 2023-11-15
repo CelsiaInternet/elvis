@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/cgalvisleon/elvis/console"
-	. "github.com/cgalvisleon/elvis/utility"
+	"github.com/cgalvisleon/elvis/utility"
 	"gopkg.in/validator.v2"
 )
 
@@ -126,7 +126,7 @@ func ValidateID(id string) error {
 
 func validRequired(v interface{}, param string) error {
 	st := reflect.ValueOf(v)
-	if !ValidStr(st.String(), 0, []string{"", "-1"}) {
+	if !utility.ValidStr(st.String(), 0, []string{"", "-1"}) {
 		return console.AlertF("Required value")
 	}
 	return nil
