@@ -2,8 +2,8 @@ package core
 
 import (
 	"github.com/cgalvisleon/elvis/console"
-	. "github.com/cgalvisleon/elvis/jdb"
-	. "github.com/cgalvisleon/elvis/utility"
+	"github.com/cgalvisleon/elvis/jdb"
+	"github.com/cgalvisleon/elvis/utility"
 )
 
 var existSyncs bool
@@ -119,7 +119,7 @@ func DefineSync() error {
   $$ LANGUAGE plpgsql;
   `
 
-	_, err := QDDL(sql)
+	_, err := jdb.QDDL(sql)
 	if err != nil {
 		return console.PanicE(err)
 	}
@@ -139,8 +139,8 @@ func SetSyncTrigger(schema, table string) error {
 	}
 
 	if created {
-		tableName := Append(Lowcase(schema), Uppcase(table), ".")
-		sql := SQLDDL(`
+		tableName := utility.Append(utility.Lowcase(schema), utility.Uppcase(table), ".")
+		sql := jdb.SQLDDL(`
     CREATE INDEX IF NOT EXISTS $2_IDT_IDX ON $1(_IDT);
 
     DROP TRIGGER IF EXISTS SYNC_INSERT ON $1 CASCADE;
@@ -159,9 +159,9 @@ func SetSyncTrigger(schema, table string) error {
     CREATE TRIGGER SYNC_DELETE
     BEFORE DELETE ON $1
     FOR EACH ROW
-    EXECUTE PROCEDURE core.SYNC_DELETE();`, tableName, Uppcase(table))
+    EXECUTE PROCEDURE core.SYNC_DELETE();`, tableName, utility.Uppcase(table))
 
-		_, err := QDDL(sql)
+		_, err := jdb.QDDL(sql)
 		if err != nil {
 			return err
 		}

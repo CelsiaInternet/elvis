@@ -2,8 +2,8 @@ package core
 
 import (
 	"github.com/cgalvisleon/elvis/console"
-	. "github.com/cgalvisleon/elvis/jdb"
-	. "github.com/cgalvisleon/elvis/utility"
+	"github.com/cgalvisleon/elvis/jdb"
+	"github.com/cgalvisleon/elvis/utility"
 )
 
 var (
@@ -32,7 +32,7 @@ func DefineSeries() error {
 		PRIMARY KEY(SERIE)
 	);`
 
-	_, err := QDDL(sql)
+	_, err := jdb.QDDL(sql)
 	if err != nil {
 		return console.PanicE(err)
 	}
@@ -56,7 +56,7 @@ func EnabledSeries() bool {
 func NextVal(tag string) int {
 	sql := `SELECT nextval($1) AS SERIE;`
 
-	item, err := DBQueryOne(0, sql, tag)
+	item, err := jdb.DBQueryOne(0, sql, tag)
 	if err != nil {
 		console.Error(err)
 		return 0
@@ -72,7 +72,7 @@ func NextVal(tag string) int {
 func GetSerie(tag string) int {
 	if !EnabledSeries() {
 		var result int
-		tag = Replace(tag, ".", "")
+		tag = utility.Replace(tag, ".", "")
 		if _, ok := series[tag]; ok {
 			result = NextVal(tag)
 		} else {
@@ -102,7 +102,7 @@ func GetSerie(tag string) int {
 		VALUE = A.VALUE + 1
 		RETURNING VALUE AS SERIE;`
 
-	item, err := DBQueryOne(db, sql, tag)
+	item, err := jdb.DBQueryOne(db, sql, tag)
 	if err != nil {
 		console.Error(err)
 		return 0
@@ -115,9 +115,9 @@ func GetCode(tag, prefix string) string {
 	num := GetSerie(tag)
 
 	if len(prefix) == 0 {
-		return Format("%08v", num)
+		return utility.Format("%08v", num)
 	} else {
-		return Format("%s%08v", prefix, num)
+		return utility.Format("%s%08v", prefix, num)
 	}
 }
 
@@ -131,7 +131,7 @@ func GetSerieLast(tag string) int {
   SELECT VALUE AS SERIE
   FROM core.SERIES
   WHERE SERIE=$1 LIMIT 1;`
-	item, err := DBQueryOne(db, sql, tag)
+	item, err := jdb.DBQueryOne(db, sql, tag)
 	if err != nil {
 		console.Error(err)
 		return 0
@@ -155,7 +155,7 @@ func SetSerieValue(db int, tag string, val int) (int, error) {
 	WHERE VALUE < $2
 	RETURNING VALUE AS SERIE;`
 
-	item, err := DBQueryOne(db, sql, tag, val)
+	item, err := jdb.DBQueryOne(db, sql, tag, val)
 	if err != nil {
 		return 0, err
 	}
@@ -171,13 +171,13 @@ func SyncSeries(masterIdx int, c chan int) error {
 		ok = false
 
 		offset := (page - 1) * rows
-		sql := Format(`
+		sql := utility.Format(`
 		SELECT A.*
 		FROM core.SERIES A
 		ORDER BY A.SERIE
 		LIMIT %d OFFSET %d;`, rows, offset)
 
-		items, err := Query(sql)
+		items, err := jdb.Query(sql)
 		if err != nil {
 			return err
 		}

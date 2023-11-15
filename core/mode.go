@@ -2,10 +2,10 @@ package core
 
 import (
 	"github.com/cgalvisleon/elvis/console"
-	. "github.com/cgalvisleon/elvis/jdb"
-	. "github.com/cgalvisleon/elvis/json"
-	. "github.com/cgalvisleon/elvis/msg"
-	. "github.com/cgalvisleon/elvis/utility"
+	"github.com/cgalvisleon/elvis/jdb"
+	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/msg"
+	"github.com/cgalvisleon/elvis/utility"
 )
 
 /**
@@ -48,7 +48,7 @@ func DefineMode() error {
 		PRIMARY KEY(_ID)
   );
 	`
-	_, err := QDDL(sql)
+	_, err := jdb.QDDL(sql)
 	if err != nil {
 		return console.Error(err)
 	}
@@ -58,20 +58,20 @@ func DefineMode() error {
 	FROM core.MODE A
 	LIMIT 1;`
 
-	item, err := QueryOne(sql)
+	item, err := jdb.QueryOne(sql)
 	if err != nil {
 		return console.Error(err)
 	}
 
 	if !item.Ok {
-		id := NewId()
+		id := utility.NewId()
 		mode := ModeIdle
-		data := Json{}
-		now := Now()
+		data := e.Json{}
+		now := utility.Now()
 		data["date_make"] = now
 		data["date_update"] = now
 		data["mode"] = mode
-		data["driver"] = Postgres
+		data["driver"] = jdb.Postgres
 		data["host"] = ""
 		data["port"] = 5432
 		data["dbname"] = ""
@@ -82,7 +82,7 @@ func DefineMode() error {
 		VALUES($1, $1, $2, $3, $4)
 		RETURNING *;`
 
-		item, err = QueryOne(sql, now, id, mode, data)
+		item, err = jdb.QueryOne(sql, now, id, mode, data)
 		if err != nil {
 			return console.Error(err)
 		}
@@ -94,15 +94,15 @@ func DefineMode() error {
 	return nil
 }
 
-func GetMode() (Item, error) {
+func GetMode() (e.Item, error) {
 	sql := `
 	SELECT A.*
 	FROM core.MODE A
 	LIMIT 1;`
 
-	item, err := QueryOne(sql)
+	item, err := jdb.QueryOne(sql)
 	if err != nil {
-		return Item{}, err
+		return e.Item{}, err
 	}
 
 	delete(item.Result, "password")
@@ -110,30 +110,30 @@ func GetMode() (Item, error) {
 	return item, nil
 }
 
-func SetMode(mode int, driver, host string, port int, dbname, user, password string) (Item, error) {
-	if !ValidStr(driver, 0, []string{""}) {
-		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "driver")
+func SetMode(mode int, driver, host string, port int, dbname, user, password string) (e.Item, error) {
+	if !utility.ValidStr(driver, 0, []string{""}) {
+		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "driver")
 	}
 
-	if !ValidStr(host, 0, []string{""}) {
-		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "host")
+	if !utility.ValidStr(host, 0, []string{""}) {
+		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "host")
 	}
 
-	if !ValidStr(dbname, 0, []string{""}) {
-		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "dbname")
+	if !utility.ValidStr(dbname, 0, []string{""}) {
+		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "dbname")
 	}
 
-	if !ValidStr(user, 0, []string{""}) {
-		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "user")
+	if !utility.ValidStr(user, 0, []string{""}) {
+		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "user")
 	}
 
-	if !ValidStr(password, 0, []string{""}) {
-		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "password")
+	if !utility.ValidStr(password, 0, []string{""}) {
+		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "password")
 	}
 
 	id := ModeId
-	now := Now()
-	data := Json{}
+	now := utility.Now()
+	data := e.Json{}
 	data["date_update"] = now
 	data["mode"] = mode
 	data["driver"] = driver
@@ -151,17 +151,17 @@ func SetMode(mode int, driver, host string, port int, dbname, user, password str
 		WHERE _ID=$1
 		RETURNING _ID;`
 
-	item, err := QueryOne(sql, id, now, mode, password, data)
+	item, err := jdb.QueryOne(sql, id, now, mode, password, data)
 	if err != nil {
-		return Item{}, err
+		return e.Item{}, err
 	}
 
 	ModeTp = mode
 
-	return Item{
+	return e.Item{
 		Ok: item.Ok,
-		Result: Json{
-			"message": RECORD_UPDATE,
+		Result: e.Json{
+			"message": msg.RECORD_UPDATE,
 		},
 	}, nil
 }

@@ -2,11 +2,9 @@ package core
 
 import (
 	"github.com/cgalvisleon/elvis/console"
-	. "github.com/cgalvisleon/elvis/jdb"
-	. "github.com/cgalvisleon/elvis/utility"
+	"github.com/cgalvisleon/elvis/jdb"
+	"github.com/cgalvisleon/elvis/utility"
 )
-
-var existRecicling bool
 
 func DefineRecycling() error {
 	existRecicling, _ := ExistTable(0, "core", "RECYCLING")
@@ -65,7 +63,7 @@ func DefineRecycling() error {
   $$ LANGUAGE plpgsql;
   `
 
-	_, err := QDDL(sql)
+	_, err := jdb.QDDL(sql)
 	if err != nil {
 		return console.PanicE(err)
 	}
@@ -80,8 +78,8 @@ func SetRecycligTrigger(schema, table string) error {
 	}
 
 	if created {
-		tableName := Append(Lowcase(schema), Uppcase(table), ".")
-		sql := SQLDDL(`
+		tableName := utility.Append(utility.Lowcase(schema), utility.Uppcase(table), ".")
+		sql := jdb.SQLDDL(`
     CREATE INDEX IF NOT EXISTS $2_IDT_IDX ON $1(_STATE);
 
     DROP TRIGGER IF EXISTS RECYCLING ON $1 CASCADE;
@@ -94,9 +92,9 @@ func SetRecycligTrigger(schema, table string) error {
     CREATE TRIGGER ERASE
     AFTER DELETE ON $1
     FOR EACH ROW
-    EXECUTE PROCEDURE core.ERASE();`, tableName, Uppcase(table))
+    EXECUTE PROCEDURE core.ERASE();`, tableName, utility.Uppcase(table))
 
-		_, err := QDDL(sql)
+		_, err := jdb.QDDL(sql)
 		if err != nil {
 			return err
 		}

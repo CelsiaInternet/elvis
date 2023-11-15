@@ -2,8 +2,8 @@ package core
 
 import (
 	"github.com/cgalvisleon/elvis/console"
-	. "github.com/cgalvisleon/elvis/jdb"
-	. "github.com/cgalvisleon/elvis/linq"
+	"github.com/cgalvisleon/elvis/jdb"
+	"github.com/cgalvisleon/elvis/linq"
 )
 
 var existReferences bool
@@ -31,7 +31,7 @@ func DefineReference() error {
   );
   CREATE INDEX IF NOT EXISTS REFERENCES_INDEX_IDX ON core.REFERENCES(INDEX);`
 
-	_, err := QDDL(sql)
+	_, err := jdb.QDDL(sql)
 	if err != nil {
 		return console.PanicE(err)
 	}
@@ -42,7 +42,7 @@ func DefineReference() error {
 /**
 * After reference
 **/
-func SetReferences(references []*ReferenceValue) {
+func SetReferences(references []*linq.ReferenceValue) {
 	if !existReferences {
 		return
 	}
@@ -59,7 +59,7 @@ func SetReferences(references []*ReferenceValue) {
 		COUNT = A.COUNT + $4
 		RETURNING INDEX;`
 
-		_, err := QueryOne(sql, ref.Schema, ref.Table, ref.Key, ref.Op)
+		_, err := jdb.QueryOne(sql, ref.Schema, ref.Table, ref.Key, ref.Op)
 		if err != nil {
 			return
 		}
