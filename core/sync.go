@@ -6,8 +6,6 @@ import (
 	"github.com/cgalvisleon/elvis/utility"
 )
 
-var existSyncs bool
-
 func DefineSync() error {
 	existSyncs, _ := ExistTable(0, "core", "SYNCS")
 	if existSyncs {

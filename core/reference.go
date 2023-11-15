@@ -9,7 +9,7 @@ import (
 var existReferences bool
 
 func DefineReference() error {
-	existReferences, _ := ExistTable(0, "core", "REFERENCES")
+	existReferences, _ = ExistTable(0, "core", "REFERENCES")
 	if existReferences {
 		return nil
 	}

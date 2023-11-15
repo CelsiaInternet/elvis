@@ -12,7 +12,7 @@ var (
 )
 
 func DefineSeries() error {
-	existSeries, _ := ExistTable(0, "core", "SERIES")
+	existSeries, _ = ExistTable(0, "core", "SERIES")
 	if existSeries {
 		return nil
 	}
