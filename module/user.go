@@ -3,16 +3,16 @@ package module
 import (
 	"github.com/cgalvisleon/elvis/aws"
 	"github.com/cgalvisleon/elvis/console"
-	. "github.com/cgalvisleon/elvis/core"
-	. "github.com/cgalvisleon/elvis/envar"
-	. "github.com/cgalvisleon/elvis/json"
-	. "github.com/cgalvisleon/elvis/linq"
-	. "github.com/cgalvisleon/elvis/msg"
-	. "github.com/cgalvisleon/elvis/utility"
+	"github.com/cgalvisleon/elvis/core"
+	"github.com/cgalvisleon/elvis/envar"
+	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/linq"
+	"github.com/cgalvisleon/elvis/msg"
+	"github.com/cgalvisleon/elvis/utility"
 	_ "github.com/joho/godotenv/autoload"
 )
 
-var Users *Model
+var Users *linq.Model
 
 func DefineUsers() error {
 	if err := DefineSchemaModule(); err != nil {
@@ -23,10 +23,10 @@ func DefineUsers() error {
 		return nil
 	}
 
-	Users = NewModel(SchemaModule, "USERS", "Tabla de usuarios", 1)
+	Users = linq.NewModel(SchemaModule, "USERS", "Tabla de usuarios", 1)
 	Users.DefineColum("date_make", "", "TIMESTAMP", "NOW()")
 	Users.DefineColum("date_update", "", "TIMESTAMP", "NOW()")
-	Users.DefineColum("_state", "", "VARCHAR(80)", ACTIVE)
+	Users.DefineColum("_state", "", "VARCHAR(80)", utility.ACTIVE)
 	Users.DefineColum("_id", "", "VARCHAR(80)", "-1")
 	Users.DefineColum("name", "", "VARCHAR(250)", "")
 	Users.DefineColum("password", "", "VARCHAR(250)", "")
@@ -46,16 +46,16 @@ func DefineUsers() error {
 		"index",
 	})
 	Users.DefineHidden([]string{"password"})
-	Users.Details("last_use", "", "", func(col *Column, data *Json) {
+	Users.Details("last_use", "", "", func(col *linq.Column, data *e.Json) {
 		id := data.Id()
-		collection, err := GetCollectionById("telemetry.token.last_use", id)
+		collection, err := core.GetCollectionById("telemetry.token.last_use", id)
 		if err != nil {
 			return
 		}
 
 		data.Set(col.Low(), collection.Str("last_use"))
 	})
-	Users.Details("projects", "", []Json{}, func(col *Column, data *Json) {
+	Users.Details("projects", "", []e.Json{}, func(col *linq.Column, data *e.Json) {
 		id := data.Id()
 		projects, err := GetUserProjects(id)
 		if err != nil {
@@ -64,7 +64,7 @@ func DefineUsers() error {
 
 		data.Set(col.Low(), projects)
 	})
-	Users.Details("modules", "", []Json{}, func(col *Column, data *Json) {
+	Users.Details("modules", "", []e.Json{}, func(col *linq.Column, data *e.Json) {
 		id := data.Id()
 		modules, err := GetUserModules(id)
 		if err != nil {
@@ -73,21 +73,21 @@ func DefineUsers() error {
 
 		data.Set(col.Low(), modules)
 	})
-	Users.Trigger(AfterInsert, func(model *Model, old, new *Json, data Json) error {
+	Users.Trigger(linq.AfterInsert, func(model *linq.Model, old, new *e.Json, data e.Json) error {
 		id := new.Key("_id")
 		if id == "USER.ADMIN" {
 			fullName := new.Str("full_name")
 			country := new.Str("country")
 			phone := new.Str("phone")
-			APP := EnvarStr("", "APP")
-			message := Format(MSG_ADMIN_WELCOME, fullName, APP)
+			APP := envar.EnvarStr("", "APP")
+			message := utility.Format(msg.MSG_ADMIN_WELCOME, fullName, APP)
 			go aws.SendSMS(country, phone, message)
 		}
 
 		return nil
 	})
 
-	if err := InitModel(Users); err != nil {
+	if err := core.InitModel(Users); err != nil {
 		return console.PanicE(err)
 	}
 
@@ -98,44 +98,44 @@ func DefineUsers() error {
 * User
 *	Handler for CRUD data
  */
-func GetUserByName(name string) (Item, error) {
+func GetUserByName(name string) (e.Item, error) {
 	item, err := Users.Select().
 		Where(Users.Column("name").Eq(name)).
 		First()
 	if err != nil {
-		return Item{}, err
+		return e.Item{}, err
 	}
 
 	return item, nil
 }
 
-func GetUserById(id string) (Item, error) {
+func GetUserById(id string) (e.Item, error) {
 	item, err := Users.Select().
 		Where(Users.Column("_id").Eq(id)).
 		First()
 	if err != nil {
-		return Item{}, err
+		return e.Item{}, err
 	}
 
 	return item, nil
 }
 
-func InitAdmin(fullName, country, phone, email string) (Item, error) {
-	if !ValidStr(country, 0, []string{""}) {
-		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "country")
+func InitAdmin(fullName, country, phone, email string) (e.Item, error) {
+	if !utility.ValidStr(country, 0, []string{""}) {
+		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "country")
 	}
 
-	if !ValidStr(phone, 9, []string{""}) {
-		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "phone")
+	if !utility.ValidStr(phone, 9, []string{""}) {
+		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "phone")
 	}
 
-	if !ValidStr(fullName, 0, []string{""}) {
-		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "full_name")
+	if !utility.ValidStr(fullName, 0, []string{""}) {
+		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "full_name")
 	}
 
 	id := "USER.ADMIN"
 	name := country + phone
-	data := Json{}
+	data := e.Json{}
 	data["_id"] = id
 	data["name"] = name
 	data["full_name"] = fullName
@@ -147,28 +147,28 @@ func InitAdmin(fullName, country, phone, email string) (Item, error) {
 		Where(Users.Column("_id").Eq(id)).
 		Command()
 	if err != nil {
-		return Item{}, err
+		return e.Item{}, err
 	}
 
 	return item, nil
 }
 
-func UpSetAdmin(fullName, country, phone, email string) (Item, error) {
-	if !ValidStr(country, 0, []string{""}) {
-		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "country")
+func UpSetAdmin(fullName, country, phone, email string) (e.Item, error) {
+	if !utility.ValidStr(country, 0, []string{""}) {
+		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "country")
 	}
 
-	if !ValidStr(phone, 9, []string{""}) {
-		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "phone")
+	if !utility.ValidStr(phone, 9, []string{""}) {
+		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "phone")
 	}
 
-	if !ValidStr(fullName, 0, []string{""}) {
-		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "full_name")
+	if !utility.ValidStr(fullName, 0, []string{""}) {
+		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "full_name")
 	}
 
 	id := "USER.ADMIN"
 	name := country + phone
-	data := Json{}
+	data := e.Json{}
 	data["_id"] = id
 	data["name"] = name
 	data["full_name"] = fullName
@@ -180,72 +180,72 @@ func UpSetAdmin(fullName, country, phone, email string) (Item, error) {
 		Where(Users.Column("_id").Eq(id)).
 		Command()
 	if err != nil {
-		return Item{}, err
+		return e.Item{}, err
 	}
 
 	return item, nil
 }
 
-func SetUser(name, password, fullName, phone, email string) (Item, error) {
-	if !ValidStr(name, 0, []string{""}) {
-		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "name")
+func SetUser(name, password, fullName, phone, email string) (e.Item, error) {
+	if !utility.ValidStr(name, 0, []string{""}) {
+		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "name")
 	}
 
-	if !ValidStr(phone, 3, []string{""}) {
-		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "phone")
+	if !utility.ValidStr(phone, 3, []string{""}) {
+		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "phone")
 	}
 
-	if !ValidStr(fullName, 3, []string{""}) {
-		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "full_name")
+	if !utility.ValidStr(fullName, 3, []string{""}) {
+		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "full_name")
 	}
 
 	current, err := GetUserByName(name)
 	if err != nil {
-		return Item{}, err
+		return e.Item{}, err
 	}
 
 	if current.Ok {
-		return Item{}, console.ErrorM(RECORD_FOUND)
+		return e.Item{}, console.ErrorM(msg.RECORD_FOUND)
 	}
 
-	id := NewId()
-	data := Json{}
+	id := utility.NewId()
+	data := e.Json{}
 	data["_id"] = id
 	data["full_name"] = fullName
 	data["phone"] = phone
 	data["email"] = email
 	data["avatar"] = ""
-	item, err := Users.Insert(data).
+	_, err = Users.Insert(data).
 		Where(Users.Column("name").Eq(name)).
 		Command()
 	if err != nil {
-		return Item{}, err
+		return e.Item{}, err
 	}
 
-	item, err = GetProfile(id)
+	item, err := GetProfile(id)
 	if err != nil {
-		return Item{}, err
+		return e.Item{}, err
 	}
 
 	return item, nil
 }
 
-func UpdateUser(id, fullName, phone, email string, data Json) (Item, error) {
-	if !ValidStr(fullName, 3, []string{""}) {
-		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "full_name")
+func UpdateUser(id, fullName, phone, email string, data e.Json) (e.Item, error) {
+	if !utility.ValidStr(fullName, 3, []string{""}) {
+		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "full_name")
 	}
 
-	if !ValidStr(phone, 3, []string{""}) {
-		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "phone")
+	if !utility.ValidStr(phone, 3, []string{""}) {
+		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "phone")
 	}
 
 	current, err := GetUserById(id)
 	if err != nil {
-		return Item{}, err
+		return e.Item{}, err
 	}
 
 	if !current.Ok {
-		return Item{}, console.ErrorM(RECORD_NOT_FOUND)
+		return e.Item{}, console.ErrorM(msg.RECORD_NOT_FOUND)
 	}
 
 	data["_id"] = id
@@ -253,28 +253,28 @@ func UpdateUser(id, fullName, phone, email string, data Json) (Item, error) {
 	data["phone"] = phone
 	data["email"] = email
 	data["avatar"] = ""
-	item, err := Users.Insert(data).
+	_, err = Users.Insert(data).
 		Where(Users.Column("_id").Eq(id)).
-		And(Users.Column("_state").Eq(ACTIVE)).
+		And(Users.Column("_state").Eq(utility.ACTIVE)).
 		Command()
 	if err != nil {
-		return Item{}, err
+		return e.Item{}, err
 	}
 
-	item, err = GetProfile(id)
+	item, err := GetProfile(id)
 	if err != nil {
-		return Item{}, err
+		return e.Item{}, err
 	}
 
 	return item, nil
 }
 
-func StateUser(id, state string) (Item, error) {
-	if !ValidId(state) {
-		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "state")
+func StateUser(id, state string) (e.Item, error) {
+	if !utility.ValidId(state) {
+		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "state")
 	}
 
-	return Users.Upsert(Json{
+	return Users.Upsert(e.Json{
 		"_state": state,
 	}).
 		Where(Users.Column("_id").Eq(id)).
@@ -282,21 +282,21 @@ func StateUser(id, state string) (Item, error) {
 		Command()
 }
 
-func DeleteUser(id string) (Item, error) {
-	return StateUser(id, FOR_DELETE)
+func DeleteUser(id string) (e.Item, error) {
+	return StateUser(id, utility.FOR_DELETE)
 }
 
-func AllUsers(state, search string, page, rows int, _select string) (List, error) {
+func AllUsers(state, search string, page, rows int, _select string) (e.List, error) {
 	if state == "" {
-		state = ACTIVE
+		state = utility.ACTIVE
 	}
 
 	auxState := state
 
-	cols := StrToCols(_select)
+	cols := linq.StrToCols(_select)
 
 	if auxState == "*" {
-		state = FOR_DELETE
+		state = utility.FOR_DELETE
 
 		return Users.Select(cols).
 			Where(Users.Column("_state").Neg(state)).
@@ -312,12 +312,12 @@ func AllUsers(state, search string, page, rows int, _select string) (List, error
 	}
 }
 
-func GetProfile(userId string) (Item, error) {
+func GetProfile(userId string) (e.Item, error) {
 	item, err := Users.Select().
 		Where(Users.Column("_id").Eq(userId)).
 		First()
 	if err != nil {
-		return Item{}, err
+		return e.Item{}, err
 	}
 
 	return item, nil

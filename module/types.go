@@ -2,14 +2,14 @@ package module
 
 import (
 	"github.com/cgalvisleon/elvis/console"
-	. "github.com/cgalvisleon/elvis/core"
-	. "github.com/cgalvisleon/elvis/json"
-	. "github.com/cgalvisleon/elvis/linq"
-	. "github.com/cgalvisleon/elvis/msg"
-	. "github.com/cgalvisleon/elvis/utility"
+	"github.com/cgalvisleon/elvis/core"
+	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/linq"
+	"github.com/cgalvisleon/elvis/msg"
+	"github.com/cgalvisleon/elvis/utility"
 )
 
-var Types *Model
+var Types *linq.Model
 
 func DefineTypes() error {
 	if err := DefineSchemaModule(); err != nil {
@@ -20,10 +20,10 @@ func DefineTypes() error {
 		return nil
 	}
 
-	Types = NewModel(SchemaModule, "TYPES", "Tabla de tipo", 1)
+	Types = linq.NewModel(SchemaModule, "TYPES", "Tabla de tipo", 1)
 	Types.DefineColum("date_make", "", "TIMESTAMP", "NOW()")
 	Types.DefineColum("date_update", "", "TIMESTAMP", "NOW()")
-	Types.DefineColum("_state", "", "VARCHAR(80)", ACTIVE)
+	Types.DefineColum("_state", "", "VARCHAR(80)", utility.ACTIVE)
 	Types.DefineColum("_id", "", "VARCHAR(80)", "-1")
 	Types.DefineColum("project_id", "", "VARCHAR(80)", "-1")
 	Types.DefineColum("kind", "", "VARCHAR(80)", "")
@@ -42,7 +42,7 @@ func DefineTypes() error {
 		"index",
 	})
 
-	if err := InitModel(Types); err != nil {
+	if err := core.InitModel(Types); err != nil {
 		return console.PanicE(err)
 	}
 
@@ -53,50 +53,50 @@ func DefineTypes() error {
 * Types
 *	Handler for CRUD data
  */
-func GetTypeByName(kind, name string) (Item, error) {
+func GetTypeByName(kind, name string) (e.Item, error) {
 	return Types.Select().
 		Where(Types.Column("kind").Eq(kind)).
 		And(Types.Column("name").Eq(name)).
 		First()
 }
 
-func GetTypeById(id string) (Item, error) {
+func GetTypeById(id string) (e.Item, error) {
 	return Types.Select().
 		Where(Types.Column("_id").Eq(id)).
 		First()
 }
 
-func GetTypeByIndex(idx int) (Item, error) {
+func GetTypeByIndex(idx int) (e.Item, error) {
 	return Types.Select().
 		Where(Types.Column("index").Eq(idx)).
 		First()
 }
 
-func InitType(projectId, id, state, kind, name, description string) (Item, error) {
-	if !ValidId(kind) {
-		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "kind")
+func InitType(projectId, id, state, kind, name, description string) (e.Item, error) {
+	if !utility.ValidId(kind) {
+		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "kind")
 	}
 
-	if !ValidStr(name, 0, []string{""}) {
-		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "name")
+	if !utility.ValidStr(name, 0, []string{""}) {
+		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "name")
 	}
 
 	current, err := GetTypeByName(kind, name)
 	if err != nil {
-		return Item{}, err
+		return e.Item{}, err
 	}
 
 	if current.Ok && current.Id() != id {
-		return Item{
+		return e.Item{
 			Ok: current.Ok,
-			Result: Json{
-				"message": RECORD_FOUND,
+			Result: e.Json{
+				"message": msg.RECORD_FOUND,
 			},
 		}, nil
 	}
 
-	id = GenId(id)
-	data := Json{}
+	id = utility.GenId(id)
+	data := e.Json{}
 	data["project_id"] = projectId
 	data["_id"] = id
 	data["kind"] = kind
@@ -107,37 +107,37 @@ func InitType(projectId, id, state, kind, name, description string) (Item, error
 		Command()
 }
 
-func UpSetType(projectId, id, kind, name, description string) (Item, error) {
-	if !ValidId(id) {
-		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "_id")
+func UpSetType(projectId, id, kind, name, description string) (e.Item, error) {
+	if !utility.ValidId(id) {
+		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "_id")
 	}
 
-	if !ValidId(kind) {
-		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "kind")
+	if !utility.ValidId(kind) {
+		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "kind")
 	}
 
-	if !ValidStr(name, 0, []string{""}) {
-		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "name")
+	if !utility.ValidStr(name, 0, []string{""}) {
+		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "name")
 	}
 
 	current, err := GetTypeByName(kind, name)
 	if err != nil {
-		return Item{}, err
+		return e.Item{}, err
 	}
 
 	if current.Ok && current.Id() != id {
-		return Item{
+		return e.Item{
 			Ok: current.Ok,
-			Result: Json{
-				"message": RECORD_FOUND,
+			Result: e.Json{
+				"message": msg.RECORD_FOUND,
 				"_id":     id,
 				"index":   current.Index(),
 			},
 		}, nil
 	}
 
-	id = GenId(id)
-	data := Json{}
+	id = utility.GenId(id)
+	data := e.Json{}
 	data["project_id"] = projectId
 	data["_id"] = id
 	data["kind"] = kind
@@ -148,12 +148,12 @@ func UpSetType(projectId, id, kind, name, description string) (Item, error) {
 		Command()
 }
 
-func StateType(id, state string) (Item, error) {
-	if !ValidId(state) {
-		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "state")
+func StateType(id, state string) (e.Item, error) {
+	if !utility.ValidId(state) {
+		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "state")
 	}
 
-	return Types.Upsert(Json{
+	return Types.Upsert(e.Json{
 		"_state": state,
 	}).
 		Where(Types.Column("_id").Eq(id)).
@@ -161,25 +161,25 @@ func StateType(id, state string) (Item, error) {
 		Command()
 }
 
-func DeleteType(id string) (Item, error) {
-	return StateType(id, FOR_DELETE)
+func DeleteType(id string) (e.Item, error) {
+	return StateType(id, utility.FOR_DELETE)
 }
 
-func AllTypes(projectId, kind, state, search string, page, rows int, _select string) (List, error) {
-	if !ValidId(kind) {
-		return List{}, console.AlertF(MSG_ATRIB_REQUIRED, "kind")
+func AllTypes(projectId, kind, state, search string, page, rows int, _select string) (e.List, error) {
+	if !utility.ValidId(kind) {
+		return e.List{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "kind")
 	}
 
 	if state == "" {
-		state = ACTIVE
+		state = utility.ACTIVE
 	}
 
 	auxState := state
 
-	cols := StrToCols(_select)
+	cols := linq.StrToCols(_select)
 
 	if auxState == "*" {
-		state = FOR_DELETE
+		state = utility.FOR_DELETE
 
 		return Types.Select(cols).
 			Where(Types.Column("kind").Eq(kind)).

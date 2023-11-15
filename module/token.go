@@ -113,13 +113,6 @@ func unLoadTokenById(app, device, id string) error {
 	return nil
 }
 
-func getTokenByApp(app, userId string) (e.Item, error) {
-	return Tokens.Select().
-		Where(Tokens.Col("app").Eq(app)).
-		And(Tokens.Col("user_id").Eq(userId)).
-		First()
-}
-
 func GetTokenById(id string) (e.Item, error) {
 	item, err := Tokens.Select().
 		Where(Tokens.Col("_id").Eq(id)).
