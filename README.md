@@ -3,8 +3,9 @@
 # Public
 
 ```
+gofmt -w . &&
 git update &&
-git tag v0.0.63 &&
+git tag v0.0.64 &&
 git tags
 git push origin --tags
 
