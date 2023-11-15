@@ -5,8 +5,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/cgalvisleon/elvis/cache"
 	"github.com/cgalvisleon/elvis/console"
-	. "github.com/cgalvisleon/elvis/msg"
-	. "github.com/cgalvisleon/elvis/utility"
+	"github.com/cgalvisleon/elvis/msg"
+	"github.com/cgalvisleon/elvis/utility"
 	_ "github.com/joho/godotenv/autoload"
 )
 
@@ -17,7 +17,7 @@ func SendSMS(country string, mobile string, message string) (bool, interface{}, 
 	sess := AwsSession()
 	svc := sns.New(sess)
 
-	message = RemoveAcents(message)
+	message = utility.RemoveAcents(message)
 	params := &sns.PublishInput{
 		Message:     aws.String(message),
 		PhoneNumber: aws.String(phoneNumber),
@@ -36,10 +36,10 @@ func SendSMS(country string, mobile string, message string) (bool, interface{}, 
 * Send sms message a code to six digit from validate user identity
 **/
 func VerifyMobile(app string, device string, country string, phoneNumber string) error {
-	code := GetCodeVerify(6)
+	code := utility.GetCodeVerify(6)
 	cache.SetVerify(device, country+phoneNumber, code)
 
-	message := Format(MSG_MOBILE_VALIDATION, app, code)
+	message := utility.Format(msg.MSG_MOBILE_VALIDATION, app, code)
 	_, _, err := SendSMS(country, phoneNumber, message)
 	if err != nil {
 		return err

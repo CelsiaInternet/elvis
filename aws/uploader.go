@@ -13,10 +13,10 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/cgalvisleon/elvis/console"
-	. "github.com/cgalvisleon/elvis/envar"
-	. "github.com/cgalvisleon/elvis/json"
-	. "github.com/cgalvisleon/elvis/msg"
-	. "github.com/cgalvisleon/elvis/utility"
+	"github.com/cgalvisleon/elvis/envar"
+	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/msg"
+	"github.com/cgalvisleon/elvis/utility"
 )
 
 func UploaderS3(bucket, filename, contentType string, contentFile []byte) (*s3manager.UploadOutput, error) {
@@ -79,96 +79,96 @@ func DownloadS3(bucket, key string) (*s3.GetObjectOutput, error) {
 /**
 *
 **/
-func UploaderFile(r *http.Request, folder, name string) (Json, error) {
+func UploaderFile(r *http.Request, folder, name string) (e.Json, error) {
 	r.ParseMultipartForm(2000)
 	file, fileInfo, err := r.FormFile("myFile")
 	if err != nil {
-		return Json{}, err
+		return e.Json{}, err
 	}
 	defer file.Close()
 
 	contentType := fileInfo.Header.Get("Content-Type")
-	ext := ExtencionFile(fileInfo.Filename)
+	ext := utility.ExtencionFile(fileInfo.Filename)
 	filename := fileInfo.Filename
 	if len(name) > 0 {
-		filename = Format(`%s.%s`, name, ext)
+		filename = utility.Format(`%s.%s`, name, ext)
 	}
 	if len(folder) > 0 {
-		filename = Format(`%s/%s`, folder, filename)
+		filename = utility.Format(`%s/%s`, folder, filename)
 	}
 
-	storageType := EnvarStr("", "STORAGE_TYPE")
-	bucket := EnvarStr("", "BUCKET")
+	storageType := envar.EnvarStr("", "STORAGE_TYPE")
+	bucket := envar.EnvarStr("", "BUCKET")
 	if storageType == "S3" {
 		contentFile, err := io.ReadAll(file)
 		if err != nil {
-			return Json{}, err
+			return e.Json{}, err
 		}
 
 		output, err := UploaderS3(bucket, filename, contentType, contentFile)
 		if err != nil {
-			return Json{}, err
+			return e.Json{}, err
 		}
 
-		return Json{
+		return e.Json{
 			"url": output.Location,
 		}, nil
 	} else {
-		MakeFolder(bucket)
-		filename := Format(`%s/%s`, bucket, filename)
+		utility.MakeFolder(bucket)
+		filename := utility.Format(`%s/%s`, bucket, filename)
 
 		output, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE, 0666)
 		if err != nil {
-			return Json{}, err
+			return e.Json{}, err
 		}
 		defer output.Close()
 
 		_, err = io.Copy(output, file)
 		if err != nil {
-			return Json{}, err
+			return e.Json{}, err
 		}
 
-		hostname := EnvarStr("", "HOST")
-		url := Format(`%s/%s`, hostname, filename)
+		hostname := envar.EnvarStr("", "HOST")
+		url := utility.Format(`%s/%s`, hostname, filename)
 
-		return Json{
+		return e.Json{
 			"url": url,
 		}, nil
 	}
 }
 
-func UploaderB64(b64, filename, contentType string) (Json, error) {
-	if !ValidStr(b64, 0, []string{""}) {
-		return Json{}, console.AlertF(MSG_ATRIB_REQUIRED, "b64")
+func UploaderB64(b64, filename, contentType string) (e.Json, error) {
+	if !utility.ValidStr(b64, 0, []string{""}) {
+		return e.Json{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "b64")
 	}
 
-	if !ValidStr(filename, 0, []string{""}) {
-		return Json{}, console.AlertF(MSG_ATRIB_REQUIRED, "filename")
+	if !utility.ValidStr(filename, 0, []string{""}) {
+		return e.Json{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "filename")
 	}
 
-	if !ValidStr(contentType, 0, []string{""}) {
-		return Json{}, console.AlertF(MSG_ATRIB_REQUIRED, "content-type")
+	if !utility.ValidStr(contentType, 0, []string{""}) {
+		return e.Json{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "content-type")
 	}
 
-	storageType := EnvarStr("", "STORAGE_TYPE")
-	bucket := EnvarStr("", "BUCKET")
+	storageType := envar.EnvarStr("", "STORAGE_TYPE")
+	bucket := envar.EnvarStr("", "BUCKET")
 	if storageType == "S3" {
 		contentFile, err := base64.StdEncoding.DecodeString(b64)
 		if err != nil {
-			return Json{}, err
+			return e.Json{}, err
 		}
 
 		output, err := UploaderS3(bucket, filename, contentType, contentFile)
 		if err != nil {
-			return Json{}, err
+			return e.Json{}, err
 		}
 
-		return Json{
+		return e.Json{
 			"url": output.Location,
 		}, nil
 	} else {
-		MakeFolder(bucket)
-		filename := Format(`%s/%s`, bucket, filename)
+		utility.MakeFolder(bucket)
+		filename := utility.Format(`%s/%s`, bucket, filename)
 		dec, err := base64.StdEncoding.DecodeString(b64)
 		if err != nil {
 			panic(err)
@@ -176,32 +176,32 @@ func UploaderB64(b64, filename, contentType string) (Json, error) {
 
 		output, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE, 0666)
 		if err != nil {
-			return Json{}, err
+			return e.Json{}, err
 		}
 		defer output.Close()
 
 		if _, err := output.Write(dec); err != nil {
-			return Json{}, err
+			return e.Json{}, err
 		}
 
 		if err := output.Sync(); err != nil {
-			return Json{}, err
+			return e.Json{}, err
 		}
 
-		hostname := EnvarStr("", "HOST")
-		url := Format(`%s/%s`, hostname, filename)
+		hostname := envar.EnvarStr("", "HOST")
+		url := utility.Format(`%s/%s`, hostname, filename)
 
-		return Json{
+		return e.Json{
 			"url": url,
 		}, nil
 	}
 }
 
 func DeleteFile(url string) (bool, error) {
-	storageType := EnvarStr("", "STORAGE_TYPE")
+	storageType := envar.EnvarStr("", "STORAGE_TYPE")
 	if storageType == "S3" {
-		bucket := EnvarStr("", "BUCKET")
-		key := strings.ReplaceAll(url, Format(`https://%s.s3.amazonaws.com/`, bucket), ``)
+		bucket := envar.EnvarStr("", "BUCKET")
+		key := strings.ReplaceAll(url, utility.Format(`https://%s.s3.amazonaws.com/`, bucket), ``)
 		_, err := DeleteS3(bucket, key)
 		if err != nil {
 			return false, err
@@ -209,7 +209,7 @@ func DeleteFile(url string) (bool, error) {
 
 		return true, nil
 	} else {
-		outdel, err := RemoveFile(url)
+		outdel, err := utility.RemoveFile(url)
 		if err != nil {
 			return false, err
 		}
@@ -219,10 +219,10 @@ func DeleteFile(url string) (bool, error) {
 }
 
 func DownloaderFile(url string) (string, error) {
-	storageType := EnvarStr("", "STORAGE_TYPE")
+	storageType := envar.EnvarStr("", "STORAGE_TYPE")
 	if storageType == "S3" {
-		bucket := EnvarStr("", "BUCKET")
-		key := strings.ReplaceAll(url, Format(`https://%s.s3.amazonaws.com/`, bucket), ``)
+		bucket := envar.EnvarStr("", "BUCKET")
+		key := strings.ReplaceAll(url, utility.Format(`https://%s.s3.amazonaws.com/`, bucket), ``)
 		_, err := DownloadS3(bucket, key)
 		if err != nil {
 			return "", err

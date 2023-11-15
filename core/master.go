@@ -2,15 +2,15 @@ package core
 
 import (
 	"github.com/cgalvisleon/elvis/console"
-	. "github.com/cgalvisleon/elvis/envar"
-	. "github.com/cgalvisleon/elvis/jdb"
-	. "github.com/cgalvisleon/elvis/json"
-	. "github.com/cgalvisleon/elvis/msg"
-	. "github.com/cgalvisleon/elvis/utility"
+	"github.com/cgalvisleon/elvis/envar"
+	"github.com/cgalvisleon/elvis/jdb"
+	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/msg"
+	"github.com/cgalvisleon/elvis/utility"
 	_ "github.com/joho/godotenv/autoload"
 )
 
-func GetMarterNodeById(db int, id string) (Item, error) {
+func GetMarterNodeById(db int, id string) (e.Item, error) {
 	sql := `
 	SELECT
 	A._DATA||
@@ -22,9 +22,9 @@ func GetMarterNodeById(db int, id string) (Item, error) {
 	WHERE A._ID=$1
 	LIMIT 1;`
 
-	item, err := DBQueryDataOne(db, sql, id)
+	item, err := jdb.DBQueryDataOne(db, sql, id)
 	if err != nil {
-		return Item{}, err
+		return e.Item{}, err
 	}
 
 	delete(item.Result, "password")
@@ -32,27 +32,27 @@ func GetMarterNodeById(db int, id string) (Item, error) {
 	return item, nil
 }
 
-func UpSetMasterNode(db int, id string, mode int, driver, host string, port int, dbname, user, password string) (Item, error) {
+func UpSetMasterNode(db int, id string, mode int, driver, host string, port int, dbname, user, password string) (e.Item, error) {
 	exist, err := ExistTable(db, "core", "NODES")
 	if err != nil {
-		return Item{}, err
+		return e.Item{}, err
 	}
 
 	if !exist {
-		return Item{}, console.AlertF(MARTER_NOT_FOUNT, host)
+		return e.Item{}, console.AlertF(msg.MARTER_NOT_FOUNT, host)
 	}
 
-	if !ValidId(id) {
-		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "id")
+	if !utility.ValidId(id) {
+		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "id")
 	}
 
 	current, err := GetMarterNodeById(db, id)
 	if err != nil {
-		return Item{}, err
+		return e.Item{}, err
 	}
 
-	now := Now()
-	data := Json{
+	now := utility.Now()
+	data := e.Json{
 		"driver": driver,
 		"host":   host,
 		"port":   port,
@@ -70,15 +70,15 @@ func UpSetMasterNode(db int, id string, mode int, driver, host string, port int,
 		WHERE _ID=$1
 		RETURNING INDEX;`
 
-		item, err := DBQueryOne(db, sql, id, now, mode, password, data)
+		item, err := jdb.DBQueryOne(db, sql, id, now, mode, password, data)
 		if err != nil {
-			return Item{}, err
+			return e.Item{}, err
 		}
 
-		return Item{
+		return e.Item{
 			Ok: item.Ok,
-			Result: Json{
-				"message": RECORD_UPDATE,
+			Result: e.Json{
+				"message": msg.RECORD_UPDATE,
 				"_id":     id,
 				"index":   item.Index(),
 			},
@@ -91,15 +91,15 @@ func UpSetMasterNode(db int, id string, mode int, driver, host string, port int,
 		VALUES($1, $1, $2, $3, $4, $5)
 		RETURNING INDEX;`
 
-	item, err := DBQueryOne(db, sql, now, id, mode, data, index)
+	item, err := jdb.DBQueryOne(db, sql, now, id, mode, data, index)
 	if err != nil {
-		return Item{}, err
+		return e.Item{}, err
 	}
 
-	return Item{
+	return e.Item{
 		Ok: item.Ok,
-		Result: Json{
-			"message": RECORD_CREATE,
+		Result: e.Json{
+			"message": msg.RECORD_CREATE,
 			"_id":     id,
 			"index":   item.Index(),
 		},
@@ -116,14 +116,14 @@ func JoinToMaster() error {
 	FROM core.MODE A
 	LIMIT 1;`
 
-	item, err := QueryOne(sql)
+	item, err := jdb.QueryOne(sql)
 	if err != nil {
 		return err
 	}
 
 	id := item.Id()
 	mode := item.ValInt(ModeNone, "_data", "mode")
-	driver := item.ValStr(Postgres, "_data", "driver")
+	driver := item.ValStr(jdb.Postgres, "_data", "driver")
 	host := item.ValStr("", "_data", "host")
 	port := item.ValInt(5432, "_data", "port")
 	dbname := item.ValStr("", "_data", "dbname")
@@ -133,41 +133,41 @@ func JoinToMaster() error {
 	ModeId = id
 	ModeTp = mode
 
-	if ContainsInt([]int{ModeNone, ModeIdle}, ModeTp) {
+	if utility.ContainsInt([]int{ModeNone, ModeIdle}, ModeTp) {
 		return nil
 	}
 
 	if driver == "" {
-		return console.AlertF(MSG_ATRIB_REQUIRED, "driver")
+		return console.AlertF(msg.MSG_ATRIB_REQUIRED, "driver")
 	}
 
 	if host == "" {
-		return console.AlertF(MSG_ATRIB_REQUIRED, "host")
+		return console.AlertF(msg.MSG_ATRIB_REQUIRED, "host")
 	}
 
 	if dbname == "" {
-		return console.AlertF(MSG_ATRIB_REQUIRED, "dbname")
+		return console.AlertF(msg.MSG_ATRIB_REQUIRED, "dbname")
 	}
 
 	if user == "" {
-		return console.AlertF(MSG_ATRIB_REQUIRED, "user")
+		return console.AlertF(msg.MSG_ATRIB_REQUIRED, "user")
 	}
 
 	if password == "" {
-		return console.AlertF(MSG_ATRIB_REQUIRED, "password")
+		return console.AlertF(msg.MSG_ATRIB_REQUIRED, "password")
 	}
 
-	idx, err := Connected(driver, host, port, dbname, user, password)
+	idx, err := jdb.Connected(driver, host, port, dbname, user, password)
 	if err != nil {
 		return err
 	}
 
-	driver = EnvarStr("", "DB_DRIVE")
-	host = EnvarStr("", "DB_HOST")
-	port = EnvarInt(5432, "DB_PORT")
-	dbname = EnvarStr("", "DB_NAME")
-	user = EnvarStr("", "DB_USER")
-	password = EnvarStr("", "DB_PASSWORD")
+	driver = envar.EnvarStr("", "DB_DRIVE")
+	host = envar.EnvarStr("", "DB_HOST")
+	port = envar.EnvarInt(5432, "DB_PORT")
+	dbname = envar.EnvarStr("", "DB_NAME")
+	user = envar.EnvarStr("", "DB_USER")
+	password = envar.EnvarStr("", "DB_PASSWORD")
 	_, err = UpSetMasterNode(idx, ModeId, ModeTp, driver, host, port, dbname, user, password)
 	if err != nil {
 		return err

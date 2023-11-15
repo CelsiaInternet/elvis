@@ -2,20 +2,20 @@ package core
 
 import (
 	"github.com/cgalvisleon/elvis/console"
-	. "github.com/cgalvisleon/elvis/json"
-	. "github.com/cgalvisleon/elvis/linq"
-	. "github.com/cgalvisleon/elvis/msg"
-	. "github.com/cgalvisleon/elvis/utility"
+	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/linq"
+	"github.com/cgalvisleon/elvis/msg"
+	"github.com/cgalvisleon/elvis/utility"
 )
 
 type Collection struct {
 	Name      string
 	Id        string
 	ProjectId string
-	Result    Json
+	Result    e.Json
 }
 
-var Collections *Model
+var Collections *linq.Model
 
 func DefineCollection() error {
 	if err := DefineCoreSchema(); err != nil {
@@ -26,10 +26,10 @@ func DefineCollection() error {
 		return nil
 	}
 
-	Collections = NewModel(SchemaCore, "COLLECTION", "Tabla de colecciones", 1)
+	Collections = linq.NewModel(SchemaCore, "COLLECTION", "Tabla de colecciones", 1)
 	Collections.DefineColum("date_make", "", "TIMESTAMP", "NOW()")
 	Collections.DefineColum("date_update", "", "TIMESTAMP", "NOW()")
-	Collections.DefineColum("_state", "", "VARCHAR(80)", ACTIVE)
+	Collections.DefineColum("_state", "", "VARCHAR(80)", utility.ACTIVE)
 	Collections.DefineColum("_id", "", "VARCHAR(80)", "-1")
 	Collections.DefineColum("collection", "", "VARCHAR(80)", "")
 	Collections.DefineColum("project_id", "", "VARCHAR(80)", "-1")
@@ -45,7 +45,7 @@ func DefineCollection() error {
 		"expiration",
 		"index",
 	})
-	Collections.Trigger(AfterInsert, func(model *Model, old, new *Json, data Json) error {
+	Collections.Trigger(linq.AfterInsert, func(model *linq.Model, old, new *e.Json, data e.Json) error {
 		collection := new.Str("collection")
 
 		if collection == "__telemetry" {
@@ -63,7 +63,7 @@ func DefineCollection() error {
 		projectId := new.Key("project_id")
 		count := item.Int("count")
 		count++
-		data = Json{}
+		data = e.Json{}
 		data["collection"] = "__telemetry"
 		data["project_id"] = projectId
 		data["_id"] = collection
@@ -79,7 +79,7 @@ func DefineCollection() error {
 
 		return nil
 	})
-	Collections.Trigger(AfterDelete, func(model *Model, old, new *Json, data Json) error {
+	Collections.Trigger(linq.AfterDelete, func(model *linq.Model, old, new *e.Json, data e.Json) error {
 		collection := old.Str("collection")
 
 		if collection == "__telemetry" {
@@ -97,7 +97,7 @@ func DefineCollection() error {
 		projectId := old.Key("project_id")
 		count := item.Int("count")
 		count--
-		data = Json{}
+		data = e.Json{}
 		data["collection"] = "__telemetry"
 		data["project_id"] = projectId
 		data["_id"] = collection
@@ -154,30 +154,30 @@ func (c *Collection) Str(atribs ...string) string {
 * Collection
 *	Handler for CRUD data
  */
-func GetCollectionById(collection, id string) (Item, error) {
+func GetCollectionById(collection, id string) (e.Item, error) {
 	return Collections.Select().
 		Where(Collections.Column("collection").Eq(collection)).
 		And(Collections.Column("_id").Eq(id)).
 		First()
 }
 
-func GetCollectionByIndex(collection string, idx int) (Item, error) {
+func GetCollectionByIndex(collection string, idx int) (e.Item, error) {
 	return Collections.Select().
 		Where(Collections.Column("collection").Eq(collection)).
 		And(Collections.Column("index").Eq(idx)).
 		First()
 }
 
-func UpSertCollection(collection, projectId, id string, data Json) (Item, error) {
-	if !ValidStr(collection, 0, []string{""}) {
-		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "collection")
+func UpSertCollection(collection, projectId, id string, data e.Json) (e.Item, error) {
+	if !utility.ValidStr(collection, 0, []string{""}) {
+		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "collection")
 	}
 
 	if projectId == "" {
 		projectId = "-1"
 	}
 
-	id = GenId(id)
+	id = utility.GenId(id)
 	data["collection"] = collection
 	data["project_id"] = projectId
 	data["_id"] = id
@@ -188,12 +188,12 @@ func UpSertCollection(collection, projectId, id string, data Json) (Item, error)
 		Command()
 }
 
-func StateCollection(collection, id, state string) (Item, error) {
-	if !ValidId(state) {
-		return Item{}, console.AlertF(MSG_ATRIB_REQUIRED, "state")
+func StateCollection(collection, id, state string) (e.Item, error) {
+	if !utility.ValidId(state) {
+		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "state")
 	}
 
-	return Collections.Upsert(Json{
+	return Collections.Upsert(e.Json{
 		"_state": state,
 	}).
 		Where(Collections.Column("collection").Eq(collection)).
@@ -202,30 +202,30 @@ func StateCollection(collection, id, state string) (Item, error) {
 		Command()
 }
 
-func DeleteCollection(collection, id string) (Item, error) {
+func DeleteCollection(collection, id string) (e.Item, error) {
 	return Collections.Delete().
 		Where(Collections.Column("collection").Eq(collection)).
 		And(Collections.Column("_id").Eq(id)).
 		Command()
 }
 
-func AllCollections(projectId, collection, state, search string, page, rows int) (List, error) {
-	if !ValidId(projectId) {
-		return List{}, console.AlertF(MSG_ATRIB_REQUIRED, "project_id")
+func AllCollections(projectId, collection, state, search string, page, rows int) (e.List, error) {
+	if !utility.ValidId(projectId) {
+		return e.List{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "project_id")
 	}
 
-	if !ValidStr(collection, 0, []string{""}) {
-		return List{}, console.AlertF(MSG_ATRIB_REQUIRED, "collection")
+	if !utility.ValidStr(collection, 0, []string{""}) {
+		return e.List{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "collection")
 	}
 
 	if state == "" {
-		state = ACTIVE
+		state = utility.ACTIVE
 	}
 
 	auxState := state
 
 	if auxState == "*" {
-		state = FOR_DELETE
+		state = utility.FOR_DELETE
 
 		return Collections.Select().
 			Where(Collections.Column("collection").Eq(collection)).

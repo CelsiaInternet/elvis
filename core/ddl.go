@@ -2,14 +2,14 @@ package core
 
 import (
 	"github.com/cgalvisleon/elvis/console"
-	. "github.com/cgalvisleon/elvis/jdb"
-	. "github.com/cgalvisleon/elvis/json"
-	. "github.com/cgalvisleon/elvis/linq"
-	. "github.com/cgalvisleon/elvis/msg"
-	. "github.com/cgalvisleon/elvis/utility"
+	"github.com/cgalvisleon/elvis/jdb"
+	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/linq"
+	"github.com/cgalvisleon/elvis/msg"
+	"github.com/cgalvisleon/elvis/utility"
 )
 
-func InitModel(model *Model) error {
+func InitModel(model *linq.Model) error {
 	err := model.Init()
 	if err != nil {
 		return err
@@ -24,7 +24,7 @@ func InitModel(model *Model) error {
 	}
 
 	if model.UseIndex {
-		model.Trigger(BeforeInsert, func(model *Model, old, new *Json, data Json) error {
+		model.Trigger(linq.BeforeInsert, func(model *linq.Model, old, new *e.Json, data e.Json) error {
 			index := GetSerie(model.Name)
 			new.Set("index", index)
 
@@ -32,7 +32,7 @@ func InitModel(model *Model) error {
 		})
 	}
 
-	model.References(func(references []*ReferenceValue) {
+	model.References(func(references []*linq.ReferenceValue) {
 		SetReferences(references)
 	})
 
@@ -43,14 +43,14 @@ func InitModel(model *Model) error {
 *
  */
 func ExistDatabase(db int, name string) (bool, error) {
-	name = Lowcase(name)
+	name = utility.Lowcase(name)
 	sql := `
 	SELECT EXISTS(
 		SELECT 1
 		FROM pg_database
 		WHERE UPPER(datname) = UPPER($1));`
 
-	item, err := DBQueryOne(db, sql, name)
+	item, err := jdb.DBQueryOne(db, sql, name)
 	if err != nil {
 		return false, err
 	}
@@ -59,14 +59,14 @@ func ExistDatabase(db int, name string) (bool, error) {
 }
 
 func ExistSchema(db int, name string) (bool, error) {
-	name = Lowcase(name)
+	name = utility.Lowcase(name)
 	sql := `
 	SELECT EXISTS(
 		SELECT 1
 		FROM pg_namespace
 		WHERE UPPER(nspname) = UPPER($1));`
 
-	item, err := DBQueryOne(db, sql, name)
+	item, err := jdb.DBQueryOne(db, sql, name)
 	if err != nil {
 		return false, err
 	}
@@ -75,14 +75,14 @@ func ExistSchema(db int, name string) (bool, error) {
 }
 
 func ExistUser(db int, name string) (bool, error) {
-	name = Uppcase(name)
+	name = utility.Uppcase(name)
 	sql := `
 	SELECT EXISTS(
 		SELECT 1
 		FROM pg_roles
 		WHERE UPPER(rolname) = UPPER($1));`
 
-	item, err := DBQueryOne(db, sql, name)
+	item, err := jdb.DBQueryOne(db, sql, name)
 	if err != nil {
 		return false, err
 	}
@@ -98,7 +98,7 @@ func ExistTable(db int, schema, name string) (bool, error) {
 		WHERE UPPER(table_schema) = UPPER($1)
 		AND UPPER(table_name) = UPPER($2));`
 
-	item, err := DBQueryOne(db, sql, schema, name)
+	item, err := jdb.DBQueryOne(db, sql, schema, name)
 	if err != nil {
 		return false, err
 	}
@@ -115,7 +115,7 @@ func ExistColum(db int, schema, table, name string) (bool, error) {
 		AND UPPER(table_name) = UPPER($2)
 		AND UPPER(column_name) = UPPER($3));`
 
-	item, err := DBQueryOne(db, sql, schema, table, name)
+	item, err := jdb.DBQueryOne(db, sql, schema, table, name)
 	if err != nil {
 		return false, err
 	}
@@ -124,7 +124,7 @@ func ExistColum(db int, schema, table, name string) (bool, error) {
 }
 
 func ExistIndex(db int, schema, table, field string) (bool, error) {
-	indexName := Format(`%s_%s_IDX`, Uppcase(table), Uppcase(field))
+	indexName := utility.Format(`%s_%s_IDX`, utility.Uppcase(table), utility.Uppcase(field))
 	sql := `
 	SELECT EXISTS(
 		SELECT 1
@@ -133,7 +133,7 @@ func ExistIndex(db int, schema, table, field string) (bool, error) {
 		AND UPPER(tablename) = UPPER($2)
 		AND UPPER(indexname) = UPPER($3));`
 
-	item, err := QueryOne(sql, schema, table, indexName)
+	item, err := jdb.QueryOne(sql, schema, table, indexName)
 	if err != nil {
 		return false, err
 	}
@@ -149,7 +149,7 @@ func ExistSerie(db int, schema, name string) (bool, error) {
 		WHERE UPPER(schemaname) = UPPER($1)
 		AND UPPER(sequencename) = UPPER($2));`
 
-	item, err := DBQueryOne(db, sql, schema, name)
+	item, err := jdb.DBQueryOne(db, sql, schema, name)
 	if err != nil {
 		return false, err
 	}
@@ -161,16 +161,16 @@ func ExistSerie(db int, schema, name string) (bool, error) {
 *
 **/
 func CreateDatabase(db int, name string) (bool, error) {
-	name = Lowcase(name)
+	name = utility.Lowcase(name)
 	exists, err := ExistDatabase(db, name)
 	if err != nil {
 		return false, err
 	}
 
 	if !exists {
-		sql := Format(`CREATE DATABASE %s;`, name)
+		sql := utility.Format(`CREATE DATABASE %s;`, name)
 
-		_, err := DBQuery(db, sql)
+		_, err := jdb.DBQuery(db, sql)
 		if err != nil {
 			return false, err
 		}
@@ -180,16 +180,16 @@ func CreateDatabase(db int, name string) (bool, error) {
 }
 
 func CreateSchema(db int, name string) (bool, error) {
-	name = Lowcase(name)
+	name = utility.Lowcase(name)
 	exists, err := ExistSchema(db, name)
 	if err != nil {
 		return false, err
 	}
 
 	if !exists {
-		sql := Format(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"; CREATE SCHEMA IF NOT EXISTS "%s";`, name)
+		sql := utility.Format(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"; CREATE SCHEMA IF NOT EXISTS "%s";`, name)
 
-		_, err := DBQuery(db, sql)
+		_, err := jdb.DBQuery(db, sql)
 		if err != nil {
 			return false, err
 		}
@@ -199,21 +199,21 @@ func CreateSchema(db int, name string) (bool, error) {
 }
 
 func CreateUser(db int, name, password string) (bool, error) {
-	name = Uppcase(name)
+	name = utility.Uppcase(name)
 	exists, err := ExistUser(db, name)
 	if err != nil {
 		return false, err
 	}
 
 	if !exists {
-		passwordHash, err := PasswordHash(password)
+		passwordHash, err := utility.PasswordHash(password)
 		if err != nil {
 			return false, err
 		}
 
-		sql := Format(`CREATE USER %s WITH PASSWORD '%s';`, name, passwordHash)
+		sql := utility.Format(`CREATE USER %s WITH PASSWORD '%s';`, name, passwordHash)
 
-		_, err = DBQuery(db, sql)
+		_, err = jdb.DBQuery(db, sql)
 		if err != nil {
 			return false, err
 		}
@@ -229,17 +229,17 @@ func ChangePassword(db int, name, password string) (bool, error) {
 	}
 
 	if !exists {
-		return false, console.ErrorM(SYSTEM_USER_NOT_FOUNT)
+		return false, console.ErrorM(msg.SYSTEM_USER_NOT_FOUNT)
 	}
 
-	passwordHash, err := PasswordHash(password)
+	passwordHash, err := utility.PasswordHash(password)
 	if err != nil {
 		return false, err
 	}
 
-	sql := Format(`ALTER USER %s WITH PASSWORD '%s';`, name, passwordHash)
+	sql := utility.Format(`ALTER USER %s WITH PASSWORD '%s';`, name, passwordHash)
 
-	_, err = Query(sql)
+	_, err = jdb.Query(sql)
 	if err != nil {
 		return false, err
 	}
@@ -254,8 +254,8 @@ func CreateColumn(db int, schema, table, name, kind, defaultValue string) (bool,
 	}
 
 	if !exists {
-		tableName := Format(`%s.%s`, schema, Uppcase(table))
-		sql := SQLDDL(`
+		tableName := utility.Format(`%s.%s`, schema, utility.Uppcase(table))
+		sql := jdb.SQLDDL(`
 		DO $$
 		BEGIN
 			BEGIN
@@ -264,9 +264,9 @@ func CreateColumn(db int, schema, table, name, kind, defaultValue string) (bool,
 				WHEN duplicate_column THEN RAISE NOTICE 'column <column_name> already exists in <table_name>.';
 			END;
 		END;
-		$$;`, tableName, Uppcase(name), Uppcase(kind), defaultValue)
+		$$;`, tableName, utility.Uppcase(name), utility.Uppcase(kind), defaultValue)
 
-		_, err := QDDL(sql)
+		_, err := jdb.QDDL(sql)
 		if err != nil {
 			return false, err
 		}
@@ -282,9 +282,9 @@ func CreateIndex(db int, schema, table, field string) (bool, error) {
 	}
 
 	if !exists {
-		sql := SQLDDL(`CREATE INDEX IF NOT EXISTS $2_$3_IDX ON $1.$2($3);`, Uppcase(schema), Uppcase(table), Uppcase(field))
+		sql := jdb.SQLDDL(`CREATE INDEX IF NOT EXISTS $2_$3_IDX ON $1.$2($3);`, utility.Uppcase(schema), utility.Uppcase(table), utility.Uppcase(field))
 
-		_, err := QDDL(sql)
+		_, err := jdb.QDDL(sql)
 		if err != nil {
 			return false, err
 		}
@@ -300,9 +300,9 @@ func CreateSerie(db int, schema, tag string) (bool, error) {
 	}
 
 	if !exists {
-		sql := Format(`CREATE SEQUENCE IF NOT EXISTS %s START 1;`, tag)
+		sql := utility.Format(`CREATE SEQUENCE IF NOT EXISTS %s START 1;`, tag)
 
-		_, err := Query(sql)
+		_, err := jdb.Query(sql)
 		if err != nil {
 			return false, err
 		}
