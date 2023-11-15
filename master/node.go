@@ -4,9 +4,9 @@ import (
 	"time"
 
 	"github.com/cgalvisleon/elvis/console"
-	. "github.com/cgalvisleon/elvis/core"
-	. "github.com/cgalvisleon/elvis/jdb"
-	. "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/core"
+	"github.com/cgalvisleon/elvis/jdb"
+	e "github.com/cgalvisleon/elvis/json"
 )
 
 const NodeStatusIdle = 0
@@ -22,13 +22,13 @@ type Node struct {
 	Date_update time.Time `json:"date_update"`
 	Id          string    `json:"_id"`
 	Mode        int       `json:"mode"`
-	Data        Json      `json:"_data"`
+	Data        e.Json      `json:"_data"`
 	Status      int       `json:"status"`
 	Index       int       `json:"index"`
-	Synced      *Collection
+	Synced      *core.Collection
 }
 
-func (n *Node) Scan(data *Json) error {
+func (n *Node) Scan(data *e.Json) error {
 	n.Date_make = data.Time("date_make")
 	n.Date_update = data.Time("date_update")
 	n.Id = data.Str("_id")
@@ -45,7 +45,7 @@ func (c *Node) LatIndex() int {
 	SELECT INDEX FROM core.MODE
 	LIMIT 1;`
 
-	item, err := DBQueryOne(c.Db, sql)
+	item, err := jdb.DBQueryOne(c.Db, sql)
 	if err != nil {
 		return -1
 	}
@@ -53,16 +53,16 @@ func (c *Node) LatIndex() int {
 	return item.Index()
 }
 
-func (c *Node) GetSyncByIdT(idT string) (Item, error) {
+func (c *Node) GetSyncByIdT(idT string) (e.Item, error) {
 	sql := `
   SELECT *
   FROM core.SYNC
   WHERE _IDT=$1
   LIMIT 1;`
 
-	item, err := DBQueryOne(c.Db, sql, idT)
+	item, err := jdb.DBQueryOne(c.Db, sql, idT)
 	if err != nil {
-		return Item{}, err
+		return e.Item{}, err
 	}
 
 	return item, nil
@@ -73,7 +73,7 @@ func (c *Node) DelSyncByIndex(index int) error {
   DELETE FROM core.SYNC
   WHERE INDEX=$1;`
 
-	_, err := DBQueryOne(c.Db, sql, index)
+	_, err := jdb.DBQueryOne(c.Db, sql, index)
 	if err != nil {
 		return err
 	}
@@ -81,7 +81,7 @@ func (c *Node) DelSyncByIndex(index int) error {
 	return nil
 }
 
-func NewNode(params *Json) (*Node, error) {
+func NewNode(params *e.Json) (*Node, error) {
 	result := &Node{}
 	err := result.Scan(params)
 	if err != nil {
@@ -172,7 +172,7 @@ func DefineNodes() error {
 	CREATE INDEX IF NOT EXISTS SYNC_NODE_IDX ON core.SYNC(NODE);
   CREATE INDEX IF NOT EXISTS SYNC_INDEX_IDX ON core.SYNC(INDEX);`
 
-	_, err := QDDL(sql)
+	_, err := jdb.QDDL(sql)
 	if err != nil {
 		return console.PanicE(err)
 	}
@@ -188,7 +188,7 @@ func DefineNodes() error {
 * Mode
 *	Handler for CRUD data
  */
-func GetNodeById(id string) (Item, error) {
+func GetNodeById(id string) (e.Item, error) {
 	sql := `
 	SELECT
 	A._DATA||
@@ -200,9 +200,9 @@ func GetNodeById(id string) (Item, error) {
 	WHERE A._ID=$1
 	LIMIT 1;`
 
-	item, err := QueryDataOne(sql, id)
+	item, err := jdb.QueryDataOne(sql, id)
 	if err != nil {
-		return Item{}, err
+		return e.Item{}, err
 	}
 
 	delete(item.Result, "password")
@@ -210,15 +210,15 @@ func GetNodeById(id string) (Item, error) {
 	return item, nil
 }
 
-func DeleteNodeById(id string) (Item, error) {
+func DeleteNodeById(id string) (e.Item, error) {
 	sql := `
 	DELETE FROM core.NODES	
 	WHERE _ID=$1
 	RETURNING *;`
 
-	item, err := QueryDataOne(sql, id)
+	item, err := jdb.QueryDataOne(sql, id)
 	if err != nil {
-		return Item{}, err
+		return e.Item{}, err
 	}
 
 	delete(item.Result, "password")
@@ -226,13 +226,13 @@ func DeleteNodeById(id string) (Item, error) {
 	return item, nil
 }
 
-func AllNodes(search string, page, rows int) (List, error) {
+func AllNodes(search string, page, rows int) (e.List, error) {
 	sql := `
 	SELECT COUNT(*) AS COUNT
 	FROM core.NODES A
 	WHERE CONCAT('MODE:', A.MODE, ':DATA:', A._DATA::TEXT) ILIKE CONCAT('%', $1, '%');`
 
-	all := QueryCount(sql, search)
+	all := jdb.QueryCount(sql, search)
 
 	sql = `
 	SELECT A._DATA||
@@ -248,9 +248,9 @@ func AllNodes(search string, page, rows int) (List, error) {
 	LIMIT $2 OFFSET $3;`
 
 	offset := (page - 1) * rows
-	items, err := Query(sql, search, rows, offset)
+	items, err := jdb.Query(sql, search, rows, offset)
 	if err != nil {
-		return List{}, err
+		return e.List{}, err
 	}
 
 	return items.ToList(all, page, rows), nil

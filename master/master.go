@@ -1,19 +1,16 @@
 package master
 
 import (
-	"sync"
-
 	"github.com/cgalvisleon/elvis/console"
-	. "github.com/cgalvisleon/elvis/core"
-	. "github.com/cgalvisleon/elvis/jdb"
-	. "github.com/cgalvisleon/elvis/json"
-	. "github.com/cgalvisleon/elvis/utility"
+	"github.com/cgalvisleon/elvis/core"
+	"github.com/cgalvisleon/elvis/jdb"
+	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/utility"
 	_ "github.com/joho/godotenv/autoload"
 )
 
 var (
 	master *Master
-	once   sync.Once
 )
 
 type Master struct {
@@ -32,7 +29,7 @@ func (c *Master) GetNodeByID(id string) *Node {
 	return nil
 }
 
-func (c *Master) LoadNode(params Json) error {
+func (c *Master) LoadNode(params e.Json) error {
 	id := params.Key()
 
 	node := c.GetNodeByID(id)
@@ -49,13 +46,13 @@ func (c *Master) LoadNode(params Json) error {
 		user := node.Data.Str("user")
 		password := node.Data.Str("password")
 
-		idx, err := Connected(driver, host, port, dbname, user, password)
+		idx, err := jdb.Connected(driver, host, port, dbname, user, password)
 		if err != nil {
 			console.Fatal(err)
 		}
 
 		node.Db = idx
-		node.URL = Jdb(idx).URL
+		node.URL = jdb.DB(idx).URL
 		node.Index = len(c.Nodes)
 		c.Nodes = append(c.Nodes, *node)
 
@@ -82,14 +79,14 @@ func (c *Master) LoadNodes() error {
 		ok = false
 
 		offset := (page - 1) * rows
-		sql := Format(`
+		sql := utility.Format(`
 		SELECT A.*,
 		0 AS STATUS
 		FROM core.NODES A
 		ORDER BY A.INDEX
 		LIMIT %d OFFSET %d;`, rows, offset)
 
-		items, err := Query(sql)
+		items, err := jdb.Query(sql)
 		if err != nil {
 			return console.Error(err)
 		}
@@ -115,29 +112,29 @@ func (c *Master) UnloadNodeById(id string) error {
 		idx := node.Index
 		node.Status = NodeStatusIdle
 		copy(c.Nodes[idx:], c.Nodes[idx+1:])
-		DBClose(node.Db)
+		jdb.DBClose(node.Db)
 	}
 
 	return nil
 }
 
-func (c *Master) GetSyncById(idT string) (Item, error) {
+func (c *Master) GetSyncById(idT string) (e.Item, error) {
 	sql := `
   SELECT *
   FROM core.SYNC
   WHERE _IDT=$1
   LIMIT 1;`
 
-	item, err := QueryOne(sql, idT)
+	item, err := jdb.QueryOne(sql, idT)
 	if err != nil {
-		return Item{}, err
+		return e.Item{}, err
 	}
 
 	return item, nil
 }
 
-func (c *Master) SetSync(schema, table, action, node, idT string, data Json, query string) (int, error) {
-	index := GetSerie("main.SYNC")
+func (c *Master) SetSync(schema, table, action, node, idT string, data e.Json, query string) (int, error) {
+	index := core.GetSerie("main.SYNC")
 
 	sql := `
 	INSERT INTO core.SYNC(TABLE_SCHEMA, TABLE_NAME, ACTION, _IDT, _DATA, QUERY, NODE, INDEX)
@@ -150,7 +147,7 @@ func (c *Master) SetSync(schema, table, action, node, idT string, data Json, que
 	NODE = EXCLUDED.NODE
 	RETURNING *;`
 
-	_, err := Query(sql, schema, table, action, idT, data.ToString(), query, node, index)
+	_, err := jdb.Query(sql, schema, table, action, idT, data.ToString(), query, node, index)
 	if err != nil {
 		return -1, err
 	}

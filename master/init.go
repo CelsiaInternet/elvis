@@ -2,8 +2,8 @@ package master
 
 import (
 	"github.com/cgalvisleon/elvis/console"
-	. "github.com/cgalvisleon/elvis/core"
-	. "github.com/cgalvisleon/elvis/jdb"
+	"github.com/cgalvisleon/elvis/core"
+	"github.com/cgalvisleon/elvis/jdb"
 )
 
 func InitMaster() error {
@@ -13,23 +13,23 @@ func InitMaster() error {
 
 	master = &Master{}
 
-	if err := DefineConfig(); err != nil {
+	if err := core.DefineConfig(); err != nil {
 		return console.PanicE(err)
 	}
 	if err := DefineNodes(); err != nil {
 		return console.PanicE(err)
 	}
-	if err := DefineSeries(); err != nil {
+	if err := core.DefineSeries(); err != nil {
 		return console.PanicE(err)
 	}
-	if err := DefineReference(); err != nil {
+	if err := core.DefineReference(); err != nil {
 		return console.PanicE(err)
 	}
-	if err := DefineCollection(); err != nil {
+	if err := core.DefineCollection(); err != nil {
 		return console.PanicE(err)
 	}
 
-	go Listen("master", Jdb(0).URL, "node", listenNode)
+	go jdb.Listen("master", jdb.DB(0).URL, "node", listenNode)
 
 	console.LogK("CORE", "Init Master")
 

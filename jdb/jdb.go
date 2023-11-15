@@ -30,14 +30,10 @@ func Close() error {
 	return nil
 }
 
-func DB(db int) *Db {
-	return conn.Db[db]
-}
-
-func DBClose(db int) error {
-	return conn.Db[db].Close()
-}
-
-func Jdb(idx int) *Db {
+func DB(idx int) *Db {
 	return conn.Db[idx]
+}
+
+func DBClose(idx int) error {
+	return conn.Db[idx].Close()
 }

@@ -5,20 +5,20 @@ import (
 	"os"
 
 	"github.com/cgalvisleon/elvis/cache"
-	. "github.com/cgalvisleon/elvis/envar"
-	. "github.com/cgalvisleon/elvis/msg"
-	. "github.com/cgalvisleon/elvis/utility"
+	"github.com/cgalvisleon/elvis/envar"
+	"github.com/cgalvisleon/elvis/msg"
+	"github.com/cgalvisleon/elvis/utility"
 	_ "github.com/joho/godotenv/autoload"
 	mail "github.com/xhit/go-simple-mail/v2"
 )
 
 func Send(ctx context.Context, from string, to string, subject string, html string) (bool, error) {
-	port := EnvarInt(4200, "EMAIL_PORT")
+	port := envar.EnvarInt(4200, "EMAIL_PORT")
 	server := mail.NewSMTPClient()
-	server.Host = EnvarStr("", "EMAIL_HOST")
+	server.Host = envar.EnvarStr("", "EMAIL_HOST")
 	server.Port = port
-	server.Username = EnvarStr("", "EMAIL")
-	server.Password = EnvarStr("", "EMAIL_PASSWORD")
+	server.Username = envar.EnvarStr("", "EMAIL")
+	server.Password = envar.EnvarStr("", "EMAIL_PASSWORD")
 	server.Encryption = mail.EncryptionTLS
 
 	smtpClient, err := server.Connect()
@@ -44,10 +44,10 @@ func Send(ctx context.Context, from string, to string, subject string, html stri
 }
 
 func SendVerify(ctx context.Context, to string, subject string, title string, email string, code string) (bool, error) {
-	company := EnvarStr("", "COMPANY")
-	fromEmail := EnvarStr("", "EMAIL")
-	project := EnvarStr("", "PROJECT")
-	from := Format("%s account team <%s>", Titlecase(project), fromEmail)
+	company := envar.EnvarStr("", "COMPANY")
+	fromEmail := envar.EnvarStr("", "EMAIL")
+	project := envar.EnvarStr("", "PROJECT")
+	from := utility.Format("%s account team <%s>", utility.Titlecase(project), fromEmail)
 
 	css, err := os.ReadFile("./assets/template/style.txt")
 	if err != nil {
@@ -59,15 +59,15 @@ func SendVerify(ctx context.Context, to string, subject string, title string, em
 		return false, err
 	}
 
-	html := Format(string(template), css, title, email, code, company)
+	html := utility.Format(string(template), css, title, email, code, company)
 	return Send(ctx, from, to, subject, html)
 }
 
 func SendAlert(ctx context.Context, to string, subject string, title string, subtitle string, message string, button string, href string, thanks string) (bool, error) {
-	company := EnvarStr("", "COMPANY")
-	fromEmail := EnvarStr("", "EMAIL")
-	project := EnvarStr("", "PROJECT")
-	from := Format("%s account team <%s>", Titlecase(project), fromEmail)
+	company := envar.EnvarStr("", "COMPANY")
+	fromEmail := envar.EnvarStr("", "EMAIL")
+	project := envar.EnvarStr("", "PROJECT")
+	from := utility.Format("%s account team <%s>", utility.Titlecase(project), fromEmail)
 
 	css, err := os.ReadFile("./assets/template/style.txt")
 	if err != nil {
@@ -79,15 +79,15 @@ func SendAlert(ctx context.Context, to string, subject string, title string, sub
 		return false, err
 	}
 
-	html := Format(string(template), css, title, subtitle, message, href, button, thanks, company)
+	html := utility.Format(string(template), css, title, subtitle, message, href, button, thanks, company)
 	return Send(ctx, from, to, subject, html)
 }
 
 func SendAction(ctx context.Context, to string, subject string, title string, message string, button string, href string) (bool, error) {
-	company := EnvarStr("", "COMPANY")
-	fromEmail := EnvarStr("", "EMAIL")
-	project := EnvarStr("", "PROJECT")
-	from := Format("%s account team <%s>", Titlecase(project), fromEmail)
+	company := envar.EnvarStr("", "COMPANY")
+	fromEmail := envar.EnvarStr("", "EMAIL")
+	project := envar.EnvarStr("", "PROJECT")
+	from := utility.Format("%s account team <%s>", utility.Titlecase(project), fromEmail)
 
 	css, err := os.ReadFile("./assets/template/style.txt")
 	if err != nil {
@@ -104,16 +104,16 @@ func SendAction(ctx context.Context, to string, subject string, title string, me
 		return false, err
 	}
 
-	html := Format(string(template), css, logo, title, message, href, button, company)
+	html := utility.Format(string(template), css, logo, title, message, href, button, company)
 	return Send(ctx, from, to, subject, html)
 }
 
 func VerifyMail(ctx context.Context, device string, name string, email string) error {
-	code := GetCodeVerify(6)
+	code := utility.GetCodeVerify(6)
 	cache.SetVerify(device, email, code)
 
-	to := Format("%s <%s>", name, email)
-	_, err := SendVerify(ctx, to, MSG_MAIL_001, MSG_MAIL_002, email, code)
+	to := utility.Format("%s <%s>", name, email)
+	_, err := SendVerify(ctx, to, msg.MSG_MAIL_001, msg.MSG_MAIL_002, email, code)
 	if err != nil {
 		return err
 	}
