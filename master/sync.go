@@ -1,9 +1,9 @@
 package master
 
 import (
-	. "github.com/cgalvisleon/elvis/jdb"
-	. "github.com/cgalvisleon/elvis/json"
-	. "github.com/cgalvisleon/elvis/utility"
+	"github.com/cgalvisleon/elvis/jdb"
+	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/utility"
 )
 
 func (c *Node) SyncNode() error {
@@ -19,7 +19,7 @@ func (c *Node) SyncNode() error {
 		return err
 	}
 
-	go Listen(c.Id, c.URL, "sync", listenSync)
+	go jdb.Listen(c.Id, c.URL, "sync", listenSync)
 
 	c.Status = NodeStatusActive
 
@@ -37,14 +37,14 @@ func (c *Node) SyncMasterToNode() error {
 		ok = false
 
 		offset := (page - 1) * rows
-		sql := Format(`
+		sql := utility.Format(`
 		SELECT A.*
 		FROM core.SYNC A
 		WHERE A.INDEX>$1
 		ORDER BY A.TABLE_SCHEMA, A.TABLE_SCHEMA, A.ACTION, A.INDEX
 		LIMIT %d OFFSET %d;`, rows, offset)
 
-		items, err := Query(sql, lastIndex)
+		items, err := jdb.Query(sql, lastIndex)
 		if err != nil {
 			c.Status = NodeStatusError
 			return err
@@ -61,7 +61,7 @@ func (c *Node) SyncMasterToNode() error {
 			_data := item.Json("_data")
 			action := item.Str("action")
 			lastIndex = item.Index()
-			if !Contains([]string{"INSERT", "UPDATE", "DELETE", "DDL"}, action) {
+			if !utility.Contains([]string{"INSERT", "UPDATE", "DELETE", "DDL"}, action) {
 				continue
 			}
 
@@ -79,12 +79,12 @@ func (c *Node) SyncMasterToNode() error {
 			if oldSchema == schema && oldTable == table && action == "INSERT" && len(batch) == 0 {
 				batch = c.SqlField(schema, table, _data)
 			} else if oldSchema == schema && oldTable == table && action == "INSERT" {
-				batch = Format(`%s,`, batch)
+				batch = utility.Format(`%s,`, batch)
 			}
 
 			query, append := c.ToSql(schema, table, idT, _data, action)
 			if append {
-				batch = Append(batch, query, "\n")
+				batch = utility.Append(batch, query, "\n")
 			}
 
 			ok = true
@@ -110,13 +110,13 @@ func (c *Node) SyncNodeToMaster() error {
 		c.Status = NodeStatusSync
 		ok = false
 
-		sql := Format(`
+		sql := utility.Format(`
 		SELECT A.*
 		FROM core.SYNC A
 		ORDER BY A.INDEX
 		LIMIT %d;`, rows)
 
-		items, err := DBQuery(c.Db, sql)
+		items, err := jdb.DBQuery(c.Db, sql)
 		if err != nil {
 			c.Status = NodeStatusError
 			return err
@@ -143,15 +143,15 @@ func (c *Node) SyncNodeToMaster() error {
 }
 
 func (c *Node) SyncQuery(query string, index int) error {
-	sql := Format(`
+	sql := utility.Format(`
 	UPDATE core.MODE SET
 	INDEX=%d
 	WHERE INDEX<%d
 	RETURNING INDEX;`, index, index)
 
-	query = Append(query, sql, "\n")
+	query = utility.Append(query, sql, "\n")
 
-	_, err := DBQuery(c.Db, query)
+	_, err := jdb.DBQuery(c.Db, query)
 	if err != nil {
 		return err
 	}
@@ -159,13 +159,13 @@ func (c *Node) SyncQuery(query string, index int) error {
 	return nil
 }
 
-func (c *Node) SyncRecord(schema, table, idT string, _data Json, action string, _index int) error {
+func (c *Node) SyncRecord(schema, table, idT string, _data e.Json, action string, _index int) error {
 	query := ""
 	if action == "INSERT" {
 		fields := c.SqlField(schema, table, _data)
 		insert, append := c.ToSql(schema, table, idT, _data, action)
 		if append {
-			query = Append(fields, insert, "\n")
+			query = utility.Append(fields, insert, "\n")
 		}
 	} else {
 		query, _ = c.ToSql(schema, table, idT, _data, action)
