@@ -6,12 +6,12 @@ import (
 	"github.com/cgalvisleon/elvis/cache"
 	"github.com/cgalvisleon/elvis/claim"
 	"github.com/cgalvisleon/elvis/console"
-	. "github.com/cgalvisleon/elvis/core"
-	. "github.com/cgalvisleon/elvis/jdb"
-	. "github.com/cgalvisleon/elvis/json"
-	. "github.com/cgalvisleon/elvis/linq"
-	. "github.com/cgalvisleon/elvis/msg"
-	. "github.com/cgalvisleon/elvis/utility"
+	"github.com/cgalvisleon/elvis/core"
+	"github.com/cgalvisleon/elvis/jdb"
+	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/linq"
+	"github.com/cgalvisleon/elvis/msg"
+	"github.com/cgalvisleon/elvis/utility"
 )
 
 type Token struct {
@@ -25,7 +25,7 @@ type Token struct {
 	Index       int       `json:"index"`
 }
 
-func (n *Token) Scan(js *Json) error {
+func (n *Token) Scan(js *e.Json) error {
 	n.Date_make = js.Time("date_make")
 	n.Date_update = js.Time("date_update")
 	n.Id = js.Str("_id")
@@ -38,7 +38,7 @@ func (n *Token) Scan(js *Json) error {
 	return nil
 }
 
-var Tokens *Model
+var Tokens *linq.Model
 
 func DefineTokens() error {
 	if err := DefineSchemaModule(); err != nil {
@@ -49,7 +49,7 @@ func DefineTokens() error {
 		return nil
 	}
 
-	Tokens = NewModel(SchemaModule, "TOKENS", "Tabla de tokens", 1)
+	Tokens = linq.NewModel(SchemaModule, "TOKENS", "Tabla de tokens", 1)
 	Tokens.DefineColum("date_make", "", "TIMESTAMP", "NOW()")
 	Tokens.DefineColum("date_update", "", "TIMESTAMP", "NOW()")
 	Tokens.DefineColum("_id", "", "VARCHAR(80)", "-1")
@@ -69,22 +69,22 @@ func DefineTokens() error {
 		"device",
 		"index",
 	})
-	Tokens.Details("last_use", "", "", func(col *Column, data *Json) {
+	Tokens.Details("last_use", "", "", func(col *linq.Column, data *e.Json) {
 		id := data.Id()
-		collection, err := GetCollectionById("telemetry.token.last_use", id)
+		collection, err := core.GetCollectionById("telemetry.token.last_use", id)
 		if err != nil {
 			return
 		}
 
 		data.Set(col.Low(), collection.Str("last_use"))
 	})
-	Tokens.Details("token", "", "", func(col *Column, data *Json) {
+	Tokens.Details("token", "", "", func(col *linq.Column, data *e.Json) {
 		token := data.Str("token")
 		newToken := token[0:6] + "..." + token[len(token)-6:]
 		data.Set(col.Low(), newToken)
 	})
 
-	if err := InitModel(Tokens); err != nil {
+	if err := core.InitModel(Tokens); err != nil {
 		return console.PanicE(err)
 	}
 
@@ -113,43 +113,43 @@ func unLoadTokenById(app, device, id string) error {
 	return nil
 }
 
-func getTokenByApp(app, userId string) (Item, error) {
+func getTokenByApp(app, userId string) (e.Item, error) {
 	return Tokens.Select().
 		Where(Tokens.Col("app").Eq(app)).
 		And(Tokens.Col("user_id").Eq(userId)).
 		First()
 }
 
-func GetTokenById(id string) (Item, error) {
+func GetTokenById(id string) (e.Item, error) {
 	item, err := Tokens.Select().
 		Where(Tokens.Col("_id").Eq(id)).
 		First()
 	if err != nil {
-		return Item{}, err
+		return e.Item{}, err
 	}
 
 	return item, nil
 }
 
-func UpSetToken(projeectId, id, app, device, name, userId string) (Item, error) {
+func UpSetToken(projeectId, id, app, device, name, userId string) (e.Item, error) {
 	user, err := GetUserById(userId)
 	if err != nil {
-		return Item{}, err
+		return e.Item{}, err
 	}
 
 	if !user.Ok {
-		return Item{}, console.ErrorM(USER_NOT_FONUND)
+		return e.Item{}, console.ErrorM(msg.USER_NOT_FONUND)
 	}
 
-	id = GenId(id)
+	id = utility.GenId(id)
 	current, err := GetTokenById(id)
 	if err != nil {
-		return Item{}, err
+		return e.Item{}, err
 	}
 
 	if current.Ok {
 		id := current.Id()
-		data := Json{
+		data := e.Json{
 			"name": name,
 		}
 
@@ -157,24 +157,24 @@ func UpSetToken(projeectId, id, app, device, name, userId string) (Item, error) 
 			Where(Tokens.Col("_id").Eq(id)).
 			Command()
 		if err != nil {
-			return Item{}, err
+			return e.Item{}, err
 		}
 
-		return Item{
+		return e.Item{
 			Ok: item.Ok,
-			Result: OkOrNotJson(item.Ok, item.Result, Json{
-				"message": RECORD_NOT_UPDATE,
+			Result: e.OkOrNotJson(item.Ok, item.Result, e.Json{
+				"message": msg.RECORD_NOT_UPDATE,
 				"_id":     id,
 			}),
 		}, nil
 	} else {
-		id := NewId()
+		id := utility.NewId()
 		token, err := claim.GenToken(id, app, name, "token", app, device, 0)
 		if err != nil {
-			return Item{}, console.Error(err)
+			return e.Item{}, console.Error(err)
 		}
 
-		data := Json{}
+		data := e.Json{}
 		data.Set("project_id", projeectId)
 		data.Set("_id", id)
 		data.Set("user_id", userId)
@@ -186,7 +186,7 @@ func UpSetToken(projeectId, id, app, device, name, userId string) (Item, error) 
 		item, err := Tokens.Insert(data).
 			Command()
 		if err != nil {
-			return Item{}, console.Error(err)
+			return e.Item{}, console.Error(err)
 		}
 
 		err = loadToken(&Token{
@@ -200,13 +200,13 @@ func UpSetToken(projeectId, id, app, device, name, userId string) (Item, error) 
 			Index:       item.Index(),
 		})
 		if err != nil {
-			return Item{}, console.Error(err)
+			return e.Item{}, console.Error(err)
 		}
 
-		return Item{
+		return e.Item{
 			Ok: item.Ok,
-			Result: OkOrNotJson(item.Ok, item.Result, Json{
-				"message": RECORD_NOT_CREATE,
+			Result: e.OkOrNotJson(item.Ok, item.Result, e.Json{
+				"message": msg.RECORD_NOT_CREATE,
 				"_id":     id,
 			}),
 		}, nil
@@ -221,13 +221,13 @@ func LoadTokens() error {
 		ok = false
 
 		offset := (page - 1) * rows
-		sql := Format(`
+		sql := utility.Format(`
 		SELECT *
 		FROM module.TOKENS
 		ORDER BY INDEX
 		LIMIT %d OFFSET %d;`, rows, offset)
 
-		items, err := Query(sql)
+		items, err := jdb.Query(sql)
 		if err != nil {
 			return console.Error(err)
 		}
@@ -261,13 +261,13 @@ func UnLoadTokens() error {
 		ok = false
 
 		offset := (page - 1) * rows
-		sql := Format(`
+		sql := utility.Format(`
 		SELECT APP, DEVICE, _ID
 		FROM module.TOKENS
 		ORDER BY INDEX
 		LIMIT %d OFFSET %d;`, rows, offset)
 
-		items, err := Query(sql)
+		items, err := jdb.Query(sql)
 		if err != nil {
 			return console.Error(err)
 		}
@@ -290,14 +290,14 @@ func UnLoadTokens() error {
 	return nil
 }
 
-func GetTokensByUserId(userId, search string, page, rows int) (List, error) {
+func GetTokensByUserId(userId, search string, page, rows int) (e.List, error) {
 	sql := `
   SELECT COUNT(*) AS COUNT
   FROM module.TOKENS A
   WHERE A.USER_ID=$1
 	AND CONCAT('NAME:', A.NAME, ':APP:', A.APP, ':DEVICE:', A.DEVICE, ':') ILIKE CONCAT('%', $2, '%');`
 
-	all := QueryCount(sql, userId, search)
+	all := jdb.QueryCount(sql, userId, search)
 
 	offset := (page - 1) * rows
 	sql = `
@@ -308,16 +308,16 @@ func GetTokensByUserId(userId, search string, page, rows int) (List, error) {
 	ORDER BY A.APP, A.DEVICE, A.NAME
   LIMIT $3 OFFSET $4;`
 
-	items, err := Query(sql, userId, search, rows, offset)
+	items, err := jdb.Query(sql, userId, search, rows, offset)
 	if err != nil {
-		return List{}, err
+		return e.List{}, err
 	}
 
 	for _, item := range items.Result {
 		id := item.Id()
-		collection, err := GetCollectionById("telemetry.token.last_use", id)
+		collection, err := core.GetCollectionById("telemetry.token.last_use", id)
 		if err != nil {
-			return List{}, err
+			return e.List{}, err
 		}
 
 		token := item["token"].(string)
@@ -328,14 +328,14 @@ func GetTokensByUserId(userId, search string, page, rows int) (List, error) {
 	return items.ToList(all, page, rows), nil
 }
 
-func DeleteToken(id string) (Item, error) {
+func DeleteToken(id string) (e.Item, error) {
 	current, err := GetTokenById(id)
 	if err != nil {
-		return Item{}, err
+		return e.Item{}, err
 	}
 
 	if !current.Ok {
-		return Item{}, console.ErrorM(RECORD_NOT_FOUND)
+		return e.Item{}, console.ErrorM(msg.RECORD_NOT_FOUND)
 	}
 
 	sql := `
@@ -343,22 +343,22 @@ func DeleteToken(id string) (Item, error) {
   WHERE _ID=$1
   RETURNING *;`
 
-	item, err := QueryOne(sql, id)
+	item, err := jdb.QueryOne(sql, id)
 	if err != nil {
-		return Item{}, err
+		return e.Item{}, err
 	}
 
 	app := item.Str("app")
 	device := item.Str("device")
 	err = unLoadTokenById(app, device, id)
 	if err != nil {
-		return Item{}, err
+		return e.Item{}, err
 	}
 
-	return Item{
+	return e.Item{
 		Ok: item.Ok,
-		Result: Json{
-			"message": OkOrNot(item.Ok, RECORD_DELETE, RECORD_NOT_DELETE),
+		Result: e.Json{
+			"message": utility.OkOrNot(item.Ok, msg.RECORD_DELETE, msg.RECORD_NOT_DELETE),
 			"index":   item.Index(),
 		},
 	}, nil

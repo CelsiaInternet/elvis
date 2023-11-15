@@ -1,17 +1,17 @@
 package module
 
 import (
-	. "github.com/cgalvisleon/elvis/linq"
+	"github.com/cgalvisleon/elvis/linq"
 )
 
-var SchemaModule *Schema
+var SchemaModule *linq.Schema
 
 func DefineSchemaModule() error {
 	if SchemaModule != nil {
 		return nil
 	}
 
-	SchemaModule = NewSchema(0, "module")
+	SchemaModule = linq.NewSchema(0, "module")
 
 	return nil
 }
