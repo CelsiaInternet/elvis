@@ -9,9 +9,9 @@ import (
 	"github.com/cgalvisleon/elvis/claim"
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/event"
-	. "github.com/cgalvisleon/elvis/json"
+	e "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/response"
-	. "github.com/cgalvisleon/elvis/utility"
+	"github.com/cgalvisleon/elvis/utility"
 )
 
 func tokenFromAuthorization(authorization string) (string, error) {
@@ -63,9 +63,9 @@ func Authorization(next http.Handler) http.Handler {
 		ctx = context.WithValue(ctx, "username", c.Username)
 		ctx = context.WithValue(ctx, "token", tokenString)
 
-		now := Now()
+		now := utility.Now()
 		hostName, _ := os.Hostname()
-		data := Json{
+		data := e.Json{
 			"clientId":  c.ID,
 			"last_use":  now,
 			"host_name": hostName,

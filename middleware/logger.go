@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/cgalvisleon/elvis/event"
-	. "github.com/cgalvisleon/elvis/json"
-	. "github.com/cgalvisleon/elvis/utility"
+	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/utility"
 	"github.com/shirou/gopsutil/v3/mem"
 )
 
@@ -56,7 +56,7 @@ func RequestLogger(f LogFormatter) func(next http.Handler) http.Handler {
 			ww := NewWrapResponseWriter(w, r.ProtoMajor)
 
 			t1 := time.Now()
-			_idT := NewId()
+			_idT := utility.NewId()
 			endPoint := r.URL.Path
 			method := r.Method
 			hostName, _ := os.Hostname()
@@ -80,11 +80,11 @@ func RequestLogger(f LogFormatter) func(next http.Handler) http.Handler {
 				scheme = "https"
 			}
 			defer func() {
-				telemetry := Json{
+				telemetry := e.Json{
 					"_idT":      _idT,
 					"date_time": t1,
 					"host_name": hostName,
-					"request": Json{
+					"request": e.Json{
 						"method":   method,
 						"endpoint": endPoint,
 						"status":   http.StatusOK,
@@ -92,18 +92,18 @@ func RequestLogger(f LogFormatter) func(next http.Handler) http.Handler {
 						"scheme":   scheme,
 						"host":     r.Host,
 					},
-					"since": Json{
+					"since": e.Json{
 						"value": time.Since(t1),
 						"unity": "Milliseconds",
 					},
-					"memory": Json{
+					"memory": e.Json{
 						"unity":        "MB",
 						"total":        mTotal / 1024 / 1024,
 						"used":         mUsed / 1024 / 1024,
 						"free":         mFree / 1024 / 1024,
 						"percent_free": math.Floor(pFree*100) / 100,
 					},
-					"request_host": Json{
+					"request_host": e.Json{
 						"host":   requests_host.Tag,
 						"day":    requests_host.Day,
 						"hour":   requests_host.Hour,
@@ -111,7 +111,7 @@ func RequestLogger(f LogFormatter) func(next http.Handler) http.Handler {
 						"second": requests_host.Seccond,
 						"limit":  requests_host.Limit,
 					},
-					"requests_endpoint": Json{
+					"requests_endpoint": e.Json{
 						"endpoint": requests_endpoint.Tag,
 						"day":      requests_endpoint.Day,
 						"hour":     requests_endpoint.Hour,
