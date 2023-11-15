@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	j "github.com/cgalvisleon/elvis/json"
+	e "github.com/cgalvisleon/elvis/json"
 	"github.com/go-chi/chi"
 )
 
@@ -14,21 +14,21 @@ type Result struct {
 	Result interface{} `json:"result"`
 }
 
-func GetBody(r *http.Request) (j.Json, error) {
-	var body j.Json
+func GetBody(r *http.Request) (e.Json, error) {
+	var body e.Json
 	err := json.NewDecoder(r.Body).Decode(&body)
 	if err != nil {
-		return j.Json{}, err
+		return e.Json{}, err
 	}
 	defer r.Body.Close()
 
 	return body, nil
 }
 
-func WriteResponse(w http.ResponseWriter, statusCode int, j []byte) error {
+func WriteResponse(w http.ResponseWriter, statusCode int, e []byte) error {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(statusCode)
-	w.Write(j)
+	w.Write(e)
 
 	return nil
 }
@@ -45,46 +45,46 @@ func JSON(w http.ResponseWriter, r *http.Request, statusCode int, dt interface{}
 		Result: dt,
 	}
 
-	j, err := json.Marshal(result)
+	e, err := json.Marshal(result)
 	if err != nil {
 		return err
 	}
 
-	return WriteResponse(w, statusCode, j)
+	return WriteResponse(w, statusCode, e)
 }
 
-func ITEM(w http.ResponseWriter, r *http.Request, statusCode int, dt j.Item) error {
-	if &dt == (&j.Item{}) {
+func ITEM(w http.ResponseWriter, r *http.Request, statusCode int, dt e.Item) error {
+	if &dt == (&e.Item{}) {
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(statusCode)
 		return nil
 	}
 
-	j, err := json.Marshal(dt)
+	e, err := json.Marshal(dt)
 	if err != nil {
 		return err
 	}
 
-	return WriteResponse(w, statusCode, j)
+	return WriteResponse(w, statusCode, e)
 }
 
-func ITEMS(w http.ResponseWriter, r *http.Request, statusCode int, dt j.Items) error {
-	if &dt == (&j.Items{}) {
+func ITEMS(w http.ResponseWriter, r *http.Request, statusCode int, dt e.Items) error {
+	if &dt == (&e.Items{}) {
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(statusCode)
 		return nil
 	}
 
-	j, err := json.Marshal(dt)
+	e, err := json.Marshal(dt)
 	if err != nil {
 		return err
 	}
 
-	return WriteResponse(w, statusCode, j)
+	return WriteResponse(w, statusCode, e)
 }
 
 func HTTPError(w http.ResponseWriter, r *http.Request, statusCode int, message string) error {
-	msg := j.Json{
+	msg := e.Json{
 		"message": message,
 	}
 
@@ -102,12 +102,12 @@ func Stream(w http.ResponseWriter, r *http.Request, statusCode int, dt interface
 		return nil
 	}
 
-	j, err := json.Marshal(dt)
+	e, err := json.Marshal(dt)
 	if err != nil {
 		return err
 	}
 
-	WriteResponse(w, statusCode, j)
+	WriteResponse(w, statusCode, e)
 	if f, ok := w.(http.Flusher); ok {
 		f.Flush()
 	}

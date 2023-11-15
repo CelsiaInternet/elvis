@@ -2,7 +2,7 @@ package linq
 
 import (
 	"github.com/cgalvisleon/elvis/jdb"
-	j "github.com/cgalvisleon/elvis/json"
+	e "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/utility"
 )
 
@@ -59,13 +59,13 @@ func GetSchema(name string) *Schema {
 /**
 *
 **/
-func (c *Schema) Describe() j.Json {
-	var models []j.Json = []j.Json{}
+func (c *Schema) Describe() e.Json {
+	var models []e.Json = []e.Json{}
 	for _, model := range c.Models {
 		models = append(models, model.Describe())
 	}
 
-	return j.Json{
+	return e.Json{
 		"name":            c.Name,
 		"description":     c.Description,
 		"database":        c.Database.Dbname,

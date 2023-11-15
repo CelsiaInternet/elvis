@@ -5,7 +5,7 @@ import (
 
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/jdb"
-	j "github.com/cgalvisleon/elvis/json"
+	e "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/utility"
 )
 
@@ -105,9 +105,9 @@ type Linq struct {
 	fromAs  []*FRom
 	as      int
 	details []*Column
-	data    j.Json
+	data    e.Json
 	// dta        *Json
-	new        *j.Json
+	new        *e.Json
 	change     bool
 	references []*ReferenceValue
 	debug      bool
@@ -171,8 +171,8 @@ func NewLinq(tp int, act int, model *Model, as ...string) *Linq {
 		orderBy: []*OrderBy{},
 		groupBy: []*Column{},
 		details: []*Column{},
-		data:    j.Json{},
-		new:     &j.Json{},
+		data:    e.Json{},
+		new:     &e.Json{},
 		as:      1,
 	}
 }
@@ -195,7 +195,7 @@ func (c *Linq) GetAs() string {
 	return result
 }
 
-func (c *Linq) Details(data *j.Json) *j.Json {
+func (c *Linq) Details(data *e.Json) *e.Json {
 	for _, col := range c.details {
 		col.Details(col, data)
 	}
@@ -324,7 +324,7 @@ func (c *Linq) ToCols(sel ...any) []*Column {
 /**
 * Query
 **/
-func (c *Linq) Query() (j.Items, error) {
+func (c *Linq) Query() (e.Items, error) {
 	if c.debug {
 		console.Log(c.sql)
 	}
@@ -332,7 +332,7 @@ func (c *Linq) Query() (j.Items, error) {
 	if c.Tp == TpData {
 		result, err := jdb.DBQueryData(c.db, c.sql)
 		if err != nil {
-			return j.Items{}, err
+			return e.Items{}, err
 		}
 
 		return result, nil
@@ -340,13 +340,13 @@ func (c *Linq) Query() (j.Items, error) {
 
 	result, err := jdb.DBQuery(c.db, c.sql)
 	if err != nil {
-		return j.Items{}, err
+		return e.Items{}, err
 	}
 
 	return result, nil
 }
 
-func (c *Linq) QueryOne() (j.Item, error) {
+func (c *Linq) QueryOne() (e.Item, error) {
 	if c.debug {
 		console.Log(c.sql)
 	}
@@ -354,7 +354,7 @@ func (c *Linq) QueryOne() (j.Item, error) {
 	if c.Tp == TpData {
 		result, err := jdb.DBQueryDataOne(c.db, c.sql)
 		if err != nil {
-			return j.Item{}, err
+			return e.Item{}, err
 		}
 
 		return result, nil
@@ -362,7 +362,7 @@ func (c *Linq) QueryOne() (j.Item, error) {
 
 	result, err :=jdb.DBQueryOne(c.db, c.sql)
 	if err != nil {
-		return j.Item{}, err
+		return e.Item{}, err
 	}
 
 	return result, nil
