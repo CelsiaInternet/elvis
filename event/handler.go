@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/cgalvisleon/elvis/cache"
-	. "github.com/cgalvisleon/elvis/json"
+	e "github.com/cgalvisleon/elvis/json"
 	"github.com/google/uuid"
 	"github.com/nats-io/nats.go"
 )
@@ -36,7 +36,7 @@ func Publish(clientId, channel string, data map[string]interface{}) error {
 }
 
 func Event(event, _group string, data map[string]interface{}) {
-	go Publish("event", "event/publish", Json{
+	go Publish("event", "event/publish", e.Json{
 		"event":  event,
 		"_group": _group,
 		"data":   data,
@@ -44,7 +44,7 @@ func Event(event, _group string, data map[string]interface{}) {
 }
 
 func Work(work, work_id string, data map[string]interface{}) {
-	go Publish("event", work, Json{
+	go Publish("event", work, e.Json{
 		"work":    work,
 		"work_id": work_id,
 		"data":    data,
@@ -52,14 +52,14 @@ func Work(work, work_id string, data map[string]interface{}) {
 }
 
 func Working(worker, work_id string) {
-	go Publish("event", "event/working", Json{
+	go Publish("event", "event/working", e.Json{
 		"worker":  worker,
 		"work_id": work_id,
 	})
 }
 
 func Done(work_id string) {
-	go Publish("event", "event/done", Json{
+	go Publish("event", "event/done", e.Json{
 		"work_id": work_id,
 	})
 }

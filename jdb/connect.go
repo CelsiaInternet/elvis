@@ -5,45 +5,43 @@ import (
 	"fmt"
 
 	"github.com/cgalvisleon/elvis/console"
-	. "github.com/cgalvisleon/elvis/envar"
-	. "github.com/cgalvisleon/elvis/msg"
+	"github.com/cgalvisleon/elvis/envar"
+	"github.com/cgalvisleon/elvis/msg"
 	_ "github.com/joho/godotenv/autoload"
 )
 
 func connect() {
-	driver := EnvarStr("", "DB_DRIVE")
-	host := EnvarStr("", "DB_HOST")
-	port := EnvarInt(5432, "DB_PORT")
-	dbname := EnvarStr("", "DB_NAME")
-	user := EnvarStr("", "DB_USER")
-	password := EnvarStr("", "DB_PASSWORD")
+	driver := envar.EnvarStr("", "DB_DRIVE")
+	host := envar.EnvarStr("", "DB_HOST")
+	port := envar.EnvarInt(5432, "DB_PORT")
+	dbname := envar.EnvarStr("", "DB_NAME")
+	user := envar.EnvarStr("", "DB_USER")
+	password := envar.EnvarStr("", "DB_PASSWORD")
 
 	if driver == "" {
-		console.FatalF(ERR_ENV_REQUIRED, "DB_DRIVE")
+		console.FatalF(msg.ERR_ENV_REQUIRED, "DB_DRIVE")
 	}
 
 	if host == "" {
-		console.FatalF(ERR_ENV_REQUIRED, "DB_HOST")
+		console.FatalF(msg.ERR_ENV_REQUIRED, "DB_HOST")
 	}
 
 	if dbname == "" {
-		console.FatalF(ERR_ENV_REQUIRED, "DB_NAME")
+		console.FatalF(msg.ERR_ENV_REQUIRED, "DB_NAME")
 	}
 
 	if user == "" {
-		console.FatalF(ERR_ENV_REQUIRED, "DB_USER")
+		console.FatalF(msg.ERR_ENV_REQUIRED, "DB_USER")
 	}
 
 	if password == "" {
-		console.FatalF(ERR_ENV_REQUIRED, "DB_PASSWORD")
+		console.FatalF(msg.ERR_ENV_REQUIRED, "DB_PASSWORD")
 	}
 
 	_, err := Connected(driver, host, port, dbname, user, password)
 	if err != nil {
 		console.Fatal(err)
 	}
-
-	return
 }
 
 func Connected(driver, host string, port int, dbname, user, password string) (int, error) {
@@ -58,7 +56,7 @@ func Connected(driver, host string, port int, dbname, user, password string) (in
 	case Firebird:
 		url = fmt.Sprintf(`%s/%s@%s;`, user, password, host)
 	default:
-		panic(NOT_SELECT_DRIVE)
+		panic(msg.NOT_SELECT_DRIVE)
 	}
 
 	sqlDB, err := sql.Open(driver, url)

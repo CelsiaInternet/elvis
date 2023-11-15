@@ -4,8 +4,8 @@ import (
 	"time"
 
 	"github.com/cgalvisleon/elvis/console"
-	. "github.com/cgalvisleon/elvis/json"
-	. "github.com/cgalvisleon/elvis/utility"
+	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/utility"
 	"github.com/lib/pq"
 )
 
@@ -24,7 +24,7 @@ func ListenClose(listen *pq.Listener) error {
 	return nil
 }
 
-func Listen(nodo, url, channel string, listen func(res Json)) {
+func Listen(nodo, url, channel string, listen func(res e.Json)) {
 	reportProblem := func(ev pq.ListenerEventType, err error) {
 		if err != nil {
 			console.Error(err)
@@ -37,7 +37,7 @@ func Listen(nodo, url, channel string, listen func(res Json)) {
 	ListenEvent(nodo, url, channel, listener, listen)
 }
 
-func ListenEvent(nodo, url, channel string, listener *pq.Listener, listen func(res Json)) {
+func ListenEvent(nodo, url, channel string, listener *pq.Listener, listen func(res e.Json)) {
 	if url == "" {
 		return
 	}
@@ -76,21 +76,21 @@ func ListenEvent(nodo, url, channel string, listener *pq.Listener, listen func(r
 }
 
 func CloseListen(host, channel string) {
-	closeListen = Format(`%s/%s`, host, channel)
+	closeListen = utility.Format(`%s/%s`, host, channel)
 }
 
 func IsCloseListen(host, channel string) bool {
-	key := Format(`%s/%s`, host, channel)
+	key := utility.Format(`%s/%s`, host, channel)
 	result := closeListen == key
 	return !result
 }
 
-func hostNotification(l *pq.Listener, channel string, nodo string, listen func(res Json)) {
+func hostNotification(l *pq.Listener, channel string, nodo string, listen func(res e.Json)) {
 	select {
 	case n := <-l.Notify:
-		result, err := ToJson(n.Extra)
+		result, err := e.ToJson(n.Extra)
 		if err != nil {
-			console.LogC("DB channel", "Red", Format("hostNotification: Not conver to Json nodo:%s channel:%s result:%s", nodo, channel, n.Extra))
+			console.LogC("DB channel", "Red", utility.Format("hostNotification: Not conver to e.Json nodo:%s channel:%s result:%s", nodo, channel, n.Extra))
 		}
 
 		result["nodo"] = nodo

@@ -5,9 +5,9 @@ import (
 
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/event"
-	. "github.com/cgalvisleon/elvis/json"
-	. "github.com/cgalvisleon/elvis/msg"
-	. "github.com/cgalvisleon/elvis/utility"
+	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/msg"
+	"github.com/cgalvisleon/elvis/utility"
 )
 
 /**
@@ -16,8 +16,8 @@ import (
 func SQLQuote(sql string) string {
 	sql = strings.TrimSpace(sql)
 
-	result := Replace(sql, `'`, `"`)
-	result = Trim(result)
+	result := utility.Replace(sql, `'`, `"`)
+	result = utility.Trim(result)
 
 	return result
 }
@@ -26,8 +26,8 @@ func SQLDDL(sql string, args ...any) string {
 	sql = strings.TrimSpace(sql)
 
 	for i, arg := range args {
-		old := Format(`$%d`, i+1)
-		new := Format(`%v`, arg)
+		old := utility.Format(`$%d`, i+1)
+		new := utility.Format(`%v`, arg)
 		sql = strings.ReplaceAll(sql, old, new)
 	}
 
@@ -36,14 +36,14 @@ func SQLDDL(sql string, args ...any) string {
 
 func SQLParse(sql string, args ...any) string {
 	for i := range args {
-		old := Format(`$%d`, i+1)
-		new := Format(`{$%d}`, i+1)
+		old := utility.Format(`$%d`, i+1)
+		new := utility.Format(`{$%d}`, i+1)
 		sql = strings.ReplaceAll(sql, old, new)
 	}
 
 	for i, arg := range args {
-		old := Format(`{$%d}`, i+1)
-		new := Format(`%v`, Quoted(arg))
+		old := utility.Format(`{$%d}`, i+1)
+		new := utility.Format(`%v`, e.Quoted(arg))
 		sql = strings.ReplaceAll(sql, old, new)
 	}
 
@@ -53,54 +53,54 @@ func SQLParse(sql string, args ...any) string {
 /**
 * DBQDDL
 **/
-func DBQDDL(db int, sql string, args ...any) (Items, error) {
+func DBQDDL(db int, sql string, args ...any) (e.Items, error) {
 	sql = SQLParse(sql, args...)
 	rows, err := conn.Db[db].Db.Query(sql)
 	if err != nil {
-		return Items{}, console.ErrorF(ERR_SQL, err.Error(), sql)
+		return e.Items{}, console.ErrorF(msg.ERR_SQL, err.Error(), sql)
 	}
 	defer rows.Close()
 
 	items := rowsItems(rows)
 
-	event.Action("sql/ddl", Json{
+	event.Action("sql/ddl", e.Json{
 		"sql": sql,
 	})
 
 	return items, nil
 }
 
-func DBQuery(db int, sql string, args ...any) (Items, error) {
+func DBQuery(db int, sql string, args ...any) (e.Items, error) {
 	sql = SQLParse(sql, args...)
 	rows, err := conn.Db[db].Db.Query(sql)
 	if err != nil {
-		return Items{}, console.ErrorF(ERR_SQL, err.Error(), sql)
+		return e.Items{}, console.ErrorF(msg.ERR_SQL, err.Error(), sql)
 	}
 	defer rows.Close()
 
 	items := rowsItems(rows)
 
-	event.Action("sql/query", Json{
+	event.Action("sql/query", e.Json{
 		"sql": sql,
 	})
 
 	return items, nil
 }
 
-func DBQueryOne(db int, sql string, args ...any) (Item, error) {
+func DBQueryOne(db int, sql string, args ...any) (e.Item, error) {
 	items, err := DBQuery(db, sql, args...)
 	if err != nil {
-		return Item{}, err
+		return e.Item{}, err
 	}
 
 	if items.Count == 0 {
-		return Item{
+		return e.Item{
 			Ok:     false,
-			Result: Json{},
+			Result: e.Json{},
 		}, nil
 	}
 
-	return Item{
+	return e.Item{
 		Ok:     items.Ok,
 		Result: items.Result[0],
 	}, nil
@@ -115,11 +115,11 @@ func DBQueryCount(db int, sql string, args ...any) int {
 	return item.Int("count")
 }
 
-func DBQueryAtrib(db int, sql, atrib string, args ...any) (Items, error) {
+func DBQueryAtrib(db int, sql, atrib string, args ...any) (e.Items, error) {
 	sql = SQLParse(sql, args...)
 	rows, err := conn.Db[db].Db.Query(sql)
 	if err != nil {
-		return Items{}, console.ErrorF(ERR_SQL, err.Error(), sql)
+		return e.Items{}, console.ErrorF(msg.ERR_SQL, err.Error(), sql)
 	}
 	defer rows.Close()
 
@@ -128,45 +128,45 @@ func DBQueryAtrib(db int, sql, atrib string, args ...any) (Items, error) {
 	return items, nil
 }
 
-func DBQueryAtribOne(db int, sql, atrib string, args ...any) (Item, error) {
+func DBQueryAtribOne(db int, sql, atrib string, args ...any) (e.Item, error) {
 	items, err := DBQueryAtrib(db, sql, atrib, args...)
 	if err != nil {
-		return Item{}, err
+		return e.Item{}, err
 	}
 
 	if items.Count == 0 {
-		return Item{
+		return e.Item{
 			Ok:     false,
-			Result: Json{},
+			Result: e.Json{},
 		}, nil
 	}
 
-	return Item{
+	return e.Item{
 		Ok:     items.Ok,
 		Result: items.Result[0],
 	}, nil
 }
 
-func DBQueryData(db int, sql string, args ...any) (Items, error) {
+func DBQueryData(db int, sql string, args ...any) (e.Items, error) {
 	return DBQueryAtrib(db, sql, "_data", args...)
 }
 
-func DBQueryDataOne(db int, sql string, args ...any) (Item, error) {
+func DBQueryDataOne(db int, sql string, args ...any) (e.Item, error) {
 	return DBQueryAtribOne(db, sql, "_data", args...)
 }
 
 /**
 * Query
 **/
-func QDDL(sql string, args ...any) (Items, error) {
+func QDDL(sql string, args ...any) (e.Items, error) {
 	return DBQDDL(0, sql, args...)
 }
 
-func Query(sql string, args ...any) (Items, error) {
+func Query(sql string, args ...any) (e.Items, error) {
 	return DBQuery(0, sql, args...)
 }
 
-func QueryOne(sql string, args ...any) (Item, error) {
+func QueryOne(sql string, args ...any) (e.Item, error) {
 	return DBQueryOne(0, sql, args...)
 }
 
@@ -174,28 +174,28 @@ func QueryCount(sql string, args ...any) int {
 	return DBQueryCount(0, sql, args...)
 }
 
-func QueryAtrib(sql, atrib string, args ...any) (Items, error) {
+func QueryAtrib(sql, atrib string, args ...any) (e.Items, error) {
 	return DBQueryAtrib(0, sql, atrib, args...)
 }
 
-func QueryAtribOne(sql, atrib string, args ...any) (Item, error) {
+func QueryAtribOne(sql, atrib string, args ...any) (e.Item, error) {
 	return DBQueryAtribOne(0, sql, atrib, args...)
 }
 
-func QueryData(sql string, args ...any) (Items, error) {
+func QueryData(sql string, args ...any) (e.Items, error) {
 	return DBQueryData(0, sql, args...)
 }
 
-func QueryDataOne(sql string, args ...any) (Item, error) {
+func QueryDataOne(sql string, args ...any) (e.Item, error) {
 	return DBQueryDataOne(0, sql, args...)
 }
 
 /**
 *
 **/
-func HttpQuery(sql string, args []any) (Items, error) {
-	if !ValidStr(sql, 0, []string{""}) {
-		return Items{}, console.AlertF(MSG_ATRIB_REQUIRED, "name")
+func HttpQuery(sql string, args []any) (e.Items, error) {
+	if !utility.ValidStr(sql, 0, []string{""}) {
+		return e.Items{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "name")
 	}
 
 	return Query(sql, args...)

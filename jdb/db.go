@@ -3,8 +3,8 @@ package jdb
 import (
 	"database/sql"
 
-	. "github.com/cgalvisleon/elvis/json"
-	. "github.com/cgalvisleon/elvis/utility"
+	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/utility"
 )
 
 const Postgres = "postgres"
@@ -21,7 +21,6 @@ type Db struct {
 	Dbname      string
 	User        string
 	URL         string
-	token       string
 	Db          *sql.DB
 }
 
@@ -34,9 +33,9 @@ func (c *Db) Close() error {
 	return nil
 }
 
-func (c *Db) Describe() Json {
-	host := Format(`%s:%d`, c.Host, c.Port)
-	return Json{
+func (c *Db) Describe() e.Json {
+	host := utility.Format(`%s:%d`, c.Host, c.Port)
+	return e.Json{
 		"name":        c.Dbname,
 		"description": c.Description,
 		"driver":      c.Driver,

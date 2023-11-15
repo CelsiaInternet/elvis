@@ -1,14 +1,14 @@
 package event
 
 import (
-	. "github.com/cgalvisleon/elvis/envar"
+	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/logs"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/nats-io/nats.go"
 )
 
 func connect() {
-	host := EnvarStr("", "NATS_HOST")
+	host := envar.EnvarStr("", "NATS_HOST")
 	if host == "" {
 		return
 	}
