@@ -5,21 +5,21 @@ import (
 	"net/http"
 	"net/url"
 
-	. "github.com/cgalvisleon/elvis/envar"
-	. "github.com/cgalvisleon/elvis/json"
-	. "github.com/cgalvisleon/elvis/utility"
+	"github.com/cgalvisleon/elvis/envar"
+	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/utility"
 	_ "github.com/joho/godotenv/autoload"
 )
 
-func SendWhatsApp(country, phone, message string) (Json, error) {
-	twilioSID := EnvarStr("", "TWILIO_SID")
-	twilioAUT := EnvarStr("", "TWILIO_AUT")
-	twilioFrom := EnvarStr("", "TWILIO_FROM")
+func SendWhatsApp(country, phone, message string) (e.Json, error) {
+	twilioSID := envar.EnvarStr("", "TWILIO_SID")
+	twilioAUT := envar.EnvarStr("", "TWILIO_AUT")
+	twilioFrom := envar.EnvarStr("", "TWILIO_FROM")
 
-	apiURL := Format(`https://api.twilio.com/2010-04-01/Accounts/%s/Messages.json`, twilioSID)
-	from := Format(`whatsapp:%s`, twilioFrom)
+	apiURL := utility.Format(`https://api.twilio.com/2010-04-01/Accounts/%s/Messages.json`, twilioSID)
+	from := utility.Format(`whatsapp:%s`, twilioFrom)
 	body := message
-	to := Format(`whatsapp:%s%s`, country, phone)
+	to := utility.Format(`whatsapp:%s%s`, country, phone)
 
 	data := url.Values{}
 	data.Set("From", from)
@@ -30,7 +30,7 @@ func SendWhatsApp(country, phone, message string) (Json, error) {
 	params := bytes.NewBufferString(data.Encode())
 	req, err := http.NewRequest("POST", apiURL, params)
 	if err != nil {
-		return Json{}, err
+		return e.Json{}, err
 	}
 
 	req.SetBasicAuth(twilioSID, twilioAUT)
@@ -38,12 +38,12 @@ func SendWhatsApp(country, phone, message string) (Json, error) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return Json{}, err
+		return e.Json{}, err
 	}
 
 	defer resp.Body.Close()
 
-	return Json{
+	return e.Json{
 		"status": resp.Status,
 		"body":   resp.Body,
 	}, nil

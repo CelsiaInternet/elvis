@@ -22,7 +22,7 @@ const ActUpsert = 7
 *
 **/
 type SQL struct {
-	val  string
+	val string
 }
 
 /**
@@ -360,7 +360,7 @@ func (c *Linq) QueryOne() (e.Item, error) {
 		return result, nil
 	}
 
-	result, err :=jdb.DBQueryOne(c.db, c.sql)
+	result, err := jdb.DBQueryOne(c.db, c.sql)
 	if err != nil {
 		return e.Item{}, err
 	}

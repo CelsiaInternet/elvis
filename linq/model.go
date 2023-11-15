@@ -69,7 +69,7 @@ func (c *Model) Describe() e.Json {
 
 	var primaryKeys []string = append([]string{}, c.PrimaryKeys...)
 	var index []string = append([]string{}, c.Index...)
-	
+
 	return e.Json{
 		"name":               c.Name,
 		"description":        c.Description,
@@ -231,7 +231,7 @@ func (c *Model) DDL() string {
 		if i == 0 {
 			def = utility.Format("\n%s", def)
 		}
-		_fields =utility.Append(_fields, def, ",\n")
+		_fields = utility.Append(_fields, def, ",\n")
 	}
 
 	str := utility.Format(`CREATE TABLE IF NOT EXISTS %s(%s);`, c.Name, _fields)

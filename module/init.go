@@ -66,7 +66,7 @@ func InitModules() error {
 func defineModule() error {
 	// Initial types
 	InitType("-1", utility.OF_SYSTEM, utility.OF_SYSTEM, "STATE", "System", "Record system")
-	InitType("-1", utility.FOR_DELETE,utility.OF_SYSTEM, "STATE", "Delete", "To delete record")
+	InitType("-1", utility.FOR_DELETE, utility.OF_SYSTEM, "STATE", "Delete", "To delete record")
 	InitType("-1", utility.ACTIVE, utility.OF_SYSTEM, "STATE", "Activo", "")
 	InitType("-1", utility.ARCHIVED, utility.OF_SYSTEM, "STATE", "Archivado", "")
 	InitType("-1", utility.CANCELLED, utility.OF_SYSTEM, "STATE", "Cacnelado", "")

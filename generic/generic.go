@@ -90,8 +90,8 @@ func (an *Any) Bool() bool {
 	}
 }
 
-func (an *Any) Time() time.Time {	
-	_default := time.Now()	
+func (an *Any) Time() time.Time {
+	_default := time.Now()
 	switch v := an.value.(type) {
 	case int:
 		return _default

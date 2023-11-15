@@ -243,7 +243,7 @@ func (c *Linq) delete(current e.Json) (e.Item, error) {
 	}
 
 	return e.Item{
-		Ok: true,
+		Ok:     true,
 		Result: current,
 	}, nil
 }

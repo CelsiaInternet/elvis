@@ -22,7 +22,7 @@ type Node struct {
 	Date_update time.Time `json:"date_update"`
 	Id          string    `json:"_id"`
 	Mode        int       `json:"mode"`
-	Data        e.Json      `json:"_data"`
+	Data        e.Json    `json:"_data"`
 	Status      int       `json:"status"`
 	Index       int       `json:"index"`
 	Synced      *core.Collection
