@@ -8,8 +8,9 @@ import (
 	"github.com/cgalvisleon/elvis/utility"
 )
 
-func RpcCall(host string, port int, method string, args []byte) (e.Item, error) {
-	var reply *[]byte
+func RpcCall(host string, port int, method string, data e.Json) (e.Item, error) {
+	var args []byte = data.ToByte()
+ 	var reply *[]byte
 
 	client, err := rpc.DialHTTP("tcp", utility.Format(`%s:%d`, host, port))
 	if err != nil {
