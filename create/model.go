@@ -467,6 +467,7 @@ import (
 
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/core"
+	"github.com/cgalvisleon/elvis/generic"
 	e "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/linq"
 	"github.com/cgalvisleon/elvis/msg"
@@ -539,6 +540,17 @@ func Get$2ById(id string) (e.Item, error) {
 	return $2.Select().
 		Where($2.Column("_id").Eq(id)).
 		First()
+}
+
+func Value$2ById(_default any, id, atrib string) *generic.Any {
+	item, err := $2.Select(atrib).
+		Where($2.Column("_id").Eq(id)).
+		First()
+	if err != nil {
+		return &generic.Any{}
+	}
+
+	return item.Any(_default, atrib)
 }
 
 func UpSert$2(project_id, id string, data e.Json) (e.Item, error) {

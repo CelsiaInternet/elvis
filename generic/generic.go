@@ -18,6 +18,16 @@ func New(val any) *Any {
 	}
 }
 
+func (an *Any) IsNil() bool {
+	if an.value == nil {
+		return true
+	} else if an.value == "<nil>" {
+		return true
+	}
+
+	return false
+}
+
 func (an *Any) Set(val any) any {
 	an.value = val
 	return an.value
@@ -48,6 +58,9 @@ func (an *Any) Int() int {
 	case int64:
 		return int(v)
 	case string:
+		if v == "" {
+			return 0
+		}
 		i, err := strconv.Atoi(v)
 		if err != nil {
 			log.Println("Generic value int not conver:", reflect.TypeOf(v), "value:", v)

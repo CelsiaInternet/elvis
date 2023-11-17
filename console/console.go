@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"slices"
+	"strings"
 
 	"github.com/cgalvisleon/elvis/event"
 	"github.com/cgalvisleon/elvis/logs"
@@ -25,12 +27,6 @@ func NewErrorF(format string, args ...any) error {
 	err := NewError(message)
 
 	return err
-}
-
-func FuncName() string {
-	pc, _, _, _ := runtime.Caller(2)
-	function := runtime.FuncForPC(pc)
-	return function.Name()
 }
 
 func LogC(kind string, color string, args ...any) string {
@@ -92,21 +88,47 @@ func AlertF(format string, args ...any) error {
 }
 
 func Error(err error) error {
-	LogC("ERROR", "Red", fmt.Sprintf(`%s - %s`, FuncName(), err.Error()))
+	var n int = 1
+	var trces []string = []string{err.Error()}
+
+	logs.Logln("ERROR", "Red", err.Error())
+
+	for {
+		pc, file, line, more := runtime.Caller(n)
+		if !more {
+			break
+		}
+		n++
+		function := runtime.FuncForPC(pc)
+		name := function.Name()
+		list := strings.Split(name, ".")
+		if len(list) > 0 {
+			name = list[len(list)-1]
+		}
+		if !slices.Contains([]string{"ErrorM", "ErrorF"}, name) {
+			trace := fmt.Sprintf("%s:%d func:%s", file, line, name)
+			trces = append(trces, trace)
+			logs.Logln("TRACE", "Red", trace)
+		}
+	}
+
+	event.Action("logs", map[string]interface{}{
+		"kind": "ERROR",
+		"args": trces,
+	})
+
 	return err
 }
 
 func ErrorM(message string) error {
 	err := NewError(message)
-	LogC("ERROR", "Red", fmt.Sprintf(`%s - %s`, FuncName(), err.Error()))
-	return err
+	return Error(err)
 }
 
 func ErrorF(format string, args ...any) error {
 	message := fmt.Sprintf(format, args...)
 	err := NewError(message)
-	LogC("ERROR", "Red", fmt.Sprintf(`%s - %s`, FuncName(), err.Error()))
-	return err
+	return Error(err)
 }
 
 func Fatal(v ...any) {

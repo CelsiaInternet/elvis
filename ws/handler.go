@@ -14,12 +14,12 @@ func Connect(w http.ResponseWriter, r *http.Request) (*Client, error) {
 	}
 
 	ctx := r.Context()
-	clientId := generic.New(ctx.Value("clientId")).Str()
-	if clientId == "<nil>" {
+	clientId := generic.New(ctx.Value("clientId"))
+	if clientId.IsNil() {
 		return nil, errors.New(ERR_NOT_DEFINE_CLIENTID)
 	}
 
-	idxC := conn.hub.indexClient(clientId)
+	idxC := conn.hub.indexClient(clientId.Str())
 	if idxC != -1 {
 		return conn.hub.clients[idxC], nil
 	}
@@ -29,9 +29,12 @@ func Connect(w http.ResponseWriter, r *http.Request) (*Client, error) {
 		return nil, err
 	}
 
-	userName := generic.New(ctx.Value("username")).Str()
+	userName := generic.New(ctx.Value("username"))
+	if userName.IsNil() {
+		return nil, errors.New(ERR_NOT_DEFINE_USERNAME)
+	}
 
-	return conn.hub.connect(socket, clientId, userName)
+	return conn.hub.connect(socket, clientId.Str(), userName.Str())
 }
 
 func Broadcast(message interface{}, ignoreId string) {

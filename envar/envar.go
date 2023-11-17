@@ -3,9 +3,9 @@ package envar
 import (
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
 
+	"github.com/cgalvisleon/elvis/generic"
 	"github.com/cgalvisleon/elvis/logs"
 )
 
@@ -20,29 +20,8 @@ func appendStr(s1, s2 string) string {
 	return fmt.Sprintf(`%s_%s`, strings.ToUpper(s1), strings.ToUpper(s2))
 }
 
-func MetavarInt(meta, name string, _default int, usage, _var string) int {
-	result := _default
-	ok := false
-	for _, arg := range os.Args[1:] {
-		if ok {
-			val, err := strconv.Atoi(arg)
-			if err != nil {
-				logs.Errorf(`-%s in %s (default %d)`, name, usage, _default)
-			}
-			_var = appendStr(meta, _var)
-			os.Setenv(_var, arg)
-			result = val
-			break
-		} else if arg == fmt.Sprintf(`-%s`, name) {
-			ok = true
-		}
-	}
-
-	return result
-}
-
-func MetavarStr(meta, name string, _default string, usage, _var string) string {
-	result := _default
+func MetaSet(meta, name string, _default any, usage, _var string) *generic.Any {
+	var result *generic.Any = generic.New(_default)
 	ok := false
 	for _, arg := range os.Args[1:] {
 		if ok {
@@ -51,7 +30,7 @@ func MetavarStr(meta, name string, _default string, usage, _var string) string {
 			}
 			_var = appendStr(meta, _var)
 			os.Setenv(_var, arg)
-			result = arg
+			result.Set(arg)
 			break
 		} else if arg == fmt.Sprintf(`-%s`, name) {
 			ok = true
@@ -61,15 +40,22 @@ func MetavarStr(meta, name string, _default string, usage, _var string) string {
 	return result
 }
 
-func SetvarInt(name string, _default int, usage, _var string) int {
-	return MetavarInt("", name, _default, usage, _var)
+func SetvarAny(name string, _default any, usage, _var string) *generic.Any {
+	result := MetaSet("", name, _default, usage, _var)
+	return result
 }
 
 func SetvarStr(name string, _default string, usage, _var string) string {
-	return MetavarStr("", name, _default, usage, _var)
+	result := MetaSet("", name, _default, usage, _var)
+	return result.Str()
 }
 
-func EnvarStr(_default string, args ...string) string {
+func SetvarInt(name string, _default int, usage, _var string) int {
+	result := MetaSet("", name, _default, usage, _var)
+	return result.Int()
+}
+
+func EnvarAny(_default any, args ...string) *generic.Any {
 	var _var string
 	if len(args) > 1 {
 		_var = appendStr(args[0], args[1])
@@ -77,20 +63,19 @@ func EnvarStr(_default string, args ...string) string {
 		_var = args[0]
 	}
 
-	result := os.Getenv(_var)
-	if result == "" {
-		result = _default
+	val := os.Getenv(_var)
+	var result *generic.Any = generic.New(val)
+	if result.IsNil() {
+		result.Set(_default)
 	}
 
 	return result
 }
 
-func EnvarInt(_default int, args ...string) int {
-	_var := EnvarStr(fmt.Sprintf(`%d`, _default), args...)
-	result, err := strconv.Atoi(_var)
-	if err != nil {
-		return 0
-	}
+func EnvarStr(_default string, args ...string) string {
+	return EnvarAny(_default, args...).Str()
+}
 
-	return result
+func EnvarInt(_default int, args ...string) int {
+	return EnvarAny(_default, args...).Int()
 }
