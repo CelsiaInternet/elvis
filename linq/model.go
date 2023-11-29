@@ -212,7 +212,11 @@ func (c *Model) DDL() string {
 		if column.Tp == TpColumn {
 			fields = append(fields, column.DDL())
 			if column.Indexed {
-				index = append(index, column.DDLIndex())
+				if column.Unique {
+					index = append(index, column.DDLUniqueIndex())
+				} else {
+					index = append(index, column.DDLIndex())
+				}
 			}
 		}
 	}
@@ -412,6 +416,18 @@ func (c *Model) DefineIndex(index []string) *Model {
 	return c
 }
 
+func (c *Model) DefineUniqueIndex(index []string) *Model {
+	c.Index = index
+	for _, key := range c.Index {
+		col := c.Col(key)
+		if col != nil {
+			col.Indexed = true
+			col.Unique = true
+		}
+	}
+	return c
+}
+
 func (c *Model) DefineHidden(hidden []string) *Model {
 	for _, key := range hidden {
 		col := c.Col(key)
@@ -427,7 +443,6 @@ func (c *Model) DefinePrimaryKey(keys []string) *Model {
 	for _, key := range c.PrimaryKeys {
 		col := c.Col(key)
 		if col != nil {
-			col.Indexed = true
 			col.Unique = true
 			col.Required = true
 			col.PrimaryKey = true
@@ -440,7 +455,6 @@ func (c *Model) DefinePrimaryKey(keys []string) *Model {
 func (c *Model) DefineForeignKey(thisKey string, otherKey *Column) *Model {
 	col := c.Col(thisKey)
 	if col != nil {
-		col.Indexed = true
 		col.ForeignKey = true
 	}
 	c.ForeignKey = append(c.ForeignKey, NewForeignKey(thisKey, otherKey))

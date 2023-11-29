@@ -217,6 +217,10 @@ func (c *Column) DDLIndex() string {
 	return jdb.SQLDDL(`CREATE INDEX IF NOT EXISTS $2_$3_IDX ON $1($3);`, utility.Lowcase(c.Model.Name), utility.Uppcase(c.Model.Table), utility.Uppcase(c.name))
 }
 
+func (c *Column) DDLUniqueIndex() string {
+	return jdb.SQLDDL(`CREATE UNIQUE INDEX IF NOT EXISTS $2_$3_IDX ON $1($3);`, utility.Lowcase(c.Model.Name), utility.Uppcase(c.Model.Table), utility.Uppcase(c.name))
+}
+
 /**
 *
 **/

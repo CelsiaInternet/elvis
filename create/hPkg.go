@@ -39,9 +39,11 @@ func MakePkg(name, schema, schemaVar string) error {
 		return err
 	}
 
-	_, err = utility.MakeFile(path, "schema.go", modelSchema, name, schemaVar, schema)
-	if err != nil {
-		return err
+	if len(schema) > 0 {
+		_, err = utility.MakeFile(path, "schema.go", modelSchema, name, schemaVar, schema)
+		if err != nil {
+			return err
+		}
 	}
 
 	return MakeModel(name, name, schemaVar)

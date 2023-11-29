@@ -34,7 +34,9 @@ func (c *Linq) SqlColumDef(cols ...*Column) string {
 	var result string
 
 	if c.Tp == TpData {
+		atribs := make(map[string]string)
 		data := ""
+		objects := ""
 		json := ""
 		n := 0
 
@@ -44,20 +46,22 @@ func (c *Linq) SqlColumDef(cols ...*Column) string {
 
 			if col.name == col.Model.SourceField {
 				data = col.As(c)
-			} else {
-				json = utility.Append(json, def, ",\n")
+			} else if _, exist := atribs[col.name]; !exist {
+				atribs[col.name] = col.name
+				objects = utility.Append(objects, def, ",\n")
 			}
 
 			if n == 20 {
-				json = utility.Format(`jsonb_build_object(%s)`, json)
-				data = utility.Append(data, json, "||")
-				json = ""
+				def := utility.Format(`jsonb_build_object(%s)`, objects)
+				json = utility.Append(json, def, "||")
+				objects = ""
 				n = 0
 			}
 		}
 
 		if n > 0 {
-			json = utility.Format(`jsonb_build_object(%s)`, json)
+			def := utility.Format(`jsonb_build_object(%s)`, objects)
+			json = utility.Append(json, def, "||")
 			data = utility.Append(data, json, "||")
 		}
 
