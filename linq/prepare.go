@@ -37,6 +37,7 @@ func (c *Model) Consolidate(current e.Json, linq *Linq) *Linq {
 		} else if idxCol == -1 {
 			continue
 		} else {
+			delete(source, k)
 			col = c.Definition[idxCol]
 		}
 
