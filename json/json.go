@@ -30,7 +30,7 @@ func (jb *Json) Scan(src interface{}) error {
 	case string:
 		ba = []byte(v)
 	default:
-		return logs.Errorf(`Failed to unmarshal JSON value:%s`, src)
+		return logs.Errorf(`json/Scan - Failed to unmarshal JSON value:%s`, src)
 	}
 
 	t := map[string]interface{}{}
@@ -50,16 +50,16 @@ func (jb *Json) ToScan(src interface{}) error {
 	for k, val := range *jb {
 		field := v.FieldByName(k)
 		if !field.IsValid() {
-			logs.Errorf("No such field:%s in struct", k)
+			logs.Errorf("json/ToScan - No such field:%s in struct", k)
 			continue
 		}
 		if !field.CanSet() {
-			logs.Errorf("Cannot set field:%s in struct", k)
+			logs.Errorf("json/ToScan - Cannot set field:%s in struct", k)
 			continue
 		}
 		valType := reflect.ValueOf(val)
 		if field.Type() != valType.Type() {
-			return logs.Errorf("Provided value type didn't match obj field:%s type", k)
+			return logs.Errorf("json/ToScan - Provided value type didn't match obj field:%s type", k)
 		}
 		field.Set(valType)
 	}
@@ -273,7 +273,7 @@ func (jb Json) Json(atrib string) Json {
 	case map[string]interface{}:
 		return Json(v)
 	default:
-		logs.Errorf("Json. Type (%v) value:%v", reflect.TypeOf(v), v)
+		logs.Errorf("json/Json - Atrib:%s Type:%v Value:%v", atrib, reflect.TypeOf(v), v)
 		return Json{}
 	}
 }
@@ -290,13 +290,18 @@ func (jb Json) Array(atrib string) []Json {
 	case []interface{}:
 		result, err := ToJsonArray(v)
 		if err != nil {
-			logs.Errorf("Array. Type (%v) value:%v", reflect.TypeOf(v), v)
+			logs.Errorf("json/Array - Atrib:%s Type:%v Value:%v", atrib, reflect.TypeOf(v), v)
 			return []Json{}
 		}
 
 		return result
+	case string:
+		if v != "[]" {
+			logs.Errorf("json/Array - Atrib:%s Type:%v Value:%v", atrib, reflect.TypeOf(v), v)
+		}
+		return []Json{}
 	default:
-		logs.Errorf("Array. Type (%v) value:%v", reflect.TypeOf(v), v)
+		logs.Errorf("json/Array - Atrib:%s Type:%v Value:%v", atrib, reflect.TypeOf(v), v)
 		return []Json{}
 	}
 }
@@ -310,7 +315,7 @@ func (jb Json) ArrayStr(atrib string) []string {
 			result = append(result, val.(string))
 		}
 	default:
-		logs.Errorf("ArrayStr Type (%v) value:%v", reflect.TypeOf(v), v)
+		logs.Errorf("json/ArrayStr - Atrib:%s Type:%v Value:%v", atrib, reflect.TypeOf(v), v)
 	}
 
 	return result
@@ -325,7 +330,7 @@ func (jb Json) ArrayAny(atrib string) []any {
 			result = append(result, val)
 		}
 	default:
-		logs.Errorf("ArrayAny Type (%v) value:%v", reflect.TypeOf(v), v)
+		logs.Errorf("json/ArrayAny - Type (%v) value:%v", reflect.TypeOf(v), v)
 	}
 
 	return result

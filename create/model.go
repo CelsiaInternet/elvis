@@ -304,6 +304,8 @@ import (
 	"github.com/cgalvisleon/elvis/json"
 )
 
+var initRpc bool
+
 type Service json.Item
 
 func InitRpc() error {
@@ -314,10 +316,16 @@ func InitRpc() error {
 		return console.Error(err)
 	}
 
+	initRpc = true
+
 	return nil
 }
 
 func (c *Service) Version(require []byte, response *[]byte) error {
+	if !initRpc {
+		return nil
+	}
+	
 	rq := json.ByteToJson(require)
 	help := rq.Str("help")
 
