@@ -36,8 +36,7 @@ func (c *Model) Consolidate(current e.Json, linq *Linq) *Linq {
 			continue
 		} else if idxCol == -1 {
 			continue
-		} else {
-			delete(source, k)
+		} else {			
 			col = c.Definition[idxCol]
 		}
 
@@ -57,6 +56,7 @@ func (c *Model) Consolidate(current e.Json, linq *Linq) *Linq {
 				source = atribs
 			}
 		} else if utility.ContainsInt([]int{TpColumn}, col.Tp) {
+			delete(source, k)
 			setValue(k, v)
 			col := c.Column(k)
 			if col.PrimaryKey || col.ForeignKey {

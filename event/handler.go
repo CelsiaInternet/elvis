@@ -64,6 +64,12 @@ func Done(work_id string) {
 	})
 }
 
+func Rejected(work_id string) {
+	go Publish("event", "event/rejected", e.Json{
+		"work_id": work_id,
+	})
+}
+
 func Action(action string, data map[string]interface{}) {
 	go Publish("action", action, data)
 }
@@ -84,7 +90,7 @@ func Subscribe(channel string, f func(CreatedEvenMessage)) (err error) {
 	return
 }
 
-func Stack(channel string, f func(CreatedEvenMessage)) (err error) {
+func Stack(channel string, f func(CreatedEvenMessage)) (err error) {	
 	if conn == nil {
 		return
 	}
