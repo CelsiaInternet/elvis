@@ -5,7 +5,7 @@
 ```
 gofmt -w . &&
 git update &&
-git tag v0.0.65 &&
+git tag v0.0.66 &&
 git tags
 git push origin --tags
 

@@ -90,7 +90,7 @@ func Subscribe(channel string, f func(CreatedEvenMessage)) (err error) {
 	return
 }
 
-func Stack(channel string, f func(CreatedEvenMessage)) (err error) {	
+func Stack(channel string, f func(CreatedEvenMessage)) (err error) {
 	if conn == nil {
 		return
 	}
