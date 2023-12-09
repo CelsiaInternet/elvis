@@ -1,5 +1,12 @@
 package msg
 
+import (
+	"encoding/json"
+
+	"github.com/nicksnyder/go-i18n/v2/i18n"
+	"golang.org/x/text/language"
+)
+
 const (
 	MSG_ATRIB_REQUIRED      = "Atributo requerido (%s)"
 	MSG_VALUE_REQUIRED      = "Atributo requerido (%s) value:%s"
@@ -59,3 +66,22 @@ const (
 	MARTER_NOT_FOUNT        = "Master DB not found:%s"
 	TABLE_NOT_FOUND         = "Table not found:%s.%s"
 )
+
+var bundle *i18n.Bundle
+
+func init() {
+	bundle = i18n.NewBundle(language.English)
+	bundle.RegisterUnmarshalFunc("json", json.Unmarshal)
+	bundle.MustLoadMessageFile("en.json")
+	bundle.MustLoadMessageFile("es.json")
+}
+
+func T(msg string, lang ...string) string {
+	if len(lang) == 0 {
+		lang = []string{"es"}
+	}
+
+	localizer := i18n.NewLocalizer(bundle, lang...)
+
+	return localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: msg})
+}

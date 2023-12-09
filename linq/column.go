@@ -1,6 +1,8 @@
 package linq
 
 import (
+	"errors"
+
 	"github.com/cgalvisleon/elvis/generic"
 	"github.com/cgalvisleon/elvis/jdb"
 	e "github.com/cgalvisleon/elvis/json"
@@ -77,6 +79,7 @@ type Column struct {
 	Indexed     bool
 	Unique      bool
 	Required    bool
+	RequiredMsg string
 	PrimaryKey  bool
 	ForeignKey  bool
 	Hidden      bool
@@ -124,6 +127,23 @@ func (c *Column) Describe() e.Json {
 		"required":    c.Required,
 		"hidden":      c.Hidden,
 	}
+}
+
+func (c *Column) Valid(val any) error {
+	if c.Required {
+		switch utility.Uppcase(c.Type) {
+		case "BOOLEAN":
+			if !utility.ValidIn(val.(string), 0, []string{"TRUE", "FALSE", "true", "false", "1", "0"}) {
+				return errors.New(c.RequiredMsg)
+			}
+		default:
+			if !utility.ValidStr(val.(string), 0, []string{""}) {
+				return errors.New(c.RequiredMsg)
+			}
+		}
+	}
+
+	return nil
 }
 
 func NewColumn(model *Model, name, description, _type string, _default any) *Column {
@@ -203,7 +223,9 @@ func (c *Column) DDL() string {
 		result = utility.Append(utility.Format(`DEFAULT %v`, e.Quoted(c.Default)), result, " ")
 	}
 
-	if len(c.Type) > 0 {
+	if c.Type == "SERIAL" {
+		result = utility.Uppcase(c.Type)
+	} else if len(c.Type) > 0 {
 		result = utility.Append(utility.Uppcase(c.Type), result, " ")
 	}
 	if len(c.name) > 0 {

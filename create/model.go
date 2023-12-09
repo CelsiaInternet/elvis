@@ -325,7 +325,7 @@ func (c *Service) Version(require []byte, response *[]byte) error {
 	if !initRpc {
 		return nil
 	}
-	
+
 	rq := json.ByteToJson(require)
 	help := rq.Str("help")
 
@@ -513,6 +513,9 @@ func Define$2() error {
 		"project_id",
 		"name",
 		"index",
+	})
+	$2.DefineRequired([]string{
+		"name:Nombre requerido!",
 	})
 	$2.IntegrityAtrib(true)
 	$2.Trigger(linq.BeforeInsert, func(model *linq.Model, old, new *e.Json, data e.Json) error {

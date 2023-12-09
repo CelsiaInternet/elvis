@@ -5,6 +5,7 @@ import (
 
 	"github.com/cgalvisleon/elvis/jdb"
 	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/msg"
 	"github.com/cgalvisleon/elvis/utility"
 )
 
@@ -428,8 +429,8 @@ func (c *Model) DefineUniqueIndex(index []string) *Model {
 	return c
 }
 
-func (c *Model) DefineHidden(hidden []string) *Model {
-	for _, key := range hidden {
+func (c *Model) DefineHidden(hiddens []string) *Model {
+	for _, key := range hiddens {
 		col := c.Col(key)
 		if col != nil {
 			col.Hidden = true
@@ -482,6 +483,27 @@ func (c *Model) DefineField(name, description string, _default any, definition s
 	result.Tp = TpField
 	result.Definition = definition
 
+	return c
+}
+
+func (c *Model) DefineRequired(names []string) *Model {
+	for _, name := range names {
+		list := strings.Split(name, ":")
+		key := list[0]
+		col := c.Col(key)
+		if col != nil {
+			col.Required = true
+		}
+
+		if len(list) > 1 {
+			msg := list[1]
+			if msg == "" {
+				col.RequiredMsg = msg
+			}
+		} else {
+			col.RequiredMsg = utility.Format(msg.MSG_ATRIB_REQUIRED, col.name)
+		}
+	}
 	return c
 }
 

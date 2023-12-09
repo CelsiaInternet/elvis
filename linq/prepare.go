@@ -8,7 +8,7 @@ import (
 /**
 *
 **/
-func (c *Model) Consolidate(current e.Json, linq *Linq) *Linq {
+func (c *Model) Consolidate(current e.Json, linq *Linq) error {
 	var col *Column
 	var source e.Json = e.Json{}
 	var new e.Json = e.Json{}
@@ -25,6 +25,9 @@ func (c *Model) Consolidate(current e.Json, linq *Linq) *Linq {
 			idx := c.TitleIdx(k)
 			if idx != -1 && utility.ContainsInt([]int{TpReference}, c.Definition[idx].Tp) {
 				col = c.Definition[idx]
+				if err := col.Valid(v); err != nil {
+					return err
+				}
 				reference := linq.data.Json(k)
 				setValue(col.name, reference.Key(col.Reference.Key))
 				continue
@@ -38,6 +41,9 @@ func (c *Model) Consolidate(current e.Json, linq *Linq) *Linq {
 			continue
 		} else {
 			col = c.Definition[idxCol]
+			if err := col.Valid(v); err != nil {
+				return err
+			}
 		}
 
 		if utility.ContainsInt([]int{TpField, TpFunction, TpDetail}, col.Tp) {
@@ -73,12 +79,13 @@ func (c *Model) Consolidate(current e.Json, linq *Linq) *Linq {
 
 	linq.new = &new
 
-	return linq
+	return nil
 }
 
 func (c *Model) Changue(current e.Json, linq *Linq) *Linq {
 	var change bool
-	new := c.Consolidate(current, linq).new
+	c.Consolidate(current, linq)
+	new := linq.new
 
 	for k, v := range *new {
 		k = utility.Lowcase(k)
@@ -105,11 +112,15 @@ func (c *Model) Changue(current e.Json, linq *Linq) *Linq {
 }
 
 /**
-*
+*	Prepare command data
 **/
-func (c *Linq) PrepareInsert() {
+func (c *Linq) PrepareInsert() error {
 	model := c.from[0].model
-	model.Consolidate(model.Model(), c)
+	err := model.Consolidate(model.Model(), c)
+	if err != nil {
+		return err
+	}
+
 	now := utility.Now()
 
 	if model.UseDateMake {
@@ -119,6 +130,8 @@ func (c *Linq) PrepareInsert() {
 	if model.UseDateUpdate {
 		c.new.Set(model.DateUpdateField, now)
 	}
+
+	return nil
 }
 
 func (c *Linq) PrepareUpdate(current e.Json) bool {

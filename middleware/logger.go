@@ -56,7 +56,7 @@ func RequestLogger(f LogFormatter) func(next http.Handler) http.Handler {
 			ww := NewWrapResponseWriter(w, r.ProtoMajor)
 
 			t1 := time.Now()
-			_idT := utility.NewId()
+			reqID := utility.NewId()
 			endPoint := r.URL.Path
 			method := r.Method
 			hostName, _ := os.Hostname()
@@ -81,7 +81,7 @@ func RequestLogger(f LogFormatter) func(next http.Handler) http.Handler {
 			}
 			defer func() {
 				telemetry := e.Json{
-					"_idT":      _idT,
+					"reqID":     reqID,
 					"date_time": t1,
 					"host_name": hostName,
 					"request": e.Json{
@@ -130,7 +130,7 @@ func RequestLogger(f LogFormatter) func(next http.Handler) http.Handler {
 				}
 			}()
 
-			w.Header().Set("_idT", _idT)
+			w.Header().Set("Reqid", reqID)
 			next.ServeHTTP(ww, WithLogEntry(r, entry))
 		}
 
