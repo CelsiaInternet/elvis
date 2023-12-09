@@ -3,6 +3,8 @@ package router
 import (
 	"net/http"
 
+	"github.com/cgalvisleon/elvis/event"
+	e "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/middleware"
 	"github.com/go-chi/chi"
 )
@@ -18,48 +20,62 @@ const (
 	HandlerFunc = "HandlerFunc"
 )
 
-func ProtectRoute(r *chi.Mux, method, pattern string, h http.HandlerFunc) *chi.Mux {
+func ProtectRoute(r *chi.Mux, method, path string, h http.HandlerFunc, packageName string) *chi.Mux {
 	switch method {
 	case "GET":
-		r.With(middleware.Authorization).Get(pattern, h)
+		r.With(middleware.Authorization).Get(path, h)
 	case "POST":
-		r.With(middleware.Authorization).Post(pattern, h)
+		r.With(middleware.Authorization).Post(path, h)
 	case "PUT":
-		r.With(middleware.Authorization).Put(pattern, h)
+		r.With(middleware.Authorization).Put(path, h)
 	case "PATCH":
-		r.With(middleware.Authorization).Patch(pattern, h)
+		r.With(middleware.Authorization).Patch(path, h)
 	case "DELETE":
-		r.With(middleware.Authorization).Delete(pattern, h)
+		r.With(middleware.Authorization).Delete(path, h)
 	case "HEAD":
-		r.With(middleware.Authorization).Head(pattern, h)
+		r.With(middleware.Authorization).Head(path, h)
 	case "OPTIONS":
-		r.With(middleware.Authorization).Options(pattern, h)
+		r.With(middleware.Authorization).Options(path, h)
 	case "HandlerFunc":
-		r.With(middleware.Authorization).HandleFunc(pattern, h)
+		r.With(middleware.Authorization).HandleFunc(path, h)
 	}
+
+	event.Publish("router", "apimanager/upsert", e.Json{
+		"kind":    "protect",
+		"method":  method,
+		"path":    path,
+		"package": packageName,
+	})
 
 	return r
 }
 
-func PublicRoute(r *chi.Mux, method, pattern string, h http.HandlerFunc) *chi.Mux {
+func PublicRoute(r *chi.Mux, method, path string, h http.HandlerFunc, packageName string) *chi.Mux {
 	switch method {
 	case "GET":
-		r.Get(pattern, h)
+		r.Get(path, h)
 	case "POST":
-		r.Post(pattern, h)
+		r.Post(path, h)
 	case "PUT":
-		r.Put(pattern, h)
+		r.Put(path, h)
 	case "PATCH":
-		r.Patch(pattern, h)
+		r.Patch(path, h)
 	case "DELETE":
-		r.Delete(pattern, h)
+		r.Delete(path, h)
 	case "HEAD":
-		r.Head(pattern, h)
+		r.Head(path, h)
 	case "OPTIONS":
-		r.Options(pattern, h)
+		r.Options(path, h)
 	case "HandlerFunc":
-		r.HandleFunc(pattern, h)
+		r.HandleFunc(path, h)
 	}
+
+	event.Publish("router", "apimanager/upsert", e.Json{
+		"kind":         "public",
+		"method":       method,
+		"path":         path,
+		"package_name": packageName,
+	})
 
 	return r
 }

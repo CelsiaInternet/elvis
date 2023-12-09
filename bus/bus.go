@@ -25,8 +25,8 @@ func DefineApimanager() error {
 	Apibus.DefineColum("date_update", "", "TIMESTAMP", "NOW()")
 	Apibus.DefineColum("_state", "", "VARCHAR(80)", utility.ACTIVE)
 	Apibus.DefineColum("_id", "", "VARCHAR(80)", "-1")
-	Apibus.DefineColum("project", "", "VARCHAR(80)", "-1")
-	Apibus.DefineColum("stage", "", "VARCHAR(80)", "development")
+	Apibus.DefineColum("package_name", "", "VARCHAR(250)", "-1")
+	Apibus.DefineColum("kind", "", "VARCHAR(80)", "")
 	Apibus.DefineColum("method", "", "VARCHAR(80)", "")
 	Apibus.DefineColum("path", "", "TEXT", "")
 	Apibus.DefineColum("_data", "", "JSONB", "{}")
@@ -36,8 +36,8 @@ func DefineApimanager() error {
 		"date_make",
 		"date_update",
 		"_state",
-		"project",
-		"stage",
+		"package_name",
+		"kind",
 		"method",
 		"path",
 		"index",
@@ -53,34 +53,55 @@ func DefineApimanager() error {
 /**
 *	Handler for CRUD data
  */
-func GetApi_managerById(id string) (e.Item, error) {
+func GetApimanagerById(id string) (e.Item, error) {
 	return Apibus.Select().
 		Where(Apibus.Column("_id").Eq(id)).
 		First()
 }
 
-func UpSertApi_manager(project, stage, method, path, id string, data e.Json) (e.Item, error) {
-	if !utility.ValidStr(project, 0, []string{""}) {
-		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "project")
+func GetApimanagerByPath(method, path string) (e.Item, error) {
+	return Apibus.Select().
+		Where(Apibus.Column("path").Eq(path)).
+		And(Apibus.Column("method").Eq(method)).
+		First()
+}
+
+func UpSertApimanager(package_name, kind, method, path string, data e.Json) (e.Item, error) {
+	if !utility.ValidStr(package_name, 0, []string{""}) {
+		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "package_name")
 	}
 
-	if !utility.ValidStr(stage, 0, []string{""}) {
-		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "stage")
+	if !utility.ValidStr(kind, 0, []string{""}) {
+		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "kind")
 	}
 
 	if !utility.ValidStr(method, 0, []string{""}) {
 		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "method")
 	}
 
-	id = utility.GenId(id)
-	data["project"] = project
+	current, err := GetApimanagerByPath(method, path)
+	if err != nil {
+		return e.Item{}, err
+	}
+
+	var id string
+	if current.Ok {
+		id = current.Key("_id")
+	} else {
+		id = utility.NewId()
+	}
+
+	data["package_name"] = package_name
+	data["kind"] = kind
+	data["method"] = method
+	data["path"] = path
 	data["_id"] = id
 	return Apibus.Upsert(data).
 		Where(Apibus.Column("_id").Eq(id)).
 		Command()
 }
 
-func StateApi_manager(id, state string) (e.Item, error) {
+func StateApimanager(id, state string) (e.Item, error) {
 	if !utility.ValidId(state) {
 		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "state")
 	}
@@ -93,11 +114,11 @@ func StateApi_manager(id, state string) (e.Item, error) {
 		Command()
 }
 
-func DeleteApi_manager(id string) (e.Item, error) {
-	return StateApi_manager(id, utility.FOR_DELETE)
+func DeleteApimanager(id string) (e.Item, error) {
+	return StateApimanager(id, utility.FOR_DELETE)
 }
 
-func AllApi_manager(project, state, search string, page, rows int, _select string) (e.List, error) {
+func AllApimanager(package_name, state, search string, page, rows int, _select string) (e.List, error) {
 	if state == "" {
 		state = utility.ACTIVE
 	}
@@ -108,8 +129,8 @@ func AllApi_manager(project, state, search string, page, rows int, _select strin
 
 	if search != "" {
 		return Apibus.Select(cols).
-			Where(Apibus.Column("project").Like("%"+project+"%")).
-			And(Apibus.Concat("STAGE:", Apibus.Column("stage"), "METHOD:", Apibus.Column("method"), "PATH:", Apibus.Column("path"), "DATA:", Apibus.Column("_data"), ":").Like("%"+search+"%")).
+			Where(Apibus.Column("package_name").Like("%"+package_name+"%")).
+			And(Apibus.Concat("kind:", Apibus.Column("kind"), "METHOD:", Apibus.Column("method"), "PATH:", Apibus.Column("path"), "DATA:", Apibus.Column("_data"), ":").Like("%"+search+"%")).
 			OrderBy(Apibus.Column("path"), true).
 			List(page, rows)
 	} else if auxState == "*" {
@@ -117,19 +138,19 @@ func AllApi_manager(project, state, search string, page, rows int, _select strin
 
 		return Apibus.Select(cols).
 			Where(Apibus.Column("_state").Neg(state)).
-			And(Apibus.Column("project").Like("%"+project+"%")).
+			And(Apibus.Column("package_name").Like("%"+package_name+"%")).
 			OrderBy(Apibus.Column("path"), true).
 			List(page, rows)
 	} else if auxState == "0" {
 		return Apibus.Select(cols).
 			Where(Apibus.Column("_state").In("-1", state)).
-			And(Apibus.Column("project").Like("%"+project+"%")).
+			And(Apibus.Column("package_name").Like("%"+package_name+"%")).
 			OrderBy(Apibus.Column("path"), true).
 			List(page, rows)
 	} else {
 		return Apibus.Select(cols).
 			Where(Apibus.Column("_state").Eq(state)).
-			And(Apibus.Column("project").Like("%"+project+"%")).
+			And(Apibus.Column("package_name").Like("%"+package_name+"%")).
 			OrderBy(Apibus.Column("path"), true).
 			List(page, rows)
 	}
