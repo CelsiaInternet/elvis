@@ -86,27 +86,38 @@ type ReferenceValue struct {
 	Op     int
 }
 
+/**
+*
+**/
 type Rerences func(references []*ReferenceValue)
 
 /**
 *
 **/
+type Validate struct {
+	Col   *Column
+	Value any
+}
+
+/**
+*
+**/
 type Linq struct {
-	Tp      int
-	Act     int
-	db      int
-	_select []*Column
-	from    []*FRom
-	where   []*Where
-	_join   []*Join
-	orderBy []*OrderBy
-	groupBy []*Column
-	_return []*Column
-	fromAs  []*FRom
-	as      int
-	details []*Column
-	data    e.Json
-	// dta        *Json
+	Tp         int
+	Act        int
+	db         int
+	_select    []*Column
+	from       []*FRom
+	where      []*Where
+	_join      []*Join
+	orderBy    []*OrderBy
+	groupBy    []*Column
+	_return    []*Column
+	fromAs     []*FRom
+	as         int
+	details    []*Column
+	validates  []*Validate
+	data       e.Json
 	new        *e.Json
 	change     bool
 	references []*ReferenceValue
@@ -114,6 +125,37 @@ type Linq struct {
 	sql        string
 }
 
+/**
+*
+**/
+func NewLinq(tp int, act int, model *Model, as ...string) *Linq {
+	if len(as) == 0 && act == ActSelect {
+		as = []string{GetAs(0)}
+	} else if len(as) == 0 {
+		as = []string{""}
+	}
+	from := &FRom{model: model, as: utility.Uppcase(as[0])}
+	return &Linq{
+		Tp:        tp,
+		Act:       act,
+		db:        model.Db,
+		from:      []*FRom{from},
+		fromAs:    []*FRom{from},
+		where:     []*Where{},
+		_join:     []*Join{},
+		orderBy:   []*OrderBy{},
+		groupBy:   []*Column{},
+		details:   []*Column{},
+		validates: []*Validate{},
+		data:      e.Json{},
+		new:       &e.Json{},
+		as:        1,
+	}
+}
+
+/**
+*
+**/
 func GetAs(n int) string {
 	limit := 18251
 	base := 26
@@ -148,33 +190,6 @@ func GetAs(n int) string {
 	}
 
 	return as
-}
-
-/**
-*
-**/
-func NewLinq(tp int, act int, model *Model, as ...string) *Linq {
-	if len(as) == 0 && act == ActSelect {
-		as = []string{GetAs(0)}
-	} else if len(as) == 0 {
-		as = []string{""}
-	}
-	from := &FRom{model: model, as: utility.Uppcase(as[0])}
-	return &Linq{
-		Tp:      tp,
-		Act:     act,
-		db:      model.Db,
-		from:    []*FRom{from},
-		fromAs:  []*FRom{from},
-		where:   []*Where{},
-		_join:   []*Join{},
-		orderBy: []*OrderBy{},
-		groupBy: []*Column{},
-		details: []*Column{},
-		data:    e.Json{},
-		new:     &e.Json{},
-		as:      1,
-	}
 }
 
 /**
@@ -319,6 +334,17 @@ func (c *Linq) ToCols(sel ...any) []*Column {
 	}
 
 	return cols
+}
+
+func (c *Linq) AddValidate(col *Column, val any) {
+	if !col.Required {
+		return
+	}
+
+	c.validates = append(c.validates, &Validate{
+		Col:   col,
+		Value: val,
+	})
 }
 
 /**

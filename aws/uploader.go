@@ -14,6 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/envar"
+	"github.com/cgalvisleon/elvis/file"
 	e "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/msg"
 	"github.com/cgalvisleon/elvis/utility"
@@ -81,14 +82,14 @@ func DownloadS3(bucket, key string) (*s3.GetObjectOutput, error) {
 **/
 func UploaderFile(r *http.Request, folder, name string) (e.Json, error) {
 	r.ParseMultipartForm(2000)
-	file, fileInfo, err := r.FormFile("myFile")
+	fileparts, fileInfo, err := r.FormFile("myFile")
 	if err != nil {
 		return e.Json{}, err
 	}
-	defer file.Close()
+	defer fileparts.Close()
 
 	contentType := fileInfo.Header.Get("Content-Type")
-	ext := utility.ExtencionFile(fileInfo.Filename)
+	ext := file.ExtencionFile(fileInfo.Filename)
 	filename := fileInfo.Filename
 	if len(name) > 0 {
 		filename = utility.Format(`%s.%s`, name, ext)
@@ -100,7 +101,7 @@ func UploaderFile(r *http.Request, folder, name string) (e.Json, error) {
 	storageType := envar.EnvarStr("", "STORAGE_TYPE")
 	bucket := envar.EnvarStr("", "BUCKET")
 	if storageType == "S3" {
-		contentFile, err := io.ReadAll(file)
+		contentFile, err := io.ReadAll(fileparts)
 		if err != nil {
 			return e.Json{}, err
 		}
@@ -114,7 +115,7 @@ func UploaderFile(r *http.Request, folder, name string) (e.Json, error) {
 			"url": output.Location,
 		}, nil
 	} else {
-		utility.MakeFolder(bucket)
+		file.MakeFolder(bucket)
 		filename := utility.Format(`%s/%s`, bucket, filename)
 
 		output, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE, 0666)
@@ -123,7 +124,7 @@ func UploaderFile(r *http.Request, folder, name string) (e.Json, error) {
 		}
 		defer output.Close()
 
-		_, err = io.Copy(output, file)
+		_, err = io.Copy(output, fileparts)
 		if err != nil {
 			return e.Json{}, err
 		}
@@ -167,7 +168,7 @@ func UploaderB64(b64, filename, contentType string) (e.Json, error) {
 			"url": output.Location,
 		}, nil
 	} else {
-		utility.MakeFolder(bucket)
+		file.MakeFolder(bucket)
 		filename := utility.Format(`%s/%s`, bucket, filename)
 		dec, err := base64.StdEncoding.DecodeString(b64)
 		if err != nil {
@@ -209,7 +210,7 @@ func DeleteFile(url string) (bool, error) {
 
 		return true, nil
 	} else {
-		outdel, err := utility.RemoveFile(url)
+		outdel, err := file.RemoveFile(url)
 		if err != nil {
 			return false, err
 		}

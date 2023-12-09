@@ -3,21 +3,21 @@ package create
 import (
 	"fmt"
 
-	"github.com/cgalvisleon/elvis/utility"
+	"github.com/cgalvisleon/elvis/file"
 )
 
 func MakeCmd(packageName, name string) error {
-	path, err := utility.MakeFolder("cmd", name)
+	path, err := file.MakeFolder("cmd", name)
 	if err != nil {
 		return err
 	}
 
-	_, err = utility.MakeFile(path, "Dockerfile", modelDockerfile, name)
+	_, err = file.MakeFile(path, "Dockerfile", modelDockerfile, name)
 	if err != nil {
 		return err
 	}
 
-	_, err = utility.MakeFile(path, "main.go", modelMain, packageName, name)
+	_, err = file.MakeFile(path, "main.go", modelMain, packageName, name)
 	if err != nil {
 		return err
 	}
@@ -27,25 +27,25 @@ func MakeCmd(packageName, name string) error {
 
 func DeleteCmd(packageName string) error {
 	path := fmt.Sprintf(`./cmd/%s`, packageName)
-	_, err := utility.RemoveFile(path)
+	_, err := file.RemoveFile(path)
 	if err != nil {
 		return err
 	}
 
 	path = fmt.Sprintf(`./internal/service/%s`, packageName)
-	_, err = utility.RemoveFile(path)
+	_, err = file.RemoveFile(path)
 	if err != nil {
 		return err
 	}
 
 	path = fmt.Sprintf(`./internal/pkg/%s`, packageName)
-	_, err = utility.RemoveFile(path)
+	_, err = file.RemoveFile(path)
 	if err != nil {
 		return err
 	}
 
 	path = fmt.Sprintf(`./internal/rest/%s.http`, packageName)
-	_, err = utility.RemoveFile(path)
+	_, err = file.RemoveFile(path)
 	if err != nil {
 		return err
 	}

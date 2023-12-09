@@ -3,9 +3,10 @@
 # Public
 
 ```
+go mod tidy &&
 gofmt -w . &&
 git update &&
-git tag v0.0.68 &&
+git tag v0.0.69 &&
 git tags
 git push origin --tags
 

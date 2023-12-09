@@ -1,10 +1,33 @@
-package utility
+package file
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"strings"
 )
+
+func params(str string, args ...any) string {
+	var result string = str
+	for i, v := range args {
+		p := fmt.Sprintf(`$%d`, i+1)
+		rp := fmt.Sprintf(`%v`, v)
+		result = strings.ReplaceAll(result, p, rp)
+	}
+
+	return result
+}
+
+func append(str1, str2, sp string) string {
+	if len(str1) == 0 {
+		return str2
+	}
+	if len(str2) == 0 {
+		return str1
+	}
+
+	return fmt.Sprintf(`%s%s%s`, str1, sp, str2)
+}
 
 func ExistPath(name string) bool {
 	_, err := os.Stat(name)
@@ -18,13 +41,13 @@ func ExistPath(name string) bool {
 }
 
 func MakeFile(folder, name, model string, args ...any) (string, error) {
-	path := Format(`%s/%s`, folder, name)
+	path := fmt.Sprintf(`%s/%s`, folder, name)
 
 	if ExistPath(path) {
 		return "", errors.New("file found")
 	}
 
-	_content := Params(model, args...)
+	_content := params(model, args...)
 	content := []byte(_content)
 	err := os.WriteFile(path, content, 0666)
 	if err != nil {
@@ -37,7 +60,7 @@ func MakeFile(folder, name, model string, args ...any) (string, error) {
 func MakeFolder(names ...string) (string, error) {
 	var path string
 	for _, name := range names {
-		path = Append(path, name, "/")
+		path = append(path, name, "/")
 
 		if !ExistPath(path) {
 			err := os.MkdirAll(path, os.ModePerm)

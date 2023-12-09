@@ -25,9 +25,11 @@ func DefineApimanager() error {
 	Apibus.DefineColum("date_update", "", "TIMESTAMP", "NOW()")
 	Apibus.DefineColum("_state", "", "VARCHAR(80)", utility.ACTIVE)
 	Apibus.DefineColum("_id", "", "VARCHAR(80)", "-1")
-	Apibus.DefineColum("package_name", "", "VARCHAR(250)", "-1")
+	Apibus.DefineColum("package_name", "", "VARCHAR(250)", "")
+	Apibus.DefineColum("package_path", "", "VARCHAR(250)", "")
 	Apibus.DefineColum("kind", "", "VARCHAR(80)", "")
 	Apibus.DefineColum("method", "", "VARCHAR(80)", "")
+	Apibus.DefineColum("host", "", "VARCHAR(250)", "")
 	Apibus.DefineColum("path", "", "TEXT", "")
 	Apibus.DefineColum("_data", "", "JSONB", "{}")
 	Apibus.DefineColum("index", "", "SERIAL", 0)
@@ -37,8 +39,10 @@ func DefineApimanager() error {
 		"date_update",
 		"_state",
 		"package_name",
+		"package_path",
 		"kind",
 		"method",
+		"host",
 		"path",
 		"index",
 	})

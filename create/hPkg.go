@@ -3,44 +3,45 @@ package create
 import (
 	"fmt"
 
+	"github.com/cgalvisleon/elvis/file"
 	"github.com/cgalvisleon/elvis/utility"
 )
 
 func MakePkg(name, schema, schemaVar string) error {
-	path, err := utility.MakeFolder("pkg", name)
+	path, err := file.MakeFolder("pkg", name)
 	if err != nil {
 		return err
 	}
 
-	_, err = utility.MakeFile(path, "event.go", modelEvent, name)
+	_, err = file.MakeFile(path, "event.go", modelEvent, name)
 	if err != nil {
 		return err
 	}
 
 	modelo := utility.Titlecase(name)
-	_, err = utility.MakeFile(path, "model.go", modelModel, name, modelo)
+	_, err = file.MakeFile(path, "model.go", modelModel, name, modelo)
 	if err != nil {
 		return err
 	}
 
-	_, err = utility.MakeFile(path, "msg.go", modelMsg, name)
+	_, err = file.MakeFile(path, "msg.go", modelMsg, name)
 	if err != nil {
 		return err
 	}
 
-	_, err = utility.MakeFile(path, "controller.go", modelController, name)
+	_, err = file.MakeFile(path, "controller.go", modelController, name)
 	if err != nil {
 		return err
 	}
 
 	title := utility.Titlecase(name)
-	_, err = utility.MakeFile(path, "router.go", modelRouter, name, title)
+	_, err = file.MakeFile(path, "router.go", modelRouter, name, title)
 	if err != nil {
 		return err
 	}
 
 	if len(schema) > 0 {
-		_, err = utility.MakeFile(path, "schema.go", modelSchema, name, schemaVar, schema)
+		_, err = file.MakeFile(path, "schema.go", modelSchema, name, schemaVar, schema)
 		if err != nil {
 			return err
 		}
@@ -50,14 +51,14 @@ func MakePkg(name, schema, schemaVar string) error {
 }
 
 func MakeModel(name, modelo, schemaVar string) error {
-	path, err := utility.MakeFolder("pkg", name)
+	path, err := file.MakeFolder("pkg", name)
 	if err != nil {
 		return err
 	}
 
 	modelo = utility.Titlecase(modelo)
 	fileName := fmt.Sprintf(`h%s.go`, modelo)
-	_, err = utility.MakeFile(path, fileName, modelHandler, name, modelo, schemaVar, utility.Uppcase(modelo), utility.Lowcase(modelo))
+	_, err = file.MakeFile(path, fileName, modelHandler, name, modelo, schemaVar, utility.Uppcase(modelo), utility.Lowcase(modelo))
 	if err != nil {
 		return err
 	}
@@ -66,12 +67,12 @@ func MakeModel(name, modelo, schemaVar string) error {
 }
 
 func MakeRpc(name string) error {
-	path, err := utility.MakeFolder("pkg", name)
+	path, err := file.MakeFolder("pkg", name)
 	if err != nil {
 		return err
 	}
 
-	_, err = utility.MakeFile(path, "hRpc.go", modelhRpc, name)
+	_, err = file.MakeFile(path, "hRpc.go", modelhRpc, name)
 	if err != nil {
 		return err
 	}

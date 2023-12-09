@@ -413,6 +413,7 @@ var PackageTitle = "$1"
 var PackagePath = "/api/$1"
 var PackageVersion = envar.EnvarStr("0.0.1", "VERSION")
 var HostName, _ = os.Hostname()
+var Host = "$1"
 
 type Router struct {
 	Repository Repository
@@ -421,13 +422,13 @@ type Router struct {
 func (rt *Router) Routes() http.Handler {
 	r := chi.NewRouter()
 
-	er.PublicRoute(r, er.Get, "/version", rt.Version)
+	er.PublicRoute(r, er.Get, "/version", rt.Version, PackageName, PackagePath, Host)
 	// $2
-	er.ProtectRoute(r, er.Get, "/$1/{id}", rt.Get$2ById)
-	er.ProtectRoute(r, er.Post, "/$1", rt.UpSert$2)
-	er.ProtectRoute(r, er.Put, "/$1/state/{id}", rt.State$2)
-	er.ProtectRoute(r, er.Delete, "/$1/{id}", rt.Delete$2)
-	er.ProtectRoute(r, er.Get, "/$1/all", rt.All$2)
+	er.ProtectRoute(r, er.Get, "/$1/{id}", rt.Get$2ById, PackageName, PackagePath, Host)
+	er.ProtectRoute(r, er.Post, "/$1", rt.UpSert$2, PackageName, PackagePath, Host)
+	er.ProtectRoute(r, er.Put, "/$1/state/{id}", rt.State$2, PackageName, PackagePath, Host)
+	er.ProtectRoute(r, er.Delete, "/$1/{id}", rt.Delete$2, PackageName, PackagePath, Host)
+	er.ProtectRoute(r, er.Get, "/$1/all", rt.All$2, PackageName, PackagePath, Host)
 
 	ctx := context.Background()
 	rt.Repository.Init(ctx)
@@ -515,7 +516,7 @@ func Define$2() error {
 		"index",
 	})
 	$2.DefineRequired([]string{
-		"name:Nombre requerido!",
+		"name:Atributo requerido (name)",
 	})
 	$2.IntegrityAtrib(true)
 	$2.Trigger(linq.BeforeInsert, func(model *linq.Model, old, new *e.Json, data e.Json) error {

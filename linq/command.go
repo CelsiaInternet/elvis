@@ -1,6 +1,7 @@
 package linq
 
 import (
+	"github.com/cgalvisleon/elvis/console"
 	e "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/msg"
 )
@@ -45,12 +46,7 @@ func (c *Linq) commandInsert() (e.Item, error) {
 		}
 
 		if current.Ok {
-			return e.Item{
-				Ok: !current.Ok,
-				Result: e.Json{
-					"message": msg.RECORD_FOUND,
-				},
-			}, nil
+			return e.Item{}, console.Alert(msg.RECORD_FOUND)
 		}
 	}
 
@@ -64,12 +60,7 @@ func (c *Linq) commandUpdate() (e.Item, error) {
 	}
 
 	if !current.Ok {
-		return e.Item{
-			Ok: current.Ok,
-			Result: e.Json{
-				"message": msg.RECORD_NOT_FOUND,
-			},
-		}, nil
+		return e.Item{}, console.Alert(msg.RECORD_NOT_FOUND)
 	}
 
 	return c.update(current.Result)
@@ -82,12 +73,7 @@ func (c *Linq) commandDelete() (e.Item, error) {
 	}
 
 	if !current.Ok {
-		return e.Item{
-			Ok: current.Ok,
-			Result: e.Json{
-				"message": msg.RECORD_NOT_FOUND,
-			},
-		}, nil
+		return e.Item{}, console.Alert(msg.RECORD_NOT_FOUND)
 	}
 
 	return c.delete(current.Result)

@@ -8,7 +8,7 @@ import (
 /**
 *
 **/
-func (c *Model) Consolidate(current e.Json, linq *Linq) error {
+func (c *Model) Consolidate(current e.Json, linq *Linq) *Linq {
 	var col *Column
 	var source e.Json = e.Json{}
 	var new e.Json = e.Json{}
@@ -25,9 +25,7 @@ func (c *Model) Consolidate(current e.Json, linq *Linq) error {
 			idx := c.TitleIdx(k)
 			if idx != -1 && utility.ContainsInt([]int{TpReference}, c.Definition[idx].Tp) {
 				col = c.Definition[idx]
-				if err := col.Valid(v); err != nil {
-					return err
-				}
+				linq.AddValidate(col, v)
 				reference := linq.data.Json(k)
 				setValue(col.name, reference.Key(col.Reference.Key))
 				continue
@@ -41,9 +39,7 @@ func (c *Model) Consolidate(current e.Json, linq *Linq) error {
 			continue
 		} else {
 			col = c.Definition[idxCol]
-			if err := col.Valid(v); err != nil {
-				return err
-			}
+			linq.AddValidate(col, v)
 		}
 
 		if utility.ContainsInt([]int{TpField, TpFunction, TpDetail}, col.Tp) {
@@ -55,6 +51,8 @@ func (c *Model) Consolidate(current e.Json, linq *Linq) error {
 				for ak, av := range atribs {
 					ak = utility.Lowcase(ak)
 					if idx := c.AtribIdx(ak); idx != -1 {
+						atrib := c.Definition[idx]
+						linq.AddValidate(atrib, av)
 						source[ak] = av
 					}
 				}
@@ -65,6 +63,7 @@ func (c *Model) Consolidate(current e.Json, linq *Linq) error {
 			delete(source, k)
 			setValue(k, v)
 			col := c.Column(k)
+			linq.AddValidate(col, v)
 			if col.PrimaryKey || col.ForeignKey {
 				linq.references = append(linq.references, &ReferenceValue{c.Schema, c.Table, v, 1})
 			}
@@ -79,7 +78,7 @@ func (c *Model) Consolidate(current e.Json, linq *Linq) error {
 
 	linq.new = &new
 
-	return nil
+	return linq
 }
 
 func (c *Model) Changue(current e.Json, linq *Linq) *Linq {
@@ -116,9 +115,11 @@ func (c *Model) Changue(current e.Json, linq *Linq) *Linq {
 **/
 func (c *Linq) PrepareInsert() error {
 	model := c.from[0].model
-	err := model.Consolidate(model.Model(), c)
-	if err != nil {
-		return err
+	model.Consolidate(model.Model(), c)
+	for _, validate := range c.validates {
+		if err := validate.Col.Valid(validate.Value); err != nil {
+			return err
+		}
 	}
 
 	now := utility.Now()

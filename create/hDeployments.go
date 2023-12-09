@@ -1,19 +1,19 @@
 package create
 
-import "github.com/cgalvisleon/elvis/utility"
+import "github.com/cgalvisleon/elvis/file"
 
 func MakeDeployments(name string) error {
-	_, err := utility.MakeFolder("deployments", "dev")
+	_, err := file.MakeFolder("deployments", "dev")
 	if err != nil {
 		return err
 	}
 
-	_, err = utility.MakeFolder("deployments", "local")
+	_, err = file.MakeFolder("deployments", "local")
 	if err != nil {
 		return err
 	}
 
-	_, err = utility.MakeFolder("deployments", "prd")
+	_, err = file.MakeFolder("deployments", "prd")
 	if err != nil {
 		return err
 	}

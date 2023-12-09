@@ -20,7 +20,7 @@ const (
 	HandlerFunc = "HandlerFunc"
 )
 
-func ProtectRoute(r *chi.Mux, method, path string, h http.HandlerFunc, packageName string) *chi.Mux {
+func ProtectRoute(r *chi.Mux, method, path string, h http.HandlerFunc, packageName, packagepath, host string) *chi.Mux {
 	switch method {
 	case "GET":
 		r.With(middleware.Authorization).Get(path, h)
@@ -41,16 +41,18 @@ func ProtectRoute(r *chi.Mux, method, path string, h http.HandlerFunc, packageNa
 	}
 
 	event.Publish("router", "apimanager/upsert", e.Json{
-		"kind":    "protect",
-		"method":  method,
-		"path":    path,
-		"package": packageName,
+		"kind":         "protect",
+		"method":       method,
+		"path":         path,
+		"package_name": packageName,
+		"package_path": packagepath,
+		"host":         host,
 	})
 
 	return r
 }
 
-func PublicRoute(r *chi.Mux, method, path string, h http.HandlerFunc, packageName string) *chi.Mux {
+func PublicRoute(r *chi.Mux, method, path string, h http.HandlerFunc, packageName, packagepath, host string) *chi.Mux {
 	switch method {
 	case "GET":
 		r.Get(path, h)
@@ -75,6 +77,8 @@ func PublicRoute(r *chi.Mux, method, path string, h http.HandlerFunc, packageNam
 		"method":       method,
 		"path":         path,
 		"package_name": packageName,
+		"package_path": packagepath,
+		"host":         host,
 	})
 
 	return r
