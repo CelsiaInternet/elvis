@@ -7,6 +7,7 @@ import (
 	"github.com/cgalvisleon/elvis/cache"
 	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/msg"
+	"github.com/cgalvisleon/elvis/strs"
 	"github.com/cgalvisleon/elvis/utility"
 	_ "github.com/joho/godotenv/autoload"
 	mail "github.com/xhit/go-simple-mail/v2"
@@ -47,7 +48,7 @@ func SendVerify(ctx context.Context, to string, subject string, title string, em
 	company := envar.EnvarStr("", "COMPANY")
 	fromEmail := envar.EnvarStr("", "EMAIL")
 	project := envar.EnvarStr("", "PROJECT")
-	from := utility.Format("%s account team <%s>", utility.Titlecase(project), fromEmail)
+	from := strs.Format("%s account team <%s>", strs.Titlecase(project), fromEmail)
 
 	css, err := os.ReadFile("./assets/template/style.txt")
 	if err != nil {
@@ -59,7 +60,7 @@ func SendVerify(ctx context.Context, to string, subject string, title string, em
 		return false, err
 	}
 
-	html := utility.Format(string(template), css, title, email, code, company)
+	html := strs.Format(string(template), css, title, email, code, company)
 	return Send(ctx, from, to, subject, html)
 }
 
@@ -67,7 +68,7 @@ func SendAlert(ctx context.Context, to string, subject string, title string, sub
 	company := envar.EnvarStr("", "COMPANY")
 	fromEmail := envar.EnvarStr("", "EMAIL")
 	project := envar.EnvarStr("", "PROJECT")
-	from := utility.Format("%s account team <%s>", utility.Titlecase(project), fromEmail)
+	from := strs.Format("%s account team <%s>", strs.Titlecase(project), fromEmail)
 
 	css, err := os.ReadFile("./assets/template/style.txt")
 	if err != nil {
@@ -79,7 +80,7 @@ func SendAlert(ctx context.Context, to string, subject string, title string, sub
 		return false, err
 	}
 
-	html := utility.Format(string(template), css, title, subtitle, message, href, button, thanks, company)
+	html := strs.Format(string(template), css, title, subtitle, message, href, button, thanks, company)
 	return Send(ctx, from, to, subject, html)
 }
 
@@ -87,7 +88,7 @@ func SendAction(ctx context.Context, to string, subject string, title string, me
 	company := envar.EnvarStr("", "COMPANY")
 	fromEmail := envar.EnvarStr("", "EMAIL")
 	project := envar.EnvarStr("", "PROJECT")
-	from := utility.Format("%s account team <%s>", utility.Titlecase(project), fromEmail)
+	from := strs.Format("%s account team <%s>", strs.Titlecase(project), fromEmail)
 
 	css, err := os.ReadFile("./assets/template/style.txt")
 	if err != nil {
@@ -104,7 +105,7 @@ func SendAction(ctx context.Context, to string, subject string, title string, me
 		return false, err
 	}
 
-	html := utility.Format(string(template), css, logo, title, message, href, button, company)
+	html := strs.Format(string(template), css, logo, title, message, href, button, company)
 	return Send(ctx, from, to, subject, html)
 }
 
@@ -112,7 +113,7 @@ func VerifyMail(ctx context.Context, device string, name string, email string) e
 	code := utility.GetCodeVerify(6)
 	cache.SetVerify(device, email, code)
 
-	to := utility.Format("%s <%s>", name, email)
+	to := strs.Format("%s <%s>", name, email)
 	_, err := SendVerify(ctx, to, msg.MSG_MAIL_001, msg.MSG_MAIL_002, email, code)
 	if err != nil {
 		return err

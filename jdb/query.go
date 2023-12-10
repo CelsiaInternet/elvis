@@ -7,6 +7,7 @@ import (
 	"github.com/cgalvisleon/elvis/event"
 	e "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/msg"
+	"github.com/cgalvisleon/elvis/strs"
 	"github.com/cgalvisleon/elvis/utility"
 )
 
@@ -16,8 +17,8 @@ import (
 func SQLQuote(sql string) string {
 	sql = strings.TrimSpace(sql)
 
-	result := utility.Replace(sql, `'`, `"`)
-	result = utility.Trim(result)
+	result := strs.Replace(sql, `'`, `"`)
+	result = strs.Trim(result)
 
 	return result
 }
@@ -26,8 +27,8 @@ func SQLDDL(sql string, args ...any) string {
 	sql = strings.TrimSpace(sql)
 
 	for i, arg := range args {
-		old := utility.Format(`$%d`, i+1)
-		new := utility.Format(`%v`, arg)
+		old := strs.Format(`$%d`, i+1)
+		new := strs.Format(`%v`, arg)
 		sql = strings.ReplaceAll(sql, old, new)
 	}
 
@@ -36,14 +37,14 @@ func SQLDDL(sql string, args ...any) string {
 
 func SQLParse(sql string, args ...any) string {
 	for i := range args {
-		old := utility.Format(`$%d`, i+1)
-		new := utility.Format(`{$%d}`, i+1)
+		old := strs.Format(`$%d`, i+1)
+		new := strs.Format(`{$%d}`, i+1)
 		sql = strings.ReplaceAll(sql, old, new)
 	}
 
 	for i, arg := range args {
-		old := utility.Format(`{$%d}`, i+1)
-		new := utility.Format(`%v`, e.Quoted(arg))
+		old := strs.Format(`{$%d}`, i+1)
+		new := strs.Format(`%v`, e.Quoted(arg))
 		sql = strings.ReplaceAll(sql, old, new)
 	}
 

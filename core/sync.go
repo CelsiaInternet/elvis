@@ -3,7 +3,7 @@ package core
 import (
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/jdb"
-	"github.com/cgalvisleon/elvis/utility"
+	"github.com/cgalvisleon/elvis/strs"
 )
 
 func DefineSync() error {
@@ -137,7 +137,7 @@ func SetSyncTrigger(schema, table string) error {
 	}
 
 	if created {
-		tableName := utility.Append(utility.Lowcase(schema), utility.Uppcase(table), ".")
+		tableName := strs.Append(strs.Lowcase(schema), strs.Uppcase(table), ".")
 		sql := jdb.SQLDDL(`
     CREATE INDEX IF NOT EXISTS $2_IDT_IDX ON $1(_IDT);
 
@@ -157,7 +157,7 @@ func SetSyncTrigger(schema, table string) error {
     CREATE TRIGGER SYNC_DELETE
     BEFORE DELETE ON $1
     FOR EACH ROW
-    EXECUTE PROCEDURE core.SYNC_DELETE();`, tableName, utility.Uppcase(table))
+    EXECUTE PROCEDURE core.SYNC_DELETE();`, tableName, strs.Uppcase(table))
 
 		_, err := jdb.QDDL(sql)
 		if err != nil {

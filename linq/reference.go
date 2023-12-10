@@ -2,7 +2,7 @@ package linq
 
 import (
 	e "github.com/cgalvisleon/elvis/json"
-	"github.com/cgalvisleon/elvis/utility"
+	"github.com/cgalvisleon/elvis/strs"
 )
 
 type Reference struct {
@@ -23,7 +23,7 @@ func (c *Reference) Describe() e.Json {
 
 func (c *Reference) DDL() string {
 	table := c.Reference.Model.Name
-	return utility.Format(`REFERENCES %s(%s)`, table, c.Reference.Up())
+	return strs.Format(`REFERENCES %s(%s)`, table, c.Reference.Up())
 }
 
 func NewForeignKey(fKey string, reference *Column) *Reference {

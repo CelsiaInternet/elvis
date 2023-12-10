@@ -4,7 +4,7 @@ import (
 	"database/sql"
 
 	e "github.com/cgalvisleon/elvis/json"
-	"github.com/cgalvisleon/elvis/utility"
+	"github.com/cgalvisleon/elvis/strs"
 )
 
 const Postgres = "postgres"
@@ -34,7 +34,7 @@ func (c *Db) Close() error {
 }
 
 func (c *Db) Describe() e.Json {
-	host := utility.Format(`%s:%d`, c.Host, c.Port)
+	host := strs.Format(`%s:%d`, c.Host, c.Port)
 	return e.Json{
 		"name":        c.Dbname,
 		"description": c.Description,

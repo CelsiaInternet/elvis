@@ -8,6 +8,7 @@ import (
 	e "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/linq"
 	"github.com/cgalvisleon/elvis/msg"
+	"github.com/cgalvisleon/elvis/strs"
 	"github.com/cgalvisleon/elvis/utility"
 	_ "github.com/joho/godotenv/autoload"
 )
@@ -80,7 +81,7 @@ func DefineUsers() error {
 			country := new.Str("country")
 			phone := new.Str("phone")
 			APP := envar.EnvarStr("", "APP")
-			message := utility.Format(msg.MSG_ADMIN_WELCOME, fullName, APP)
+			message := strs.Format(msg.MSG_ADMIN_WELCOME, fullName, APP)
 			go aws.SendSMS(country, phone, message)
 		}
 

@@ -7,7 +7,7 @@ func DivNum(a, b float64) float64 {
 		return 0
 	}
 
-	return float64(a / b)
+	return a / b
 }
 
 func DivInt(a, b int64) int64 {
@@ -15,5 +15,5 @@ func DivInt(a, b int64) int64 {
 		return 0
 	}
 
-	return int64(a / b)
+	return a / b
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/cgalvisleon/elvis/cache"
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/msg"
+	"github.com/cgalvisleon/elvis/strs"
 	"github.com/cgalvisleon/elvis/utility"
 	_ "github.com/joho/godotenv/autoload"
 )
@@ -17,7 +18,7 @@ func SendSMS(country string, mobile string, message string) (bool, interface{}, 
 	sess := AwsSession()
 	svc := sns.New(sess)
 
-	message = utility.RemoveAcents(message)
+	message = strs.RemoveAcents(message)
 	params := &sns.PublishInput{
 		Message:     aws.String(message),
 		PhoneNumber: aws.String(phoneNumber),
@@ -39,7 +40,7 @@ func VerifyMobile(app string, device string, country string, phoneNumber string)
 	code := utility.GetCodeVerify(6)
 	cache.SetVerify(device, country+phoneNumber, code)
 
-	message := utility.Format(msg.MSG_MOBILE_VALIDATION, app, code)
+	message := strs.Format(msg.MSG_MOBILE_VALIDATION, app, code)
 	_, _, err := SendSMS(country, phoneNumber, message)
 	if err != nil {
 		return err

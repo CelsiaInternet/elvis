@@ -3,6 +3,7 @@ package master
 import (
 	"github.com/cgalvisleon/elvis/jdb"
 	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/strs"
 	"github.com/cgalvisleon/elvis/utility"
 )
 
@@ -37,7 +38,7 @@ func (c *Node) SyncMasterToNode() error {
 		ok = false
 
 		offset := (page - 1) * rows
-		sql := utility.Format(`
+		sql := strs.Format(`
 		SELECT A.*
 		FROM core.SYNC A
 		WHERE A.INDEX>$1
@@ -79,12 +80,12 @@ func (c *Node) SyncMasterToNode() error {
 			if oldSchema == schema && oldTable == table && action == "INSERT" && len(batch) == 0 {
 				batch = c.SqlField(schema, table, _data)
 			} else if oldSchema == schema && oldTable == table && action == "INSERT" {
-				batch = utility.Format(`%s,`, batch)
+				batch = strs.Format(`%s,`, batch)
 			}
 
 			query, append := c.ToSql(schema, table, idT, _data, action)
 			if append {
-				batch = utility.Append(batch, query, "\n")
+				batch = strs.Append(batch, query, "\n")
 			}
 
 			ok = true
@@ -110,7 +111,7 @@ func (c *Node) SyncNodeToMaster() error {
 		c.Status = NodeStatusSync
 		ok = false
 
-		sql := utility.Format(`
+		sql := strs.Format(`
 		SELECT A.*
 		FROM core.SYNC A
 		ORDER BY A.INDEX
@@ -143,13 +144,13 @@ func (c *Node) SyncNodeToMaster() error {
 }
 
 func (c *Node) SyncQuery(query string, index int) error {
-	sql := utility.Format(`
+	sql := strs.Format(`
 	UPDATE core.MODE SET
 	INDEX=%d
 	WHERE INDEX<%d
 	RETURNING INDEX;`, index, index)
 
-	query = utility.Append(query, sql, "\n")
+	query = strs.Append(query, sql, "\n")
 
 	_, err := jdb.DBQuery(c.Db, query)
 	if err != nil {
@@ -165,7 +166,7 @@ func (c *Node) SyncRecord(schema, table, idT string, _data e.Json, action string
 		fields := c.SqlField(schema, table, _data)
 		insert, append := c.ToSql(schema, table, idT, _data, action)
 		if append {
-			query = utility.Append(fields, insert, "\n")
+			query = strs.Append(fields, insert, "\n")
 		}
 	} else {
 		query, _ = c.ToSql(schema, table, idT, _data, action)

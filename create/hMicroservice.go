@@ -3,7 +3,7 @@ package create
 import (
 	"fmt"
 
-	"github.com/cgalvisleon/elvis/utility"
+	"github.com/cgalvisleon/elvis/strs"
 )
 
 func MkPMicroservice(packageName, name, author, schema string) error {
@@ -59,7 +59,7 @@ func MkMicroservice(packageName, name, schema string) error {
 	}
 
 	ProgressNext(10)
-	schemaVar := utility.Format(`Schema%s`, utility.Titlecase(schema))
+	schemaVar := strs.Format(`Schema%s`, strs.Titlecase(schema))
 	err = MakePkg(name, schema, schemaVar)
 	if err != nil {
 		return err
@@ -84,7 +84,7 @@ func MkMicroservice(packageName, name, schema string) error {
 
 func MkMolue(name, modelo, schema string) error {
 	ProgressNext(10)
-	schemaVar := utility.Format(`Schema%s`, utility.Titlecase(schema))
+	schemaVar := strs.Format(`Schema%s`, strs.Titlecase(schema))
 	err := MakeModel(name, modelo, schemaVar)
 	if err != nil {
 		return err

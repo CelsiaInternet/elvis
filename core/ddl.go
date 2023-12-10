@@ -6,6 +6,7 @@ import (
 	e "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/linq"
 	"github.com/cgalvisleon/elvis/msg"
+	"github.com/cgalvisleon/elvis/strs"
 	"github.com/cgalvisleon/elvis/utility"
 )
 
@@ -43,7 +44,7 @@ func InitModel(model *linq.Model) error {
 *
  */
 func ExistDatabase(db int, name string) (bool, error) {
-	name = utility.Lowcase(name)
+	name = strs.Lowcase(name)
 	sql := `
 	SELECT EXISTS(
 		SELECT 1
@@ -59,7 +60,7 @@ func ExistDatabase(db int, name string) (bool, error) {
 }
 
 func ExistSchema(db int, name string) (bool, error) {
-	name = utility.Lowcase(name)
+	name = strs.Lowcase(name)
 	sql := `
 	SELECT EXISTS(
 		SELECT 1
@@ -75,7 +76,7 @@ func ExistSchema(db int, name string) (bool, error) {
 }
 
 func ExistUser(db int, name string) (bool, error) {
-	name = utility.Uppcase(name)
+	name = strs.Uppcase(name)
 	sql := `
 	SELECT EXISTS(
 		SELECT 1
@@ -124,7 +125,7 @@ func ExistColum(db int, schema, table, name string) (bool, error) {
 }
 
 func ExistIndex(db int, schema, table, field string) (bool, error) {
-	indexName := utility.Format(`%s_%s_IDX`, utility.Uppcase(table), utility.Uppcase(field))
+	indexName := strs.Format(`%s_%s_IDX`, strs.Uppcase(table), strs.Uppcase(field))
 	sql := `
 	SELECT EXISTS(
 		SELECT 1
@@ -161,14 +162,14 @@ func ExistSerie(db int, schema, name string) (bool, error) {
 *
 **/
 func CreateDatabase(db int, name string) (bool, error) {
-	name = utility.Lowcase(name)
+	name = strs.Lowcase(name)
 	exists, err := ExistDatabase(db, name)
 	if err != nil {
 		return false, err
 	}
 
 	if !exists {
-		sql := utility.Format(`CREATE DATABASE %s;`, name)
+		sql := strs.Format(`CREATE DATABASE %s;`, name)
 
 		_, err := jdb.DBQuery(db, sql)
 		if err != nil {
@@ -180,14 +181,14 @@ func CreateDatabase(db int, name string) (bool, error) {
 }
 
 func CreateSchema(db int, name string) (bool, error) {
-	name = utility.Lowcase(name)
+	name = strs.Lowcase(name)
 	exists, err := ExistSchema(db, name)
 	if err != nil {
 		return false, err
 	}
 
 	if !exists {
-		sql := utility.Format(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"; CREATE SCHEMA IF NOT EXISTS "%s";`, name)
+		sql := strs.Format(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"; CREATE SCHEMA IF NOT EXISTS "%s";`, name)
 
 		_, err := jdb.DBQuery(db, sql)
 		if err != nil {
@@ -199,7 +200,7 @@ func CreateSchema(db int, name string) (bool, error) {
 }
 
 func CreateUser(db int, name, password string) (bool, error) {
-	name = utility.Uppcase(name)
+	name = strs.Uppcase(name)
 	exists, err := ExistUser(db, name)
 	if err != nil {
 		return false, err
@@ -211,7 +212,7 @@ func CreateUser(db int, name, password string) (bool, error) {
 			return false, err
 		}
 
-		sql := utility.Format(`CREATE USER %s WITH PASSWORD '%s';`, name, passwordHash)
+		sql := strs.Format(`CREATE USER %s WITH PASSWORD '%s';`, name, passwordHash)
 
 		_, err = jdb.DBQuery(db, sql)
 		if err != nil {
@@ -237,7 +238,7 @@ func ChangePassword(db int, name, password string) (bool, error) {
 		return false, err
 	}
 
-	sql := utility.Format(`ALTER USER %s WITH PASSWORD '%s';`, name, passwordHash)
+	sql := strs.Format(`ALTER USER %s WITH PASSWORD '%s';`, name, passwordHash)
 
 	_, err = jdb.Query(sql)
 	if err != nil {
@@ -254,7 +255,7 @@ func CreateColumn(db int, schema, table, name, kind, defaultValue string) (bool,
 	}
 
 	if !exists {
-		tableName := utility.Format(`%s.%s`, schema, utility.Uppcase(table))
+		tableName := strs.Format(`%s.%s`, schema, strs.Uppcase(table))
 		sql := jdb.SQLDDL(`
 		DO $$
 		BEGIN
@@ -264,7 +265,7 @@ func CreateColumn(db int, schema, table, name, kind, defaultValue string) (bool,
 				WHEN duplicate_column THEN RAISE NOTICE 'column <column_name> already exists in <table_name>.';
 			END;
 		END;
-		$$;`, tableName, utility.Uppcase(name), utility.Uppcase(kind), defaultValue)
+		$$;`, tableName, strs.Uppcase(name), strs.Uppcase(kind), defaultValue)
 
 		_, err := jdb.QDDL(sql)
 		if err != nil {
@@ -282,7 +283,7 @@ func CreateIndex(db int, schema, table, field string) (bool, error) {
 	}
 
 	if !exists {
-		sql := jdb.SQLDDL(`CREATE INDEX IF NOT EXISTS $2_$3_IDX ON $1.$2($3);`, utility.Uppcase(schema), utility.Uppcase(table), utility.Uppcase(field))
+		sql := jdb.SQLDDL(`CREATE INDEX IF NOT EXISTS $2_$3_IDX ON $1.$2($3);`, strs.Uppcase(schema), strs.Uppcase(table), strs.Uppcase(field))
 
 		_, err := jdb.QDDL(sql)
 		if err != nil {
@@ -300,7 +301,7 @@ func CreateSerie(db int, schema, tag string) (bool, error) {
 	}
 
 	if !exists {
-		sql := utility.Format(`CREATE SEQUENCE IF NOT EXISTS %s START 1;`, tag)
+		sql := strs.Format(`CREATE SEQUENCE IF NOT EXISTS %s START 1;`, tag)
 
 		_, err := jdb.Query(sql)
 		if err != nil {

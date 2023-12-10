@@ -5,7 +5,7 @@ import (
 	"github.com/cgalvisleon/elvis/core"
 	"github.com/cgalvisleon/elvis/jdb"
 	e "github.com/cgalvisleon/elvis/json"
-	"github.com/cgalvisleon/elvis/utility"
+	"github.com/cgalvisleon/elvis/strs"
 	_ "github.com/joho/godotenv/autoload"
 )
 
@@ -79,7 +79,7 @@ func (c *Master) LoadNodes() error {
 		ok = false
 
 		offset := (page - 1) * rows
-		sql := utility.Format(`
+		sql := strs.Format(`
 		SELECT A.*,
 		0 AS STATUS
 		FROM core.NODES A

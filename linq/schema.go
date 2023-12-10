@@ -3,7 +3,7 @@ package linq
 import (
 	"github.com/cgalvisleon/elvis/jdb"
 	e "github.com/cgalvisleon/elvis/json"
-	"github.com/cgalvisleon/elvis/utility"
+	"github.com/cgalvisleon/elvis/strs"
 )
 
 var schemas []*Schema = []*Schema{}
@@ -27,7 +27,7 @@ type Schema struct {
 func NewSchema(db int, name string) *Schema {
 	result := &Schema{
 		Db:              db,
-		Name:            utility.Lowcase(name),
+		Name:            strs.Lowcase(name),
 		Database:        jdb.DB(db),
 		UseSync:         true,
 		SourceField:     "_DATA",
@@ -48,7 +48,7 @@ func NewSchema(db int, name string) *Schema {
 
 func GetSchema(name string) *Schema {
 	for _, item := range schemas {
-		if utility.Uppcase(item.Name) == utility.Uppcase(name) {
+		if strs.Uppcase(item.Name) == strs.Uppcase(name) {
 			return item
 		}
 	}
@@ -109,7 +109,7 @@ func (c *Schema) DDL() string {
 	var result string
 
 	if len(c.Name) > 0 {
-		result = utility.Format(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"; CREATE SCHEMA IF NOT EXISTS "%s";`, c.Name)
+		result = strs.Format(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"; CREATE SCHEMA IF NOT EXISTS "%s";`, c.Name)
 	}
 
 	return result
@@ -120,7 +120,7 @@ func (c *Schema) DDL() string {
 **/
 func (c *Schema) Model(name string) *Model {
 	for _, item := range c.Models {
-		if utility.Uppcase(item.Name) == utility.Uppcase(name) {
+		if strs.Uppcase(item.Name) == strs.Uppcase(name) {
 			return item
 		}
 	}

@@ -3,7 +3,7 @@ package core
 import (
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/jdb"
-	"github.com/cgalvisleon/elvis/utility"
+	"github.com/cgalvisleon/elvis/strs"
 )
 
 var (
@@ -72,7 +72,7 @@ func NextVal(tag string) int {
 func GetSerie(tag string) int {
 	if !EnabledSeries() {
 		var result int
-		tag = utility.Replace(tag, ".", "")
+		tag = strs.Replace(tag, ".", "")
 		if _, ok := series[tag]; ok {
 			result = NextVal(tag)
 		} else {
@@ -115,9 +115,9 @@ func GetCode(tag, prefix string) string {
 	num := GetSerie(tag)
 
 	if len(prefix) == 0 {
-		return utility.Format("%08v", num)
+		return strs.Format("%08v", num)
 	} else {
-		return utility.Format("%s%08v", prefix, num)
+		return strs.Format("%s%08v", prefix, num)
 	}
 }
 
@@ -171,7 +171,7 @@ func SyncSeries(masterIdx int, c chan int) error {
 		ok = false
 
 		offset := (page - 1) * rows
-		sql := utility.Format(`
+		sql := strs.Format(`
 		SELECT A.*
 		FROM core.SERIES A
 		ORDER BY A.SERIE

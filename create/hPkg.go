@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/cgalvisleon/elvis/file"
-	"github.com/cgalvisleon/elvis/utility"
+	"github.com/cgalvisleon/elvis/strs"
 )
 
 func MakePkg(name, schema, schemaVar string) error {
@@ -18,7 +18,7 @@ func MakePkg(name, schema, schemaVar string) error {
 		return err
 	}
 
-	modelo := utility.Titlecase(name)
+	modelo := strs.Titlecase(name)
 	_, err = file.MakeFile(path, "model.go", modelModel, name, modelo)
 	if err != nil {
 		return err
@@ -34,7 +34,7 @@ func MakePkg(name, schema, schemaVar string) error {
 		return err
 	}
 
-	title := utility.Titlecase(name)
+	title := strs.Titlecase(name)
 	_, err = file.MakeFile(path, "router.go", modelRouter, name, title)
 	if err != nil {
 		return err
@@ -56,9 +56,9 @@ func MakeModel(name, modelo, schemaVar string) error {
 		return err
 	}
 
-	modelo = utility.Titlecase(modelo)
+	modelo = strs.Titlecase(modelo)
 	fileName := fmt.Sprintf(`h%s.go`, modelo)
-	_, err = file.MakeFile(path, fileName, modelHandler, name, modelo, schemaVar, utility.Uppcase(modelo), utility.Lowcase(modelo))
+	_, err = file.MakeFile(path, fileName, modelHandler, name, modelo, schemaVar, strs.Uppcase(modelo), strs.Lowcase(modelo))
 	if err != nil {
 		return err
 	}

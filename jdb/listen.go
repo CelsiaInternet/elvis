@@ -5,7 +5,7 @@ import (
 
 	"github.com/cgalvisleon/elvis/console"
 	e "github.com/cgalvisleon/elvis/json"
-	"github.com/cgalvisleon/elvis/utility"
+	"github.com/cgalvisleon/elvis/strs"
 	"github.com/lib/pq"
 )
 
@@ -76,11 +76,11 @@ func ListenEvent(nodo, url, channel string, listener *pq.Listener, listen func(r
 }
 
 func CloseListen(host, channel string) {
-	closeListen = utility.Format(`%s/%s`, host, channel)
+	closeListen = strs.Format(`%s/%s`, host, channel)
 }
 
 func IsCloseListen(host, channel string) bool {
-	key := utility.Format(`%s/%s`, host, channel)
+	key := strs.Format(`%s/%s`, host, channel)
 	result := closeListen == key
 	return !result
 }
@@ -90,7 +90,7 @@ func hostNotification(l *pq.Listener, channel string, nodo string, listen func(r
 	case n := <-l.Notify:
 		result, err := e.ToJson(n.Extra)
 		if err != nil {
-			console.LogC("DB channel", "Red", utility.Format("hostNotification: Not conver to e.Json nodo:%s channel:%s result:%s", nodo, channel, n.Extra))
+			console.LogC("DB channel", "Red", strs.Format("hostNotification: Not conver to e.Json nodo:%s channel:%s result:%s", nodo, channel, n.Extra))
 		}
 
 		result["nodo"] = nodo

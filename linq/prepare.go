@@ -2,6 +2,7 @@ package linq
 
 import (
 	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/strs"
 	"github.com/cgalvisleon/elvis/utility"
 )
 
@@ -18,7 +19,7 @@ func (c *Model) Consolidate(current e.Json, linq *Linq) *Linq {
 	}
 
 	for k, v := range linq.data {
-		k = utility.Lowcase(k)
+		k = strs.Lowcase(k)
 		idxCol := c.ColIdx(k)
 
 		if idxCol == -1 {
@@ -44,12 +45,12 @@ func (c *Model) Consolidate(current e.Json, linq *Linq) *Linq {
 
 		if utility.ContainsInt([]int{TpField, TpFunction, TpDetail}, col.Tp) {
 			continue
-		} else if k == utility.Lowcase(c.SourceField) {
+		} else if k == strs.Lowcase(c.SourceField) {
 			atribs := linq.data.Json(k)
 
 			if c.integrityAtrib {
 				for ak, av := range atribs {
-					ak = utility.Lowcase(ak)
+					ak = strs.Lowcase(ak)
 					if idx := c.AtribIdx(ak); idx != -1 {
 						atrib := c.Definition[idx]
 						linq.AddValidate(atrib, av)
@@ -87,7 +88,7 @@ func (c *Model) Changue(current e.Json, linq *Linq) *Linq {
 	new := linq.new
 
 	for k, v := range *new {
-		k = utility.Lowcase(k)
+		k = strs.Lowcase(k)
 		idxCol := c.ColIdx(k)
 
 		if idxCol != -1 {
@@ -144,7 +145,7 @@ func (c *Linq) PrepareUpdate(current e.Json) bool {
 	}
 
 	if model.UseDateMake {
-		delete(*c.new, utility.Lowcase(model.DateMakeField))
+		delete(*c.new, strs.Lowcase(model.DateMakeField))
 	}
 
 	now := utility.Now()

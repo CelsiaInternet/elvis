@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/cgalvisleon/elvis/console"
-	"github.com/cgalvisleon/elvis/generic"
 	"github.com/cgalvisleon/elvis/logs"
+	"github.com/cgalvisleon/elvis/strs"
 	"github.com/google/uuid"
 	"golang.org/x/exp/slices"
 )
@@ -93,81 +93,8 @@ func NewId() string {
 	return GenId("")
 }
 
-func Format(format string, args ...any) string {
-	result := fmt.Sprintf(format, args...)
-
-	return result
-}
-
-func FormatUppCase(format string, args ...any) string {
-	result := Format(format, args...)
-
-	return Uppcase(result)
-}
-
-func FormatLowCase(format string, args ...any) string {
-	result := Format(format, args...)
-
-	return Lowcase(result)
-}
-
-func Replace(str string, old string, new string) string {
-	return strings.ReplaceAll(str, old, new)
-}
-
-func ReplaceAll(str string, olds []string, new string) string {
-	var result string = str
-	for _, str := range olds {
-		result = strings.ReplaceAll(result, str, new)
-	}
-
-	return result
-}
-
-func Name(str string) string {
-	regex := `[0-9\s]+`
-	pattern := regexp.MustCompile(regex)
-	return pattern.ReplaceAllString(str, "_")
-}
-
-func Trim(str string) string {
-	return strings.Trim(str, " ")
-}
-
-func NotSpace(str string) string {
-	return Replace(str, " ", "")
-}
-
-func Uppcase(s string) string {
-	return strings.ToUpper(s)
-}
-
-func Lowcase(s string) string {
-	return strings.ToLower(s)
-}
-
-func Titlecase(str string) string {
-	var result string
-	var ok bool
-	for i, char := range str {
-		s := fmt.Sprintf("%c", char)
-		if i == 0 {
-			s = strings.ToUpper(s)
-		} else if s == "" {
-			ok = true
-		} else if ok {
-			ok = false
-			s = strings.ToUpper(s)
-		}
-
-		result = Append(result, s, "")
-	}
-
-	return result
-}
-
 func Pointer(collection string, id string) string {
-	return Format("%s/%s", collection, id)
+	return strs.Format("%s/%s", collection, id)
 }
 
 func Contains(c []string, v string) bool {
@@ -197,78 +124,13 @@ func InInt(val string, in []string) bool {
 }
 
 func StrToBool(val string) (bool, error) {
-	if Lowcase(val) == "true" {
+	if strs.Lowcase(val) == "true" {
 		return true, nil
-	} else if Lowcase(val) == "false" {
+	} else if strs.Lowcase(val) == "false" {
 		return false, nil
 	}
 
 	return false, console.ErrorM(VALUE_NOT_BOOL)
-}
-
-func Empty(str1, str2 string) string {
-	if len(str1) == 0 {
-		return str2
-	}
-
-	return str1
-}
-
-func Append(str1, str2, sp string) string {
-	if len(str1) == 0 {
-		return str2
-	}
-	if len(str2) == 0 {
-		return str1
-	}
-
-	return Format(`%s%s%s`, str1, sp, str2)
-}
-
-func AppendAny(val1, val2 any, sp string) string {
-	any1 := generic.New(val1)
-	any2 := generic.New(val2)
-
-	if len(any1.Str()) == 0 {
-		return any2.Str()
-	}
-	if len(any2.Str()) == 0 {
-		return any1.Str()
-	}
-
-	return Format(`%v%s%v`, any1, sp, any2)
-}
-
-func Split(str, sep string) []string {
-	return strings.Split(str, sep)
-}
-
-func GetSplitIndex(str, sep string, idx int) string {
-	split := Split(str, sep)
-	if idx < 0 {
-		idx = len(split) + idx
-	}
-
-	if idx < len(split) {
-		return split[idx]
-	}
-
-	return ""
-}
-
-func ApendAny(space string, strs ...any) string {
-	var result string = ""
-	for i, s := range strs {
-		if i == 0 {
-			result = fmt.Sprintf(`%v`, s)
-		} else if len(result) == 0 && len(fmt.Sprint(s)) > 0 {
-			result = fmt.Sprintf(`%v`, s)
-		} else if len(result) > 0 && len(fmt.Sprint(s)) > 0 {
-			result = fmt.Sprintf(`%s%v%v`, result, space, s)
-		}
-	}
-
-	return result
 }
 
 func TimeDifference(dateInt, dateEnd any) time.Duration {
@@ -292,33 +154,6 @@ func TimeDifference(dateInt, dateEnd any) time.Duration {
 	}
 
 	return _dateInt.Sub(_dateEnd)
-}
-
-func StrToTime(val string) (time.Time, error) {
-	var result time.Time
-	layout := "2006-01-02T15:04:05.000Z"
-
-	result, err := time.Parse(layout, val)
-	if err != nil {
-		return result, err
-	}
-
-	return result, nil
-}
-
-func RemoveAcents(str string) string {
-	str = strings.ReplaceAll(str, "á", "a")
-	str = strings.ReplaceAll(str, "é", "e")
-	str = strings.ReplaceAll(str, "í", "i")
-	str = strings.ReplaceAll(str, "ó", "o")
-	str = strings.ReplaceAll(str, "ú", "u")
-
-	str = strings.ReplaceAll(str, "Á", "A")
-	str = strings.ReplaceAll(str, "É", "E")
-	str = strings.ReplaceAll(str, "Í", "I")
-	str = strings.ReplaceAll(str, "Ó", "O")
-	str = strings.ReplaceAll(str, "Ú", "U")
-	return str
 }
 
 func GeneratePortNumber() int {
@@ -434,9 +269,9 @@ func Quote(val interface{}) any {
 func Params(str string, args ...any) string {
 	var result string = str
 	for i, v := range args {
-		p := Format(`$%d`, i+1)
-		rp := Format(`%v`, v)
-		result = Replace(result, p, rp)
+		p := strs.Format(`$%d`, i+1)
+		rp := strs.Format(`%v`, v)
+		result = strs.Replace(result, p, rp)
 	}
 
 	return result
@@ -444,8 +279,8 @@ func Params(str string, args ...any) string {
 
 func ParamQuote(str string, args ...any) string {
 	for i, arg := range args {
-		old := Format(`$%d`, i+1)
-		new := Format(`%v`, Quote(arg))
+		old := strs.Format(`$%d`, i+1)
+		new := strs.Format(`%v`, Quote(arg))
 		str = strings.ReplaceAll(str, old, new)
 	}
 

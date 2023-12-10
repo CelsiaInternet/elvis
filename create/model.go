@@ -106,7 +106,7 @@ func New() (*Server, error) {
 		r.Mount("/v1", latest)
 
 		handler := cors.AllowAll().Handler(r)
-		addr := utility.Format(":%d", port)
+		addr := strs.Format(":%d", port)
 		serv := &http.Server{
 			Addr:    addr,
 			Handler: handler,

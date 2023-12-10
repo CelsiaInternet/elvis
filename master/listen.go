@@ -2,7 +2,7 @@ package master
 
 import (
 	e "github.com/cgalvisleon/elvis/json"
-	"github.com/cgalvisleon/elvis/utility"
+	"github.com/cgalvisleon/elvis/strs"
 )
 
 func listenSync(res e.Json) {
@@ -21,7 +21,7 @@ func listenNode(res e.Json) {
 	action := res.Str("action")
 	nodeId := res.Str("nodo")
 
-	switch utility.Uppcase(action) {
+	switch strs.Uppcase(action) {
 	case "INSERT":
 		go master.LoadNodeById(nodeId)
 	case "UPDATE":

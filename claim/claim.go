@@ -12,6 +12,7 @@ import (
 	"github.com/cgalvisleon/elvis/event"
 	"github.com/cgalvisleon/elvis/generic"
 	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/strs"
 	"github.com/cgalvisleon/elvis/utility"
 	"github.com/golang-jwt/jwt/v4"
 	_ "github.com/joho/godotenv/autoload"
@@ -96,8 +97,8 @@ func DelTokeStrng(tokenString string) error {
 }
 
 func TokenKey(app, device, id string) string {
-	str := utility.Append(app, device, "-")
-	str = utility.Append(str, id, "-")
+	str := strs.Append(app, device, "-")
+	str = strs.Append(str, id, "-")
 	return fmt.Sprintf(`token:%s`, str)
 }
 

@@ -6,6 +6,7 @@ import (
 	"github.com/cgalvisleon/elvis/generic"
 	"github.com/cgalvisleon/elvis/jdb"
 	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/strs"
 	"github.com/cgalvisleon/elvis/utility"
 )
 
@@ -28,11 +29,11 @@ type Col struct {
 }
 
 func (c *Col) Up() string {
-	return utility.Uppcase(c.name)
+	return strs.Uppcase(c.name)
 }
 
 func (c *Col) Low() string {
-	return utility.Lowcase(c.name)
+	return strs.Lowcase(c.name)
 }
 
 func (c *Col) Cast(cast string) *Col {
@@ -50,11 +51,11 @@ func (c *Col) As() string {
 }
 
 func (c *Col) AsUp() string {
-	return utility.Uppcase(c.As())
+	return strs.Uppcase(c.As())
 }
 
 func (c *Col) AsLow() string {
-	return utility.Lowcase(c.As())
+	return strs.Lowcase(c.As())
 }
 
 /**
@@ -131,7 +132,7 @@ func (c *Column) Describe() e.Json {
 
 func (c *Column) Valid(val any) error {
 	if c.Required {
-		switch utility.Uppcase(c.Type) {
+		switch strs.Uppcase(c.Type) {
 		case "BOOLEAN":
 			if !utility.ValidIn(val.(string), 0, []string{"TRUE", "FALSE", "true", "false", "1", "0"}) {
 				return errors.New(c.RequiredMsg)
@@ -150,7 +151,7 @@ func NewColumn(model *Model, name, description, _type string, _default any) *Col
 	result := &Column{
 		Model:       model,
 		Tp:          TpColumn,
-		name:        utility.Uppcase(name),
+		name:        strs.Uppcase(name),
 		Description: description,
 		Type:        _type,
 		Default:     _default,
@@ -159,31 +160,31 @@ func NewColumn(model *Model, name, description, _type string, _default any) *Col
 	}
 
 	if !model.UseDateMake {
-		model.UseDateMake = utility.Uppcase(result.name) == utility.Uppcase(model.DateMakeField)
+		model.UseDateMake = strs.Uppcase(result.name) == strs.Uppcase(model.DateMakeField)
 	}
 
 	if !model.UseDateUpdate {
-		model.UseDateUpdate = utility.Uppcase(result.name) == utility.Uppcase(model.DateUpdateField)
+		model.UseDateUpdate = strs.Uppcase(result.name) == strs.Uppcase(model.DateUpdateField)
 	}
 
 	if !model.UseState {
-		model.UseState = utility.Uppcase(result.name) == utility.Uppcase(model.StateField)
+		model.UseState = strs.Uppcase(result.name) == strs.Uppcase(model.StateField)
 	}
 
 	if !model.UseRecycle {
-		model.UseRecycle = utility.Uppcase(result.name) == utility.Uppcase(model.StateField)
+		model.UseRecycle = strs.Uppcase(result.name) == strs.Uppcase(model.StateField)
 	}
 
 	if !model.UseProject {
-		model.UseProject = utility.Uppcase(result.name) == utility.Uppcase(model.ProjectField)
+		model.UseProject = strs.Uppcase(result.name) == strs.Uppcase(model.ProjectField)
 	}
 
 	if !model.UseIndex {
-		model.UseIndex = utility.Uppcase(result.name) == utility.Uppcase(model.IndexField)
+		model.UseIndex = strs.Uppcase(result.name) == strs.Uppcase(model.IndexField)
 	}
 
 	if !model.UseSource {
-		model.UseSource = utility.Uppcase(result.name) == utility.Uppcase(model.SourceField)
+		model.UseSource = strs.Uppcase(result.name) == strs.Uppcase(model.SourceField)
 	}
 
 	model.Definition = append(model.Definition, result)
@@ -194,7 +195,7 @@ func NewVirtualAtrib(model *Model, name, description, _type string, _default any
 	result := &Column{
 		Model:       model,
 		Tp:          TpColumn,
-		name:        utility.Uppcase(name),
+		name:        strs.Uppcase(name),
 		Description: description,
 		Type:        _type,
 		Default:     _default,
@@ -218,40 +219,40 @@ func (c *Column) DDL() string {
 	_default := generic.New(c.Default)
 
 	if _default.Str() == "NOW()" {
-		result = utility.Append(`DEFAULT NOW()`, result, " ")
+		result = strs.Append(`DEFAULT NOW()`, result, " ")
 	} else {
-		result = utility.Append(utility.Format(`DEFAULT %v`, e.Quoted(c.Default)), result, " ")
+		result = strs.Append(strs.Format(`DEFAULT %v`, e.Quoted(c.Default)), result, " ")
 	}
 
 	if c.Type == "SERIAL" {
-		result = utility.Uppcase(c.Type)
+		result = strs.Uppcase(c.Type)
 	} else if len(c.Type) > 0 {
-		result = utility.Append(utility.Uppcase(c.Type), result, " ")
+		result = strs.Append(strs.Uppcase(c.Type), result, " ")
 	}
 	if len(c.name) > 0 {
-		result = utility.Append(utility.Uppcase(c.name), result, " ")
+		result = strs.Append(strs.Uppcase(c.name), result, " ")
 	}
 
 	return result
 }
 
 func (c *Column) DDLIndex() string {
-	return jdb.SQLDDL(`CREATE INDEX IF NOT EXISTS $2_$3_IDX ON $1($3);`, utility.Lowcase(c.Model.Name), utility.Uppcase(c.Model.Table), utility.Uppcase(c.name))
+	return jdb.SQLDDL(`CREATE INDEX IF NOT EXISTS $2_$3_IDX ON $1($3);`, strs.Lowcase(c.Model.Name), strs.Uppcase(c.Model.Table), strs.Uppcase(c.name))
 }
 
 func (c *Column) DDLUniqueIndex() string {
-	return jdb.SQLDDL(`CREATE UNIQUE INDEX IF NOT EXISTS $2_$3_IDX ON $1($3);`, utility.Lowcase(c.Model.Name), utility.Uppcase(c.Model.Table), utility.Uppcase(c.name))
+	return jdb.SQLDDL(`CREATE UNIQUE INDEX IF NOT EXISTS $2_$3_IDX ON $1($3);`, strs.Lowcase(c.Model.Name), strs.Uppcase(c.Model.Table), strs.Uppcase(c.name))
 }
 
 /**
 *
 **/
 func (c *Column) Up() string {
-	return utility.Uppcase(c.name)
+	return strs.Uppcase(c.name)
 }
 
 func (c *Column) Low() string {
-	return utility.Lowcase(c.name)
+	return strs.Lowcase(c.name)
 }
 
 /**
@@ -261,36 +262,36 @@ func (c *Column) As(linq *Linq) string {
 	switch c.Tp {
 	case TpColumn:
 		from := linq.GetFrom(c)
-		return utility.Append(from.As(), c.Up(), ".")
+		return strs.Append(from.As(), c.Up(), ".")
 	case TpAtrib:
 		from := linq.GetFrom(c)
-		col := utility.Append(from.As(), c.Column.Up(), ".")
-		return utility.Format(`%s#>>'{%s}'`, col, c.Low())
+		col := strs.Append(from.As(), c.Column.Up(), ".")
+		return strs.Format(`%s#>>'{%s}'`, col, c.Low())
 	case TpClone:
-		return utility.Append(utility.Uppcase(c.from), c.Up(), ".")
+		return strs.Append(strs.Uppcase(c.from), c.Up(), ".")
 	case TpReference:
 		from := linq.GetFrom(c)
 		as := linq.GetAs()
-		as = utility.Format(`A%s`, as)
-		fn := utility.Format(`%s.%s`, as, c.Reference.Reference.Up())
-		fm := utility.Format(`%s AS %s`, c.Reference.Reference.Model.Name, as)
-		key := utility.Format(`%s.%s`, as, c.Reference.Key)
-		Fkey := utility.Append(from.As(), c.Reference.Fkey, ".")
-		return utility.Format(`(SELECT %s FROM %s WHERE %s=%v LIMIT 1)`, fn, fm, key, Fkey)
+		as = strs.Format(`A%s`, as)
+		fn := strs.Format(`%s.%s`, as, c.Reference.Reference.Up())
+		fm := strs.Format(`%s AS %s`, c.Reference.Reference.Model.Name, as)
+		key := strs.Format(`%s.%s`, as, c.Reference.Key)
+		Fkey := strs.Append(from.As(), c.Reference.Fkey, ".")
+		return strs.Format(`(SELECT %s FROM %s WHERE %s=%v LIMIT 1)`, fn, fm, key, Fkey)
 	case TpDetail:
-		return utility.Format(`%v`, e.Quoted(c.Default))
+		return strs.Format(`%v`, e.Quoted(c.Default))
 	case TpFunction:
 		def := FunctionDef(linq, c)
-		return utility.Append(def, c.Up(), " AS ")
+		return strs.Append(def, c.Up(), " AS ")
 	case TpField:
 		as := linq.As(c)
 		if len(as) > 0 {
-			as = utility.Format(`%s.`, as)
+			as = strs.Format(`%s.`, as)
 		}
-		def := utility.Format(`(%v)`, c.Definition)
-		return utility.ReplaceAll(def, []string{"{AS}.", "{as}.", "{AS}", "{as}"}, as)
+		def := strs.Format(`(%v)`, c.Definition)
+		return strs.ReplaceAll(def, []string{"{AS}.", "{as}.", "{AS}", "{as}"}, as)
 	default:
-		return utility.Format(`%s`, c.Up())
+		return strs.Format(`%s`, c.Up())
 	}
 }
 
@@ -304,57 +305,57 @@ func (c *Column) Def(linq *Linq) string {
 		switch c.Tp {
 		case TpColumn:
 			def := c.As(linq)
-			return utility.Format(`'%s', %s`, c.Low(), def)
+			return strs.Format(`'%s', %s`, c.Low(), def)
 		case TpAtrib:
 			def := c.As(linq)
-			def = utility.Format(`COALESCE(%s, %v)`, def, e.Quoted(c.Default))
-			return utility.Format(`'%s', %s`, c.Low(), def)
+			def = strs.Format(`COALESCE(%s, %v)`, def, e.Quoted(c.Default))
+			return strs.Format(`'%s', %s`, c.Low(), def)
 		case TpClone:
 			return c.As(linq)
 		case TpReference:
-			Fkey := utility.Append(from.As(), c.Reference.Fkey, ".")
+			Fkey := strs.Append(from.As(), c.Reference.Fkey, ".")
 			def := c.As(linq)
-			def = utility.Format(`jsonb_build_object('_id', %s, 'name', %s)`, Fkey, def)
-			return utility.Format(`'%s', %s`, c.Title, def)
+			def = strs.Format(`jsonb_build_object('_id', %s, 'name', %s)`, Fkey, def)
+			return strs.Format(`'%s', %s`, c.Title, def)
 		case TpDetail:
 			def := e.Quoted(c.Default)
-			return utility.Format(`'%s', %s`, c.Low(), def)
+			return strs.Format(`'%s', %s`, c.Low(), def)
 		case TpFunction:
 			def := FunctionDef(linq, c)
-			return utility.Format(`'%s', %s`, c.Low(), def)
+			return strs.Format(`'%s', %s`, c.Low(), def)
 		case TpField:
 			def := c.As(linq)
-			return utility.Format(`'%s', %s`, c.Low(), def)
+			return strs.Format(`'%s', %s`, c.Low(), def)
 		default:
 			def := e.Quoted(c.Default)
-			return utility.Format(`'%s', %s`, c.Low(), def)
+			return strs.Format(`'%s', %s`, c.Low(), def)
 		}
 	}
 
 	switch c.Tp {
 	case TpColumn:
-		return utility.Append(from.As(), c.Up(), ".")
+		return strs.Append(from.As(), c.Up(), ".")
 	case TpAtrib:
-		col := utility.Append(from.As(), c.Column.Up(), ".")
-		def := utility.Format(`%s#>>'{%s}'`, col, c.Low())
-		def = utility.Format(`COALESCE(%s, %v)`, def, e.Quoted(c.Default))
-		return utility.Format(`%s AS %s`, def, c.Up())
+		col := strs.Append(from.As(), c.Column.Up(), ".")
+		def := strs.Format(`%s#>>'{%s}'`, col, c.Low())
+		def = strs.Format(`COALESCE(%s, %v)`, def, e.Quoted(c.Default))
+		return strs.Format(`%s AS %s`, def, c.Up())
 	case TpClone:
-		return utility.Append(utility.Uppcase(c.from), c.Up(), ".")
+		return strs.Append(strs.Uppcase(c.from), c.Up(), ".")
 	case TpReference:
 		def := c.As(linq)
-		return utility.Format(`%s AS %s`, def, utility.Uppcase(c.Title))
+		return strs.Format(`%s AS %s`, def, strs.Uppcase(c.Title))
 	case TpDetail:
 		def := e.Quoted(c.Default)
-		return utility.Format(`%v AS %s`, def, c.Up())
+		return strs.Format(`%v AS %s`, def, c.Up())
 	case TpFunction:
 		def := FunctionDef(linq, c)
-		return utility.Format(`%s AS %s`, def, c.Up())
+		return strs.Format(`%s AS %s`, def, c.Up())
 	case TpField:
 		def := c.As(linq)
-		return utility.Format(`%s AS %s`, def, c.Up())
+		return strs.Format(`%s AS %s`, def, c.Up())
 	default:
-		return utility.Format(`%s`, c.Up())
+		return strs.Format(`%s`, c.Up())
 	}
 }
 

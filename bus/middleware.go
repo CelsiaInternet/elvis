@@ -14,7 +14,7 @@ import (
 	"github.com/cgalvisleon/elvis/console"
 	e "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/response"
-	"github.com/cgalvisleon/elvis/utility"
+	"github.com/cgalvisleon/elvis/strs"
 	"github.com/go-chi/chi"
 )
 
@@ -189,7 +189,7 @@ func FindPath(endpoint *Endpoint) *Endpoint {
 }
 
 func ExecutePath(endpoint *Endpoint, w http.ResponseWriter, r *http.Request) {
-	apiUrl := utility.Format(`%s://%s%s`, endpoint.Scheme, endpoint.Host, endpoint.Path)
+	apiUrl := strs.Format(`%s://%s%s`, endpoint.Scheme, endpoint.Host, endpoint.Path)
 	body := endpoint.Body
 	bodyParams := []byte(body.ToString())
 	req, err := http.NewRequest(endpoint.Method, apiUrl, bytes.NewBuffer(bodyParams))

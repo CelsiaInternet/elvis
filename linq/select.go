@@ -5,7 +5,7 @@ import (
 
 	"github.com/cgalvisleon/elvis/console"
 	e "github.com/cgalvisleon/elvis/json"
-	"github.com/cgalvisleon/elvis/utility"
+	"github.com/cgalvisleon/elvis/strs"
 )
 
 func (c *Linq) Select(sel ...any) *Linq {
@@ -44,7 +44,7 @@ func (c *Linq) Select(sel ...any) *Linq {
 func (c *Linq) Find() (e.Items, error) {
 	c.SqlSelect()
 
-	c.sql = utility.Format(`%s;`, c.sql)
+	c.sql = strs.Format(`%s;`, c.sql)
 
 	items, err := c.Query()
 	if err != nil {

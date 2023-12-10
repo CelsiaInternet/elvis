@@ -3,11 +3,12 @@ package utility
 import (
 	"regexp"
 
+	"github.com/cgalvisleon/elvis/strs"
 	"golang.org/x/exp/slices"
 )
 
 func ValidStr(val string, min int, notIn []string) bool {
-	v := Replace(val, " ", "")
+	v := strs.Replace(val, " ", "")
 	ok := len(v) > min
 	if ok {
 		return ok
@@ -18,7 +19,7 @@ func ValidStr(val string, min int, notIn []string) bool {
 }
 
 func ValidIn(val string, min int, in []string) bool {
-	v := Replace(val, " ", "")
+	v := strs.Replace(val, " ", "")
 	ok := len(v) > min && Contains(in, val)
 	return ok
 }

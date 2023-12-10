@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/cgalvisleon/elvis/logs"
+	"github.com/cgalvisleon/elvis/strs"
 )
 
 type Items struct {
@@ -145,8 +146,18 @@ func (it *Items) Json(idx int, atribs ...string) Json {
 	}
 }
 
-func (it *Items) ToString(idx int) string {
+func (it *Items) ToStrings(idx int) string {
 	return it.Result[idx].ToString()
+}
+
+func (it *Items) ToString() string {
+	var result string
+	for _, item := range it.Result {
+		str := item.ToString()
+		result = strs.Append(result, str, ",")
+	}
+
+	return  strs.Format(`[%s]`, result)
 }
 
 func (it *Items) ToJson() Json {

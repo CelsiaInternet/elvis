@@ -7,7 +7,7 @@ import (
 
 	"github.com/cgalvisleon/elvis/envar"
 	e "github.com/cgalvisleon/elvis/json"
-	"github.com/cgalvisleon/elvis/utility"
+	"github.com/cgalvisleon/elvis/strs"
 	_ "github.com/joho/godotenv/autoload"
 )
 
@@ -16,10 +16,10 @@ func SendWhatsApp(country, phone, message string) (e.Json, error) {
 	twilioAUT := envar.EnvarStr("", "TWILIO_AUT")
 	twilioFrom := envar.EnvarStr("", "TWILIO_FROM")
 
-	apiURL := utility.Format(`https://api.twilio.com/2010-04-01/Accounts/%s/Messages.json`, twilioSID)
-	from := utility.Format(`whatsapp:%s`, twilioFrom)
+	apiURL := strs.Format(`https://api.twilio.com/2010-04-01/Accounts/%s/Messages.json`, twilioSID)
+	from := strs.Format(`whatsapp:%s`, twilioFrom)
 	body := message
-	to := utility.Format(`whatsapp:%s%s`, country, phone)
+	to := strs.Format(`whatsapp:%s%s`, country, phone)
 
 	data := url.Values{}
 	data.Set("From", from)

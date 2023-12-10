@@ -6,6 +6,7 @@ import (
 	"github.com/cgalvisleon/elvis/jdb"
 	e "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/msg"
+	"github.com/cgalvisleon/elvis/strs"
 	"github.com/cgalvisleon/elvis/utility"
 )
 
@@ -142,9 +143,9 @@ func NewModel(schema *Schema, table, description string, version int) *Model {
 		Db:              schema.Db,
 		Database:        schema.Database,
 		Schema:          schema.Name,
-		Name:            utility.Append(utility.Lowcase(schema.Name), utility.Uppcase(table), "."),
+		Name:            strs.Append(strs.Lowcase(schema.Name), strs.Uppcase(table), "."),
 		Description:     description,
-		Table:           utility.Uppcase(table),
+		Table:           strs.Uppcase(table),
 		UseSync:         schema.UseSync,
 		Version:         version,
 		SourceField:     schema.SourceField,
@@ -223,24 +224,24 @@ func (c *Model) DDL() string {
 	}
 
 	if len(c.PrimaryKeys) > 0 {
-		keys := utility.Format(`PRIMARY KEY (%s)`, strings.Join(c.PrimaryKeys, ", "))
-		fields = append(fields, utility.Uppcase(keys))
+		keys := strs.Format(`PRIMARY KEY (%s)`, strings.Join(c.PrimaryKeys, ", "))
+		fields = append(fields, strs.Uppcase(keys))
 	}
 
 	for _, def := range index {
-		result = utility.Append(result, def, "\n")
+		result = strs.Append(result, def, "\n")
 	}
 
 	_fields := ""
 	for i, def := range fields {
 		if i == 0 {
-			def = utility.Format("\n%s", def)
+			def = strs.Format("\n%s", def)
 		}
-		_fields = utility.Append(_fields, def, ",\n")
+		_fields = strs.Append(_fields, def, ",\n")
 	}
 
-	str := utility.Format(`CREATE TABLE IF NOT EXISTS %s(%s);`, c.Name, _fields)
-	result = utility.Append(str, result, "\n")
+	str := strs.Format(`CREATE TABLE IF NOT EXISTS %s(%s);`, c.Name, _fields)
+	result = strs.Append(str, result, "\n")
 
 	c.Ddl = result
 
@@ -252,26 +253,26 @@ func (c *Model) DDLMigration() string {
 
 	table := c.Name
 	c.Table = "NEW_TABLE"
-	c.Name = utility.Append(c.Schema, c.Table, ",")
+	c.Name = strs.Append(c.Schema, c.Table, ",")
 	ddl := c.DDL()
 
 	for _, column := range c.Definition {
 		fields = append(fields, column.name)
 	}
 
-	insert := utility.Format(`INSERT INTO %s(%s) SELECT %s FROM %s;`, c.Name, strings.Join(fields, ", "), strings.Join(fields, ", "), table)
+	insert := strs.Format(`INSERT INTO %s(%s) SELECT %s FROM %s;`, c.Name, strings.Join(fields, ", "), strings.Join(fields, ", "), table)
 
-	drop := utility.Format(`DROP TABLE %s CASCADE;`, c.Name)
+	drop := strs.Format(`DROP TABLE %s CASCADE;`, c.Name)
 
-	alter := utility.Format(`ALTER TABLE %s RENAME TO %s;`, c.Name, table)
+	alter := strs.Format(`ALTER TABLE %s RENAME TO %s;`, c.Name, table)
 
-	result := utility.Format(`%s %s %s %s`, ddl, insert, drop, alter)
+	result := strs.Format(`%s %s %s %s`, ddl, insert, drop, alter)
 
 	return result
 }
 
 func (c *Model) DropDDL() string {
-	return utility.Format(`DROP TABLE IF EXISTS %s CASCADE;`, c.Name)
+	return strs.Format(`DROP TABLE IF EXISTS %s CASCADE;`, c.Name)
 }
 
 /**
@@ -307,16 +308,16 @@ func (c *Model) Details(name, description string, _default any, details Details)
 *
 **/
 func (c *Model) Up() string {
-	return utility.Uppcase(c.Name)
+	return strs.Uppcase(c.Name)
 }
 
 func (c *Model) Low() string {
-	return utility.Lowcase(c.Name)
+	return strs.Lowcase(c.Name)
 }
 
 func (c *Model) ColIdx(name string) int {
 	for i, item := range c.Definition {
-		if item.Up() == utility.Uppcase(name) {
+		if item.Up() == strs.Uppcase(name) {
 			return i
 		}
 	}
@@ -348,7 +349,7 @@ func (c *Model) Column(name string) *Column {
 
 func (c *Model) TitleIdx(name string) int {
 	for i, item := range c.Definition {
-		if utility.Uppcase(item.Title) == utility.Uppcase(name) {
+		if strs.Uppcase(item.Title) == strs.Uppcase(name) {
 			return i
 		}
 	}
@@ -363,7 +364,7 @@ func (c *Model) AtribIdx(name string) int {
 	}
 
 	for i, item := range source.Atribs {
-		if utility.Lowcase(item.name) == utility.Lowcase(name) {
+		if strs.Lowcase(item.name) == strs.Lowcase(name) {
 			return i
 		}
 	}
@@ -400,7 +401,7 @@ func (c *Model) DefineAtrib(name, description, _type string, _default any) *Mode
 	result := NewColumn(c, name, description, _type, _default)
 	result.Tp = TpAtrib
 	result.Column = source
-	result.name = utility.Lowcase(name)
+	result.name = strs.Lowcase(name)
 	source.Atribs = append(source.Atribs, result)
 
 	return c
@@ -501,7 +502,7 @@ func (c *Model) DefineRequired(names []string) *Model {
 				col.RequiredMsg = msg
 			}
 		} else {
-			col.RequiredMsg = utility.Format(msg.MSG_ATRIB_REQUIRED, col.name)
+			col.RequiredMsg = strs.Format(msg.MSG_ATRIB_REQUIRED, col.name)
 		}
 	}
 	return c

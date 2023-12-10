@@ -2,7 +2,7 @@ package linq
 
 import (
 	e "github.com/cgalvisleon/elvis/json"
-	"github.com/cgalvisleon/elvis/utility"
+	"github.com/cgalvisleon/elvis/strs"
 )
 
 func (c *Linq) Sql() string {
@@ -23,7 +23,7 @@ func (c *Linq) Sql() string {
 func (c *Linq) SQL() SQL {
 	c.Sql()
 	return SQL{
-		val: utility.Format(`(%s)`, c.sql),
+		val: strs.Format(`(%s)`, c.sql),
 	}
 }
 
@@ -48,21 +48,21 @@ func (c *Linq) SqlColumDef(cols ...*Column) string {
 				data = col.As(c)
 			} else if _, exist := atribs[col.name]; !exist {
 				atribs[col.name] = col.name
-				objects = utility.Append(objects, def, ",\n")
+				objects = strs.Append(objects, def, ",\n")
 			}
 
 			if n == 20 {
-				def := utility.Format(`jsonb_build_object(%s)`, objects)
-				json = utility.Append(json, def, "||")
+				def := strs.Format(`jsonb_build_object(%s)`, objects)
+				json = strs.Append(json, def, "||")
 				objects = ""
 				n = 0
 			}
 		}
 
 		if n > 0 {
-			def := utility.Format(`jsonb_build_object(%s)`, objects)
-			json = utility.Append(json, def, "||")
-			data = utility.Append(data, json, "||")
+			def := strs.Format(`jsonb_build_object(%s)`, objects)
+			json = strs.Append(json, def, "||")
+			data = strs.Append(data, json, "||")
 		}
 
 		return data
@@ -71,7 +71,7 @@ func (c *Linq) SqlColumDef(cols ...*Column) string {
 	for _, col := range cols {
 		def := col.Def(c)
 
-		result = utility.Append(result, def, ",")
+		result = strs.Append(result, def, ",")
 	}
 
 	return result
@@ -93,14 +93,14 @@ func (c *Linq) SqlColums(cols ...*Column) string {
 			}
 
 			res := c.SqlColumDef(cols...)
-			result = utility.Append(result, res, ",")
+			result = strs.Append(result, res, ",")
 		}
 
-		result = utility.Format(`%s AS %s`, result, c.from[0].model.SourceField)
+		result = strs.Format(`%s AS %s`, result, c.from[0].model.SourceField)
 	} else if c.Tp == TpData {
 		result = c.SqlColumDef(cols...)
 
-		result = utility.Format(`%s AS %s`, result, c.from[0].model.SourceField)
+		result = strs.Format(`%s AS %s`, result, c.from[0].model.SourceField)
 	} else if n > 0 {
 		result = c.SqlColumDef(cols...)
 	} else {
@@ -116,7 +116,7 @@ func (c *Linq) SqlColums(cols ...*Column) string {
 func (c *Linq) SqlSelect() string {
 	result := c.SqlColums(c._select...)
 
-	c.sql = utility.Format(`SELECT %s`, result)
+	c.sql = strs.Format(`SELECT %s`, result)
 
 	c.SqlFrom()
 
@@ -135,10 +135,10 @@ func (c *Linq) SqlReturn() string {
 	result := c.SqlColums(c._return...)
 
 	if len(result) > 0 {
-		result = utility.Format(`RETURNING %s`, result)
+		result = strs.Format(`RETURNING %s`, result)
 	}
 
-	c.sql = utility.Append(c.sql, result, "\n")
+	c.sql = strs.Append(c.sql, result, "\n")
 
 	return result
 }
@@ -159,13 +159,13 @@ func (c *Linq) SqlCurrent() string {
 	if n > 0 {
 		result = c.SqlColumDef(cols...)
 		if c.Tp == TpData {
-			result = utility.Format(`%s AS %s`, result, c.from[0].model.SourceField)
+			result = strs.Format(`%s AS %s`, result, c.from[0].model.SourceField)
 		}
 	} else {
 		result = "*"
 	}
 
-	c.sql = utility.Format(`SELECT %s`, result)
+	c.sql = strs.Format(`SELECT %s`, result)
 
 	c.SqlFrom()
 
@@ -191,12 +191,12 @@ func (c *Linq) SqlCount() string {
 func (c *Linq) SqlFrom() string {
 	var result string
 	for _, from := range c.from {
-		result = utility.Append(result, from.NameAs(), ", ")
+		result = strs.Append(result, from.NameAs(), ", ")
 	}
 
-	result = utility.Format(`FROM %s`, result)
+	result = strs.Format(`FROM %s`, result)
 
-	c.sql = utility.Append(c.sql, result, "\n")
+	c.sql = strs.Append(c.sql, result, "\n")
 
 	return result
 }
@@ -205,12 +205,12 @@ func (c *Linq) SqlJoin() string {
 	var result string
 	for _, join := range c._join {
 		where := join.where.Define(c).where
-		def := utility.Append(join.join.model.Name, join.join.as, " AS ")
-		def = utility.Format(`%s %s ON %s`, join.kind, def, where)
-		result = utility.Append(result, def, "\n")
+		def := strs.Append(join.join.model.Name, join.join.as, " AS ")
+		def = strs.Format(`%s %s ON %s`, join.kind, def, where)
+		result = strs.Append(result, def, "\n")
 	}
 
-	c.sql = utility.Append(c.sql, result, "\n")
+	c.sql = strs.Append(c.sql, result, "\n")
 
 	return result
 }
@@ -223,16 +223,16 @@ func (c *Linq) SqlWhere() string {
 		if len(result) == 0 {
 			wh = def.where
 		} else {
-			wh = utility.Append(def.connector, def.where, " ")
+			wh = strs.Append(def.connector, def.where, " ")
 		}
-		result = utility.Append(result, wh, "\n")
+		result = strs.Append(result, wh, "\n")
 	}
 
 	if len(result) > 0 {
-		result = utility.Format(`WHERE %s`, result)
+		result = strs.Format(`WHERE %s`, result)
 	}
 
-	c.sql = utility.Append(c.sql, result, "\n")
+	c.sql = strs.Append(c.sql, result, "\n")
 
 	return result
 }
@@ -247,17 +247,17 @@ func (c *Linq) SqlKey() string {
 			if len(result) == 0 {
 				wh = def.where
 			} else {
-				wh = utility.Append(def.connector, def.where, " ")
+				wh = strs.Append(def.connector, def.where, " ")
 			}
-			result = utility.Append(result, wh, "\n")
+			result = strs.Append(result, wh, "\n")
 		}
 	}
 
 	if len(result) > 0 {
-		result = utility.Format(`WHERE %s`, result)
+		result = strs.Format(`WHERE %s`, result)
 	}
 
-	c.sql = utility.Append(c.sql, result, "\n")
+	c.sql = strs.Append(c.sql, result, "\n")
 
 	return result
 }
@@ -266,14 +266,14 @@ func (c *Linq) SqlGroupBy() string {
 	var result string
 	for _, col := range c.groupBy {
 		def := col.As(c)
-		result = utility.Append(result, def, ", ")
+		result = strs.Append(result, def, ", ")
 	}
 
 	if len(result) > 0 {
-		result = utility.Format(`GROUP BY %s`, result)
+		result = strs.Format(`GROUP BY %s`, result)
 	}
 
-	c.sql = utility.Append(c.sql, result, "\n")
+	c.sql = strs.Append(c.sql, result, "\n")
 
 	return result
 }
@@ -283,19 +283,19 @@ func (c *Linq) SqlOrderBy() string {
 	var group string
 	for _, order := range c.orderBy {
 		if order.sorted {
-			group = utility.Format(`%s ASC`, order.colum.As(c))
+			group = strs.Format(`%s ASC`, order.colum.As(c))
 		} else {
-			group = utility.Format(`%s DESC`, order.colum.As(c))
+			group = strs.Format(`%s DESC`, order.colum.As(c))
 		}
 
-		result = utility.Append(result, group, ", ")
+		result = strs.Append(result, group, ", ")
 	}
 
 	if len(result) > 0 {
-		result = utility.Format(`ORDER BY %s`, result)
+		result = strs.Format(`ORDER BY %s`, result)
 	}
 
-	c.sql = utility.Append(c.sql, result, "\n")
+	c.sql = strs.Append(c.sql, result, "\n")
 
 	return result
 }
@@ -309,9 +309,9 @@ func (c *Linq) SqlAll() string {
 func (c *Linq) SqlLimit(limit int) string {
 	c.SqlSelect()
 
-	result := utility.Format(`LIMIT %d;`, limit)
+	result := strs.Format(`LIMIT %d;`, limit)
 
-	c.sql = utility.Append(c.sql, result, "\n")
+	c.sql = strs.Append(c.sql, result, "\n")
 
 	return c.sql
 }
@@ -319,9 +319,9 @@ func (c *Linq) SqlLimit(limit int) string {
 func (c *Linq) SqlOffset(limit, offset int) string {
 	c.SqlSelect()
 
-	result := utility.Format(`LIMIT %d OFFSET %d;`, limit, offset)
+	result := strs.Format(`LIMIT %d OFFSET %d;`, limit, offset)
 
-	c.sql = utility.Append(c.sql, result, "\n")
+	c.sql = strs.Append(c.sql, result, "\n")
 
 	return c.sql
 }
@@ -342,14 +342,14 @@ func (c *Linq) SqlIndex() string {
 
 	result = c.SqlColumDef(cols...)
 	if c.Tp == TpData {
-		result = utility.Format(`%s AS %s`, result, c.from[0].model.SourceField)
+		result = strs.Format(`%s AS %s`, result, c.from[0].model.SourceField)
 	}
 
 	if len(result) > 0 {
-		result = utility.Format(`RETURNING %s`, result)
+		result = strs.Format(`RETURNING %s`, result)
 	}
 
-	c.sql = utility.Append(c.sql, result, "\n")
+	c.sql = strs.Append(c.sql, result, "\n")
 
 	return result
 }
@@ -363,18 +363,18 @@ func (c *Linq) SqlInsert() string {
 	var values string
 
 	for key, val := range *c.new {
-		field := utility.Uppcase(key)
+		field := strs.Uppcase(key)
 		value := e.Quoted(val)
 
-		fields = utility.Append(fields, field, ", ")
-		values = utility.Append(values, utility.Format(`%v`, value), ", ")
+		fields = strs.Append(fields, field, ", ")
+		values = strs.Append(values, strs.Format(`%v`, value), ", ")
 	}
 
-	c.sql = utility.Format("INSERT INTO %s(%s)\nVALUES (%s)", model.Name, fields, values)
+	c.sql = strs.Format("INSERT INTO %s(%s)\nVALUES (%s)", model.Name, fields, values)
 
 	c.SqlReturn()
 
-	c.sql = utility.Format(`%s;`, c.sql)
+	c.sql = strs.Format(`%s;`, c.sql)
 
 	return c.sql
 }
@@ -384,27 +384,27 @@ func (c *Linq) SqlUpdate() string {
 	var fieldValues string
 
 	for key, val := range *c.new {
-		field := utility.Uppcase(key)
+		field := strs.Uppcase(key)
 		value := e.Quoted(val)
 
-		if model.UseSource && field == utility.Uppcase(model.SourceField) {
-			vals := utility.Uppcase(model.SourceField)
-			atribs := c.new.Json(utility.Lowcase(field))
+		if model.UseSource && field == strs.Uppcase(model.SourceField) {
+			vals := strs.Uppcase(model.SourceField)
+			atribs := c.new.Json(strs.Lowcase(field))
 
 			for ak, av := range atribs {
-				ak = utility.Lowcase(ak)
+				ak = strs.Lowcase(ak)
 				av = e.DoubleQuoted(av)
 
-				vals = utility.Format(`jsonb_set(%s, '{%s}', '%v', true)`, vals, ak, av)
+				vals = strs.Format(`jsonb_set(%s, '{%s}', '%v', true)`, vals, ak, av)
 			}
 			value = vals
 		}
 
-		fieldValue := utility.Format(`%s=%v`, field, value)
-		fieldValues = utility.Append(fieldValues, fieldValue, ",\n")
+		fieldValue := strs.Format(`%s=%v`, field, value)
+		fieldValues = strs.Append(fieldValues, fieldValue, ",\n")
 	}
 
-	c.sql = utility.Format(`UPDATE %s AS A SET %s`, model.Name, fieldValues)
+	c.sql = strs.Format(`UPDATE %s AS A SET %s`, model.Name, fieldValues)
 
 	c.SqlWhere()
 
@@ -412,7 +412,7 @@ func (c *Linq) SqlUpdate() string {
 
 	c.SqlReturn()
 
-	c.sql = utility.Format(`%s;`, c.sql)
+	c.sql = strs.Format(`%s;`, c.sql)
 
 	return c.sql
 }
@@ -420,13 +420,13 @@ func (c *Linq) SqlUpdate() string {
 func (c *Linq) SqlDelete() string {
 	model := c.from[0].model
 
-	c.sql = utility.Format(`DELETE FROM %s`, model.Name)
+	c.sql = strs.Format(`DELETE FROM %s`, model.Name)
 
 	c.SqlWhere()
 
 	c.SqlIndex()
 
-	c.sql = utility.Format(`%s;`, c.sql)
+	c.sql = strs.Format(`%s;`, c.sql)
 
 	return c.sql
 }

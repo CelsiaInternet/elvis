@@ -11,6 +11,7 @@ import (
 	e "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/linq"
 	"github.com/cgalvisleon/elvis/msg"
+	"github.com/cgalvisleon/elvis/strs"
 	"github.com/cgalvisleon/elvis/utility"
 )
 
@@ -214,7 +215,7 @@ func LoadTokens() error {
 		ok = false
 
 		offset := (page - 1) * rows
-		sql := utility.Format(`
+		sql := strs.Format(`
 		SELECT *
 		FROM module.TOKENS
 		ORDER BY INDEX
@@ -254,7 +255,7 @@ func UnLoadTokens() error {
 		ok = false
 
 		offset := (page - 1) * rows
-		sql := utility.Format(`
+		sql := strs.Format(`
 		SELECT APP, DEVICE, _ID
 		FROM module.TOKENS
 		ORDER BY INDEX

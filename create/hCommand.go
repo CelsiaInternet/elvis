@@ -3,6 +3,7 @@ package create
 import (
 	"fmt"
 
+	"github.com/cgalvisleon/elvis/strs"
 	"github.com/cgalvisleon/elvis/utility"
 	"github.com/spf13/cobra"
 )
@@ -104,7 +105,7 @@ var CmdModelo = &cobra.Command{
 			return
 		}
 
-		title := utility.Titlecase(name)
+		title := strs.Titlecase(name)
 		message := fmt.Sprintf(`Remember, including the router, that it is on the bottom of the h%s.go, in routers section of the router.go file`, title)
 		fmt.Println(message)
 	},

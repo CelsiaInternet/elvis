@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	e "github.com/cgalvisleon/elvis/json"
-	"github.com/cgalvisleon/elvis/utility"
+	"github.com/cgalvisleon/elvis/strs"
 )
 
 type Where struct {
@@ -22,9 +22,9 @@ func (c *Where) Str1() string {
 	case []any:
 		for _, vl := range v {
 			def := c.Def(vl)
-			result = utility.Append(result, def, ",")
+			result = strs.Append(result, def, ",")
 		}
-		result = utility.Format(`(%s)`, result)
+		result = strs.Format(`(%s)`, result)
 	default:
 		result = c.Def(v)
 	}
@@ -38,9 +38,9 @@ func (c *Where) Str2() string {
 	case []any:
 		for _, vl := range v {
 			def := c.Def(vl)
-			result = utility.Append(result, def, ",")
+			result = strs.Append(result, def, ",")
 		}
-		result = utility.Format(`(%s)`, result)
+		result = strs.Format(`(%s)`, result)
 	default:
 		result = c.Def(v)
 	}
@@ -49,7 +49,7 @@ func (c *Where) Str2() string {
 }
 
 func StrToCols(str string) []string {
-	str = utility.ReplaceAll(str, []string{" "}, "")
+	str = strs.ReplaceAll(str, []string{" "}, "")
 	cols := strings.Split(str, ",")
 
 	return cols
@@ -70,22 +70,22 @@ func (c *Where) Def(val any) string {
 	switch v := val.(type) {
 	case Column:
 		as := v.As(c.linq)
-		return utility.Append(as, v.cast, "::")
+		return strs.Append(as, v.cast, "::")
 	case *Column:
 		as := v.As(c.linq)
-		return utility.Append(as, v.cast, "::")
+		return strs.Append(as, v.cast, "::")
 	case Col:
 		as := v.from
-		as = utility.Append(as, v.name, ".")
-		return utility.Append(as, v.cast, "::")
+		as = strs.Append(as, v.name, ".")
+		return strs.Append(as, v.cast, "::")
 	case *Col:
 		as := v.from
-		as = utility.Append(as, v.name, ".")
-		return utility.Append(as, v.cast, "::")
+		as = strs.Append(as, v.name, ".")
+		return strs.Append(as, v.cast, "::")
 	case SQL:
-		return utility.Format(`%v`, v.val)
+		return strs.Format(`%v`, v.val)
 	default:
-		return utility.Format(`%v`, e.Quoted(v))
+		return strs.Format(`%v`, e.Quoted(v))
 	}
 }
 
@@ -93,9 +93,9 @@ func (c *Where) Define(linq *Linq) *Where {
 	var where string
 
 	result := c.Str1()
-	where = utility.Format(`%s %s`, result, c.operator)
+	where = strs.Format(`%s %s`, result, c.operator)
 	result = c.Str2()
-	where = utility.Format(`%s %s`, where, result)
+	where = strs.Format(`%s %s`, where, result)
 
 	c.where = where
 

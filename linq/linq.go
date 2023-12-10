@@ -6,7 +6,7 @@ import (
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/jdb"
 	e "github.com/cgalvisleon/elvis/json"
-	"github.com/cgalvisleon/elvis/utility"
+	"github.com/cgalvisleon/elvis/strs"
 )
 
 const TpSelect = 1
@@ -38,7 +38,7 @@ func (c *FRom) As() string {
 }
 
 func (c *FRom) NameAs() string {
-	return utility.Append(c.model.Name, c.as, " AS ")
+	return strs.Append(c.model.Name, c.as, " AS ")
 }
 
 func (c *FRom) Col(name string, cast ...string) *Col {
@@ -134,7 +134,7 @@ func NewLinq(tp int, act int, model *Model, as ...string) *Linq {
 	} else if len(as) == 0 {
 		as = []string{""}
 	}
-	from := &FRom{model: model, as: utility.Uppcase(as[0])}
+	from := &FRom{model: model, as: strs.Uppcase(as[0])}
 	return &Linq{
 		Tp:        tp,
 		Act:       act,
@@ -173,20 +173,20 @@ func GetAs(n int) string {
 		a = 65 + a
 		b = 65 + b - 1
 		c = 65 + c - 1
-		as = utility.Format(`A%c%c%c`, rune(c), rune(b), rune(a))
+		as = strs.Format(`A%c%c%c`, rune(c), rune(b), rune(a))
 	} else if b > base {
 		b = b / base
 		a = 65 + a
 		b = 65 + b - 1
 		c = 65 + c - 1
-		as = utility.Format(`%c%c%c`, rune(c), rune(b), rune(a))
+		as = strs.Format(`%c%c%c`, rune(c), rune(b), rune(a))
 	} else if b > 0 {
 		a = 65 + a
 		b = 65 + b - 1
-		as = utility.Format(`%c%c`, rune(b), rune(a))
+		as = strs.Format(`%c%c`, rune(b), rune(a))
 	} else {
 		a = 65 + a
-		as = utility.Format(`%c`, rune(a))
+		as = strs.Format(`%c`, rune(a))
 	}
 
 	return as
@@ -292,7 +292,7 @@ func (c *Linq) As(val any) string {
 }
 
 func (c *Linq) GetCol(name string) *Column {
-	if f := utility.ReplaceAll(name, []string{" "}, ""); len(f) == 0 {
+	if f := strs.ReplaceAll(name, []string{" "}, ""); len(f) == 0 {
 		return nil
 	}
 
@@ -301,7 +301,7 @@ func (c *Linq) GetCol(name string) *Column {
 		modelN := pars[0]
 		colN := pars[0]
 		for _, item := range c.fromAs {
-			if item.model.Up() == utility.Uppcase(modelN) {
+			if item.model.Up() == strs.Uppcase(modelN) {
 				return item.model.Column(colN)
 			}
 		}
