@@ -157,7 +157,7 @@ func (it *Items) ToString() string {
 		result = strs.Append(result, str, ",")
 	}
 
-	return  strs.Format(`[%s]`, result)
+	return strs.Format(`[%s]`, result)
 }
 
 func (it *Items) ToJson() Json {
