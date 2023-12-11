@@ -206,7 +206,7 @@ func SetUser(name, password, fullName, phone, email string) (e.Item, error) {
 	}
 
 	if current.Ok {
-		return e.Item{}, console.ErrorM(msg.RECORD_FOUND)
+		return e.Item{}, console.Alert(msg.RECORD_FOUND)
 	}
 
 	id := utility.NewId()
