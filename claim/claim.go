@@ -2,7 +2,6 @@ package claim
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -99,7 +98,7 @@ func DelTokeStrng(tokenString string) error {
 func TokenKey(app, device, id string) string {
 	str := strs.Append(app, device, "-")
 	str = strs.Append(str, id, "-")
-	return fmt.Sprintf(`token:%s`, str)
+	return strs.Format(`token:%s`, str)
 }
 
 func ParceToken(tokenString string) (*Claim, error) {

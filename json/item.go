@@ -2,13 +2,13 @@ package json
 
 import (
 	"database/sql"
-	"fmt"
 	"reflect"
 	"strings"
 	"time"
 
 	"github.com/cgalvisleon/elvis/generic"
 	"github.com/cgalvisleon/elvis/logs"
+	"github.com/cgalvisleon/elvis/strs"
 )
 
 type Item struct {
@@ -100,7 +100,7 @@ func (it *Item) Uppcase(_default string, atribs ...string) string {
 	case string:
 		return strings.ToUpper(v)
 	default:
-		return fmt.Sprintf(`%v`, strings.ToUpper(_default))
+		return strs.Format(`%v`, strings.ToUpper(_default))
 	}
 }
 
@@ -111,7 +111,7 @@ func (it *Item) Lowcase(_default string, atribs ...string) string {
 	case string:
 		return strings.ToLower(v)
 	default:
-		return fmt.Sprintf(`%v`, strings.ToLower(_default))
+		return strs.Format(`%v`, strings.ToLower(_default))
 	}
 }
 
@@ -122,7 +122,7 @@ func (it *Item) Titlecase(_default string, atribs ...string) string {
 	case string:
 		return strings.ToTitle(v)
 	default:
-		return fmt.Sprintf(`%v`, strings.ToTitle(_default))
+		return strs.Format(`%v`, strings.ToTitle(_default))
 	}
 }
 

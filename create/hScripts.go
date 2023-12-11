@@ -1,9 +1,8 @@
 package create
 
 import (
-	"fmt"
-
 	"github.com/cgalvisleon/elvis/file"
+	"github.com/cgalvisleon/elvis/strs"
 )
 
 func MakeScripts(name string) error {
@@ -12,7 +11,7 @@ func MakeScripts(name string) error {
 		return err
 	}
 
-	_, err = file.MakeFile(path, fmt.Sprintf("%s.http", name), restHttp, name)
+	_, err = file.MakeFile(path, strs.Format("%s.http", name), restHttp, name)
 	if err != nil {
 		return err
 	}

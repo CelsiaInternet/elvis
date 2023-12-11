@@ -101,6 +101,17 @@ func Append(str1, str2, sp string) string {
 	return Format(`%s%s%s`, str1, sp, str2)
 }
 
+func AppendStr(s1, s2 string) string {
+	if len(s2) == 0 {
+		return s1
+	}
+	if len(s1) == 0 {
+		return s2
+	}
+
+	return Format(`%s_%s`, strings.ToUpper(s1), strings.ToUpper(s2))
+}
+
 func AppendAny(val1, val2 any, sp string) string {
 	any1 := generic.New(val1)
 	any2 := generic.New(val2)

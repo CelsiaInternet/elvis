@@ -5,7 +5,6 @@ package console
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"runtime"
 	"slices"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/cgalvisleon/elvis/event"
 	"github.com/cgalvisleon/elvis/logs"
+	"github.com/cgalvisleon/elvis/strs"
 	_ "github.com/joho/godotenv/autoload"
 )
 
@@ -23,7 +23,7 @@ func NewError(message string) error {
 }
 
 func NewErrorF(format string, args ...any) error {
-	message := fmt.Sprintf(format, args...)
+	message := strs.Format(format, args...)
 	err := NewError(message)
 
 	return err
@@ -42,7 +42,7 @@ func LogK(kind string, args ...any) {
 }
 
 func LogKF(kind string, format string, args ...any) {
-	message := fmt.Sprintf(format, args...)
+	message := strs.Format(format, args...)
 	LogK(kind, message)
 }
 
@@ -51,7 +51,7 @@ func Log(args ...any) {
 }
 
 func LogF(format string, args ...any) {
-	message := fmt.Sprintf(format, args...)
+	message := strs.Format(format, args...)
 	Log(message)
 }
 
@@ -59,9 +59,9 @@ func Print(args ...any) {
 	message := ""
 	for i, arg := range args {
 		if i == 0 {
-			message = fmt.Sprintf("%v", arg)
+			message = strs.Format("%v", arg)
 		} else {
-			message = fmt.Sprintf("%s, %v", message, arg)
+			message = strs.Format("%s, %v", message, arg)
 		}
 	}
 	Log(message)
@@ -72,7 +72,7 @@ func Info(args ...any) {
 }
 
 func InfoF(format string, args ...any) {
-	message := fmt.Sprintf(format, args...)
+	message := strs.Format(format, args...)
 	Info(message)
 }
 
@@ -83,7 +83,7 @@ func Alert(message string) error {
 }
 
 func AlertF(format string, args ...any) error {
-	message := fmt.Sprintf(format, args...)
+	message := strs.Format(format, args...)
 	return Alert(message)
 }
 
@@ -106,7 +106,7 @@ func Error(err error) error {
 			name = list[len(list)-1]
 		}
 		if !slices.Contains([]string{"ErrorM", "ErrorF"}, name) {
-			trace := fmt.Sprintf("%s:%d func:%s", file, line, name)
+			trace := strs.Format("%s:%d func:%s", file, line, name)
 			trces = append(trces, trace)
 			logs.Logln("TRACE", "Red", trace)
 		}
@@ -126,7 +126,7 @@ func ErrorM(message string) error {
 }
 
 func ErrorF(format string, args ...any) error {
-	message := fmt.Sprintf(format, args...)
+	message := strs.Format(format, args...)
 	err := NewError(message)
 	return Error(err)
 }
@@ -137,7 +137,7 @@ func Fatal(v ...any) {
 }
 
 func FatalF(format string, args ...any) {
-	message := fmt.Sprintf(format, args...)
+	message := strs.Format(format, args...)
 	Fatal(message)
 }
 

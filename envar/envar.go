@@ -1,24 +1,12 @@
 package envar
 
 import (
-	"fmt"
 	"os"
-	"strings"
 
 	"github.com/cgalvisleon/elvis/generic"
 	"github.com/cgalvisleon/elvis/logs"
+	"github.com/cgalvisleon/elvis/strs"
 )
-
-func appendStr(s1, s2 string) string {
-	if len(s2) == 0 {
-		return s1
-	}
-	if len(s1) == 0 {
-		return s2
-	}
-
-	return fmt.Sprintf(`%s_%s`, strings.ToUpper(s1), strings.ToUpper(s2))
-}
 
 func MetaSet(meta, name string, _default any, usage, _var string) *generic.Any {
 	var result *generic.Any = generic.New(_default)
@@ -28,11 +16,11 @@ func MetaSet(meta, name string, _default any, usage, _var string) *generic.Any {
 			if arg == "" {
 				logs.Errorf(`-%s in %s (default %s)`, name, usage, _default)
 			}
-			_var = appendStr(meta, _var)
+			_var = strs.AppendStr(meta, _var)
 			os.Setenv(_var, arg)
 			result.Set(arg)
 			break
-		} else if arg == fmt.Sprintf(`-%s`, name) {
+		} else if arg == strs.Format(`-%s`, name) {
 			ok = true
 		}
 	}
@@ -58,7 +46,7 @@ func SetvarInt(name string, _default int, usage, _var string) int {
 func EnvarAny(_default any, args ...string) *generic.Any {
 	var _var string
 	if len(args) > 1 {
-		_var = appendStr(args[0], args[1])
+		_var = strs.AppendStr(args[0], args[1])
 	} else if len(args) > 0 {
 		_var = args[0]
 	}

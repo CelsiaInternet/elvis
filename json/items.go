@@ -1,7 +1,6 @@
 package json
 
 import (
-	"fmt"
 	"reflect"
 	"strings"
 
@@ -42,7 +41,7 @@ func (it *Items) Uppcase(idx int, _default string, atribs ...string) string {
 	case string:
 		return strings.ToUpper(v)
 	default:
-		return fmt.Sprintf(`%v`, strings.ToUpper(_default))
+		return strs.Format(`%v`, strings.ToUpper(_default))
 	}
 }
 
@@ -57,7 +56,7 @@ func (it *Items) Lowcase(idx int, _default string, atribs ...string) string {
 	case string:
 		return strings.ToLower(v)
 	default:
-		return fmt.Sprintf(`%v`, strings.ToLower(_default))
+		return strs.Format(`%v`, strings.ToLower(_default))
 	}
 }
 
@@ -72,7 +71,7 @@ func (it *Items) Titlecase(idx int, _default string, atribs ...string) string {
 	case string:
 		return strings.ToTitle(v)
 	default:
-		return fmt.Sprintf(`%v`, strings.ToTitle(_default))
+		return strs.Format(`%v`, strings.ToTitle(_default))
 	}
 }
 

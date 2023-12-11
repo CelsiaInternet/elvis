@@ -2,13 +2,13 @@ package cache
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 	"time"
 
 	e "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/logs"
 	"github.com/cgalvisleon/elvis/msg"
+	"github.com/cgalvisleon/elvis/strs"
 )
 
 func SetCtx(ctx context.Context, key, val string, second time.Duration) error {
@@ -126,7 +126,7 @@ func More(key string, second time.Duration) int {
 	}
 
 	val++
-	Set(key, fmt.Sprintf(`%d`, val), second)
+	Set(key, strs.Format(`%d`, val), second)
 
 	return val
 }
@@ -144,17 +144,17 @@ func HDel(key, atr string) error {
 }
 
 func SetVerify(device, key, val string) error {
-	key = fmt.Sprintf(`verify:%s/%s`, device, key)
+	key = strs.Format(`verify:%s/%s`, device, key)
 	return Set(key, val, 5*60)
 }
 
 func GetVerify(device string, key string) (string, error) {
-	key = fmt.Sprintf(`verify:%s/%s`, device, key)
+	key = strs.Format(`verify:%s/%s`, device, key)
 	return Get(key)
 }
 
 func DelVerify(device string, key string) (int64, error) {
-	key = fmt.Sprintf(`verify:%s/%s`, device, key)
+	key = strs.Format(`verify:%s/%s`, device, key)
 	return Del(key)
 }
 

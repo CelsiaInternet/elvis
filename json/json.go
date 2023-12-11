@@ -3,7 +3,6 @@ package json
 import (
 	"database/sql/driver"
 	"encoding/json"
-	"fmt"
 	"log"
 	"reflect"
 	"strconv"
@@ -12,6 +11,7 @@ import (
 
 	"github.com/cgalvisleon/elvis/generic"
 	"github.com/cgalvisleon/elvis/logs"
+	"github.com/cgalvisleon/elvis/strs"
 )
 
 type Json map[string]interface{}
@@ -113,7 +113,7 @@ func (jb Json) ValStr(_default string, atribs ...string) string {
 	case string:
 		return v
 	default:
-		return fmt.Sprintf(`%v`, v)
+		return strs.Format(`%v`, v)
 	}
 }
 

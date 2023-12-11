@@ -1,9 +1,8 @@
 package create
 
 import (
-	"fmt"
-
 	"github.com/cgalvisleon/elvis/file"
+	"github.com/cgalvisleon/elvis/strs"
 )
 
 func MakeCmd(packageName, name string) error {
@@ -26,25 +25,25 @@ func MakeCmd(packageName, name string) error {
 }
 
 func DeleteCmd(packageName string) error {
-	path := fmt.Sprintf(`./cmd/%s`, packageName)
+	path := strs.Format(`./cmd/%s`, packageName)
 	_, err := file.RemoveFile(path)
 	if err != nil {
 		return err
 	}
 
-	path = fmt.Sprintf(`./internal/service/%s`, packageName)
+	path = strs.Format(`./internal/service/%s`, packageName)
 	_, err = file.RemoveFile(path)
 	if err != nil {
 		return err
 	}
 
-	path = fmt.Sprintf(`./internal/pkg/%s`, packageName)
+	path = strs.Format(`./internal/pkg/%s`, packageName)
 	_, err = file.RemoveFile(path)
 	if err != nil {
 		return err
 	}
 
-	path = fmt.Sprintf(`./internal/rest/%s.http`, packageName)
+	path = strs.Format(`./internal/rest/%s.http`, packageName)
 	_, err = file.RemoveFile(path)
 	if err != nil {
 		return err

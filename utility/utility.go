@@ -208,7 +208,7 @@ func ExtractMencion(str string) []string {
 func Quote(val interface{}) any {
 	switch v := val.(type) {
 	case string:
-		return fmt.Sprintf(`'%s'`, v)
+		return strs.Format(`'%s'`, v)
 	case int:
 		return v
 	case float64:
@@ -224,7 +224,7 @@ func Quote(val interface{}) any {
 	case bool:
 		return v
 	case time.Time:
-		return fmt.Sprintf(`'%s'`, v.Format("2006-01-02 15:04:05"))
+		return strs.Format(`'%s'`, v.Format("2006-01-02 15:04:05"))
 	case []interface{}:
 		var r string
 		for _, _v := range v {
@@ -232,21 +232,21 @@ func Quote(val interface{}) any {
 			if len(r) == 0 {
 				r = q
 			} else {
-				r = fmt.Sprintf(`%v, %v`, r, q)
+				r = strs.Format(`%v, %v`, r, q)
 			}
 		}
-		return fmt.Sprintf(`'[%s]'`, r)
+		return strs.Format(`'[%s]'`, r)
 	case map[string]interface{}:
 		var r string
 		for k, _v := range v {
 			q := Quote(_v).(string)
 			if len(r) == 0 {
-				r = fmt.Sprintf(`"%v": %v`, k, q)
+				r = strs.Format(`"%v": %v`, k, q)
 			} else {
-				r = fmt.Sprintf(`%v, "%v": %v`, r, k, q)
+				r = strs.Format(`%v, "%v": %v`, r, k, q)
 			}
 		}
-		return fmt.Sprintf(`'%s'`, r)
+		return strs.Format(`'%s'`, r)
 	case []map[string]interface{}:
 		var r string
 		for _, _v := range v {
@@ -254,10 +254,10 @@ func Quote(val interface{}) any {
 			if len(r) == 0 {
 				r = q
 			} else {
-				r = fmt.Sprintf(`%v, %v`, r, q)
+				r = strs.Format(`%v, %v`, r, q)
 			}
 		}
-		return fmt.Sprintf(`'[%s]'`, r)
+		return strs.Format(`'[%s]'`, r)
 	case nil:
 		return "NULL"
 	default:
@@ -288,11 +288,11 @@ func ParamQuote(str string, args ...any) string {
 }
 
 func Address(host string, port int) string {
-	return fmt.Sprintf("%s:%d", host, port)
+	return strs.Format("%s:%d", host, port)
 }
 
 func BannerTitle(name, version string, size int) string {
-	return fmt.Sprintf(`{{ .Title "%s V%s" "" %d }}`, name, version, size)
+	return strs.Format(`{{ .Title "%s V%s" "" %d }}`, name, version, size)
 }
 
 func ModuleName() (string, error) {

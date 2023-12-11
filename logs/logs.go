@@ -7,6 +7,8 @@ import (
 	"runtime"
 	"strings"
 	"time"
+
+	"github.com/cgalvisleon/elvis/strs"
 )
 
 var Reset = "\033[0m"
@@ -41,25 +43,25 @@ func Logln(kind string, color string, args ...any) string {
 
 	switch color {
 	case "Reset":
-		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + message + Reset
+		result = now + Purple + strs.Format(" [%s]: ", kind) + Reset + message + Reset
 	case "Red":
-		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Red + message + Reset
+		result = now + Purple + strs.Format(" [%s]: ", kind) + Reset + Red + message + Reset
 	case "Green":
-		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Green + message + Reset
+		result = now + Purple + strs.Format(" [%s]: ", kind) + Reset + Green + message + Reset
 	case "Yellow":
-		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Yellow + message + Reset
+		result = now + Purple + strs.Format(" [%s]: ", kind) + Reset + Yellow + message + Reset
 	case "Blue":
-		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Blue + message + Reset
+		result = now + Purple + strs.Format(" [%s]: ", kind) + Reset + Blue + message + Reset
 	case "Purple":
-		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Purple + message + Reset
+		result = now + Purple + strs.Format(" [%s]: ", kind) + Reset + Purple + message + Reset
 	case "Cyan":
-		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Cyan + message + Reset
+		result = now + Purple + strs.Format(" [%s]: ", kind) + Reset + Cyan + message + Reset
 	case "Gray":
-		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Gray + message + Reset
+		result = now + Purple + strs.Format(" [%s]: ", kind) + Reset + Gray + message + Reset
 	case "White":
-		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + White + message + Reset
+		result = now + Purple + strs.Format(" [%s]: ", kind) + Reset + White + message + Reset
 	default:
-		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Green + message + Reset
+		result = now + Purple + strs.Format(" [%s]: ", kind) + Reset + Green + message + Reset
 	}
 
 	println(result)
@@ -72,7 +74,7 @@ func Log(kind string, args ...any) {
 }
 
 func Logf(kind string, format string, args ...any) {
-	message := fmt.Sprintf(format, args...)
+	message := strs.Format(format, args...)
 	Logln(kind, "", message)
 }
 
@@ -87,7 +89,7 @@ func Errorm(message string) error {
 }
 
 func Errorf(format string, args ...any) error {
-	message := fmt.Sprintf(format, args...)
+	message := strs.Format(format, args...)
 	err := errors.New(message)
 	return Error(err)
 }

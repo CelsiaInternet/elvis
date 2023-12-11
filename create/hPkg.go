@@ -1,8 +1,6 @@
 package create
 
 import (
-	"fmt"
-
 	"github.com/cgalvisleon/elvis/file"
 	"github.com/cgalvisleon/elvis/strs"
 )
@@ -57,7 +55,7 @@ func MakeModel(name, modelo, schemaVar string) error {
 	}
 
 	modelo = strs.Titlecase(modelo)
-	fileName := fmt.Sprintf(`h%s.go`, modelo)
+	fileName := strs.Format(`h%s.go`, modelo)
 	_, err = file.MakeFile(path, fileName, modelHandler, name, modelo, schemaVar, strs.Uppcase(modelo), strs.Lowcase(modelo))
 	if err != nil {
 		return err

@@ -1,8 +1,6 @@
 package create
 
 import (
-	"fmt"
-
 	"github.com/cgalvisleon/elvis/strs"
 )
 
@@ -27,8 +25,8 @@ func MkPMicroservice(packageName, name, author, schema string) error {
 
 	ProgressNext(60)
 	_, err = Command([]string{
-		fmt.Sprintf("cd ./%s", name),
-		fmt.Sprintf("go mod init github.com/%s/%s", author, name),
+		strs.Format("cd ./%s", name),
+		strs.Format("go mod init github.com/%s/%s", author, name),
 	})
 	if err != nil {
 		return err

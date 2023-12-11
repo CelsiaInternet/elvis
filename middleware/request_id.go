@@ -7,11 +7,12 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
-	"fmt"
 	"net/http"
 	"os"
 	"strings"
 	"sync/atomic"
+
+	"github.com/cgalvisleon/elvis/strs"
 )
 
 // Key to use when setting the request ID.
@@ -56,7 +57,7 @@ func init() {
 		b64 = strings.NewReplacer("+", "", "/", "").Replace(b64)
 	}
 
-	prefix = fmt.Sprintf("%s/%s", hostname, b64[0:10])
+	prefix = strs.Format("%s/%s", hostname, b64[0:10])
 }
 
 // RequestID is a middleware that injects a request ID into the context of each
@@ -70,7 +71,7 @@ func RequestID(next http.Handler) http.Handler {
 		requestID := r.Header.Get(RequestIDHeader)
 		if requestID == "" {
 			myid := atomic.AddUint64(&reqid, 1)
-			requestID = fmt.Sprintf("%s-%06d", prefix, myid)
+			requestID = strs.Format("%s-%06d", prefix, myid)
 		}
 		ctx = context.WithValue(ctx, RequestIDKey, requestID)
 		next.ServeHTTP(w, r.WithContext(ctx))

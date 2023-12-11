@@ -2,16 +2,17 @@ package file
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"strings"
+
+	"github.com/cgalvisleon/elvis/strs"
 )
 
 func params(str string, args ...any) string {
 	var result string = str
 	for i, v := range args {
-		p := fmt.Sprintf(`$%d`, i+1)
-		rp := fmt.Sprintf(`%v`, v)
+		p := strs.Format(`$%d`, i+1)
+		rp := strs.Format(`%v`, v)
 		result = strings.ReplaceAll(result, p, rp)
 	}
 
@@ -26,7 +27,7 @@ func append(str1, str2, sp string) string {
 		return str1
 	}
 
-	return fmt.Sprintf(`%s%s%s`, str1, sp, str2)
+	return strs.Format(`%s%s%s`, str1, sp, str2)
 }
 
 func ExistPath(name string) bool {
@@ -41,7 +42,7 @@ func ExistPath(name string) bool {
 }
 
 func MakeFile(folder, name, model string, args ...any) (string, error) {
-	path := fmt.Sprintf(`%s/%s`, folder, name)
+	path := strs.Format(`%s/%s`, folder, name)
 
 	if ExistPath(path) {
 		return "", errors.New("file found")

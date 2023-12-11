@@ -2,11 +2,11 @@ package jdb
 
 import (
 	"database/sql"
-	"fmt"
 
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/msg"
+	"github.com/cgalvisleon/elvis/strs"
 	_ "github.com/joho/godotenv/autoload"
 )
 
@@ -48,13 +48,13 @@ func Connected(driver, host string, port int, dbname, user, password string) (in
 	url := ""
 	switch driver {
 	case Postgres:
-		url = fmt.Sprintf(`%s://%s:%s@%s:%d/%s?sslmode=disable`, driver, user, password, host, port, dbname)
+		url = strs.Format(`%s://%s:%s@%s:%d/%s?sslmode=disable`, driver, user, password, host, port, dbname)
 	case Mysql:
-		url = fmt.Sprintf(`%s:%s@tcp(%s:%d)/%s`, user, password, host, port, dbname)
+		url = strs.Format(`%s:%s@tcp(%s:%d)/%s`, user, password, host, port, dbname)
 	case Sqlserver:
-		url = fmt.Sprintf(`server=%s;user id=%s;password=%s;port=%d;database=%s;`, host, user, password, port, dbname)
+		url = strs.Format(`server=%s;user id=%s;password=%s;port=%d;database=%s;`, host, user, password, port, dbname)
 	case Firebird:
-		url = fmt.Sprintf(`%s/%s@%s;`, user, password, host)
+		url = strs.Format(`%s/%s@%s;`, user, password, host)
 	default:
 		panic(msg.NOT_SELECT_DRIVE)
 	}
