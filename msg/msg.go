@@ -45,7 +45,7 @@ const (
 	ERR_MIGRATION_MODEL     = "Migration model faillure"
 	ERR_NOT_NATS_SERVICE    = "Not nats service"
 	MODEL_NOT_FOUND         = "Model not found:(%s)"
-	TABLE_RECORD_FOUND      = "Record found, table name:%s\nQuery:%s"
+	TABLE_RECORD_FOUND      = "Record found, table name:%s"
 	ERR_SQL                 = "SQL Error, %s\nQuery:%s"
 	STEP_VERITY             = "Verify"
 	MODULE_NOT_FOUND        = "Module not found"
