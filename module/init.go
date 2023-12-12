@@ -28,7 +28,7 @@ func InitModules() error {
 	}
 	if err := DefineTokens(); err != nil {
 		return console.PanicE(err)
-	}	
+	}
 	if err := DefineModules(); err != nil {
 		return console.PanicE(err)
 	}
@@ -199,6 +199,6 @@ func defineModule() error {
 	if err != nil {
 		return err
 	}
-	
+
 	return nil
 }

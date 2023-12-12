@@ -47,9 +47,9 @@ func PrompCreate() {
 	}
 }
 
-func PrompStr(label string) (string, error) {
+func PrompStr(label string, require bool) (string, error) {
 	validate := func(input string) error {
-		if len(input) == 0 {
+		if len(input) == 0 && require {
 			return fmt.Errorf("invalid %s", label)
 		}
 
@@ -70,8 +70,12 @@ func PrompStr(label string) (string, error) {
 	return result, nil
 }
 
-func PrompInt(label string) (int, error) {
+func PrompInt(label string, require bool) (int, error) {
 	validate := func(input string) error {
+		if len(input) == 0 && require {
+			return fmt.Errorf("invalid %s", label)
+		}
+
 		_, err := strconv.Atoi(input)
 		if err != nil {
 			return fmt.Errorf("invalid %s", label)

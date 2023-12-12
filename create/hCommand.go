@@ -19,25 +19,25 @@ var CmdProject = &cobra.Command{
 			return
 		}
 
-		name, err := PrompStr("Name")
+		name, err := PrompStr("Name", true)
 		if err != nil {
 			fmt.Printf("Prompt failed %v\n", err)
 			return
 		}
 
-		author, err := PrompStr("Author")
+		author, err := PrompStr("Author", true)
 		if err != nil {
 			fmt.Printf("Prompt failed %v\n", err)
 			return
 		}
 
-		schema, err := PrompStr("Schema")
+		schema, err := PrompStr("Schema", false)
 		if err != nil {
 			fmt.Printf("Prompt failed %v\n", err)
 			return
 		}
 
-		err = MkPMicroservice(packageName, name, author, schema)
+		err = MkProject(packageName, name, author, schema)
 		if err != nil {
 			fmt.Printf("Command failed %v\n", err)
 			return
@@ -56,13 +56,13 @@ var CmdMicro = &cobra.Command{
 			return
 		}
 
-		name, err := PrompStr("Name")
+		name, err := PrompStr("Name", true)
 		if err != nil {
 			fmt.Printf("Prompt failed %v\n", err)
 			return
 		}
 
-		schema, err := PrompStr("Schema")
+		schema, err := PrompStr("Schema", false)
 		if err != nil {
 			fmt.Printf("Prompt failed %v\n", err)
 			return
@@ -81,19 +81,19 @@ var CmdModelo = &cobra.Command{
 	Short: "Create model to microservice.",
 	Long:  "Template model to microservice include function handler model.",
 	Run: func(cmd *cobra.Command, args []string) {
-		name, err := PrompStr("Package")
+		name, err := PrompStr("Package", true)
 		if err != nil {
 			fmt.Printf("Prompt failed %v\n", err)
 			return
 		}
 
-		modelo, err := PrompStr("Model")
+		modelo, err := PrompStr("Model", true)
 		if err != nil {
 			fmt.Printf("Prompt failed %v\n", err)
 			return
 		}
 
-		schema, err := PrompStr("Schema")
+		schema, err := PrompStr("Schema", false)
 		if err != nil {
 			fmt.Printf("Prompt failed %v\n", err)
 			return
@@ -116,7 +116,7 @@ var CmdRpc = &cobra.Command{
 	Short: "Create rpc model to microservice.",
 	Long:  "Template rpc model to microservice include function handler model.",
 	Run: func(cmd *cobra.Command, args []string) {
-		name, err := PrompStr("Package")
+		name, err := PrompStr("Package", true)
 		if err != nil {
 			fmt.Printf("Prompt failed %v\n", err)
 			return

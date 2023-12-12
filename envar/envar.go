@@ -43,7 +43,7 @@ func SetvarInt(name string, _default int, usage, _var string) int {
 	return result.Int()
 }
 
-func EnvarAny(arg string) *generic.Any {	
+func EnvarAny(arg string) *generic.Any {
 	val := os.Getenv(arg)
 
 	return generic.New(val)

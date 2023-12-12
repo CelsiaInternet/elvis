@@ -143,7 +143,7 @@ func InitAdmin(fullName, country, phone, email string) (e.Item, error) {
 	if current.Ok {
 		return current, nil
 	}
-	
+
 	name := country + phone
 	data := e.Json{}
 	data["_id"] = id

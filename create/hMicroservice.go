@@ -4,7 +4,7 @@ import (
 	"github.com/cgalvisleon/elvis/strs"
 )
 
-func MkPMicroservice(packageName, name, author, schema string) error {
+func MkProject(packageName, name, author, schema string) error {
 	ProgressNext(10)
 	err := MakeProject(name)
 	if err != nil {
@@ -57,7 +57,7 @@ func MkMicroservice(packageName, name, schema string) error {
 	}
 
 	ProgressNext(10)
-	schemaVar := strs.Format(`Schema%s`, strs.Titlecase(schema))
+	schemaVar := strs.Append("Schema", strs.Titlecase(schema), "")
 	err = MakePkg(name, schema, schemaVar)
 	if err != nil {
 		return err
