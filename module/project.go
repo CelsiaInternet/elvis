@@ -266,9 +266,22 @@ func CheckProjectModule(project_id, module_id string, chk bool) (e.Item, error) 
 	data.Set("project_id", project_id)
 	data.Set("module_id", module_id)
 	if chk {
+		current, err := GetProjectByModule(project_id, module_id)
+		if err != nil {
+			return e.Item{}, err
+		}
+
+		if current.Ok {
+			return e.Item{
+				Ok: current.Ok,
+				Result: e.Json{
+					"message": msg.RECORD_NOT_UPDATE,
+					"index":   current.Index(),
+				},
+			}, nil
+		}
+
 		return ProjectModules.Insert(data).
-			Where(ProjectModules.Column("project_id").Eq(project_id)).
-			And(ProjectModules.Column("module_id").Eq(module_id)).
 			Command()
 	} else {
 		return ProjectModules.Delete().

@@ -23,6 +23,12 @@ func (an *Any) IsNil() bool {
 		return true
 	} else if an.value == "<nil>" {
 		return true
+	} else if an.value == "" {
+		return true
+	} else if an.value == "0" {
+		return true
+	} else if an.value == "0.0" {
+		return true
 	}
 
 	return false

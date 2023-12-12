@@ -153,13 +153,13 @@ func PanicE(err error) error {
 
 func PanicM(message string) error {
 	err := ErrorM(message)
-	Panic(err)
+	PanicE(err)
 	return err
 }
 
 func PanicF(format string, args ...any) error {
 	err := ErrorF(format, args...)
-	Panic(err)
+	PanicE(err)
 	return err
 }
 

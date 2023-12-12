@@ -2,7 +2,6 @@ package module
 
 import (
 	"github.com/cgalvisleon/elvis/console"
-	"github.com/cgalvisleon/elvis/core"
 	"github.com/cgalvisleon/elvis/envar"
 	e "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/utility"
@@ -29,10 +28,7 @@ func InitModules() error {
 	}
 	if err := DefineTokens(); err != nil {
 		return console.PanicE(err)
-	}
-	if err := core.DefineCollection(); err != nil {
-		return console.PanicE(err)
-	}
+	}	
 	if err := DefineModules(); err != nil {
 		return console.PanicE(err)
 	}
@@ -64,7 +60,7 @@ func InitModules() error {
 }
 
 func defineModule() error {
-	// Initial types
+	// Initial state types
 	InitType("-1", utility.OF_SYSTEM, utility.OF_SYSTEM, "STATE", "System", "Record system")
 	InitType("-1", utility.FOR_DELETE, utility.OF_SYSTEM, "STATE", "Delete", "To delete record")
 	InitType("-1", utility.ACTIVE, utility.OF_SYSTEM, "STATE", "Activo", "")
@@ -74,7 +70,7 @@ func defineModule() error {
 	InitType("-1", utility.PENDING_APPROVAL, utility.OF_SYSTEM, "STATE", "Pendiente de aprobación", "")
 	InitType("-1", utility.APPROVAL, utility.OF_SYSTEM, "STATE", "Aprobado", "")
 	InitType("-1", utility.REFUSED, utility.OF_SYSTEM, "STATE", "Rechazado", "")
-
+	// Initial profile types
 	InitType("-1", "PROFILE.ADMIN", utility.OF_SYSTEM, "PROFILE", "Admin", "")
 	InitType("-1", "PROFILE.DEV", utility.OF_SYSTEM, "PROFILE", "Develop", "")
 	InitType("-1", "PROFILE.SUPORT", utility.OF_SYSTEM, "PROFILE", "Suport", "")
@@ -203,6 +199,6 @@ func defineModule() error {
 	if err != nil {
 		return err
 	}
-
+	
 	return nil
 }

@@ -135,6 +135,15 @@ func InitAdmin(fullName, country, phone, email string) (e.Item, error) {
 	}
 
 	id := "USER.ADMIN"
+	current, err := GetUserById(id)
+	if err != nil {
+		return e.Item{}, err
+	}
+
+	if current.Ok {
+		return current, nil
+	}
+	
 	name := country + phone
 	data := e.Json{}
 	data["_id"] = id

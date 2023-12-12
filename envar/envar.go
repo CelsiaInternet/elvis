@@ -43,27 +43,28 @@ func SetvarInt(name string, _default int, usage, _var string) int {
 	return result.Int()
 }
 
-func EnvarAny(_default any, args ...string) *generic.Any {
-	var _var string
-	if len(args) > 1 {
-		_var = strs.AppendStr(args[0], args[1])
-	} else if len(args) > 0 {
-		_var = args[0]
-	}
+func EnvarAny(arg string) *generic.Any {	
+	val := os.Getenv(arg)
 
-	val := os.Getenv(_var)
-	var result *generic.Any = generic.New(val)
+	return generic.New(val)
+}
+
+func EnvarStr(_default string, arg string) string {
+	result := EnvarAny(arg)
+
 	if result.IsNil() {
-		result.Set(_default)
+		return _default
 	}
 
-	return result
+	return result.Str()
 }
 
-func EnvarStr(_default string, args ...string) string {
-	return EnvarAny(_default, args...).Str()
-}
+func EnvarInt(_default int, arg string) int {
+	result := EnvarAny(arg)
 
-func EnvarInt(_default int, args ...string) int {
-	return EnvarAny(_default, args...).Int()
+	if result.IsNil() {
+		return _default
+	}
+
+	return result.Int()
 }
