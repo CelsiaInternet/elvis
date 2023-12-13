@@ -75,7 +75,7 @@ import (
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/middleware"
-	"github.com/cgalvisleon/elvis/utility"
+	"github.com/cgalvisleon/elvis/strs"
 	"github.com/go-chi/chi"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/rs/cors"
@@ -728,3 +728,36 @@ func (rt *Router) All$2(w http.ResponseWriter, r *http.Request) {
 	er.ProtectRoute(r, er.Get, "/$5/all", rt.All$2)
 **/
 `
+
+const modelReadme = `### $1`
+
+const modelEnvar = `APP=
+PORT=3300
+VERSION=0.0.0
+COMPANY=Company
+WEB=https://www.company.com
+
+# DB
+DB_DRIVE=postgres
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=test
+DB_USER=test
+DB_PASSWORD=test
+
+# AWS
+AWS_REGION=
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_SESSION_TOKEN=
+
+# REDIS
+REDIS_HOST=localhost:6379
+REDIS_PASSWORD=test
+REDIS_DB=0
+
+# CALM
+SECRET=test
+
+# NATS
+NATS_HOST=localhost:4222`
