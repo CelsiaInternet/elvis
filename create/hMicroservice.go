@@ -23,6 +23,18 @@ func MkProject(packageName, name, author, schema string) error {
 		return err
 	}
 
+	ProgressNext(10)
+	err = MakeReadme(name)
+	if err != nil {
+		return err
+	}
+
+	ProgressNext(10)
+	err = MakeEnv(name)
+	if err != nil {
+		return err
+	}
+
 	ProgressNext(60)
 	_, err = Command([]string{
 		strs.Format("cd ./%s", name),

@@ -1,6 +1,6 @@
 package create
 
-const modelDockerfile = `ARG GO_VERSION=1.18.4
+const modelDockerfile = `ARG GO_VERSION=1.21.3
 
 FROM golang:${GO_VERSION}-alpine AS builder
 
@@ -745,19 +745,20 @@ DB_NAME=test
 DB_USER=test
 DB_PASSWORD=test
 
-# AWS
-AWS_REGION=
-AWS_ACCESS_KEY_ID=
-AWS_SECRET_ACCESS_KEY=
-AWS_SESSION_TOKEN=
-
 # REDIS
 REDIS_HOST=localhost:6379
 REDIS_PASSWORD=test
 REDIS_DB=0
 
+# NATS
+NATS_HOST=localhost:4222
+
 # CALM
 SECRET=test
 
-# NATS
-NATS_HOST=localhost:4222`
+# AWS
+AWS_REGION=
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_SESSION_TOKEN=
+`

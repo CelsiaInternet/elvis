@@ -8,6 +8,7 @@ import (
 )
 
 var initModules bool
+var defineModule bool
 
 func InitModules() error {
 	if initModules {
@@ -50,16 +51,17 @@ func InitModules() error {
 	if err := DefineHistorys(); err != nil {
 		return console.PanicE(err)
 	}
-	if err := defineModule(); err != nil {
-		return console.PanicE(err)
-	}
 
 	initModules = true
 
 	return nil
 }
 
-func defineModule() error {
+func DefineModule() error {
+	if defineModule {
+		return nil
+	}
+
 	// Initial state types
 	InitType("-1", utility.OF_SYSTEM, utility.OF_SYSTEM, "STATE", "System", "Record system")
 	InitType("-1", utility.FOR_DELETE, utility.OF_SYSTEM, "STATE", "Delete", "To delete record")
@@ -199,6 +201,8 @@ func defineModule() error {
 	if err != nil {
 		return err
 	}
+
+	defineModule = true
 
 	return nil
 }
