@@ -9,7 +9,7 @@ import (
 var Configs *linq.Model
 
 func DefineConfig() error {
-	if err := DefineCoreSchema(); err != nil {
+	if err := defineSchema(); err != nil {
 		return console.PanicE(err)
 	}
 

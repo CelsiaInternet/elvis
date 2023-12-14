@@ -6,7 +6,7 @@ import (
 
 var SchemaCore *linq.Schema
 
-func DefineCoreSchema() error {
+func defineSchema() error {
 	if SchemaCore != nil {
 		return nil
 	}

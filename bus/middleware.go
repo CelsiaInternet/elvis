@@ -4,11 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"log"
 	"net/http"
 	"net/url"
-	"os"
-	"runtime"
 	"time"
 
 	"github.com/cgalvisleon/elvis/console"
@@ -214,12 +211,4 @@ func ExecutePath(endpoint *Endpoint, w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.WriteResponse(w, res.StatusCode, e)
-}
-
-func init() {
-	color := true
-	if runtime.GOOS == "windows" {
-		color = false
-	}
-	DefaultLogger = RequestLogger(&DefaultLogFormatter{Logger: log.New(os.Stdout, "", log.LstdFlags), NoColor: !color})
 }

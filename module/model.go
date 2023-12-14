@@ -1,61 +1,12 @@
 package module
 
 import (
-	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/envar"
 	e "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/utility"
 )
 
-var initModules bool
 var defineModule bool
-
-func InitModules() error {
-	if initModules {
-		return nil
-	}
-
-	if err := DefineTypes(); err != nil {
-		return console.PanicE(err)
-	}
-	if err := DefineProjects(); err != nil {
-		return console.PanicE(err)
-	}
-	if err := DefineUsers(); err != nil {
-		return console.PanicE(err)
-	}
-	if err := DefineHistorys(); err != nil {
-		return console.PanicE(err)
-	}
-	if err := DefineTokens(); err != nil {
-		return console.PanicE(err)
-	}
-	if err := DefineModules(); err != nil {
-		return console.PanicE(err)
-	}
-	if err := DefineProjectModules(); err != nil {
-		return console.PanicE(err)
-	}
-	if err := DefineFolders(); err != nil {
-		return console.PanicE(err)
-	}
-	if err := DefineProfiles(); err != nil {
-		return console.PanicE(err)
-	}
-	if err := DefineProfileFolders(); err != nil {
-		return console.PanicE(err)
-	}
-	if err := DefineRoles(); err != nil {
-		return console.PanicE(err)
-	}
-	if err := DefineHistorys(); err != nil {
-		return console.PanicE(err)
-	}
-
-	initModules = true
-
-	return nil
-}
 
 func DefineModule() error {
 	if defineModule {

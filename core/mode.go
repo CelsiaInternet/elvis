@@ -30,7 +30,7 @@ func DefineMode() error {
 		return nil
 	}
 
-	if err := DefineCoreSchema(); err != nil {
+	if err := defineSchema(); err != nil {
 		return console.PanicE(err)
 	}
 
