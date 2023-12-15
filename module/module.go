@@ -2,7 +2,7 @@ package module
 
 import "github.com/cgalvisleon/elvis/console"
 
-func init() {
+func InitDefine() {
 	if err := DefineTypes(); err != nil {
 		console.PanicE(err)
 	}

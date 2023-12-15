@@ -2,7 +2,7 @@ package core
 
 import "github.com/cgalvisleon/elvis/console"
 
-func init() {
+func InitDefine() {
 	if err := DefineConfig(); err != nil {
 		console.Panic(err)
 	}
