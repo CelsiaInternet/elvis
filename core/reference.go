@@ -14,7 +14,7 @@ func DefineReference() error {
 		return nil
 	}
 
-	if err := defineSchema(); err != nil {
+	if err := DefineCollection(); err != nil {
 		return console.PanicE(err)
 	}
 

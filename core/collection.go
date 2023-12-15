@@ -18,7 +18,7 @@ type Collection struct {
 var Collections *linq.Model
 
 func DefineCollection() error {
-	if err := defineSchema(); err != nil {
+	if err := DefineSchemaCore(); err != nil {
 		return console.PanicE(err)
 	}
 
