@@ -178,24 +178,26 @@ func AllModules(state, search string, page, rows int, _select string) (e.List, e
 
 	cols := linq.StrToCols(_select)
 
-	if auxState == "*" {
+	if search != "" {
+		return Modules.Select(cols).
+			Where(Modules.Concat("NAME:", Modules.Column("name"), ":DESCRIPTION", Modules.Column("description"), ":DATA:", Modules.Column("_data"), ":").Like("%"+search+"%")).
+			OrderBy(Modules.Column("name"), true).
+			List(page, rows)
+	} else if auxState == "*" {
 		state = utility.FOR_DELETE
 
 		return Modules.Select(cols).
 			Where(Modules.Column("_state").Neg(state)).
-			And(Modules.Concat("NAME:", Modules.Column("name"), ":DESCRIPTION", Modules.Column("description"), ":DATA:", Modules.Column("_data"), ":").Like("%"+search+"%")).
 			OrderBy(Modules.Column("name"), true).
 			List(page, rows)
 	} else if auxState == "0" {
 		return Modules.Select(cols).
 			Where(Modules.Column("_state").In("-1", state)).
-			And(Modules.Concat("NAME:", Modules.Column("name"), ":DESCRIPTION", Modules.Column("description"), ":DATA:", Modules.Column("_data"), ":").Like("%"+search+"%")).
 			OrderBy(Modules.Column("name"), true).
 			List(page, rows)
 	} else {
 		return Modules.Select(cols).
 			Where(Modules.Column("_state").Eq(state)).
-			And(Modules.Concat("NAME:", Modules.Column("name"), ":DESCRIPTION", Modules.Column("description"), ":DATA:", Modules.Column("_data"), ":").Like("%"+search+"%")).
 			OrderBy(Modules.Column("name"), true).
 			List(page, rows)
 	}

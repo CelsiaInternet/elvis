@@ -81,8 +81,13 @@ func DefineTokens() error {
 	})
 	Tokens.Details("token", "", "", func(col *linq.Column, data *e.Json) {
 		token := data.Str("token")
-		newToken := token[0:6] + "..." + token[len(token)-6:]
+		newToken := token
+		if len(token) > 6 {
+			newToken = token[0:6] + "..." + token[len(token)-6:]
+		}
+
 		data.Set(col.Low(), newToken)
+		data.Set("long_token", token)
 	})
 
 	if err := core.InitModel(Tokens); err != nil {
@@ -315,7 +320,11 @@ func GetTokensByUserId(userId, search string, page, rows int) (e.List, error) {
 		}
 
 		token := item["token"].(string)
-		item["token"] = token[0:6] + "..." + token[len(token)-6:]
+		newToken := token
+		if len(token) > 6 {
+			newToken = token[0:6] + "..." + token[len(token)-6:]
+		}
+		item["token"] = newToken
 		item["last_use"] = collection.Str("last_use")
 	}
 

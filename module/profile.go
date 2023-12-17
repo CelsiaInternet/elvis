@@ -291,7 +291,16 @@ func AllModuleProfiles(projectId, moduleId, state, search string, page, rows int
 	_select := Profiles.All()
 	_select = append(_select, Types.Column("_state"), Types.Column("_id"), Types.Column("name"), Types.Column("description"))
 
-	if auxState == "*" {
+	if search != "" {
+		return linq.From(Profiles, "A").
+			Join(Profiles.As("A"), Types.As("B"), Types.Col("_id").Eq(Profiles.Col("profile_tp"))).
+			Where(Types.Column("project_id").In("-1", projectId)).
+			And(Profiles.Column("module_id").Eq(moduleId)).
+			And(Profiles.Concat("NAME:", Types.As("B").Col("name"), ":DESCRIPTION:", Types.As("B").Col("description"), ":DATA:", Profiles.As("A").Column("_data"), ":").Like("%"+search+"%")).
+			OrderBy(Types.Column("name"), true).
+			Select(_select).
+			List(page, rows)
+	} else if auxState == "*" {
 		state = utility.FOR_DELETE
 
 		return linq.From(Profiles, "A").
@@ -299,7 +308,6 @@ func AllModuleProfiles(projectId, moduleId, state, search string, page, rows int
 			Where(Types.Column("_state").Neg(state)).
 			And(Types.Column("project_id").In("-1", projectId)).
 			And(Profiles.Column("module_id").Eq(moduleId)).
-			And(Profiles.Concat("NAME:", Types.As("B").Col("name"), ":DESCRIPTION:", Types.As("B").Col("description"), ":DATA:", Profiles.As("A").Column("_data"), ":").Like("%"+search+"%")).
 			OrderBy(Types.Column("name"), true).
 			Select(_select).
 			List(page, rows)
@@ -309,7 +317,6 @@ func AllModuleProfiles(projectId, moduleId, state, search string, page, rows int
 			Where(Types.Column("_state").In("-1", state)).
 			And(Types.Column("project_id").In("-1", projectId)).
 			And(Profiles.Column("module_id").Eq(moduleId)).
-			And(Profiles.Concat("NAME:", Types.As("B").Col("name"), ":DESCRIPTION:", Types.As("B").Col("description"), ":DATA:", Profiles.As("A").Column("_data"), ":").Like("%"+search+"%")).
 			OrderBy(Types.Column("name"), true).
 			Select(_select).
 			List(page, rows)
@@ -319,7 +326,6 @@ func AllModuleProfiles(projectId, moduleId, state, search string, page, rows int
 			Where(Types.Column("_state").Eq(state)).
 			And(Types.Column("project_id").In("-1", projectId)).
 			And(Profiles.Column("module_id").Eq(moduleId)).
-			And(Profiles.Concat("NAME:", Types.As("B").Col("name"), ":DESCRIPTION:", Types.As("B").Col("description"), ":DATA:", Profiles.As("A").Column("_data"), ":").Like("%"+search+"%")).
 			OrderBy(Types.Column("name"), true).
 			Select(_select).
 			List(page, rows)

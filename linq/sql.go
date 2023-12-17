@@ -98,12 +98,31 @@ func (c *Linq) SqlColums(cols ...*Column) string {
 
 		result = strs.Format(`%s AS %s`, result, c.from[0].model.SourceField)
 	} else if c.Tp == TpData {
-		result = c.SqlColumDef(cols...)
+		for _, col := range cols {
+			if col.Tp == TpDetail {
+				c.details = append(c.details, col)
+			}
+		}
 
+		result = c.SqlColumDef(cols...)
 		result = strs.Format(`%s AS %s`, result, c.from[0].model.SourceField)
 	} else if n > 0 {
+		for _, col := range cols {
+			if col.Tp == TpDetail {
+				c.details = append(c.details, col)
+			}
+		}
+
 		result = c.SqlColumDef(cols...)
 	} else {
+		for _, from := range c.from {
+			for _, col := range from.model.Definition {
+				if col.Tp == TpDetail {
+					c.details = append(c.details, col)
+				}
+			}
+		}
+
 		result = "*"
 	}
 

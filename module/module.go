@@ -12,6 +12,9 @@ func InitDefine() error {
 		return nil
 	}
 
+	if err := core.InitDefine(); err != nil {
+		return console.PanicE(err)
+	}
 	if err := DefineTypes(); err != nil {
 		return console.PanicE(err)
 	}
@@ -46,9 +49,6 @@ func InitDefine() error {
 		return console.PanicE(err)
 	}
 	if err := DefineHistorys(); err != nil {
-		return console.PanicE(err)
-	}
-	if err := core.DefineCollection(); err != nil {
 		return console.PanicE(err)
 	}
 

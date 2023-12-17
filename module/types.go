@@ -178,14 +178,20 @@ func AllTypes(projectId, kind, state, search string, page, rows int, _select str
 
 	cols := linq.StrToCols(_select)
 
-	if auxState == "*" {
+	if search != "" {
+		return Types.Select(cols).
+			Where(Types.Column("kind").Eq(kind)).
+			And(Types.Column("project_id").In("-1", projectId)).
+			And(Types.Concat("NAME:", Types.Column("name"), ":DESCRIPTION", Types.Column("description"), ":DATA:", Types.Column("_data"), ":").Like("%"+search+"%")).
+			OrderBy(Types.Column("name"), true).
+			List(page, rows)
+	} else if auxState == "*" {
 		state = utility.FOR_DELETE
 
 		return Types.Select(cols).
 			Where(Types.Column("kind").Eq(kind)).
 			And(Types.Column("_state").Neg(state)).
 			And(Types.Column("project_id").In("-1", projectId)).
-			And(Types.Concat("NAME:", Types.Column("name"), ":DESCRIPTION", Types.Column("description"), ":DATA:", Types.Column("_data"), ":").Like("%"+search+"%")).
 			OrderBy(Types.Column("name"), true).
 			List(page, rows)
 	} else if auxState == "0" {
@@ -193,7 +199,6 @@ func AllTypes(projectId, kind, state, search string, page, rows int, _select str
 			Where(Types.Column("kind").Eq(kind)).
 			And(Types.Column("_state").In("-1", state)).
 			And(Types.Column("project_id").In("-1", projectId)).
-			And(Types.Concat("NAME:", Types.Column("name"), ":DESCRIPTION", Types.Column("description"), ":DATA:", Types.Column("_data"), ":").Like("%"+search+"%")).
 			OrderBy(Types.Column("name"), true).
 			List(page, rows)
 	} else {
@@ -201,7 +206,6 @@ func AllTypes(projectId, kind, state, search string, page, rows int, _select str
 			Where(Types.Column("kind").Eq(kind)).
 			And(Types.Column("_state").Eq(state)).
 			And(Types.Column("project_id").In("-1", projectId)).
-			And(Types.Concat("NAME:", Types.Column("name"), ":DESCRIPTION", Types.Column("description"), ":DATA:", Types.Column("_data"), ":").Like("%"+search+"%")).
 			OrderBy(Types.Column("name"), true).
 			List(page, rows)
 	}

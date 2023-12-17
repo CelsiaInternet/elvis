@@ -224,14 +224,20 @@ func AllCollections(projectId, collection, state, search string, page, rows int)
 
 	auxState := state
 
-	if auxState == "*" {
+	if search != "" {
+		return Collections.Select().
+			Where(Collections.Column("collection").Eq(collection)).
+			And(Collections.Column("project_id").In("-1", projectId)).
+			And(Collections.Column("_data").Cast("TEXT").Like("%"+search+"%")).
+			OrderBy(Collections.Column("name"), true).
+			List(page, rows)
+	} else if auxState == "*" {
 		state = utility.FOR_DELETE
 
 		return Collections.Select().
 			Where(Collections.Column("collection").Eq(collection)).
 			And(Collections.Column("_state").Neg(state)).
 			And(Collections.Column("project_id").In("-1", projectId)).
-			And(Collections.Column("_data").Cast("TEXT").Like("%"+search+"%")).
 			OrderBy(Collections.Column("name"), true).
 			List(page, rows)
 	} else if auxState == "0" {
@@ -239,7 +245,6 @@ func AllCollections(projectId, collection, state, search string, page, rows int)
 			Where(Collections.Column("collection").Eq(collection)).
 			And(Collections.Column("_state").In("-1", state)).
 			And(Collections.Column("project_id").In("-1", projectId)).
-			And(Collections.Column("_data").Cast("TEXT").Like("%"+search+"%")).
 			OrderBy(Collections.Column("name"), true).
 			List(page, rows)
 	} else {
@@ -247,7 +252,6 @@ func AllCollections(projectId, collection, state, search string, page, rows int)
 			Where(Collections.Column("collection").Eq(collection)).
 			And(Collections.Column("_state").Eq(state)).
 			And(Collections.Column("project_id").In("-1", projectId)).
-			And(Collections.Column("_data").Cast("TEXT").Like("%"+search+"%")).
 			OrderBy(Collections.Column("name"), true).
 			List(page, rows)
 	}

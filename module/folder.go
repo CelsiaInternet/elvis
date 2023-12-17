@@ -227,24 +227,26 @@ func AllFolders(state, search string, page, rows int) (e.List, error) {
 
 	auxState := state
 
-	if auxState == "*" {
+	if search != "" {
+		return Folders.Select().
+			Where(Folders.Concat("NAME:", Folders.Column("name"), ":DESCRIPTION", Folders.Column("description"), ":DATA:", Folders.Column("_data"), ":").Like("%"+search+"%")).
+			OrderBy(Folders.Column("name"), true).
+			List(page, rows)
+	} else if auxState == "*" {
 		state = utility.FOR_DELETE
 
 		return Folders.Select().
 			Where(Folders.Column("_state").Neg(state)).
-			And(Folders.Concat("NAME:", Folders.Column("name"), ":DESCRIPTION", Folders.Column("description"), ":DATA:", Folders.Column("_data"), ":").Like("%"+search+"%")).
 			OrderBy(Folders.Column("name"), true).
 			List(page, rows)
 	} else if auxState == "0" {
 		return Folders.Select().
 			Where(Folders.Column("_state").In("-1", state)).
-			And(Folders.Concat("NAME:", Folders.Column("name"), ":DESCRIPTION", Folders.Column("description"), ":DATA:", Folders.Column("_data"), ":").Like("%"+search+"%")).
 			OrderBy(Folders.Column("name"), true).
 			List(page, rows)
 	} else {
 		return Folders.Select().
 			Where(Folders.Column("_state").Eq(state)).
-			And(Folders.Concat("NAME:", Folders.Column("name"), ":DESCRIPTION", Folders.Column("description"), ":DATA:", Folders.Column("_data"), ":").Like("%"+search+"%")).
 			OrderBy(Folders.Column("name"), true).
 			List(page, rows)
 	}

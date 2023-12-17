@@ -191,24 +191,26 @@ func AllProjects(state, search string, page, rows int, _select string) (e.List, 
 
 	cols := linq.StrToCols(_select)
 
-	if auxState == "*" {
+	if search != "" {
+		return Projects.Select(cols).
+			Where(Projects.Concat("NAME:", Projects.Column("name"), ":DESCRIPTION:", Projects.Column("description"), ":DATA:", Projects.Column("_data"), ":").Like("%"+search+"%")).
+			OrderBy(Projects.Column("name"), true).
+			List(page, rows)
+	} else if auxState == "*" {
 		state = utility.FOR_DELETE
 
 		return Projects.Select(cols).
 			Where(Projects.Column("_state").Neg(state)).
-			And(Projects.Concat("NAME:", Projects.Column("name"), ":DESCRIPTION:", Projects.Column("description"), ":DATA:", Projects.Column("_data"), ":").Like("%"+search+"%")).
 			OrderBy(Projects.Column("name"), true).
 			List(page, rows)
 	} else if auxState == "0" {
 		return Projects.Select(cols).
 			Where(Projects.Column("_state").In("-1", state)).
-			And(Projects.Concat("NAME:", Projects.Column("name"), ":DESCRIPTION:", Projects.Column("description"), ":DATA:", Projects.Column("_data"), ":").Like("%"+search+"%")).
 			OrderBy(Projects.Column("name"), true).
 			List(page, rows)
 	} else {
 		return Projects.Select(cols).
 			Where(Projects.Column("_state").Eq(state)).
-			And(Projects.Concat("NAME:", Projects.Column("name"), ":DESCRIPTION:", Projects.Column("description"), ":DATA:", Projects.Column("_data"), ":").Like("%"+search+"%")).
 			OrderBy(Projects.Column("name"), true).
 			List(page, rows)
 	}

@@ -28,6 +28,8 @@ func (c *Linq) Select(sel ...any) *Linq {
 					cols = append(cols, c)
 				}
 			}
+		case []*Column:
+			cols = v
 		default:
 			console.ErrorF("Linq select type (%v) value:%v", reflect.TypeOf(v), v)
 		}

@@ -226,7 +226,6 @@ func SetUser(name, password, fullName, phone, email string) (e.Item, error) {
 	data["email"] = email
 	data["avatar"] = ""
 	_, err = Users.Insert(data).
-		Where(Users.Column("name").Eq(name)).
 		Command()
 	if err != nil {
 		return e.Item{}, err
@@ -305,18 +304,21 @@ func AllUsers(state, search string, page, rows int, _select string) (e.List, err
 
 	cols := linq.StrToCols(_select)
 
-	if auxState == "*" {
+	if search != "" {
+		return Users.Select(cols).
+			Where(Users.Concat("NAME:", Users.Column("name"), ":DATA:", Users.Column("_data"), ":").Like("%"+search+"%")).
+			OrderBy(Users.Column("name"), true).
+			List(page, rows)
+	} else if auxState == "*" {
 		state = utility.FOR_DELETE
 
 		return Users.Select(cols).
 			Where(Users.Column("_state").Neg(state)).
-			And(Users.Concat("NAME:", Users.Column("name"), ":DATA:", Users.Column("_data"), ":").Like("%"+search+"%")).
 			OrderBy(Users.Column("name"), true).
 			List(page, rows)
 	} else {
 		return Users.Select(cols).
 			Where(Users.Column("_state").Eq(state)).
-			And(Users.Concat("NAME:", Users.Column("name"), ":DATA:", Users.Column("_data"), ":").Like("%"+search+"%")).
 			OrderBy(Users.Column("name"), true).
 			List(page, rows)
 	}

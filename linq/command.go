@@ -222,8 +222,6 @@ func (c *Linq) delete(current e.Json) (e.Item, error) {
 		}
 	}
 
-	c.Details(&current)
-
 	if model.AfterReferences != nil {
 		go model.AfterReferences(c.references)
 	}
