@@ -69,6 +69,7 @@ func Authorization(next http.Handler) http.Handler {
 			"clientId":  c.ID,
 			"last_use":  now,
 			"host_name": hostName,
+			"token":     tokenString,
 		}
 
 		event.Action("telemetry.token.last_use", data)

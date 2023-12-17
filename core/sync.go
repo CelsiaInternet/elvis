@@ -7,13 +7,13 @@ import (
 )
 
 func DefineSync() error {
+	if err := DefineSchemaCore(); err != nil {
+		return console.PanicE(err)
+	}
+
 	existSyncs, _ := ExistTable(0, "core", "SYNCS")
 	if existSyncs {
 		return nil
-	}
-
-	if err := DefineCollection(); err != nil {
-		return console.PanicE(err)
 	}
 
 	sql := `

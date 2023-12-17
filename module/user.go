@@ -2,6 +2,7 @@ package module
 
 import (
 	"github.com/cgalvisleon/elvis/aws"
+	"github.com/cgalvisleon/elvis/cache"
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/core"
 	"github.com/cgalvisleon/elvis/envar"
@@ -49,12 +50,12 @@ func DefineUsers() error {
 	Users.DefineHidden([]string{"password"})
 	Users.Details("last_use", "", "", func(col *linq.Column, data *e.Json) {
 		id := data.Id()
-		collection, err := core.GetCollectionById("telemetry.token.last_use", id)
+		last_use, err := cache.HGetAtrib(id, "telemetry.token.last_use")
 		if err != nil {
 			return
 		}
 
-		data.Set(col.Low(), collection.Str("last_use"))
+		data.Set(col.Low(), last_use)
 	})
 	Users.Details("projects", "", []e.Json{}, func(col *linq.Column, data *e.Json) {
 		id := data.Id()

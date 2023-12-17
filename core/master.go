@@ -177,10 +177,7 @@ func JoinToMaster() error {
 
 	go SyncSeries(idx, c)
 
-	select {
-	case n := <-c:
-		MasterIdx = n
-	}
+	MasterIdx = <-c
 
 	console.LogKF("MASTER", "Join to master:%s:%d", host, port)
 

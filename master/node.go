@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/cgalvisleon/elvis/console"
-	"github.com/cgalvisleon/elvis/core"
 	"github.com/cgalvisleon/elvis/jdb"
 	e "github.com/cgalvisleon/elvis/json"
 )
@@ -25,7 +24,6 @@ type Node struct {
 	Data        e.Json    `json:"_data"`
 	Status      int       `json:"status"`
 	Index       int       `json:"index"`
-	Synced      *core.Collection
 }
 
 func (n *Node) Scan(data *e.Json) error {

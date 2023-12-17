@@ -139,6 +139,25 @@ func HGet(key string) (map[string]string, error) {
 	return HGetCtx(conn.ctx, key)
 }
 
+func HSetAtrib(key, atr, val string) error {
+	return HSetCtx(conn.ctx, key, map[string]string{atr: val})
+}
+
+func HGetAtrib(key, atr string) (string, error) {
+	atribs, err := HGetCtx(conn.ctx, key)
+	if err != nil {
+		return "", err
+	}
+
+	for k, v := range atribs {
+		if k == atr {
+			return v, nil
+		}
+	}
+
+	return "", nil
+}
+
 func HDel(key, atr string) error {
 	return HDelCtx(conn.ctx, key, atr)
 }

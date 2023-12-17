@@ -72,12 +72,12 @@ func DefineTokens() error {
 	})
 	Tokens.Details("last_use", "", "", func(col *linq.Column, data *e.Json) {
 		id := data.Id()
-		collection, err := core.GetCollectionById("telemetry.token.last_use", id)
+		last_use, err := cache.HGetAtrib(id, "telemetry.token.last_use")
 		if err != nil {
 			return
 		}
 
-		data.Set(col.Low(), collection.Str("last_use"))
+		data.Set(col.Low(), last_use)
 	})
 	Tokens.Details("token", "", "", func(col *linq.Column, data *e.Json) {
 		token := data.Str("token")
@@ -314,7 +314,7 @@ func GetTokensByUserId(userId, search string, page, rows int) (e.List, error) {
 
 	for _, item := range items.Result {
 		id := item.Id()
-		collection, err := core.GetCollectionById("telemetry.token.last_use", id)
+		last_use, err := cache.HGetAtrib(id, "telemetry.token.last_use")
 		if err != nil {
 			return e.List{}, err
 		}
@@ -325,7 +325,7 @@ func GetTokensByUserId(userId, search string, page, rows int) (e.List, error) {
 			newToken = token[0:6] + "..." + token[len(token)-6:]
 		}
 		item["token"] = newToken
-		item["last_use"] = collection.Str("last_use")
+		item["last_use"] = last_use
 	}
 
 	return items.ToList(all, page, rows), nil

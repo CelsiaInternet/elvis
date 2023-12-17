@@ -25,13 +25,13 @@ var (
 )
 
 func DefineMode() error {
+	if err := DefineSchemaCore(); err != nil {
+		return console.PanicE(err)
+	}
+
 	existMode, _ := ExistTable(0, "core", "MODE")
 	if existMode {
 		return nil
-	}
-
-	if err := DefineCollection(); err != nil {
-		return console.PanicE(err)
 	}
 
 	sql := `

@@ -9,13 +9,13 @@ import (
 var existReferences bool
 
 func DefineReference() error {
+	if err := DefineSchemaCore(); err != nil {
+		return console.PanicE(err)
+	}
+
 	existReferences, _ = ExistTable(0, "core", "REFERENCES")
 	if existReferences {
 		return nil
-	}
-
-	if err := DefineCollection(); err != nil {
-		return console.PanicE(err)
 	}
 
 	sql := `

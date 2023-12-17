@@ -25,9 +25,6 @@ func InitMaster() error {
 	if err := core.DefineReference(); err != nil {
 		return console.PanicE(err)
 	}
-	if err := core.DefineCollection(); err != nil {
-		return console.PanicE(err)
-	}
 
 	go jdb.Listen("master", jdb.DB(0).URL, "node", listenNode)
 

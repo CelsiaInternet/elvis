@@ -12,13 +12,13 @@ var (
 )
 
 func DefineSeries() error {
+	if err := DefineSchemaCore(); err != nil {
+		return console.PanicE(err)
+	}
+
 	existSeries, _ = ExistTable(0, "core", "SERIES")
 	if existSeries {
 		return nil
-	}
-
-	if err := DefineCollection(); err != nil {
-		return console.PanicE(err)
 	}
 
 	sql := `  

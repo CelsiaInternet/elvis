@@ -7,13 +7,13 @@ import (
 )
 
 func DefineRecycling() error {
+	if err := DefineSchemaCore(); err != nil {
+		return console.PanicE(err)
+	}
+
 	existRecicling, _ := ExistTable(0, "core", "RECYCLING")
 	if existRecicling {
 		return nil
-	}
-
-	if err := DefineCollection(); err != nil {
-		return console.PanicE(err)
 	}
 
 	sql := `  
