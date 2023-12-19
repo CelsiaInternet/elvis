@@ -218,6 +218,7 @@ func GenToken(id, app, name, kind, username, device string, duration time.Durati
 func GetClient(r *http.Request) e.Json {
 	now := utility.Now()
 	ctx := r.Context()
+
 	return e.Json{
 		"date_of":   now,
 		"client_id": generic.New(ctx.Value("clientId")).Str(),
