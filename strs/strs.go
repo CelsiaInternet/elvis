@@ -1,6 +1,7 @@
 package strs
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -168,6 +169,16 @@ func StrToTime(val string) (time.Time, error) {
 	}
 
 	return result, nil
+}
+
+func StrToBool(val string) (bool, error) {
+	if Lowcase(val) == "true" {
+		return true, nil
+	} else if Lowcase(val) == "false" {
+		return false, nil
+	}
+
+	return false, errors.New("invalid boolean value")
 }
 
 func RemoveAcents(str string) string {

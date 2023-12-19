@@ -123,16 +123,6 @@ func InInt(val string, in []string) bool {
 	return ok
 }
 
-func StrToBool(val string) (bool, error) {
-	if strs.Lowcase(val) == "true" {
-		return true, nil
-	} else if strs.Lowcase(val) == "false" {
-		return false, nil
-	}
-
-	return false, console.ErrorM(VALUE_NOT_BOOL)
-}
-
 func TimeDifference(dateInt, dateEnd any) time.Duration {
 	var result time.Time
 	layout := "2006-01-02T15:04:05.000Z"

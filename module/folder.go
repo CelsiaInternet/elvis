@@ -196,7 +196,7 @@ func StateFolder(id, state string) (e.Item, error) {
 		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "state")
 	}
 
-	item, err := Folders.Upsert(e.Json{
+	item, err := Folders.Update(e.Json{
 		"_state": state,
 	}).
 		Where(Folders.Column("_id").Eq(id)).

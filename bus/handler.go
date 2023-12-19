@@ -110,7 +110,7 @@ func StateApimanager(id, state string) (e.Item, error) {
 		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "state")
 	}
 
-	return Apibus.Upsert(e.Json{
+	return Apibus.Update(e.Json{
 		"_state": state,
 	}).
 		Where(Apibus.Column("_id").Eq(id)).

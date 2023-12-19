@@ -157,7 +157,7 @@ func StateModule(id, state string) (e.Item, error) {
 		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "state")
 	}
 
-	return Modules.Upsert(e.Json{
+	return Modules.Update(e.Json{
 		"_state": state,
 	}).
 		Where(Modules.Column("_id").Eq(id)).

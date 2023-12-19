@@ -284,7 +284,7 @@ func StateUser(id, state string) (e.Item, error) {
 		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "state")
 	}
 
-	return Users.Upsert(e.Json{
+	return Users.Update(e.Json{
 		"_state": state,
 	}).
 		Where(Users.Column("_id").Eq(id)).

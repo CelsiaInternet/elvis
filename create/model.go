@@ -587,7 +587,7 @@ func State$2(id, state string) (e.Item, error) {
 		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "state")
 	}
 
-	return $2.Upsert(e.Json{
+	return $2.Update(e.Json{
 		"_state": state,
 	}).
 		Where($2.Column("_id").Eq(id)).

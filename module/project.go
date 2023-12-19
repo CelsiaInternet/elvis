@@ -170,7 +170,7 @@ func StateProject(id, state string) (e.Item, error) {
 		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "state")
 	}
 
-	return Projects.Upsert(e.Json{
+	return Projects.Update(e.Json{
 		"_state": state,
 	}).
 		Where(Projects.Column("_id").Eq(id)).

@@ -153,7 +153,7 @@ func StateType(id, state string) (e.Item, error) {
 		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "state")
 	}
 
-	return Types.Upsert(e.Json{
+	return Types.Update(e.Json{
 		"_state": state,
 	}).
 		Where(Types.Column("_id").Eq(id)).

@@ -116,6 +116,9 @@ func DBQueryCount(db int, sql string, args ...any) int {
 	return item.Int("count")
 }
 
+/**
+*
+**/
 func DBQueryAtrib(db int, sql, atrib string, args ...any) (e.Items, error) {
 	sql = SQLParse(sql, args...)
 	rows, err := conn.Db[db].Db.Query(sql)
