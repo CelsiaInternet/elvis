@@ -3,8 +3,6 @@ package linq
 import (
 	"errors"
 
-	"github.com/cgalvisleon/elvis/generic"
-	"github.com/cgalvisleon/elvis/jdb"
 	e "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/strs"
 	"github.com/cgalvisleon/elvis/utility"
@@ -86,6 +84,10 @@ type Column struct {
 	Hidden      bool
 	from        string
 	cast        string
+}
+
+func (c *Column) Driver() string {
+	return c.Model.Driver()
 }
 
 func (c *Column) describe() e.Json {
@@ -210,38 +212,15 @@ func NewVirtualAtrib(model *Model, name, description, _type string, _default any
 * DDL
 **/
 func (c *Column) DDL() string {
-	var result string
-
-	if c.Model.integrityReference && c.ForeignKey {
-		result = c.Reference.DDL()
-	}
-
-	_default := generic.New(c.Default)
-
-	if _default.Str() == "NOW()" {
-		result = strs.Append(`DEFAULT NOW()`, result, " ")
-	} else {
-		result = strs.Append(strs.Format(`DEFAULT %v`, e.Quoted(c.Default)), result, " ")
-	}
-
-	if c.Type == "SERIAL" {
-		result = strs.Uppcase(c.Type)
-	} else if len(c.Type) > 0 {
-		result = strs.Append(strs.Uppcase(c.Type), result, " ")
-	}
-	if len(c.name) > 0 {
-		result = strs.Append(strs.Uppcase(c.name), result, " ")
-	}
-
-	return result
+	return DDLColumn(c)
 }
 
 func (c *Column) DDLIndex() string {
-	return jdb.SQLDDL(`CREATE INDEX IF NOT EXISTS $2_$3_IDX ON $1($3);`, strs.Lowcase(c.Model.Name), strs.Uppcase(c.Model.Table), strs.Uppcase(c.name))
+	return DDLIndex(c)
 }
 
 func (c *Column) DDLUniqueIndex() string {
-	return jdb.SQLDDL(`CREATE UNIQUE INDEX IF NOT EXISTS $2_$3_IDX ON $1($3);`, strs.Lowcase(c.Model.Name), strs.Uppcase(c.Model.Table), strs.Uppcase(c.name))
+	return DDLUniqueIndex(c)
 }
 
 /**

@@ -58,6 +58,10 @@ type Model struct {
 	Version            int
 }
 
+func (c *Model) Driver() string {
+	return c.Database.Driver
+}
+
 func (c *Model) Describe() e.Json {
 	var colums []e.Json = []e.Json{}
 	for _, atrib := range c.Definition {
