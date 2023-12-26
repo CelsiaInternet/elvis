@@ -721,11 +721,11 @@ func (rt *Router) All$2(w http.ResponseWriter, r *http.Request) {
 
 /**
 	// $2
-	er.ProtectRoute(r, er.Get, "/$5/{id}", rt.Get$2ById)
-	er.ProtectRoute(r, er.Post, "/$5", rt.UpSert$2)
-	er.ProtectRoute(r, er.Put, "/$5/state/{id}", rt.State$2)
-	er.ProtectRoute(r, er.Delete, "/$5/{id}", rt.Delete$2)
-	er.ProtectRoute(r, er.Get, "/$5/all", rt.All$2)
+	er.ProtectRoute(r, er.Get, "/$5/{id}", rt.Get$2ById, PackageName, PackagePath, Host)
+	er.ProtectRoute(r, er.Post, "/$5", rt.UpSert$2, PackageName, PackagePath, Host)
+	er.ProtectRoute(r, er.Put, "/$5/state/{id}", rt.State$2, PackageName, PackagePath, Host)
+	er.ProtectRoute(r, er.Delete, "/$5/{id}", rt.Delete$2, PackageName, PackagePath, Host)
+	er.ProtectRoute(r, er.Get, "/$5/all", rt.All$2, PackageName, PackagePath, Host)
 **/
 `
 
