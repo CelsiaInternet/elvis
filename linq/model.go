@@ -463,8 +463,9 @@ func (c *Model) DefineForeignKey(thisKey string, otherKey *Column) *Model {
 	col := c.Col(thisKey)
 	if col != nil {
 		col.ForeignKey = true
+		col.Reference = NewForeignKey(thisKey, otherKey)
+		c.ForeignKey = append(c.ForeignKey, col.Reference)
 	}
-	c.ForeignKey = append(c.ForeignKey, NewForeignKey(thisKey, otherKey))
 
 	return c
 }
