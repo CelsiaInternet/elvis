@@ -29,7 +29,7 @@ func DefineModule() error {
 	InitType("-1", "PROFILE.SUPORT", utility.OF_SYSTEM, "PROFILE", "Suport", "")
 
 	// Initial project
-	app := envar.EnvarStr("", "APP")
+	app := "Devops"
 	_, err := InitProject("-1", app, "Initial project", e.Json{})
 	if err != nil {
 		return err
