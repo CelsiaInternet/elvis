@@ -2,6 +2,7 @@ package response
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
 	"strings"
 
@@ -14,15 +15,25 @@ type Result struct {
 	Result interface{} `json:"result"`
 }
 
+func ScanBody(r io.Reader) (e.Json, error) {
+	var result e.Json
+	err := json.NewDecoder(r).Decode(&result)
+	if err != nil {
+		return e.Json{}, err
+	}
+
+	return result, nil
+}
+
 func GetBody(r *http.Request) (e.Json, error) {
-	var body e.Json
-	err := json.NewDecoder(r.Body).Decode(&body)
+	var result e.Json
+	err := json.NewDecoder(r.Body).Decode(&result)
 	if err != nil {
 		return e.Json{}, err
 	}
 	defer r.Body.Close()
 
-	return body, nil
+	return result, nil
 }
 
 func WriteResponse(w http.ResponseWriter, statusCode int, e []byte) error {
@@ -121,7 +132,8 @@ func HTTPApp(r chi.Router, path string, root http.FileSystem) {
 	}
 
 	if path != "/" && path[len(path)-1] != '/' {
-		r.Get(path, http.RedirectHandler(path+"/", 301).ServeHTTP)
+		h := http.RedirectHandler(path+"/", http.StatusMovedPermanently).ServeHTTP
+		r.Get(path, h)
 		path += "/"
 	}
 	path += "*"

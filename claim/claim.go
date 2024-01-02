@@ -174,7 +174,7 @@ func GetFromToken(ctx context.Context, tokenString string) (*Claim, error) {
 	}
 
 	key := TokenKey(result.App, result.Device, result.ID)
-	c, err := cache.GetCtx(ctx, key)
+	c, err := cache.GetCtx(ctx, key, "")
 	if err != nil {
 		return nil, console.Alert(MSG_TOKEN_INVALID)
 	}

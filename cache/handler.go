@@ -9,6 +9,7 @@ import (
 	"github.com/cgalvisleon/elvis/logs"
 	"github.com/cgalvisleon/elvis/msg"
 	"github.com/cgalvisleon/elvis/strs"
+	"github.com/redis/go-redis/v9"
 )
 
 func SetCtx(ctx context.Context, key, val string, second time.Duration) error {
@@ -26,14 +27,19 @@ func SetCtx(ctx context.Context, key, val string, second time.Duration) error {
 	return nil
 }
 
-func GetCtx(ctx context.Context, key string) (string, error) {
+func GetCtx(ctx context.Context, key, def string) (string, error) {
 	if conn == nil {
 		return "", logs.Errorm(msg.ERR_NOT_CACHE_SERVICE)
 	}
 
 	result, err := conn.db.Get(ctx, key).Result()
-	if err != nil {
-		return "", err
+	switch {
+	case err == redis.Nil:
+		return def, nil
+	case err != nil:
+		return def, err
+	case result == "":
+		return result, nil
 	}
 
 	return result, nil
@@ -91,8 +97,8 @@ func Set(key, val string, second time.Duration) error {
 	return SetCtx(conn.ctx, key, val, second)
 }
 
-func Get(key string) (string, error) {
-	return GetCtx(conn.ctx, key)
+func Get(key, def string) (string, error) {
+	return GetCtx(conn.ctx, key, def)
 }
 
 func Del(key string) (int64, error) {
@@ -111,7 +117,7 @@ func Empty() error {
 }
 
 func More(key string, second time.Duration) int {
-	n, err := Get(key)
+	n, err := Get(key, "")
 	if err != nil {
 		n = "0"
 	}
@@ -169,7 +175,7 @@ func SetVerify(device, key, val string) error {
 
 func GetVerify(device string, key string) (string, error) {
 	key = strs.Format(`verify:%s/%s`, device, key)
-	return Get(key)
+	return Get(key, "")
 }
 
 func DelVerify(device string, key string) (int64, error) {
