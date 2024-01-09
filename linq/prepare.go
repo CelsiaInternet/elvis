@@ -1,7 +1,9 @@
 package linq
 
 import (
+	"github.com/cgalvisleon/elvis/console"
 	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/msg"
 	"github.com/cgalvisleon/elvis/strs"
 	"github.com/cgalvisleon/elvis/utility"
 )
@@ -9,7 +11,7 @@ import (
 /**
 *
 **/
-func (c *Model) Consolidate(current e.Json, linq *Linq) *Linq {
+func (c *Model) Consolidate(linq *Linq) *Linq {
 	var col *Column
 	var source e.Json = e.Json{}
 	var new e.Json = e.Json{}
@@ -65,9 +67,6 @@ func (c *Model) Consolidate(current e.Json, linq *Linq) *Linq {
 			setValue(k, v)
 			col := c.Column(k)
 			linq.AddValidate(col, v)
-			if col.PrimaryKey || col.ForeignKey {
-				linq.references = append(linq.references, &ReferenceValue{c.Schema, c.Table, v, 1})
-			}
 		} else if utility.ContainsInt([]int{TpAtrib}, col.Tp) {
 			source.Set(k, v)
 		}
@@ -84,10 +83,9 @@ func (c *Model) Consolidate(current e.Json, linq *Linq) *Linq {
 
 func (c *Model) Changue(current e.Json, linq *Linq) *Linq {
 	var change bool
-	c.Consolidate(current, linq)
 	new := linq.new
 
-	for k, v := range *new {
+	for k, _ := range *new {
 		k = strs.Lowcase(k)
 		idxCol := c.ColIdx(k)
 
@@ -95,13 +93,6 @@ func (c *Model) Changue(current e.Json, linq *Linq) *Linq {
 			ch := current.Str(k) != new.Str(k)
 			if !change {
 				change = ch
-			}
-			if ch {
-				col := c.Column(k)
-				if col.PrimaryKey || col.ForeignKey {
-					linq.references = append(linq.references, &ReferenceValue{c.Schema, c.Table, current.Str(k), -1})
-					linq.references = append(linq.references, &ReferenceValue{c.Schema, c.Table, v, 1})
-				}
 			}
 		}
 	}
@@ -114,13 +105,22 @@ func (c *Model) Changue(current e.Json, linq *Linq) *Linq {
 /**
 *	Prepare command data
 **/
-func (c *Linq) PrepareInsert() error {
+func (c *Linq) PrepareInsert() (e.Json, error) {
 	model := c.from[0].model
-	model.Consolidate(model.Model(), c)
+	model.Consolidate(c)
 	for _, validate := range c.validates {
 		if err := validate.Col.Valid(validate.Value); err != nil {
-			return err
+			return e.Json{}, err
 		}
+	}
+
+	current, err := c.Current()
+	if err != nil {
+		return e.Json{}, err
+	}
+
+	if current.Ok {
+		return e.Json{}, console.Alert(msg.RECORD_FOUND)
 	}
 
 	now := utility.Now()
@@ -133,36 +133,74 @@ func (c *Linq) PrepareInsert() error {
 		c.new.Set(model.DateUpdateField, now)
 	}
 
-	return nil
+	return current.Result, nil
 }
 
-func (c *Linq) PrepareUpdate(current e.Json) bool {
+func (c *Linq) PrepareUpdate() (e.Json, error) {
 	model := c.from[0].model
-	model.Changue(current, c)
+	model.Consolidate(c)
 
-	if !c.change {
-		return c.change
+	current, err := c.Current()
+	if err != nil {
+		return e.Json{}, err
 	}
 
-	if model.UseDateMake {
-		delete(*c.new, strs.Lowcase(model.DateMakeField))
+	if !current.Ok {
+		return e.Json{}, console.Alert(msg.RECORD_NOT_FOUND)
+	}
+
+	model.Changue(current.Result, c)
+
+	if !c.change {
+		return e.Json{
+			"ok":      c.change,
+			"message": msg.RECORD_NOT_CHANGE,
+		}, nil
 	}
 
 	now := utility.Now()
+
 	if model.UseDateUpdate {
 		c.new.Set(model.DateUpdateField, now)
 	}
 
-	return c.change
+	return current.Result, nil
 }
 
-func (c *Linq) PrepareDelete(current e.Json) {
+func (c *Linq) PrepareDelete() (e.Json, error) {
 	model := c.from[0].model
+	model.Consolidate(c)
 
-	for k, v := range current {
-		col := model.Column(k)
-		if col.PrimaryKey || col.ForeignKey {
-			c.references = append(c.references, &ReferenceValue{model.Schema, model.Table, v, -1})
-		}
+	current, err := c.Current()
+	if err != nil {
+		return e.Json{}, err
 	}
+
+	if !current.Ok {
+		return e.Json{}, console.Alert(msg.RECORD_NOT_FOUND)
+	}
+
+	return current.Result, nil
+}
+
+func (c *Linq) PrepareUpsert() (e.Item, error) {
+	model := c.from[0].model
+	model.Consolidate(c)
+
+	current, err := c.Current()
+	if err != nil {
+		return e.Item{}, err
+	}
+
+	now := utility.Now()
+
+	if !current.Ok && model.UseDateMake {
+		c.new.Set(model.DateMakeField, now)
+	}
+
+	if model.UseDateUpdate {
+		c.new.Set(model.DateUpdateField, now)
+	}
+
+	return current, nil
 }

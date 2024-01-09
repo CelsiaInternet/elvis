@@ -79,21 +79,6 @@ type OrderBy struct {
 /**
 *
 **/
-type ReferenceValue struct {
-	Schema string
-	Table  string
-	Key    any
-	Op     int
-}
-
-/**
-*
-**/
-type Rerences func(references []*ReferenceValue)
-
-/**
-*
-**/
 type Validate struct {
 	Col   *Column
 	Value any
@@ -103,26 +88,26 @@ type Validate struct {
 *
 **/
 type Linq struct {
-	Tp         int
-	Act        int
-	db         int
-	_select    []*Column
-	from       []*FRom
-	where      []*Where
-	_join      []*Join
-	orderBy    []*OrderBy
-	groupBy    []*Column
-	_return    []*Column
-	fromAs     []*FRom
-	as         int
-	details    []*Column
-	validates  []*Validate
-	data       e.Json
-	new        *e.Json
-	change     bool
-	references []*ReferenceValue
-	debug      bool
-	sql        string
+	Tp        int
+	Act       int
+	db        int
+	_select   []*Column
+	from      []*FRom
+	where     []*Where
+	_join     []*Join
+	orderBy   []*OrderBy
+	groupBy   []*Column
+	_return   []*Column
+	fromAs    []*FRom
+	as        int
+	details   []*Column
+	validates []*Validate
+	keys      []*Validate
+	data      e.Json
+	new       *e.Json
+	change    bool
+	debug     bool
+	sql       string
 }
 
 /**
@@ -147,6 +132,7 @@ func NewLinq(tp int, act int, model *Model, as ...string) *Linq {
 		groupBy:   []*Column{},
 		details:   []*Column{},
 		validates: []*Validate{},
+		keys:      []*Validate{},
 		data:      e.Json{},
 		new:       &e.Json{},
 		as:        1,
@@ -345,6 +331,13 @@ func (c *Linq) AddValidate(col *Column, val any) {
 		Col:   col,
 		Value: val,
 	})
+
+	if col.PrimaryKey {
+		c.keys = append(c.keys, &Validate{
+			Col:   col,
+			Value: val,
+		})
+	}
 }
 
 /**

@@ -10,10 +10,10 @@ func (c *Linq) Sql() string {
 		c.PrepareInsert()
 		return c.SqlInsert()
 	} else if c.Act == ActUpdate {
-		c.PrepareUpdate(c.data)
+		c.PrepareUpdate()
 		return c.SqlUpdate()
 	} else if c.Act == ActDelete {
-		c.PrepareDelete(c.data)
+		c.PrepareDelete()
 		return c.SqlDelete()
 	} else {
 		return c.SqlSelect()
@@ -188,7 +188,7 @@ func (c *Linq) SqlCurrent() string {
 
 	c.SqlFrom()
 
-	c.SqlKey()
+	c.SqlKeys()
 
 	return c.sql
 }
@@ -245,31 +245,6 @@ func (c *Linq) SqlWhere() string {
 			wh = strs.Append(def.connector, def.where, " ")
 		}
 		result = strs.Append(result, wh, "\n")
-	}
-
-	if len(result) > 0 {
-		result = strs.Format(`WHERE %s`, result)
-	}
-
-	c.sql = strs.Append(c.sql, result, "\n")
-
-	return result
-}
-
-func (c *Linq) SqlKey() string {
-	var result string
-	var wh string
-	for _, where := range c.where {
-		col := c.Col(where.val1)
-		if col.PrimaryKey {
-			def := where.Define(c)
-			if len(result) == 0 {
-				wh = def.where
-			} else {
-				wh = strs.Append(def.connector, def.where, " ")
-			}
-			result = strs.Append(result, wh, "\n")
-		}
 	}
 
 	if len(result) > 0 {
@@ -366,6 +341,34 @@ func (c *Linq) SqlIndex() string {
 
 	if len(result) > 0 {
 		result = strs.Format(`RETURNING %s`, result)
+	}
+
+	c.sql = strs.Append(c.sql, result, "\n")
+
+	return result
+}
+
+func (c *Linq) SqlKeys() string {
+	var result string
+	var wh string
+	for _, obj := range c.keys {
+		if len(result) == 0 {
+			wh = strs.Format(`%s=%v`, strs.Uppcase(obj.Col.name), e.Quoted(obj.Value))
+		} else {
+			wh = strs.Format(`AND %s=%v`, strs.Uppcase(obj.Col.name), e.Quoted(obj.Value))
+		}
+		result = strs.Append(result, wh, "\n")
+	}
+
+	if len(result) == 0 {
+		return c.SqlWhere()
+	}
+
+	if len(result) == 0 {
+		result = strs.Format(`LIMIT 0`, result)
+	} else {
+		result = strs.Format(`WHERE %s`, result)
+		result = strs.Append(result, `LIMIT 1`, "\n")
 	}
 
 	c.sql = strs.Append(c.sql, result, "\n")

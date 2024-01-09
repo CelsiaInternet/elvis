@@ -1,9 +1,7 @@
 package linq
 
 import (
-	"github.com/cgalvisleon/elvis/console"
 	e "github.com/cgalvisleon/elvis/json"
-	"github.com/cgalvisleon/elvis/msg"
 )
 
 func (c *Linq) Debug() *Linq {
@@ -39,48 +37,34 @@ func (c *Linq) Command() (e.Item, error) {
 * Exec
 **/
 func (c *Linq) commandInsert() (e.Item, error) {
-	if len(c.where) > 0 {
-		current, err := c.Current()
-		if err != nil {
-			return e.Item{}, err
-		}
-
-		if current.Ok {
-			return e.Item{}, console.Alert(msg.RECORD_FOUND)
-		}
+	_, err := c.PrepareInsert()
+	if err != nil {
+		return e.Item{}, err
 	}
 
 	return c.insert()
 }
 
 func (c *Linq) commandUpdate() (e.Item, error) {
-	current, err := c.Current()
+	current, err := c.PrepareUpdate()
 	if err != nil {
 		return e.Item{}, err
 	}
 
-	if !current.Ok {
-		return e.Item{}, console.Alert(msg.RECORD_NOT_FOUND)
-	}
-
-	return c.update(current.Result)
+	return c.update(current)
 }
 
 func (c *Linq) commandDelete() (e.Item, error) {
-	current, err := c.Current()
+	current, err := c.PrepareDelete()
 	if err != nil {
 		return e.Item{}, err
 	}
 
-	if !current.Ok {
-		return e.Item{}, console.Alert(msg.RECORD_NOT_FOUND)
-	}
-
-	return c.delete(current.Result)
+	return c.delete(current)
 }
 
 func (c *Linq) commandUpsert() (e.Item, error) {
-	current, err := c.Current()
+	current, err := c.PrepareUpsert()
 	if err != nil {
 		return e.Item{}, err
 	}
@@ -105,7 +89,6 @@ func (c *Linq) Current() (e.Item, error) {
 * Basic operation
 **/
 func (c *Linq) insert() (e.Item, error) {
-	c.PrepareInsert()
 	model := c.from[0].model
 
 	for _, trigger := range model.BeforeInsert {
@@ -141,16 +124,6 @@ func (c *Linq) insert() (e.Item, error) {
 }
 
 func (c *Linq) update(current e.Json) (e.Item, error) {
-	changue := c.PrepareUpdate(current)
-	if !changue {
-		return e.Item{
-			Ok: changue,
-			Result: e.Json{
-				"message": msg.RECORD_NOT_CHANGE,
-			},
-		}, nil
-	}
-
 	model := c.from[0].model
 
 	for _, trigger := range model.BeforeUpdate {
@@ -186,7 +159,6 @@ func (c *Linq) update(current e.Json) (e.Item, error) {
 }
 
 func (c *Linq) delete(current e.Json) (e.Item, error) {
-	c.PrepareDelete(current)
 	model := c.from[0].model
 
 	for _, trigger := range model.BeforeDelete {
