@@ -6,11 +6,10 @@ import (
 	"github.com/cgalvisleon/elvis/linq"
 )
 
+var MasterIdx int = 0
+
 func InitDefine() error {
 	if err := DefineSync(); err != nil {
-		return err
-	}
-	if err := DefineMode(); err != nil {
 		return err
 	}
 	if err := DefineSeries(); err != nil {
@@ -49,4 +48,8 @@ func InitModel(model *linq.Model) error {
 	}
 
 	return nil
+}
+
+func SetMasterIdx(idx int) {
+	MasterIdx = idx
 }

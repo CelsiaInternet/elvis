@@ -144,7 +144,7 @@ func GetSerieLast(tag string) int {
 	return 0
 }
 
-func SetSerieValue(db int, tag string, val int) (int, error) {
+func SetSerieLast(db int, tag string, val int) (int, error) {
 	sql := `
 	INSERT INTO core.SERIES(SERIE, VALUE)
 	VALUES ($1, $2)
@@ -185,7 +185,7 @@ func SyncSeries(masterIdx int, c chan int) error {
 		for _, item := range items.Result {
 			tag := item.Str("serie")
 			val := item.Int("value")
-			_, err = SetSerieValue(masterIdx, tag, val)
+			_, err = SetSerieLast(masterIdx, tag, val)
 			if err != nil {
 				return console.Error(err)
 			}
