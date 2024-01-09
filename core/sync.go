@@ -89,7 +89,7 @@ func DefineSync() error {
   RETURNS
     TRIGGER AS $$
   DECLARE
-    VINDEX INTERGER;
+    VINDEX INTEGER;
   BEGIN
     SELECT INDEX INTO VINDEX
     FROM core.SYNCS
