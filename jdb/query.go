@@ -199,7 +199,7 @@ func QueryDataOne(sql string, args ...any) (e.Item, error) {
 **/
 func HttpQuery(sql string, args []any) (e.Items, error) {
 	if !utility.ValidStr(sql, 0, []string{""}) {
-		return e.Items{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "name")
+		return e.Items{}, console.AlertF("SQL is empty")
 	}
 
 	return Query(sql, args...)

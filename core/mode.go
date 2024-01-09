@@ -12,7 +12,7 @@ import (
 * Mode
 *	Handler for CRUD data
  */
-const ModeNone = 0   /** Node */
+const ModeNone = 0   /** None */
 const ModeIdle = 1   /** Libre */
 const ModeNode = 2   /** Node */
 const ModeBridge = 3 /** Bridge */
@@ -29,7 +29,7 @@ func DefineMode() error {
 		return console.PanicE(err)
 	}
 
-	existMode, _ := ExistTable(0, "core", "MODE")
+	existMode, _ := jdb.ExistTable(0, "core", "MODE")
 	if existMode {
 		return nil
 	}
@@ -44,7 +44,7 @@ func DefineMode() error {
     MODE INTEGER DEFAULT 0,
 		PASSWORD VARCHAR(250) DEFAULT '',		
     _DATA JSONB DEFAULT '{}',
-		INDEX BIGINT DEFAULT 0,
+		INDEX SERIAL,
 		PRIMARY KEY(_ID)
   );
 	`

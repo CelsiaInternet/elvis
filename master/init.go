@@ -13,16 +13,10 @@ func InitMaster() error {
 
 	master = &Master{}
 
-	if err := core.DefineConfig(); err != nil {
-		return console.PanicE(err)
-	}
 	if err := DefineNodes(); err != nil {
 		return console.PanicE(err)
 	}
 	if err := core.DefineSeries(); err != nil {
-		return console.PanicE(err)
-	}
-	if err := core.DefineReference(); err != nil {
 		return console.PanicE(err)
 	}
 

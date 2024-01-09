@@ -11,7 +11,7 @@ func DefineRecycling() error {
 		return console.PanicE(err)
 	}
 
-	existRecicling, _ := ExistTable(0, "core", "RECYCLING")
+	existRecicling, _ := jdb.ExistTable(0, "core", "RECYCLING")
 	if existRecicling {
 		return nil
 	}
@@ -24,7 +24,7 @@ func DefineRecycling() error {
     TABLE_NAME VARCHAR(80) DEFAULT '',
     _IDT VARCHAR(80) DEFAULT '-1',
     INDEX SERIAL,
-		PRIMARY KEY(_IDT)
+		PRIMARY KEY(TABLE_SCHEMA, TABLE_NAME, _IDT)
 	);
   CREATE INDEX IF NOT EXISTS RECYCLING_INDEX_IDX ON core.RECYCLING(INDEX);
 
@@ -54,11 +54,8 @@ func DefineRecycling() error {
   RETURNS
     TRIGGER AS $$
   BEGIN
-		IF OLD._STATE = '-2' THEN    	
-			DELETE FROM core.RECYCLING WHERE _IDT=OLD._IDT;
-    END IF;
-
-  RETURN OLD;
+		DELETE FROM core.RECYCLING WHERE _IDT=OLD._IDT;
+  	RETURN OLD;
   END;
   $$ LANGUAGE plpgsql;
   `
@@ -72,7 +69,7 @@ func DefineRecycling() error {
 }
 
 func SetRecycligTrigger(schema, table string) error {
-	created, err := CreateColumn(0, schema, table, "_STATE", "VARCHAR(80)", "0")
+	created, err := jdb.CreateColumn(0, schema, table, "_STATE", "VARCHAR(80)", "0")
 	if err != nil {
 		return err
 	}

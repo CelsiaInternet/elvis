@@ -6,6 +6,8 @@ import (
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/jdb"
 	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/msg"
+	"github.com/cgalvisleon/elvis/utility"
 )
 
 const NodeStatusIdle = 0
@@ -152,23 +154,7 @@ func DefineNodes() error {
 	CREATE TRIGGER NODES_DELETE
 	AFTER DELETE ON core.NODES
 	FOR EACH ROW
-	EXECUTE PROCEDURE core.NODES_DELETE();
-
-  CREATE TABLE IF NOT EXISTS core.SYNC(
-		DATE_MAKE TIMESTAMP DEFAULT NOW(),
-		DATE_UPDATE TIMESTAMP DEFAULT NOW(),
-    TABLE_SCHEMA VARCHAR(80) DEFAULT '',
-    TABLE_NAME VARCHAR(80) DEFAULT '',
-    ACTION VARCHAR(80) DEFAULT '',		
-    _IDT VARCHAR(80) DEFAULT '-1',
-		_DATA JSONB DEFAULT '{}',
-		QUERY TEXT DEFAULT '',
-		NODE VARCHAR(80) DEFAULT '',
-    INDEX BIGINT DEFAULT 0,
-		PRIMARY KEY (_IDT)
-  );
-	CREATE INDEX IF NOT EXISTS SYNC_NODE_IDX ON core.SYNC(NODE);
-  CREATE INDEX IF NOT EXISTS SYNC_INDEX_IDX ON core.SYNC(INDEX);`
+	EXECUTE PROCEDURE core.NODES_DELETE();`
 
 	_, err := jdb.QDDL(sql)
 	if err != nil {
@@ -206,6 +192,70 @@ func GetNodeById(id string) (e.Item, error) {
 	delete(item.Result, "password")
 
 	return item, nil
+}
+
+func UpSertNode(id string, mode int, driver, host string, port int, dbname, user, password string) (e.Item, error) {
+	if !utility.ValidId(id) {
+		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "id")
+	}
+
+	current, err := GetNodeById(id)
+	if err != nil {
+		return e.Item{}, err
+	}
+
+	now := utility.Now()
+	data := e.Json{
+		"driver": driver,
+		"host":   host,
+		"port":   port,
+		"dbname": dbname,
+		"user":   user,
+	}
+
+	if current.Ok {
+		sql := `
+		UPDATE core.NODES SET
+		DATE_UPDATE=$2,
+		MODE=$3,
+		PASSWORD=$4,
+		_DATA=$5
+		WHERE _ID=$1
+		RETURNING INDEX;`
+
+		item, err := jdb.QueryOne(sql, id, now, mode, password, data)
+		if err != nil {
+			return e.Item{}, err
+		}
+
+		return e.Item{
+			Ok: item.Ok,
+			Result: e.Json{
+				"message": msg.RECORD_UPDATE,
+				"_id":     id,
+				"index":   item.Index(),
+			},
+		}, nil
+	}
+
+	sql := `
+		INSERT INTO core.NODES(DATE_MAKE, DATE_UPDATE, _ID, MODE, _DATA)
+		VALUES($1, $1, $2, $3, $4)
+		RETURNING INDEX;`
+
+	item, err := jdb.QueryOne(sql, now, id, mode, data)
+	if err != nil {
+		return e.Item{}, err
+	}
+
+	return e.Item{
+		Ok: item.Ok,
+		Result: e.Json{
+			"message": msg.RECORD_CREATE,
+			"_id":     id,
+			"index":   item.Index(),
+		},
+	}, nil
 }
 
 func DeleteNodeById(id string) (e.Item, error) {

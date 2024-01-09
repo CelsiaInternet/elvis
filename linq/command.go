@@ -137,10 +137,6 @@ func (c *Linq) insert() (e.Item, error) {
 
 	c.Details(&item.Result)
 
-	if model.AfterReferences != nil {
-		go model.AfterReferences(c.references)
-	}
-
 	return item, nil
 }
 
@@ -186,10 +182,6 @@ func (c *Linq) update(current e.Json) (e.Item, error) {
 
 	c.Details(&item.Result)
 
-	if model.AfterReferences != nil {
-		go model.AfterReferences(c.references)
-	}
-
 	return item, nil
 }
 
@@ -220,10 +212,6 @@ func (c *Linq) delete(current e.Json) (e.Item, error) {
 		if err != nil {
 			return e.Item{}, err
 		}
-	}
-
-	if model.AfterReferences != nil {
-		go model.AfterReferences(c.references)
 	}
 
 	return e.Item{

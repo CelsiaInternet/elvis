@@ -6,6 +6,10 @@ import (
 	e "github.com/cgalvisleon/elvis/json"
 )
 
+/**
+* Data Definition Language
+**/
+
 func rowsItems(rows *sql.Rows) e.Items {
 	var result e.Items = e.Items{Result: []e.Json{}}
 

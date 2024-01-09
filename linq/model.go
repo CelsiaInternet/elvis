@@ -54,7 +54,6 @@ type Model struct {
 	AfterUpdate        []Trigger
 	BeforeDelete       []Trigger
 	AfterDelete        []Trigger
-	AfterReferences    Rerences
 	Version            int
 }
 
@@ -297,10 +296,6 @@ func (c *Model) Trigger(event int, trigger Trigger) {
 	} else if event == AfterDelete {
 		c.AfterDelete = append(c.BeforeDelete, trigger)
 	}
-}
-
-func (c *Model) References(reference Rerences) {
-	c.AfterReferences = reference
 }
 
 func (c *Model) Details(name, description string, _default any, details Details) {

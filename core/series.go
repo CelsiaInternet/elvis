@@ -16,7 +16,7 @@ func DefineSeries() error {
 		return console.PanicE(err)
 	}
 
-	existSeries, _ = ExistTable(0, "core", "SERIES")
+	existSeries, _ = jdb.ExistTable(0, "core", "SERIES")
 	if existSeries {
 		return nil
 	}
@@ -46,7 +46,7 @@ func DefineSeries() error {
 func EnabledSeries() bool {
 	if series == nil {
 		series = make(map[string]int)
-		existSeries, _ := ExistTable(0, "core", "SERIES")
+		existSeries, _ := jdb.ExistTable(0, "core", "SERIES")
 		return existSeries
 	}
 
@@ -76,9 +76,9 @@ func GetSerie(tag string) int {
 		if _, ok := series[tag]; ok {
 			result = NextVal(tag)
 		} else {
-			ok, _ := ExistSerie(0, "public", tag)
+			ok, _ := jdb.ExistSerie(0, "public", tag)
 			if !ok {
-				CreateSerie(0, "public", tag)
+				jdb.CreateSerie(0, "public", tag)
 				result = NextVal(tag)
 			} else {
 				result = NextVal(tag)

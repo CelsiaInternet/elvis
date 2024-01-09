@@ -1,15 +1,13 @@
 package core
 
-import "github.com/cgalvisleon/elvis/console"
+import (
+	"github.com/cgalvisleon/elvis/console"
+	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/linq"
+)
 
 func InitDefine() error {
-	if err := DefineConfig(); err != nil {
-		return err
-	}
 	if err := DefineSync(); err != nil {
-		return err
-	}
-	if err := DefineReference(); err != nil {
 		return err
 	}
 	if err := DefineMode(); err != nil {
@@ -21,11 +19,34 @@ func InitDefine() error {
 	if err := DefineRecycling(); err != nil {
 		return err
 	}
-	if err := JoinToMaster(); err != nil {
-		return console.Error(err)
-	}
 
 	console.LogK("CORE", "Init core")
+
+	return nil
+}
+
+func InitModel(model *linq.Model) error {
+	err := model.Init()
+	if err != nil {
+		return err
+	}
+
+	if model.UseSync {
+		SetSyncTrigger(model.Schema, model.Table)
+	}
+
+	if model.UseRecycle {
+		SetRecycligTrigger(model.Schema, model.Table)
+	}
+
+	if model.UseIndex {
+		model.Trigger(linq.BeforeInsert, func(model *linq.Model, old, new *e.Json, data e.Json) error {
+			index := GetSerie(model.Name)
+			new.Set("index", index)
+
+			return nil
+		})
+	}
 
 	return nil
 }

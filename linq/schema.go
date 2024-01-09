@@ -80,39 +80,12 @@ func (c *Schema) Describe() e.Json {
 }
 
 func (c *Schema) Init() error {
-	sql := `
-	SELECT EXISTS(
-		SELECT 1
-		FROM pg_namespace
-		WHERE nspname = $1);`
-
-	item, err := jdb.DBQueryOne(c.Db, sql, c.Name)
+	_, err := jdb.CreateSchema(c.Db, c.Name)
 	if err != nil {
 		return err
 	}
 
-	exists := item.Bool("exists")
-
-	if !exists {
-		sql := c.DDL()
-
-		_, err := jdb.DBQDDL(c.Db, sql)
-		if err != nil {
-			return err
-		}
-	}
-
 	return nil
-}
-
-func (c *Schema) DDL() string {
-	var result string
-
-	if len(c.Name) > 0 {
-		result = strs.Format(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"; CREATE SCHEMA IF NOT EXISTS "%s";`, c.Name)
-	}
-
-	return result
 }
 
 /**
