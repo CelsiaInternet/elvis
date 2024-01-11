@@ -234,6 +234,13 @@ func (c *Column) Low() string {
 	return strs.Lowcase(c.name)
 }
 
+func (c *Column) ColName() string {
+	result := strs.Uppcase(c.name)
+	result = strs.Append(c.Model.Name, result, ".")
+	result = strs.Append(c.Model.Schema, result, ".")
+	return result
+}
+
 /**
 * This function not use in Select
 **/
@@ -371,15 +378,20 @@ func (c *Column) Cast(cast string) *Column {
 *
 **/
 func (c *Column) Eq(val any) *Where {
-	return NewWhere(c, "=", val)
+	result := NewWhere(c, "=", val)
+	result.SetPrimaryKey(c, val)
+	return result
 }
 
 func (c *Column) Neg(val any) *Where {
-	return NewWhere(c, "!=", val)
+	result := NewWhere(c, "!=", val)
+	result.SetPrimaryKey(c, val)
+	return result
 }
 
 func (c *Column) In(vals ...any) *Where {
-	return NewWhere(c, "IN", vals)
+	result := NewWhere(c, "IN", vals)
+	return result
 }
 
 func (c *Column) Like(val any) *Where {
@@ -391,21 +403,31 @@ func (c *Column) Like(val any) *Where {
 		val = "%"
 	}
 
-	return NewWhere(c, "ILIKE", val)
+	result := NewWhere(c, "ILIKE", val)
+	result.SetPrimaryKey(c, val)
+	return result
 }
 
 func (c *Column) More(val any) *Where {
-	return NewWhere(c, ">", val)
+	result := NewWhere(c, ">", val)
+	result.SetPrimaryKey(c, val)
+	return result
 }
 
 func (c *Column) Less(val any) *Where {
-	return NewWhere(c, "<", val)
+	result := NewWhere(c, "<", val)
+	result.SetPrimaryKey(c, val)
+	return result
 }
 
 func (c *Column) MoreEq(val any) *Where {
-	return NewWhere(c, ">=", val)
+	result := NewWhere(c, ">=", val)
+	result.SetPrimaryKey(c, val)
+	return result
 }
 
 func (c *Column) LessEq(val any) *Where {
-	return NewWhere(c, "<=", val)
+	result := NewWhere(c, "<=", val)
+	result.SetPrimaryKey(c, val)
+	return result
 }

@@ -37,25 +37,27 @@ func LogC(kind string, color string, args ...any) string {
 	return logs.Logln(kind, color, args...)
 }
 
-func LogK(kind string, args ...any) {
+func LogK(kind string, args ...any) error {
 	LogC(kind, "Green", args...)
+	return nil
 }
 
-func LogKF(kind string, format string, args ...any) {
+func LogKF(kind string, format string, args ...any) error {
 	message := strs.Format(format, args...)
-	LogK(kind, message)
+	return LogK(kind, message)
 }
 
-func Log(args ...any) {
+func Log(args ...any) error {
 	LogC("Log", "Green", args...)
+	return nil
 }
 
-func LogF(format string, args ...any) {
+func LogF(format string, args ...any) error {
 	message := strs.Format(format, args...)
-	Log(message)
+	return Log(message)
 }
 
-func Print(args ...any) {
+func Print(args ...any) error {
 	message := ""
 	for i, arg := range args {
 		if i == 0 {
@@ -64,22 +66,27 @@ func Print(args ...any) {
 			message = strs.Format("%s, %v", message, arg)
 		}
 	}
-	Log(message)
+	return Log(message)
 }
 
-func Info(args ...any) {
+func Info(args ...any) error {
 	LogC("Info", "Blue", args...)
+	return nil
 }
 
-func InfoF(format string, args ...any) {
+func InfoF(format string, args ...any) error {
 	message := strs.Format(format, args...)
-	Info(message)
+	return Info(message)
+}
+
+func AlertE(err error) error {
+	LogC("Alert", "Yellow", err)
+	return err
 }
 
 func Alert(message string) error {
 	err := NewError(message)
-	LogC("Alert", "Yellow", err)
-	return err
+	return AlertE(err)
 }
 
 func AlertF(format string, args ...any) error {

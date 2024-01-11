@@ -120,7 +120,7 @@ func InitProfile(moduleId, profileTp string, data e.Json) (e.Item, error) {
 	data["module_id"] = moduleId
 	data["profile_tp"] = profileTp
 	return Profiles.Insert(data).
-		Command()
+		CommandOne()
 }
 
 func UpSetProfile(moduleId, profileTp string, data e.Json) (e.Item, error) {
@@ -146,7 +146,7 @@ func UpSetProfile(moduleId, profileTp string, data e.Json) (e.Item, error) {
 	return Profiles.Upsert(data).
 		Where(Profiles.Column("module_id").Eq(moduleId)).
 		And(Profiles.Column("profile_tp").Eq(profileTp)).
-		Command()
+		CommandOne()
 }
 
 func UpSetProfileTp(projectId, moduleId, id, name, description string, data e.Json) (e.Item, error) {
@@ -183,7 +183,7 @@ func DeleteProfile(moduleId, profileTp string) (e.Item, error) {
 	return Profiles.Delete().
 		Where(Profiles.Column("module_id").Eq(moduleId)).
 		And(Profiles.Column("profile_tp").Eq(profileTp)).
-		Command()
+		CommandOne()
 }
 
 func GetProfileFolderById(moduleId, profileTp, folderId string) (e.Item, error) {
@@ -226,13 +226,13 @@ func CheckProfileFolder(moduleId, profileTp, folderId string, chk bool) (e.Item,
 			And(ProfileFolders.Column("profile_tp").Eq(profileTp)).
 			And(ProfileFolders.Column("folder_id").Eq(folderId)).
 			Returns(ProfileFolders.Column("index")).
-			Command()
+			CommandOne()
 	} else {
 		return ProfileFolders.Delete().
 			Where(ProfileFolders.Column("module_id").Eq(moduleId)).
 			And(ProfileFolders.Column("profile_tp").Eq(profileTp)).
 			And(ProfileFolders.Column("folder_id").Eq(folderId)).
-			Command()
+			CommandOne()
 	}
 }
 

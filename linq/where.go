@@ -1,19 +1,18 @@
 package linq
 
 import (
-	"strings"
-
 	e "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/strs"
 )
 
 type Where struct {
-	linq      *Linq
-	connector string
-	where     string
-	val1      any
-	operator  string
-	val2      any
+	linq       *Linq
+	connector  string
+	where      string
+	val1       any
+	operator   string
+	val2       any
+	PrimaryKey *Validate
 }
 
 func (c *Where) Str1() string {
@@ -46,24 +45,6 @@ func (c *Where) Str2() string {
 	}
 
 	return result
-}
-
-func StrToCols(str string) []string {
-	str = strs.ReplaceAll(str, []string{" "}, "")
-	cols := strings.Split(str, ",")
-
-	return cols
-}
-
-func (c *Linq) Col(val any) *Column {
-	switch v := val.(type) {
-	case Column:
-		return &v
-	case *Column:
-		return v
-	default:
-		return &Column{}
-	}
 }
 
 func (c *Where) Def(val any) string {
@@ -102,6 +83,17 @@ func (c *Where) Define(linq *Linq) *Where {
 	return c
 }
 
+func (c *Where) SetPrimaryKey(col *Column, val any) *Where {
+	if col.PrimaryKey {
+		c.PrimaryKey = &Validate{
+			Col:   col,
+			Value: val,
+		}
+	}
+
+	return c
+}
+
 func NewWhere(val1 any, operator string, val2 any) *Where {
-	return &Where{val1: val1, operator: operator, val2: val2}
+	return &Where{val1: val1, operator: operator, val2: val2, PrimaryKey: nil}
 }

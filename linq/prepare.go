@@ -85,7 +85,7 @@ func (c *Model) Changue(current e.Json, linq *Linq) *Linq {
 	var change bool
 	new := linq.new
 
-	for k, _ := range *new {
+	for k := range *new {
 		k = strs.Lowcase(k)
 		idxCol := c.ColIdx(k)
 
@@ -105,101 +105,54 @@ func (c *Model) Changue(current e.Json, linq *Linq) *Linq {
 /**
 *	Prepare command data
 **/
-func (c *Linq) PrepareInsert() (e.Json, error) {
+func (c *Linq) PrepareInsert() error {
 	model := c.from[0].model
 	model.Consolidate(c)
 	for _, validate := range c.validates {
 		if err := validate.Col.Valid(validate.Value); err != nil {
-			return e.Json{}, err
+			return err
 		}
 	}
 
 	current, err := c.Current()
 	if err != nil {
-		return e.Json{}, err
+		return err
 	}
 
 	if current.Ok {
-		return e.Json{}, console.Alert(msg.RECORD_FOUND)
+		return console.NewError(msg.RECORD_FOUND)
 	}
 
-	now := utility.Now()
-
-	if model.UseDateMake {
-		c.new.Set(model.DateMakeField, now)
-	}
-
-	if model.UseDateUpdate {
-		c.new.Set(model.DateUpdateField, now)
-	}
-
-	return current.Result, nil
+	return nil
 }
 
-func (c *Linq) PrepareUpdate() (e.Json, error) {
+func (c *Linq) PrepareUpdate() (e.Items, error) {
 	model := c.from[0].model
 	model.Consolidate(c)
 
 	current, err := c.Current()
 	if err != nil {
-		return e.Json{}, err
+		return e.Items{}, err
 	}
 
 	if !current.Ok {
-		return e.Json{}, console.Alert(msg.RECORD_NOT_FOUND)
+		return e.Items{}, console.NewError(msg.RECORD_NOT_FOUND)
 	}
 
-	model.Changue(current.Result, c)
-
-	if !c.change {
-		return e.Json{
-			"ok":      c.change,
-			"message": msg.RECORD_NOT_CHANGE,
-		}, nil
-	}
-
-	now := utility.Now()
-
-	if model.UseDateUpdate {
-		c.new.Set(model.DateUpdateField, now)
-	}
-
-	return current.Result, nil
+	return current, nil
 }
 
-func (c *Linq) PrepareDelete() (e.Json, error) {
+func (c *Linq) PrepareDelete() (e.Items, error) {
+	return c.PrepareUpdate()
+}
+
+func (c *Linq) PrepareUpsert() (e.Items, error) {
 	model := c.from[0].model
 	model.Consolidate(c)
 
 	current, err := c.Current()
 	if err != nil {
-		return e.Json{}, err
-	}
-
-	if !current.Ok {
-		return e.Json{}, console.Alert(msg.RECORD_NOT_FOUND)
-	}
-
-	return current.Result, nil
-}
-
-func (c *Linq) PrepareUpsert() (e.Item, error) {
-	model := c.from[0].model
-	model.Consolidate(c)
-
-	current, err := c.Current()
-	if err != nil {
-		return e.Item{}, err
-	}
-
-	now := utility.Now()
-
-	if !current.Ok && model.UseDateMake {
-		c.new.Set(model.DateMakeField, now)
-	}
-
-	if model.UseDateUpdate {
-		c.new.Set(model.DateUpdateField, now)
+		return e.Items{}, err
 	}
 
 	return current, nil

@@ -2,13 +2,30 @@ package linq
 
 import (
 	"reflect"
+	"strings"
 
 	"github.com/cgalvisleon/elvis/console"
 	e "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/strs"
 )
 
+func strToCols(str string) []any {
+	var result []any
+	str = strs.ReplaceAll(str, []string{" "}, "")
+	cols := strings.Split(str, ",")
+
+	for col := range cols {
+		result = append(result, col)
+	}
+
+	return result
+}
+
 func (c *Linq) Select(sel ...any) *Linq {
+	if len(sel) == 1 {
+		sel = strToCols(sel[0].(string))
+	}
+
 	var cols []*Column = []*Column{}
 	for _, col := range sel {
 		switch v := col.(type) {

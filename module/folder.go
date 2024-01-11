@@ -128,7 +128,7 @@ func InitFolder(moduleId, mainId, id, name, description string, data e.Json) (e.
 	item, err := Folders.Upsert(data).
 		Where(Folders.Column("_id").Eq(id)).
 		And(Folders.Column("_state").Eq(utility.ACTIVE)).
-		Command()
+		CommandOne()
 	if err != nil {
 		return e.Item{}, err
 	}
@@ -177,7 +177,7 @@ func UpSetFolder(moduleId, mainId, name, description string, data e.Json) (e.Ite
 	item, err := Folders.Upsert(data).
 		Where(Folders.Column("_id").Eq(id)).
 		And(Folders.Column("_state").Eq(utility.ACTIVE)).
-		Command()
+		CommandOne()
 	if err != nil {
 		return e.Item{}, err
 	}
@@ -201,7 +201,7 @@ func StateFolder(id, state string) (e.Item, error) {
 	}).
 		Where(Folders.Column("_id").Eq(id)).
 		And(Folders.Column("_state").Neg(state)).
-		Command()
+		CommandOne()
 	if err != nil {
 		return e.Item{}, err
 	}
@@ -212,7 +212,7 @@ func StateFolder(id, state string) (e.Item, error) {
 func DeleteFolder(id string) (e.Item, error) {
 	item, err := Folders.Delete().
 		Where(Folders.Column("_id").Eq(id)).
-		Command()
+		CommandOne()
 	if err != nil {
 		return e.Item{}, err
 	}

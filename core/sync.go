@@ -26,7 +26,6 @@ func DefineSync() error {
     TABLE_SCHEMA VARCHAR(80) DEFAULT '',
     TABLE_NAME VARCHAR(80) DEFAULT '',
     _IDT VARCHAR(80) DEFAULT '-1',
-    _DATA JSONB DEFAULT '{}',
     ACTION VARCHAR(80) DEFAULT '',
     _SYNC BOOLEAN DEFAULT FALSE,
     _IDS VARCHAR(80) DEFAULT '-1',
@@ -42,8 +41,8 @@ func DefineSync() error {
     IF NEW._IDT = '-1' THEN
       NEW._IDT = uuid_generate_v4();
 
-      INSERT INTO core.SYNCS(TABLE_SCHEMA, TABLE_NAME, _IDT, _DATA, ACTION)
-      VALUES (TG_TABLE_SCHEMA, TG_TABLE_NAME, NEW._IDT, row_to_json(NEW), TG_OP);
+      INSERT INTO core.SYNCS(TABLE_SCHEMA, TABLE_NAME, _IDT, ACTION)
+      VALUES (TG_TABLE_SCHEMA, TG_TABLE_NAME, NEW._IDT, TG_OP);
 
       PERFORM pg_notify(
       'sync',
@@ -64,21 +63,20 @@ func DefineSync() error {
     IF NEW._IDT = '-1' THEN
       NEW._IDT = OLD._IDT;
     ELSE
-      UPDATE core.SYNCS SET
-      DATE_UPDATE = NOW(),
-      _DATA = row_to_json(NEW),
-      ACTION = TG_OP,
-      _SYNC = FALSE
-      WHERE TABLE_SCHEMA = TG_TABLE_SCHEMA
-      AND TABLE_NAME = TG_TABLE_NAME
-      AND _IDT = NEW._IDT;
+     INSERT INTO core.SYNCS(TABLE_SCHEMA, TABLE_NAME, _IDT, ACTION)
+     VALUES (TG_TABLE_SCHEMA, TG_TABLE_NAME, NEW._IDT, TG_OP)
+		 ON CONFLICT(TABLE_SCHEMA, TABLE_NAME, _IDT) DO UPDATE SET
+     DATE_UPDATE = NOW(),
+     ACTION = TG_OP,
+     _SYNC = FALSE
+     _IDS = '-1';
 
-      PERFORM pg_notify(
-      'sync',
-      json_build_object(
-        '_idt', NEW._IDT
-      )::text
-      );
+     PERFORM pg_notify(
+     'sync',
+     json_build_object(
+       '_idt', NEW._IDT
+     )::text
+     );
     END IF; 
 
   RETURN NEW;
@@ -100,9 +98,9 @@ func DefineSync() error {
     IF FOUND THEN
       UPDATE core.SYNCS SET
       DATE_UPDATE = NOW(),
-      _DATA = row_to_json(OLD),
       ACTION = TG_OP,
-      _SYNC = FALSE
+      _SYNC = FALSE,
+      _IDS = '-1'
       WHERE INDEX = VINDEX;
       
       PERFORM pg_notify(

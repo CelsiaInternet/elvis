@@ -104,7 +104,7 @@ func InitType(projectId, id, state, kind, name, description string) (e.Item, err
 	data["description"] = description
 	return Types.Upsert(data).
 		Where(Types.Column("_id").Eq(id)).
-		Command()
+		CommandOne()
 }
 
 func UpSetType(projectId, id, kind, name, description string) (e.Item, error) {
@@ -145,7 +145,7 @@ func UpSetType(projectId, id, kind, name, description string) (e.Item, error) {
 	data["description"] = description
 	return Types.Upsert(data).
 		Where(Types.Column("_id").Eq(id)).
-		Command()
+		CommandOne()
 }
 
 func StateType(id, state string) (e.Item, error) {
@@ -158,7 +158,7 @@ func StateType(id, state string) (e.Item, error) {
 	}).
 		Where(Types.Column("_id").Eq(id)).
 		And(Types.Column("_state").Neg(state)).
-		Command()
+		CommandOne()
 }
 
 func DeleteType(id string) (e.Item, error) {
@@ -176,10 +176,8 @@ func AllTypes(projectId, kind, state, search string, page, rows int, _select str
 
 	auxState := state
 
-	cols := linq.StrToCols(_select)
-
 	if search != "" {
-		return Types.Select(cols).
+		return Types.Select(_select).
 			Where(Types.Column("kind").Eq(kind)).
 			And(Types.Column("project_id").In("-1", projectId)).
 			And(Types.Concat("NAME:", Types.Column("name"), ":DESCRIPTION", Types.Column("description"), ":DATA:", Types.Column("_data"), ":").Like("%"+search+"%")).
@@ -188,21 +186,21 @@ func AllTypes(projectId, kind, state, search string, page, rows int, _select str
 	} else if auxState == "*" {
 		state = utility.FOR_DELETE
 
-		return Types.Select(cols).
+		return Types.Select(_select).
 			Where(Types.Column("kind").Eq(kind)).
 			And(Types.Column("_state").Neg(state)).
 			And(Types.Column("project_id").In("-1", projectId)).
 			OrderBy(Types.Column("name"), true).
 			List(page, rows)
 	} else if auxState == "0" {
-		return Types.Select(cols).
+		return Types.Select(_select).
 			Where(Types.Column("kind").Eq(kind)).
 			And(Types.Column("_state").In("-1", state)).
 			And(Types.Column("project_id").In("-1", projectId)).
 			OrderBy(Types.Column("name"), true).
 			List(page, rows)
 	} else {
-		return Types.Select(cols).
+		return Types.Select(_select).
 			Where(Types.Column("kind").Eq(kind)).
 			And(Types.Column("_state").Eq(state)).
 			And(Types.Column("project_id").In("-1", projectId)).

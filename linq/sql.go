@@ -71,7 +71,7 @@ func (c *Linq) SqlColumDef(cols ...*Column) string {
 	for _, col := range cols {
 		def := col.Def(c)
 
-		result = strs.Append(result, def, ",")
+		result = strs.Append(result, def, ",\n")
 	}
 
 	return result
@@ -349,7 +349,12 @@ func (c *Linq) SqlIndex() string {
 }
 
 func (c *Linq) SqlKeys() string {
-	var result string
+	result := c.SqlWhere()
+
+	if len(result) > 0 {
+		return result
+	}
+
 	var wh string
 	for _, obj := range c.keys {
 		if len(result) == 0 {
@@ -361,14 +366,9 @@ func (c *Linq) SqlKeys() string {
 	}
 
 	if len(result) == 0 {
-		return c.SqlWhere()
-	}
-
-	if len(result) == 0 {
-		result = strs.Format(`LIMIT 0`, result)
+		result = `LIMIT 0`
 	} else {
 		result = strs.Format(`WHERE %s`, result)
-		result = strs.Append(result, `LIMIT 1`, "\n")
 	}
 
 	c.sql = strs.Append(c.sql, result, "\n")

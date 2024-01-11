@@ -156,7 +156,7 @@ func InitAdmin(fullName, country, phone, email string) (e.Item, error) {
 	data["avatar"] = ""
 	item, err := Users.Insert(data).
 		Where(Users.Column("_id").Eq(id)).
-		Command()
+		CommandOne()
 	if err != nil {
 		return e.Item{}, err
 	}
@@ -189,7 +189,7 @@ func UpSetAdmin(fullName, country, phone, email string) (e.Item, error) {
 	data["avatar"] = ""
 	item, err := Users.Upsert(data).
 		Where(Users.Column("_id").Eq(id)).
-		Command()
+		CommandOne()
 	if err != nil {
 		return e.Item{}, err
 	}
@@ -227,7 +227,7 @@ func SetUser(name, password, fullName, phone, email string) (e.Item, error) {
 	data["email"] = email
 	data["avatar"] = ""
 	_, err = Users.Insert(data).
-		Command()
+		CommandOne()
 	if err != nil {
 		return e.Item{}, err
 	}
@@ -266,7 +266,7 @@ func UpdateUser(id, fullName, phone, email string, data e.Json) (e.Item, error) 
 	_, err = Users.Insert(data).
 		Where(Users.Column("_id").Eq(id)).
 		And(Users.Column("_state").Eq(utility.ACTIVE)).
-		Command()
+		CommandOne()
 	if err != nil {
 		return e.Item{}, err
 	}
@@ -289,7 +289,7 @@ func StateUser(id, state string) (e.Item, error) {
 	}).
 		Where(Users.Column("_id").Eq(id)).
 		And(Users.Column("_state").Neg(state)).
-		Command()
+		CommandOne()
 }
 
 func DeleteUser(id string) (e.Item, error) {
@@ -303,22 +303,20 @@ func AllUsers(state, search string, page, rows int, _select string) (e.List, err
 
 	auxState := state
 
-	cols := linq.StrToCols(_select)
-
 	if search != "" {
-		return Users.Select(cols).
+		return Users.Select(_select).
 			Where(Users.Concat("NAME:", Users.Column("name"), ":DATA:", Users.Column("_data"), ":").Like("%"+search+"%")).
 			OrderBy(Users.Column("name"), true).
 			List(page, rows)
 	} else if auxState == "*" {
 		state = utility.FOR_DELETE
 
-		return Users.Select(cols).
+		return Users.Select(_select).
 			Where(Users.Column("_state").Neg(state)).
 			OrderBy(Users.Column("name"), true).
 			List(page, rows)
 	} else {
-		return Users.Select(cols).
+		return Users.Select(_select).
 			Where(Users.Column("_state").Eq(state)).
 			OrderBy(Users.Column("name"), true).
 			List(page, rows)

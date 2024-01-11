@@ -119,7 +119,7 @@ func InitProject(id, name, description string, data e.Json) (e.Item, error) {
 	data.Set("description", description)
 	item, err := Projects.Upsert(data).
 		Where(Projects.Column("_id").Eq(id)).
-		Command()
+		CommandOne()
 	if err != nil {
 		return e.Item{}, err
 	}
@@ -157,7 +157,7 @@ func UpSetProject(id, moduleId, name, description string, data e.Json) (e.Item, 
 	data.Set("module_id", moduleId)
 	item, err := Projects.Upsert(data).
 		Where(Projects.Column("_id").Eq(id)).
-		Command()
+		CommandOne()
 	if err != nil {
 		return e.Item{}, err
 	}
@@ -175,7 +175,7 @@ func StateProject(id, state string) (e.Item, error) {
 	}).
 		Where(Projects.Column("_id").Eq(id)).
 		And(Projects.Column("_state").Neg(state)).
-		Command()
+		CommandOne()
 }
 
 func DeleteProject(id string) (e.Item, error) {
@@ -189,27 +189,25 @@ func AllProjects(state, search string, page, rows int, _select string) (e.List, 
 
 	auxState := state
 
-	cols := linq.StrToCols(_select)
-
 	if search != "" {
-		return Projects.Select(cols).
+		return Projects.Select(_select).
 			Where(Projects.Concat("NAME:", Projects.Column("name"), ":DESCRIPTION:", Projects.Column("description"), ":DATA:", Projects.Column("_data"), ":").Like("%"+search+"%")).
 			OrderBy(Projects.Column("name"), true).
 			List(page, rows)
 	} else if auxState == "*" {
 		state = utility.FOR_DELETE
 
-		return Projects.Select(cols).
+		return Projects.Select(_select).
 			Where(Projects.Column("_state").Neg(state)).
 			OrderBy(Projects.Column("name"), true).
 			List(page, rows)
 	} else if auxState == "0" {
-		return Projects.Select(cols).
+		return Projects.Select(_select).
 			Where(Projects.Column("_state").In("-1", state)).
 			OrderBy(Projects.Column("name"), true).
 			List(page, rows)
 	} else {
-		return Projects.Select(cols).
+		return Projects.Select(_select).
 			Where(Projects.Column("_state").Eq(state)).
 			OrderBy(Projects.Column("name"), true).
 			List(page, rows)
@@ -284,11 +282,11 @@ func CheckProjectModule(project_id, module_id string, chk bool) (e.Item, error) 
 		}
 
 		return ProjectModules.Insert(data).
-			Command()
+			CommandOne()
 	} else {
 		return ProjectModules.Delete().
 			Where(ProjectModules.Column("project_id").Eq(project_id)).
 			And(ProjectModules.Column("module_id").Eq(module_id)).
-			Command()
+			CommandOne()
 	}
 }

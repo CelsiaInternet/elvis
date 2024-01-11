@@ -579,7 +579,7 @@ func UpSert$2(project_id, id string, data e.Json) (e.Item, error) {
 	data["_id"] = id
 	return $2.Upsert(data).
 		Where($2.Column("_id").Eq(id)).
-		Command()
+		CommandOne()
 }
 
 func State$2(id, state string) (e.Item, error) {
@@ -587,12 +587,31 @@ func State$2(id, state string) (e.Item, error) {
 		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "state")
 	}
 
+	item, err := $2.Select("_state").
+		Where($2.Column("_id").Eq(id)).
+		First()
+	if err != nil {
+		return e.Item{}, err
+	}
+
+	if !item.Ok {
+		return e.Item{}, console.Alert(msg.RECORD_NOT_FOUND)
+	}
+
+	old_state := item.Key("_state")
+	if old_state == state {
+		return e.Item{
+			Ok: true,
+			Result: e.Json{
+				"message": msg.RECORD_NOT_UPDATE,
+			}}, nil
+	}
+
 	return $2.Update(e.Json{
-		"_state": state,
+		"_state":   state,
 	}).
 		Where($2.Column("_id").Eq(id)).
-		And($2.Column("_state").Neg(state)).
-		Command()
+		CommandOne()	
 }
 
 func Delete$2(id string) (e.Item, error) {
@@ -606,10 +625,8 @@ func All$2(project_id, state, search string, page, rows int, _select string) (e.
 
 	auxState := state
 
-	cols := linq.StrToCols(_select)
-
 	if search != "" {
-		return $2.Select(cols).
+		return $2.Select(_select).
 			Where($2.Column("project_id").In("-1", project_id)).
 			And($2.Concat("NAME:", $2.Column("name"), "DESCRIPTION:", $2.Column("description"), "DATA:", $2.Column("_data"), ":").Like("%"+search+"%")).
 			OrderBy($2.Column("name"), true).
@@ -617,19 +634,19 @@ func All$2(project_id, state, search string, page, rows int, _select string) (e.
 	} else if auxState == "*" {
 		state = utility.FOR_DELETE
 
-		return $2.Select(cols).
+		return $2.Select(_select).
 			Where($2.Column("_state").Neg(state)).
 			And($2.Column("project_id").In("-1", project_id)).
 			OrderBy($2.Column("name"), true).
 			List(page, rows)
 	} else if auxState == "0" {
-		return $2.Select(cols).
+		return $2.Select(_select).
 			Where($2.Column("_state").In("-1", state)).
 			And($2.Column("project_id").In("-1", project_id)).
 			OrderBy($2.Column("name"), true).
 			List(page, rows)
 	} else {
-		return $2.Select(cols).
+		return $2.Select(_select).
 			Where($2.Column("_state").Eq(state)).
 			And($2.Column("project_id").In("-1", project_id)).
 			OrderBy($2.Column("name"), true).

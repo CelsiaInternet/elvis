@@ -535,8 +535,16 @@ func (c *Model) Select(sel ...any) *Linq {
 	return result
 }
 
+func (c *Model) Record(sel ...any) *Linq {
+	result := From(c)
+	result.Select(sel...)
+	result.SetTp(TpRecord)
+
+	return result
+}
+
 func (c *Model) Insert(data e.Json) *Linq {
-	tp := TpSelect
+	tp := TpRecord
 	if c.UseSource {
 		tp = TpData
 	}
@@ -548,10 +556,11 @@ func (c *Model) Insert(data e.Json) *Linq {
 }
 
 func (c *Model) Update(data e.Json) *Linq {
-	tp := TpSelect
+	tp := TpRecord
 	if c.UseSource {
 		tp = TpData
 	}
+
 	result := NewLinq(tp, ActUpdate, c)
 	result.data = data
 
@@ -559,20 +568,22 @@ func (c *Model) Update(data e.Json) *Linq {
 }
 
 func (c *Model) Delete() *Linq {
-	tp := TpSelect
+	tp := TpRecord
 	if c.UseSource {
 		tp = TpData
 	}
+
 	result := NewLinq(tp, ActDelete, c)
 
 	return result
 }
 
 func (c *Model) Upsert(data e.Json) *Linq {
-	tp := TpSelect
+	tp := TpRecord
 	if c.UseSource {
 		tp = TpData
 	}
+
 	result := NewLinq(tp, ActUpsert, c)
 	result.data = data
 

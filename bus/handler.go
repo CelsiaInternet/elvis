@@ -102,7 +102,7 @@ func UpSertApimanager(package_name, kind, method, path string, data e.Json) (e.I
 	data["_id"] = id
 	return Apibus.Upsert(data).
 		Where(Apibus.Column("_id").Eq(id)).
-		Command()
+		CommandOne()
 }
 
 func StateApimanager(id, state string) (e.Item, error) {
@@ -115,7 +115,7 @@ func StateApimanager(id, state string) (e.Item, error) {
 	}).
 		Where(Apibus.Column("_id").Eq(id)).
 		And(Apibus.Column("_state").Neg(state)).
-		Command()
+		CommandOne()
 }
 
 func DeleteApimanager(id string) (e.Item, error) {
@@ -129,10 +129,8 @@ func AllApimanager(package_name, state, search string, page, rows int, _select s
 
 	auxState := state
 
-	cols := linq.StrToCols(_select)
-
 	if search != "" {
-		return Apibus.Select(cols).
+		return Apibus.Select(_select).
 			Where(Apibus.Column("package_name").Like("%"+package_name+"%")).
 			And(Apibus.Concat("kind:", Apibus.Column("kind"), "METHOD:", Apibus.Column("method"), "PATH:", Apibus.Column("path"), "DATA:", Apibus.Column("_data"), ":").Like("%"+search+"%")).
 			OrderBy(Apibus.Column("path"), true).
@@ -140,19 +138,19 @@ func AllApimanager(package_name, state, search string, page, rows int, _select s
 	} else if auxState == "*" {
 		state = utility.FOR_DELETE
 
-		return Apibus.Select(cols).
+		return Apibus.Select(_select).
 			Where(Apibus.Column("_state").Neg(state)).
 			And(Apibus.Column("package_name").Like("%"+package_name+"%")).
 			OrderBy(Apibus.Column("path"), true).
 			List(page, rows)
 	} else if auxState == "0" {
-		return Apibus.Select(cols).
+		return Apibus.Select(_select).
 			Where(Apibus.Column("_state").In("-1", state)).
 			And(Apibus.Column("package_name").Like("%"+package_name+"%")).
 			OrderBy(Apibus.Column("path"), true).
 			List(page, rows)
 	} else {
-		return Apibus.Select(cols).
+		return Apibus.Select(_select).
 			Where(Apibus.Column("_state").Eq(state)).
 			And(Apibus.Column("package_name").Like("%"+package_name+"%")).
 			OrderBy(Apibus.Column("path"), true).

@@ -6,7 +6,7 @@ import "github.com/cgalvisleon/elvis/strs"
 *
 **/
 func From(model *Model, as ...string) *Linq {
-	tp := TpSelect
+	tp := TpRecord
 	if model.UseSource {
 		tp = TpData
 	}

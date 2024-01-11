@@ -9,7 +9,7 @@ import (
 	"github.com/cgalvisleon/elvis/strs"
 )
 
-const TpSelect = 1
+const TpRecord = 1
 const TpData = 2
 
 const ActSelect = 3
@@ -183,12 +183,10 @@ func GetAs(n int) string {
 **/
 func (c *Linq) SetTp(tp int) *Linq {
 	c.Tp = tp
+
 	return c
 }
 
-/**
-*
-**/
 func (c *Linq) GetAs() string {
 	result := GetAs(c.as)
 	c.as++
@@ -277,6 +275,17 @@ func (c *Linq) As(val any) string {
 	}
 }
 
+func (c *Linq) Col(val any) *Column {
+	switch v := val.(type) {
+	case Column:
+		return &v
+	case *Column:
+		return v
+	default:
+		return &Column{}
+	}
+}
+
 func (c *Linq) GetCol(name string) *Column {
 	if f := strs.ReplaceAll(name, []string{" "}, ""); len(f) == 0 {
 		return nil
@@ -322,22 +331,51 @@ func (c *Linq) ToCols(sel ...any) []*Column {
 	return cols
 }
 
+func (c *Linq) AddPrimaryKey(col *Column, val any) {
+	if !col.Required {
+		return
+	}
+
+	ok := false
+	if col.PrimaryKey {
+		ok = false
+		for _, key := range c.keys {
+			if key.Col.ColName() == col.ColName() {
+				ok = true
+				break
+			}
+		}
+
+		if !ok {
+			c.keys = append(c.keys, &Validate{
+				Col:   col,
+				Value: val,
+			})
+		}
+	}
+}
+
 func (c *Linq) AddValidate(col *Column, val any) {
 	if !col.Required {
 		return
 	}
 
-	c.validates = append(c.validates, &Validate{
-		Col:   col,
-		Value: val,
-	})
+	ok := false
+	for _, validate := range c.validates {
+		if validate.Col.ColName() == col.ColName() {
+			ok = true
+			break
+		}
+	}
 
-	if col.PrimaryKey {
-		c.keys = append(c.keys, &Validate{
+	if !ok {
+		c.validates = append(c.validates, &Validate{
 			Col:   col,
 			Value: val,
 		})
 	}
+
+	c.AddPrimaryKey(col, val)
 }
 
 /**

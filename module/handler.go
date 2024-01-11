@@ -109,7 +109,7 @@ func InitModule(id, name, description string, data e.Json) (e.Item, error) {
 	data.Set("description", description)
 	item, err := Modules.Upsert(data).
 		Where(Modules.Column("_id").Eq(id)).
-		Command()
+		CommandOne()
 	if err != nil {
 		return e.Item{}, err
 	}
@@ -144,7 +144,7 @@ func UpSetModule(id, name, description string, data e.Json) (e.Item, error) {
 	data.Set("description", description)
 	item, err := Modules.Upsert(data).
 		Where(Modules.Column("_id").Eq(id)).
-		Command()
+		CommandOne()
 	if err != nil {
 		return e.Item{}, err
 	}
@@ -162,7 +162,7 @@ func StateModule(id, state string) (e.Item, error) {
 	}).
 		Where(Modules.Column("_id").Eq(id)).
 		And(Modules.Column("_state").Neg(state)).
-		Command()
+		CommandOne()
 }
 
 func DeleteModule(id string) (e.Item, error) {
@@ -176,27 +176,25 @@ func AllModules(state, search string, page, rows int, _select string) (e.List, e
 
 	auxState := state
 
-	cols := linq.StrToCols(_select)
-
 	if search != "" {
-		return Modules.Select(cols).
+		return Modules.Select(_select).
 			Where(Modules.Concat("NAME:", Modules.Column("name"), ":DESCRIPTION", Modules.Column("description"), ":DATA:", Modules.Column("_data"), ":").Like("%"+search+"%")).
 			OrderBy(Modules.Column("name"), true).
 			List(page, rows)
 	} else if auxState == "*" {
 		state = utility.FOR_DELETE
 
-		return Modules.Select(cols).
+		return Modules.Select(_select).
 			Where(Modules.Column("_state").Neg(state)).
 			OrderBy(Modules.Column("name"), true).
 			List(page, rows)
 	} else if auxState == "0" {
-		return Modules.Select(cols).
+		return Modules.Select(_select).
 			Where(Modules.Column("_state").In("-1", state)).
 			OrderBy(Modules.Column("name"), true).
 			List(page, rows)
 	} else {
-		return Modules.Select(cols).
+		return Modules.Select(_select).
 			Where(Modules.Column("_state").Eq(state)).
 			OrderBy(Modules.Column("name"), true).
 			List(page, rows)

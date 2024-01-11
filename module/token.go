@@ -154,7 +154,7 @@ func UpSetToken(projeectId, id, app, device, name, userId string) (e.Item, error
 
 		item, err := Tokens.Update(data).
 			Where(Tokens.Col("_id").Eq(id)).
-			Command()
+			CommandOne()
 		if err != nil {
 			return e.Item{}, err
 		}
@@ -183,7 +183,7 @@ func UpSetToken(projeectId, id, app, device, name, userId string) (e.Item, error
 		data.Set("token", token)
 
 		item, err := Tokens.Insert(data).
-			Command()
+			CommandOne()
 		if err != nil {
 			return e.Item{}, console.Error(err)
 		}
