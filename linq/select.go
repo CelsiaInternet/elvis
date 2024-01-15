@@ -9,23 +9,22 @@ import (
 	"github.com/cgalvisleon/elvis/strs"
 )
 
-func strToCols(str string) []any {
-	var result []any
+func (s *Linq) strToCols(str string) []*Column {
+	var result []*Column = []*Column{}
 	str = strs.ReplaceAll(str, []string{" "}, "")
 	cols := strings.Split(str, ",")
 
-	for col := range cols {
-		result = append(result, col)
+	for _, n := range cols {
+		c := s.GetCol(n)
+		if c != nil {
+			result = append(result, c)
+		}
 	}
 
 	return result
 }
 
-func (c *Linq) Select(sel ...any) *Linq {
-	if len(sel) == 1 {
-		sel = strToCols(sel[0].(string))
-	}
-
+func (s *Linq) Select(sel ...any) *Linq {
 	var cols []*Column = []*Column{}
 	for _, col := range sel {
 		switch v := col.(type) {
@@ -33,119 +32,122 @@ func (c *Linq) Select(sel ...any) *Linq {
 			cols = append(cols, &v)
 		case *Column:
 			cols = append(cols, v)
-		case string:
-			c := c.GetCol(v)
-			if c != nil {
-				cols = append(cols, c)
-			}
 		case []string:
 			for _, n := range v {
-				c := c.GetCol(n)
+				c := s.GetCol(n)
 				if c != nil {
 					cols = append(cols, c)
 				}
 			}
 		case []*Column:
 			cols = v
+		case string:
+			c := s.GetCol(v)
+			if c != nil {
+				cols = append(cols, c)
+			} else {
+				cols2 := s.strToCols(v)
+				cols = append(cols, cols2...)
+			}
 		default:
 			console.ErrorF("Linq select type (%v) value:%v", reflect.TypeOf(v), v)
 		}
 	}
 
-	c._select = cols
+	s._select = cols
 
-	return c
+	return s
 }
 
 /**
 *
 **/
-func (c *Linq) Find() (e.Items, error) {
-	c.SqlSelect()
+func (s *Linq) Find() (e.Items, error) {
+	s.SqlSelect()
 
-	c.sql = strs.Format(`%s;`, c.sql)
+	s.sql = strs.Format(`%s;`, s.sql)
 
-	items, err := c.Query()
+	items, err := s.Query()
 	if err != nil {
 		return e.Items{}, err
 	}
 
 	for _, data := range items.Result {
-		c.Details(&data)
+		s.Details(&data)
 	}
 
 	return items, nil
 }
 
-func (c *Linq) All() (e.Items, error) {
-	c.sql = c.SqlAll()
+func (s *Linq) All() (e.Items, error) {
+	s.sql = s.SqlAll()
 
-	items, err := c.Query()
+	items, err := s.Query()
 	if err != nil {
 		return e.Items{}, err
 	}
 
 	for _, data := range items.Result {
-		c.Details(&data)
+		s.Details(&data)
 	}
 
 	return items, nil
 }
 
-func (c *Linq) First() (e.Item, error) {
-	c.sql = c.SqlLimit(1)
+func (s *Linq) First() (e.Item, error) {
+	s.sql = s.SqlLimit(1)
 
-	item, err := c.QueryOne()
+	item, err := s.QueryOne()
 	if err != nil {
 		return e.Item{}, err
 	}
 
-	c.Details(&item.Result)
+	s.Details(&item.Result)
 
 	return item, nil
 }
 
-func (c *Linq) Limit(limit int) (e.Items, error) {
-	c.sql = c.SqlLimit(limit)
+func (s *Linq) Limit(limit int) (e.Items, error) {
+	s.sql = s.SqlLimit(limit)
 
-	items, err := c.Query()
+	items, err := s.Query()
 	if err != nil {
 		return e.Items{}, err
 	}
 
 	for _, data := range items.Result {
-		c.Details(&data)
+		s.Details(&data)
 	}
 
 	return items, nil
 }
 
-func (c *Linq) Page(page, rows int) (e.Items, error) {
+func (s *Linq) Page(page, rows int) (e.Items, error) {
 	offset := (page - 1) * rows
-	c.sql = c.SqlOffset(rows, offset)
+	s.sql = s.SqlOffset(rows, offset)
 
-	items, err := c.Query()
+	items, err := s.Query()
 	if err != nil {
 		return e.Items{}, err
 	}
 
 	for _, data := range items.Result {
-		c.Details(&data)
+		s.Details(&data)
 	}
 
 	return items, nil
 }
 
-func (c *Linq) Count() int {
-	c.sql = c.SqlCount()
+func (s *Linq) Count() int {
+	s.sql = s.SqlCount()
 
-	return c.QueryCount()
+	return s.QueryCount()
 }
 
-func (c *Linq) List(page, rows int) (e.List, error) {
-	all := c.Count()
+func (s *Linq) List(page, rows int) (e.List, error) {
+	all := s.Count()
 
-	items, err := c.Page(page, rows)
+	items, err := s.Page(page, rows)
 	if err != nil {
 		return e.List{}, err
 	}

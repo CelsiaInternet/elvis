@@ -131,21 +131,6 @@ func (c *Linq) commandUpsert() (e.Items, error) {
 		return e.Items{}, err
 	}
 
-	model := c.from[0].model
-	for _, current := range currents.Result {
-		model.Changue(current, c)
-		if c.change {
-			item, err := c.update(current)
-			if err != nil {
-				return e.Items{}, err
-			} else {
-				result.Result = append(result.Result, item.Result)
-				result.Ok = true
-				result.Count++
-			}
-		}
-	}
-
 	if currents.Count == 0 {
 		item, err := c.insert()
 		if err != nil {
@@ -156,6 +141,21 @@ func (c *Linq) commandUpsert() (e.Items, error) {
 			result.Result = append(result.Result, item.Result)
 			result.Ok = true
 			result.Count++
+		}
+	} else {
+		model := c.from[0].model
+		for _, current := range currents.Result {
+			model.Changue(current, c)
+			if c.change {
+				item, err := c.update(current)
+				if err != nil {
+					return e.Items{}, err
+				} else {
+					result.Result = append(result.Result, item.Result)
+					result.Ok = true
+					result.Count++
+				}
+			}
 		}
 	}
 

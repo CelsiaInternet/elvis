@@ -27,8 +27,8 @@ func DefineSync() error {
     TABLE_NAME VARCHAR(80) DEFAULT '',
     _IDT VARCHAR(80) DEFAULT '-1',
     ACTION VARCHAR(80) DEFAULT '',
-    _SYNC BOOLEAN DEFAULT FALSE,
-    _IDS VARCHAR(80) DEFAULT '-1',
+    _ID VARCHAR(80) DEFAULT '-1',
+    _SYNC BOOLEAN DEFAULT FALSE,    
     INDEX SERIAL,
     PRIMARY KEY (TABLE_SCHEMA, TABLE_NAME, _IDT)
   );  
@@ -41,8 +41,8 @@ func DefineSync() error {
     IF NEW._IDT = '-1' THEN
       NEW._IDT = uuid_generate_v4();
 
-      INSERT INTO core.SYNCS(TABLE_SCHEMA, TABLE_NAME, _IDT, ACTION)
-      VALUES (TG_TABLE_SCHEMA, TG_TABLE_NAME, NEW._IDT, TG_OP);
+      INSERT INTO core.SYNCS(TABLE_SCHEMA, TABLE_NAME, _IDT, ACTION, _ID)
+      VALUES (TG_TABLE_SCHEMA, TG_TABLE_NAME, NEW._IDT, TG_OP, uuid_generate_v4());
 
       PERFORM pg_notify(
       'sync',
@@ -68,8 +68,8 @@ func DefineSync() error {
 		 ON CONFLICT(TABLE_SCHEMA, TABLE_NAME, _IDT) DO UPDATE SET
      DATE_UPDATE = NOW(),
      ACTION = TG_OP,
-     _SYNC = FALSE
-     _IDS = '-1';
+     _SYNC = FALSE,
+     _ID = uuid_generate_v4();
 
      PERFORM pg_notify(
      'sync',
@@ -100,7 +100,7 @@ func DefineSync() error {
       DATE_UPDATE = NOW(),
       ACTION = TG_OP,
       _SYNC = FALSE,
-      _IDS = '-1'
+      _ID = uuid_generate_v4()
       WHERE INDEX = VINDEX;
       
       PERFORM pg_notify(
