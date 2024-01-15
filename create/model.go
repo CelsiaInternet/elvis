@@ -736,13 +736,19 @@ func (rt *Router) All$2(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, r, http.StatusOK, result)
 }
 
-/**
+/** Copy this code to router.go
 	// $2
 	er.ProtectRoute(r, er.Get, "/$5/{id}", rt.Get$2ById, PackageName, PackagePath, Host)
 	er.ProtectRoute(r, er.Post, "/$5", rt.UpSert$2, PackageName, PackagePath, Host)
 	er.ProtectRoute(r, er.Put, "/$5/state/{id}", rt.State$2, PackageName, PackagePath, Host)
 	er.ProtectRoute(r, er.Delete, "/$5/{id}", rt.Delete$2, PackageName, PackagePath, Host)
 	er.ProtectRoute(r, er.Get, "/$5/all", rt.All$2, PackageName, PackagePath, Host)
+**/
+
+/** Copy this code to func initModel in model.go
+	if err := Define$2(); err != nil {
+		return console.PanicE(err)
+	}
 **/
 `
 

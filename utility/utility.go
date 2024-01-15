@@ -81,9 +81,13 @@ func ValId(id string) string {
 	return id
 }
 
+func NewUUID() string {
+	return uuid.NewString()
+}
+
 func GenId(id string) string {
 	if map[string]bool{"": true, "*": true, "new": true}[id] {
-		return uuid.NewString()
+		return NewUUID()
 	}
 
 	return id
