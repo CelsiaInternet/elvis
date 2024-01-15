@@ -292,6 +292,7 @@ func (c *Linq) GetCol(name string) *Column {
 	}
 
 	pars := strings.Split(name, ".")
+
 	if len(pars) == 2 {
 		modelN := pars[0]
 		colN := pars[0]

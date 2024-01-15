@@ -42,11 +42,14 @@ func (s *Linq) Select(sel ...any) *Linq {
 		case []*Column:
 			cols = v
 		case string:
-			c := s.GetCol(v)
-			if c != nil {
-				cols = append(cols, c)
+			cols2 := s.strToCols(v)
+			if len(cols2) == 0 {
+				c := s.GetCol(v)
+				console.Log(v, ", ", v)
+				if c != nil {
+					cols = append(cols, c)
+				}
 			} else {
-				cols2 := s.strToCols(v)
 				cols = append(cols, cols2...)
 			}
 		default:
