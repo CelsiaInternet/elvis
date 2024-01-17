@@ -6,7 +6,7 @@
 go mod tidy &&
 gofmt -w . &&
 git update &&
-git tag v0.0.91 &&
+git tag v0.0.92 &&
 git tags
 git push origin --tags
 
