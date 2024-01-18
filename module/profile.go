@@ -243,13 +243,14 @@ func getProfileFolders(userId, projectId, mainId string) []e.Json {
 		And(Folders.Column("module_id").In(
 			linq.From(ProjectModules, "C").
 				Where(ProjectModules.Column("project_id").Eq(projectId)).
-				Data(ProjectModules.Column("module_id")).SQL())).
+				Select(ProjectModules.Column("module_id")).SQL())).
 		And(ProfileFolders.Column("profile_tp").In(
 			linq.From(Roles, "D").
 				Where(Roles.Column("project_id").Eq(projectId)).
 				And(Roles.Column("user_id").Eq(userId)).
-				Data(Roles.Column("profile_tp")).SQL())).
+				Select(Roles.Column("profile_tp")).SQL())).
 		OrderBy(Folders.Column("index"), true).
+		Data().
 		Find()
 	if err != nil {
 		return []e.Json{}

@@ -6,7 +6,9 @@ import "github.com/cgalvisleon/elvis/strs"
 *
 **/
 func From(model *Model, as ...string) *Linq {
-	return NewLinq(ActSelect, model, as...)
+	result := NewLinq(ActSelect, model, as...)
+
+	return result
 }
 
 func (c *Linq) From(model *Model, as ...string) *Linq {
