@@ -198,8 +198,7 @@ func (jb Json) ValBool(_default bool, atribs ...string) bool {
 	}
 }
 
-func (jb Json) ValTime(atribs ...string) time.Time {
-	_default := time.Now()
+func (jb Json) ValTime(_default time.Time, atribs ...string) time.Time {
 	val := jb.ValAny(_default, atribs...)
 
 	switch v := val.(type) {
@@ -220,6 +219,17 @@ func (jb Json) ValTime(atribs ...string) time.Time {
 	}
 }
 
+func (jb Json) ValJson(_default Json, atribs ...string) Json {
+	val := jb.ValAny(_default, atribs...)
+
+	switch v := val.(type) {
+	case Json:
+		return v
+	default:
+		log.Println("ValTime value is not json, type:", reflect.TypeOf(v), "value:", v)
+		return _default
+	}
+}
 func (jb Json) Any(_default any, atribs ...string) *generic.Any {
 	result := Val(jb, _default, atribs...)
 	return generic.New(result)
@@ -258,7 +268,7 @@ func (jb Json) Bool(atribs ...string) bool {
 }
 
 func (jb Json) Time(atribs ...string) time.Time {
-	return jb.ValTime(atribs...)
+	return jb.ValTime(time.Now(), atribs...)
 }
 
 func (jb Json) Json(atrib string) Json {

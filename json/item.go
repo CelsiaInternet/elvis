@@ -89,8 +89,12 @@ func (it *Item) ValBool(_default bool, atribs ...string) bool {
 	return it.Result.ValBool(_default, atribs...)
 }
 
-func (it *Item) ValTime(atribs ...string) time.Time {
-	return it.Result.ValTime(atribs...)
+func (it *Item) ValTime(_default time.Time, atribs ...string) time.Time {
+	return it.Result.ValTime(_default, atribs...)
+}
+
+func (it *Item) ValJson(_default Json, atribs ...string) Json {
+	return it.Result.ValJson(_default, atribs...)
 }
 
 func (it *Item) Uppcase(_default string, atribs ...string) string {
