@@ -120,7 +120,7 @@ func unLoadTokenById(app, device, id string) error {
 }
 
 func GetTokenById(id string) (e.Item, error) {
-	item, err := Tokens.Select().
+	item, err := Tokens.Data().
 		Where(Tokens.Col("_id").Eq(id)).
 		First()
 	if err != nil {

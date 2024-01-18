@@ -75,7 +75,7 @@ func DefineFolders() error {
 *	Handler for CRUD data
  */
 func GetFolderByName(moduleId, mainId, name string) (e.Item, error) {
-	return Folders.Select().
+	return Folders.Data().
 		Where(Folders.Column("module_id").Eq(moduleId)).
 		And(Folders.Column("main_id").Eq(mainId)).
 		And(Folders.Column("name").Eq(name)).
@@ -158,7 +158,7 @@ func UpSetFolder(moduleId, mainId, name, description string, data e.Json) (e.Ite
 		return e.Item{}, console.ErrorM(msg.MODULE_NOT_FOUND)
 	}
 
-	current, err := Folders.Select(Folders.Column("_id")).
+	current, err := Folders.Data(Folders.Column("_id")).
 		Where(Folders.Column("module_id").Eq(moduleId)).
 		And(Folders.Column("main_id").Eq(mainId)).
 		And(Folders.Column("name").Eq(name)).
@@ -186,7 +186,7 @@ func UpSetFolder(moduleId, mainId, name, description string, data e.Json) (e.Ite
 }
 
 func GetFolderById(id string) (e.Item, error) {
-	return Folders.Select().
+	return Folders.Data().
 		Where(Folders.Column("_id").Eq(id)).
 		First()
 }
@@ -228,24 +228,24 @@ func AllFolders(state, search string, page, rows int) (e.List, error) {
 	auxState := state
 
 	if search != "" {
-		return Folders.Select().
+		return Folders.Data().
 			Where(Folders.Concat("NAME:", Folders.Column("name"), ":DESCRIPTION", Folders.Column("description"), ":DATA:", Folders.Column("_data"), ":").Like("%"+search+"%")).
 			OrderBy(Folders.Column("name"), true).
 			List(page, rows)
 	} else if auxState == "*" {
 		state = utility.FOR_DELETE
 
-		return Folders.Select().
+		return Folders.Data().
 			Where(Folders.Column("_state").Neg(state)).
 			OrderBy(Folders.Column("name"), true).
 			List(page, rows)
 	} else if auxState == "0" {
-		return Folders.Select().
+		return Folders.Data().
 			Where(Folders.Column("_state").In("-1", state)).
 			OrderBy(Folders.Column("name"), true).
 			List(page, rows)
 	} else {
-		return Folders.Select().
+		return Folders.Data().
 			Where(Folders.Column("_state").Eq(state)).
 			OrderBy(Folders.Column("name"), true).
 			List(page, rows)

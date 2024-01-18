@@ -101,7 +101,7 @@ func DefineUsers() error {
 *	Handler for CRUD data
  */
 func GetUserByName(name string) (e.Item, error) {
-	item, err := Users.Select().
+	item, err := Users.Data().
 		Where(Users.Column("name").Eq(name)).
 		First()
 	if err != nil {
@@ -112,7 +112,7 @@ func GetUserByName(name string) (e.Item, error) {
 }
 
 func GetUserById(id string) (e.Item, error) {
-	item, err := Users.Select().
+	item, err := Users.Data().
 		Where(Users.Column("_id").Eq(id)).
 		First()
 	if err != nil {
@@ -304,19 +304,19 @@ func AllUsers(state, search string, page, rows int, _select string) (e.List, err
 	auxState := state
 
 	if search != "" {
-		return Users.Select(_select).
+		return Users.Data(_select).
 			Where(Users.Concat("NAME:", Users.Column("name"), ":DATA:", Users.Column("_data"), ":").Like("%"+search+"%")).
 			OrderBy(Users.Column("name"), true).
 			List(page, rows)
 	} else if auxState == "*" {
 		state = utility.FOR_DELETE
 
-		return Users.Select(_select).
+		return Users.Data(_select).
 			Where(Users.Column("_state").Neg(state)).
 			OrderBy(Users.Column("name"), true).
 			List(page, rows)
 	} else {
-		return Users.Select(_select).
+		return Users.Data(_select).
 			Where(Users.Column("_state").Eq(state)).
 			OrderBy(Users.Column("name"), true).
 			List(page, rows)
@@ -324,7 +324,7 @@ func AllUsers(state, search string, page, rows int, _select string) (e.List, err
 }
 
 func GetProfile(userId string) (e.Item, error) {
-	item, err := Users.Select().
+	item, err := Users.Data().
 		Where(Users.Column("_id").Eq(userId)).
 		First()
 	if err != nil {

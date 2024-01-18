@@ -61,19 +61,19 @@ func DefineModules() error {
 *	Handler for CRUD data
  */
 func GetModuleByName(name string) (e.Item, error) {
-	return Modules.Select().
+	return Modules.Data().
 		Where(Modules.Column("name").Eq(name)).
 		First()
 }
 
 func GetModuleById(id string) (e.Item, error) {
-	return Modules.Select().
+	return Modules.Data().
 		Where(Modules.Column("_id").Eq(id)).
 		First()
 }
 
 func IsInit() (e.Item, error) {
-	count := Users.Select().
+	count := Users.Data().
 		Count()
 
 	return e.Item{
@@ -177,24 +177,24 @@ func AllModules(state, search string, page, rows int, _select string) (e.List, e
 	auxState := state
 
 	if search != "" {
-		return Modules.Select(_select).
+		return Modules.Data(_select).
 			Where(Modules.Concat("NAME:", Modules.Column("name"), ":DESCRIPTION", Modules.Column("description"), ":DATA:", Modules.Column("_data"), ":").Like("%"+search+"%")).
 			OrderBy(Modules.Column("name"), true).
 			List(page, rows)
 	} else if auxState == "*" {
 		state = utility.FOR_DELETE
 
-		return Modules.Select(_select).
+		return Modules.Data(_select).
 			Where(Modules.Column("_state").Neg(state)).
 			OrderBy(Modules.Column("name"), true).
 			List(page, rows)
 	} else if auxState == "0" {
-		return Modules.Select(_select).
+		return Modules.Data(_select).
 			Where(Modules.Column("_state").In("-1", state)).
 			OrderBy(Modules.Column("name"), true).
 			List(page, rows)
 	} else {
-		return Modules.Select(_select).
+		return Modules.Data(_select).
 			Where(Modules.Column("_state").Eq(state)).
 			OrderBy(Modules.Column("name"), true).
 			List(page, rows)

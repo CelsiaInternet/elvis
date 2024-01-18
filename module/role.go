@@ -49,7 +49,7 @@ func DefineRoles() error {
 *	Handler for CRUD data
  */
 func GetRoleById(projectId, moduleId, userId, profileTp string) (e.Item, error) {
-	return Roles.Select().
+	return Roles.Data().
 		Where(Roles.Column("project_id").Eq(projectId)).
 		And(Roles.Column("module_id").Eq(moduleId)).
 		And(Roles.Column("user_id").Eq(userId)).

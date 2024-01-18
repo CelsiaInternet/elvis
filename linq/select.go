@@ -24,7 +24,7 @@ func (s *Linq) strToCols(str string) []*Column {
 	return result
 }
 
-func (s *Linq) Select(sel ...any) *Linq {
+func (s *Linq) selCols(sel ...any) *Linq {
 	var cols []*Column = []*Column{}
 	for _, col := range sel {
 		switch v := col.(type) {
@@ -60,6 +60,16 @@ func (s *Linq) Select(sel ...any) *Linq {
 	s._select = cols
 
 	return s
+}
+
+func (s *Linq) Data(sel ...any) *Linq {
+	s.SetTp(TpData)
+	return s.selCols(sel...)
+}
+
+func (s *Linq) Select(sel ...any) *Linq {
+	s.SetTp(TpSelect)
+	return s.selCols(sel...)
 }
 
 /**

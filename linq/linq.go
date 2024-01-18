@@ -9,7 +9,7 @@ import (
 	"github.com/cgalvisleon/elvis/strs"
 )
 
-const TpRecord = 1
+const TpSelect = 1
 const TpData = 2
 
 const ActSelect = 3
@@ -113,7 +113,7 @@ type Linq struct {
 /**
 *
 **/
-func NewLinq(tp int, act int, model *Model, as ...string) *Linq {
+func NewLinq(act int, model *Model, as ...string) *Linq {
 	if len(as) == 0 && act == ActSelect {
 		as = []string{GetAs(0)}
 	} else if len(as) == 0 {
@@ -121,7 +121,7 @@ func NewLinq(tp int, act int, model *Model, as ...string) *Linq {
 	}
 	from := &FRom{model: model, as: strs.Uppcase(as[0])}
 	return &Linq{
-		Tp:        tp,
+		Tp:        TpSelect,
 		Act:       act,
 		db:        model.Db,
 		from:      []*FRom{from},

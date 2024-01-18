@@ -90,19 +90,19 @@ func DefineProjectModules() error {
 *	Handler for CRUD data
  */
 func GetProjectById(id string) (e.Item, error) {
-	return Projects.Select().
+	return Projects.Data().
 		Where(Projects.Column("_id").Eq(id)).
 		First()
 }
 
 func GetProjectName(name string) (e.Item, error) {
-	return Projects.Select().
+	return Projects.Data().
 		Where(Projects.Column("name").Eq(name)).
 		First()
 }
 
 func GetProjectByModule(projectId, moduleId string) (e.Item, error) {
-	return ProjectModules.Select(ProjectModules.Column("index")).
+	return ProjectModules.Data(ProjectModules.Column("index")).
 		Where(ProjectModules.Column("project_id").Eq(projectId)).
 		And(ProjectModules.Column("module_id").Eq(moduleId)).
 		First()
@@ -190,24 +190,24 @@ func AllProjects(state, search string, page, rows int, _select string) (e.List, 
 	auxState := state
 
 	if search != "" {
-		return Projects.Select(_select).
+		return Projects.Data(_select).
 			Where(Projects.Concat("NAME:", Projects.Column("name"), ":DESCRIPTION:", Projects.Column("description"), ":DATA:", Projects.Column("_data"), ":").Like("%"+search+"%")).
 			OrderBy(Projects.Column("name"), true).
 			List(page, rows)
 	} else if auxState == "*" {
 		state = utility.FOR_DELETE
 
-		return Projects.Select(_select).
+		return Projects.Data(_select).
 			Where(Projects.Column("_state").Neg(state)).
 			OrderBy(Projects.Column("name"), true).
 			List(page, rows)
 	} else if auxState == "0" {
-		return Projects.Select(_select).
+		return Projects.Data(_select).
 			Where(Projects.Column("_state").In("-1", state)).
 			OrderBy(Projects.Column("name"), true).
 			List(page, rows)
 	} else {
-		return Projects.Select(_select).
+		return Projects.Data(_select).
 			Where(Projects.Column("_state").Eq(state)).
 			OrderBy(Projects.Column("name"), true).
 			List(page, rows)
@@ -230,7 +230,7 @@ func GetProjectModules(projectId, state, search string, page, rows int) (e.List,
 			And(ProjectModules.Column("project_id").Eq(projectId)).
 			And(Modules.Concat("NAME:", Modules.Column("name"), ":DESCRIPTION", Modules.Column("description"), ":DATA:", Modules.Column("_data"), ":").Like("%"+search+"%")).
 			OrderBy(Modules.Column("name"), true).
-			Select().
+			Data().
 			List(page, rows)
 	} else if auxState == "0" {
 		return linq.From(Modules, "A").
@@ -239,7 +239,7 @@ func GetProjectModules(projectId, state, search string, page, rows int) (e.List,
 			And(ProjectModules.Column("project_id").Eq(projectId)).
 			And(Modules.Concat("NAME:", Modules.Column("name"), ":DESCRIPTION", Modules.Column("description"), ":DATA:", Modules.Column("_data"), ":").Like("%"+search+"%")).
 			OrderBy(Modules.Column("name"), true).
-			Select().
+			Data().
 			List(page, rows)
 	} else {
 		return linq.From(Modules, "A").
@@ -248,7 +248,7 @@ func GetProjectModules(projectId, state, search string, page, rows int) (e.List,
 			And(ProjectModules.Column("project_id").Eq(projectId)).
 			And(Modules.Concat("NAME:", Modules.Column("name"), ":DESCRIPTION", Modules.Column("description"), ":DATA:", Modules.Column("_data"), ":").Like("%"+search+"%")).
 			OrderBy(Modules.Column("name"), true).
-			Select().
+			Data().
 			List(page, rows)
 	}
 }

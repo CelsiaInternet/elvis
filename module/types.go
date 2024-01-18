@@ -54,20 +54,20 @@ func DefineTypes() error {
 *	Handler for CRUD data
  */
 func GetTypeByName(kind, name string) (e.Item, error) {
-	return Types.Select().
+	return Types.Data().
 		Where(Types.Column("kind").Eq(kind)).
 		And(Types.Column("name").Eq(name)).
 		First()
 }
 
 func GetTypeById(id string) (e.Item, error) {
-	return Types.Select().
+	return Types.Data().
 		Where(Types.Column("_id").Eq(id)).
 		First()
 }
 
 func GetTypeByIndex(idx int) (e.Item, error) {
-	return Types.Select().
+	return Types.Data().
 		Where(Types.Column("index").Eq(idx)).
 		First()
 }
@@ -177,7 +177,7 @@ func AllTypes(projectId, kind, state, search string, page, rows int, _select str
 	auxState := state
 
 	if search != "" {
-		return Types.Select(_select).
+		return Types.Data(_select).
 			Where(Types.Column("kind").Eq(kind)).
 			And(Types.Column("project_id").In("-1", projectId)).
 			And(Types.Concat("NAME:", Types.Column("name"), ":DESCRIPTION", Types.Column("description"), ":DATA:", Types.Column("_data"), ":").Like("%"+search+"%")).
@@ -186,21 +186,21 @@ func AllTypes(projectId, kind, state, search string, page, rows int, _select str
 	} else if auxState == "*" {
 		state = utility.FOR_DELETE
 
-		return Types.Select(_select).
+		return Types.Data(_select).
 			Where(Types.Column("kind").Eq(kind)).
 			And(Types.Column("_state").Neg(state)).
 			And(Types.Column("project_id").In("-1", projectId)).
 			OrderBy(Types.Column("name"), true).
 			List(page, rows)
 	} else if auxState == "0" {
-		return Types.Select(_select).
+		return Types.Data(_select).
 			Where(Types.Column("kind").Eq(kind)).
 			And(Types.Column("_state").In("-1", state)).
 			And(Types.Column("project_id").In("-1", projectId)).
 			OrderBy(Types.Column("name"), true).
 			List(page, rows)
 	} else {
-		return Types.Select(_select).
+		return Types.Data(_select).
 			Where(Types.Column("kind").Eq(kind)).
 			And(Types.Column("_state").Eq(state)).
 			And(Types.Column("project_id").In("-1", projectId)).

@@ -6,12 +6,7 @@ import "github.com/cgalvisleon/elvis/strs"
 *
 **/
 func From(model *Model, as ...string) *Linq {
-	tp := TpRecord
-	if model.UseSource {
-		tp = TpData
-	}
-
-	return NewLinq(tp, ActSelect, model, as...)
+	return NewLinq(ActSelect, model, as...)
 }
 
 func (c *Linq) From(model *Model, as ...string) *Linq {

@@ -77,7 +77,7 @@ func DefineProfileFolders() error {
 *	Handler for CRUD data
 **/
 func GetProfileById(moduleId, profileTp string) (e.Item, error) {
-	return Profiles.Select().
+	return Profiles.Data().
 		Where(Profiles.Column("module_id").Eq(moduleId)).
 		And(Profiles.Column("profile_tp").Eq(profileTp)).
 		First()
@@ -187,7 +187,7 @@ func DeleteProfile(moduleId, profileTp string) (e.Item, error) {
 }
 
 func GetProfileFolderById(moduleId, profileTp, folderId string) (e.Item, error) {
-	return ProfileFolders.Select().
+	return ProfileFolders.Data().
 		Where(ProfileFolders.Column("module_id").Eq(moduleId)).
 		And(ProfileFolders.Column("profile_tp").Eq(profileTp)).
 		And(ProfileFolders.Column("folder_id").Eq(folderId)).
@@ -243,12 +243,12 @@ func getProfileFolders(userId, projectId, mainId string) []e.Json {
 		And(Folders.Column("module_id").In(
 			linq.From(ProjectModules, "C").
 				Where(ProjectModules.Column("project_id").Eq(projectId)).
-				Select(ProjectModules.Column("module_id")).SQL())).
+				Data(ProjectModules.Column("module_id")).SQL())).
 		And(ProfileFolders.Column("profile_tp").In(
 			linq.From(Roles, "D").
 				Where(Roles.Column("project_id").Eq(projectId)).
 				And(Roles.Column("user_id").Eq(userId)).
-				Select(Roles.Column("profile_tp")).SQL())).
+				Data(Roles.Column("profile_tp")).SQL())).
 		OrderBy(Folders.Column("index"), true).
 		Find()
 	if err != nil {
@@ -298,7 +298,7 @@ func AllModuleProfiles(projectId, moduleId, state, search string, page, rows int
 			And(Profiles.Column("module_id").Eq(moduleId)).
 			And(Profiles.Concat("NAME:", Types.As("B").Col("name"), ":DESCRIPTION:", Types.As("B").Col("description"), ":DATA:", Profiles.As("A").Column("_data"), ":").Like("%"+search+"%")).
 			OrderBy(Types.Column("name"), true).
-			Select(_select).
+			Data(_select).
 			List(page, rows)
 	} else if auxState == "*" {
 		state = utility.FOR_DELETE
@@ -309,7 +309,7 @@ func AllModuleProfiles(projectId, moduleId, state, search string, page, rows int
 			And(Types.Column("project_id").In("-1", projectId)).
 			And(Profiles.Column("module_id").Eq(moduleId)).
 			OrderBy(Types.Column("name"), true).
-			Select(_select).
+			Data(_select).
 			List(page, rows)
 	} else if auxState == "0" {
 		return linq.From(Profiles, "A").
@@ -318,7 +318,7 @@ func AllModuleProfiles(projectId, moduleId, state, search string, page, rows int
 			And(Types.Column("project_id").In("-1", projectId)).
 			And(Profiles.Column("module_id").Eq(moduleId)).
 			OrderBy(Types.Column("name"), true).
-			Select(_select).
+			Data(_select).
 			List(page, rows)
 	} else {
 		return linq.From(Profiles, "A").
@@ -327,7 +327,7 @@ func AllModuleProfiles(projectId, moduleId, state, search string, page, rows int
 			And(Types.Column("project_id").In("-1", projectId)).
 			And(Profiles.Column("module_id").Eq(moduleId)).
 			OrderBy(Types.Column("name"), true).
-			Select(_select).
+			Data(_select).
 			List(page, rows)
 	}
 }

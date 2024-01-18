@@ -528,6 +528,17 @@ func (c *Model) From() *Linq {
 	return From(c)
 }
 
+func (c *Model) Data(sel ...any) *Linq {
+	result := From(c)
+	if !c.UseSource {
+		result.Select(sel...)
+	} else {
+		result.Data(sel...)
+	}
+
+	return result
+}
+
 func (c *Model) Select(sel ...any) *Linq {
 	result := From(c)
 	result.Select(sel...)
@@ -535,56 +546,52 @@ func (c *Model) Select(sel ...any) *Linq {
 	return result
 }
 
-func (c *Model) Record(sel ...any) *Linq {
-	result := From(c)
-	result.Select(sel...)
-	result.SetTp(TpRecord)
-
-	return result
-}
-
 func (c *Model) Insert(data e.Json) *Linq {
-	tp := TpRecord
+	tp := TpSelect
 	if c.UseSource {
 		tp = TpData
 	}
 
-	result := NewLinq(tp, ActInsert, c)
+	result := NewLinq(ActInsert, c)
+	result.SetTp(tp)
 	result.data = data
 
 	return result
 }
 
 func (c *Model) Update(data e.Json) *Linq {
-	tp := TpRecord
+	tp := TpSelect
 	if c.UseSource {
 		tp = TpData
 	}
 
-	result := NewLinq(tp, ActUpdate, c)
+	result := NewLinq(ActUpdate, c)
+	result.SetTp(tp)
 	result.data = data
 
 	return result
 }
 
 func (c *Model) Delete() *Linq {
-	tp := TpRecord
+	tp := TpSelect
 	if c.UseSource {
 		tp = TpData
 	}
 
-	result := NewLinq(tp, ActDelete, c)
+	result := NewLinq(ActDelete, c)
+	result.SetTp(tp)
 
 	return result
 }
 
 func (c *Model) Upsert(data e.Json) *Linq {
-	tp := TpRecord
+	tp := TpSelect
 	if c.UseSource {
 		tp = TpData
 	}
 
-	result := NewLinq(tp, ActUpsert, c)
+	result := NewLinq(ActUpsert, c)
+	result.SetTp(tp)
 	result.data = data
 
 	return result

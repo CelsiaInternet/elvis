@@ -58,13 +58,13 @@ func DefineApimanager() error {
 *	Handler for CRUD data
  */
 func GetApimanagerById(id string) (e.Item, error) {
-	return Apibus.Select().
+	return Apibus.Data().
 		Where(Apibus.Column("_id").Eq(id)).
 		First()
 }
 
 func GetApimanagerByPath(method, path string) (e.Item, error) {
-	return Apibus.Select().
+	return Apibus.Data().
 		Where(Apibus.Column("path").Eq(path)).
 		And(Apibus.Column("method").Eq(method)).
 		First()
@@ -130,7 +130,7 @@ func AllApimanager(package_name, state, search string, page, rows int, _select s
 	auxState := state
 
 	if search != "" {
-		return Apibus.Select(_select).
+		return Apibus.Data(_select).
 			Where(Apibus.Column("package_name").Like("%"+package_name+"%")).
 			And(Apibus.Concat("kind:", Apibus.Column("kind"), "METHOD:", Apibus.Column("method"), "PATH:", Apibus.Column("path"), "DATA:", Apibus.Column("_data"), ":").Like("%"+search+"%")).
 			OrderBy(Apibus.Column("path"), true).
@@ -138,19 +138,19 @@ func AllApimanager(package_name, state, search string, page, rows int, _select s
 	} else if auxState == "*" {
 		state = utility.FOR_DELETE
 
-		return Apibus.Select(_select).
+		return Apibus.Data(_select).
 			Where(Apibus.Column("_state").Neg(state)).
 			And(Apibus.Column("package_name").Like("%"+package_name+"%")).
 			OrderBy(Apibus.Column("path"), true).
 			List(page, rows)
 	} else if auxState == "0" {
-		return Apibus.Select(_select).
+		return Apibus.Data(_select).
 			Where(Apibus.Column("_state").In("-1", state)).
 			And(Apibus.Column("package_name").Like("%"+package_name+"%")).
 			OrderBy(Apibus.Column("path"), true).
 			List(page, rows)
 	} else {
-		return Apibus.Select(_select).
+		return Apibus.Data(_select).
 			Where(Apibus.Column("_state").Eq(state)).
 			And(Apibus.Column("package_name").Like("%"+package_name+"%")).
 			OrderBy(Apibus.Column("path"), true).

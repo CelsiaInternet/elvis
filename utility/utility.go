@@ -73,28 +73,24 @@ func GetCodeVerify(length int) string {
 	return string(b)
 }
 
-func ValId(id string) string {
-	if map[string]bool{"": true, "-1": true, "*": true, "new": true}[id] {
-		return uuid.NewString()
-	}
-
-	return id
-}
-
-func NewUUID() string {
+func NewId() string {
 	return uuid.NewString()
 }
 
 func GenId(id string) string {
 	if map[string]bool{"": true, "*": true, "new": true}[id] {
-		return NewUUID()
+		return NewId()
 	}
 
 	return id
 }
 
-func NewId() string {
-	return GenId("")
+func NilId(id string) string {
+	if map[string]bool{"": true, "-1": true, "*": true, "new": true}[id] {
+		return uuid.NewString()
+	}
+
+	return id
 }
 
 func Pointer(collection string, id string) string {
