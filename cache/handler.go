@@ -201,3 +201,96 @@ func AllCache(search string, page, rows int) (e.List, error) {
 
 	return items.ToList(items.Count, page, rows), nil
 }
+
+/**
+* Item
+**/
+func GetItem(key string) (e.Item, error) {
+	if conn == nil {
+		return e.Item{}, nil
+	}
+
+	val, err := Get(key, "")
+	if err != nil {
+		return e.Item{}, err
+	}
+
+	var result e.Json = e.Json{}
+	err = result.Scan(val)
+	if err != nil {
+		return e.Item{}, err
+	}
+
+	return e.Item{
+		Ok:     true,
+		Result: result,
+	}, nil
+}
+
+func SetItem(key string, val e.Item, second time.Duration) (e.Item, error) {
+	if conn == nil {
+		return val, nil
+	}
+
+	err := Set(key, val.ToString(), second)
+	if err != nil {
+		return e.Item{}, err
+	}
+
+	return val, nil
+}
+
+func SetItemD(key string, val e.Item) (e.Item, error) {
+	day := time.Hour * 24
+	return SetItem(key, val, day)
+}
+
+func SetItemW(key string, val e.Item) (e.Item, error) {
+	week := time.Hour * 24 * 7
+	return SetItem(key, val, week)
+}
+
+func SetItemM(key string, val e.Item) (e.Item, error) {
+	month := time.Hour * 24 * 30
+	return SetItem(key, val, month)
+}
+
+func SetItemY(key string, val e.Item) (e.Item, error) {
+	year := time.Hour * 24 * 365
+	return SetItem(key, val, year)
+}
+
+/**
+* Items
+**/
+func GetItems(key string) (e.Items, error) {
+	if conn == nil {
+		return e.Items{}, nil
+	}
+
+	val, err := Get(key, "")
+	if err != nil {
+		return e.Items{}, err
+	}
+
+	var result e.Items = e.Items{}
+	err = result.Scan(val)
+	if err != nil {
+		return e.Items{}, err
+	}
+
+	return result, nil
+}
+
+func SetItems(key string, val e.Items, second time.Duration) (e.Items, error) {
+	if conn == nil {
+		return val, nil
+	}
+
+	err := Set(key, val.ToString(), second)
+	if err != nil {
+		return e.Items{}, err
+	}
+
+	return val, nil
+}

@@ -16,13 +16,13 @@ import (
 
 type Json map[string]interface{}
 
-func (jb Json) Value() (driver.Value, error) {
-	j, err := json.Marshal(jb)
+func (s Json) Value() (driver.Value, error) {
+	j, err := json.Marshal(s)
 
 	return j, err
 }
 
-func (jb *Json) Scan(src interface{}) error {
+func (s *Json) Scan(src interface{}) error {
 	var ba []byte
 	switch v := src.(type) {
 	case []byte:
@@ -39,15 +39,15 @@ func (jb *Json) Scan(src interface{}) error {
 		return err
 	}
 
-	*jb = Json(t)
+	*s = Json(t)
 
 	return nil
 }
 
-func (jb *Json) ToScan(src interface{}) error {
+func (s *Json) ToScan(src interface{}) error {
 	v := reflect.ValueOf(src).Elem()
 
-	for k, val := range *jb {
+	for k, val := range *s {
 		field := v.FieldByName(k)
 		if !field.IsValid() {
 			logs.Errorf("json/ToScan - No such field:%s in struct", k)
@@ -67,8 +67,8 @@ func (jb *Json) ToScan(src interface{}) error {
 	return nil
 }
 
-func (jb Json) ToByte() []byte {
-	result, err := json.Marshal(jb)
+func (s Json) ToByte() []byte {
+	result, err := json.Marshal(s)
 	if err != nil {
 		return nil
 	}
@@ -76,38 +76,38 @@ func (jb Json) ToByte() []byte {
 	return result
 }
 
-func (jb Json) ToString() string {
-	s, err := json.Marshal(jb)
+func (s Json) ToString() string {
+	result, err := json.Marshal(s)
 	if err != nil {
 		return ""
 	}
 
-	return string(s)
+	return string(result)
 }
 
-func (jb Json) ToQuoted() string {
-	s, err := json.Marshal(jb)
+func (s Json) ToQuoted() string {
+	result, err := json.Marshal(s)
 	if err != nil {
 		return ""
 	}
 
-	return string(s)
+	return string(result)
 }
 
-func (jb Json) ToItem(src interface{}) Item {
-	jb.Scan(src)
+func (s Json) ToItem(src interface{}) Item {
+	s.Scan(src)
 	return Item{
-		Ok:     jb.Bool("Ok"),
-		Result: jb.Json("Result"),
+		Ok:     s.Bool("Ok"),
+		Result: s.Json("Result"),
 	}
 }
 
-func (jb Json) ValAny(_default any, atribs ...string) any {
-	return Val(jb, _default, atribs...)
+func (s Json) ValAny(_default any, atribs ...string) any {
+	return Val(s, _default, atribs...)
 }
 
-func (jb Json) ValStr(_default string, atribs ...string) string {
-	val := jb.ValAny(_default, atribs...)
+func (s Json) ValStr(_default string, atribs ...string) string {
+	val := s.ValAny(_default, atribs...)
 
 	switch v := val.(type) {
 	case string:
@@ -117,8 +117,8 @@ func (jb Json) ValStr(_default string, atribs ...string) string {
 	}
 }
 
-func (jb Json) ValInt(_default int, atribs ...string) int {
-	val := jb.ValAny(_default, atribs...)
+func (s Json) ValInt(_default int, atribs ...string) int {
+	val := s.ValAny(_default, atribs...)
 
 	switch v := val.(type) {
 	case int:
@@ -146,8 +146,8 @@ func (jb Json) ValInt(_default int, atribs ...string) int {
 	}
 }
 
-func (jb Json) ValNum(_default float64, atribs ...string) float64 {
-	val := jb.ValAny(_default, atribs...)
+func (s Json) ValNum(_default float64, atribs ...string) float64 {
+	val := s.ValAny(_default, atribs...)
 
 	switch v := val.(type) {
 	case int:
@@ -175,8 +175,8 @@ func (jb Json) ValNum(_default float64, atribs ...string) float64 {
 	}
 }
 
-func (jb Json) ValBool(_default bool, atribs ...string) bool {
-	val := jb.ValAny(_default, atribs...)
+func (s Json) ValBool(_default bool, atribs ...string) bool {
+	val := s.ValAny(_default, atribs...)
 
 	switch v := val.(type) {
 	case bool:
@@ -198,8 +198,8 @@ func (jb Json) ValBool(_default bool, atribs ...string) bool {
 	}
 }
 
-func (jb Json) ValTime(_default time.Time, atribs ...string) time.Time {
-	val := jb.ValAny(_default, atribs...)
+func (s Json) ValTime(_default time.Time, atribs ...string) time.Time {
+	val := s.ValAny(_default, atribs...)
 
 	switch v := val.(type) {
 	case int:
@@ -219,8 +219,8 @@ func (jb Json) ValTime(_default time.Time, atribs ...string) time.Time {
 	}
 }
 
-func (jb Json) ValJson(_default Json, atribs ...string) Json {
-	val := jb.ValAny(_default, atribs...)
+func (s Json) ValJson(_default Json, atribs ...string) Json {
+	val := s.ValAny(_default, atribs...)
 
 	switch v := val.(type) {
 	case Json:
@@ -230,49 +230,49 @@ func (jb Json) ValJson(_default Json, atribs ...string) Json {
 		return _default
 	}
 }
-func (jb Json) Any(_default any, atribs ...string) *generic.Any {
-	result := Val(jb, _default, atribs...)
+func (s Json) Any(_default any, atribs ...string) *generic.Any {
+	result := Val(s, _default, atribs...)
 	return generic.New(result)
 }
 
-func (jb Json) Id() string {
-	return jb.ValStr("", "_id")
+func (s Json) Id() string {
+	return s.ValStr("", "_id")
 }
 
-func (jb Json) IdT() string {
-	return jb.ValStr("", "_idT")
+func (s Json) IdT() string {
+	return s.ValStr("", "_idT")
 }
 
-func (jb Json) Index() int {
-	return jb.ValInt(-1, "index")
+func (s Json) Index() int {
+	return s.ValInt(-1, "index")
 }
 
-func (jb Json) Key(atribs ...string) string {
-	return jb.ValStr("", atribs...)
+func (s Json) Key(atribs ...string) string {
+	return s.ValStr("", atribs...)
 }
 
-func (jb Json) Str(atribs ...string) string {
-	return jb.ValStr("", atribs...)
+func (s Json) Str(atribs ...string) string {
+	return s.ValStr("", atribs...)
 }
 
-func (jb Json) Int(atribs ...string) int {
-	return jb.ValInt(0, atribs...)
+func (s Json) Int(atribs ...string) int {
+	return s.ValInt(0, atribs...)
 }
 
-func (jb Json) Num(atribs ...string) float64 {
-	return jb.ValNum(0.00, atribs...)
+func (s Json) Num(atribs ...string) float64 {
+	return s.ValNum(0.00, atribs...)
 }
 
-func (jb Json) Bool(atribs ...string) bool {
-	return jb.ValBool(false, atribs...)
+func (s Json) Bool(atribs ...string) bool {
+	return s.ValBool(false, atribs...)
 }
 
-func (jb Json) Time(atribs ...string) time.Time {
-	return jb.ValTime(time.Now(), atribs...)
+func (s Json) Time(atribs ...string) time.Time {
+	return s.ValTime(time.Now(), atribs...)
 }
 
-func (jb Json) Json(atrib string) Json {
-	val := Val(jb, nil, atrib)
+func (s Json) Json(atrib string) Json {
+	val := Val(s, nil, atrib)
 	if val == nil {
 		return Json{}
 	}
@@ -288,8 +288,8 @@ func (jb Json) Json(atrib string) Json {
 	}
 }
 
-func (jb Json) Array(atrib string) []Json {
-	val := Val(jb, nil, atrib)
+func (s Json) Array(atrib string) []Json {
+	val := Val(s, nil, atrib)
 	if val == nil {
 		return []Json{}
 	}
@@ -316,9 +316,9 @@ func (jb Json) Array(atrib string) []Json {
 	}
 }
 
-func (jb Json) ArrayStr(atrib string) []string {
+func (s Json) ArrayStr(atrib string) []string {
 	result := []string{}
-	vals := jb[atrib]
+	vals := s[atrib]
 	switch v := vals.(type) {
 	case []interface{}:
 		for _, val := range v {
@@ -331,9 +331,9 @@ func (jb Json) ArrayStr(atrib string) []string {
 	return result
 }
 
-func (jb Json) ArrayAny(atrib string) []any {
+func (s Json) ArrayAny(atrib string) []any {
 	result := []any{}
-	vals := jb[atrib]
+	vals := s[atrib]
 	switch v := vals.(type) {
 	case []interface{}:
 		for _, val := range v {
@@ -346,45 +346,45 @@ func (jb Json) ArrayAny(atrib string) []any {
 	return result
 }
 
-func (jb Json) Update(fromJson Json) error {
+func (s Json) Update(fromJson Json) error {
 	var result bool = false
 	for k, new := range fromJson {
-		v := jb[k]
+		v := s[k]
 
 		if v == nil {
-			jb[k] = new
+			s[k] = new
 		} else if new != nil {
 			if !result && reflect.DeepEqual(v, new) {
 				result = true
 			}
-			jb[k] = new
+			s[k] = new
 		}
 	}
 
 	return nil
 }
 
-func (jb Json) Apend(n Json) error {
+func (s Json) Apend(n Json) error {
 	for k, v := range n {
-		jb[k] = v
+		s[k] = v
 	}
 
 	return nil
 }
 
-func (jb Json) IsDiferent(new Json) bool {
-	return IsDiferent(jb, new)
+func (s Json) IsDiferent(new Json) bool {
+	return IsDiferent(s, new)
 }
 
-func (jb Json) IsChange(new Json) bool {
-	return IsChange(jb, new)
+func (s Json) IsChange(new Json) bool {
+	return IsChange(s, new)
 }
 
 /**
 *
 **/
-func (jb Json) Get(key string) interface{} {
-	v, ok := jb[key]
+func (s Json) Get(key string) interface{} {
+	v, ok := s[key]
 	if !ok {
 		return nil
 	}
@@ -392,32 +392,32 @@ func (jb Json) Get(key string) interface{} {
 	return v
 }
 
-func (jb Json) Set(key string, val interface{}) bool {
+func (s Json) Set(key string, val interface{}) bool {
 	key = strings.ToLower(key)
 
-	if jb[key] != nil {
-		jb[key] = val
+	if s[key] != nil {
+		s[key] = val
 		return true
 	}
 
-	jb[key] = val
+	s[key] = val
 	return false
 }
 
-func (jb Json) Del(key string) bool {
-	if _, ok := jb[key]; !ok {
+func (s Json) Del(key string) bool {
+	if _, ok := s[key]; !ok {
 		return false
 	}
 
-	delete(jb, key)
+	delete(s, key)
 	return true
 }
 
-func (jb Json) ExistKey(key string) bool {
-	return jb[key] != nil
+func (s Json) ExistKey(key string) bool {
+	return s[key] != nil
 }
 
-func (jb Json) Consolidate(toField string, ruleOut ...string) Json {
+func (s Json) Consolidate(toField string, ruleOut ...string) Json {
 	FindIndex := func(arr []string, valor string) int {
 		for i, v := range arr {
 			if v == valor {
@@ -427,12 +427,12 @@ func (jb Json) Consolidate(toField string, ruleOut ...string) Json {
 		return -1
 	}
 
-	result := jb
-	if jb.ExistKey(toField) {
-		result = jb.Json(toField)
+	result := s
+	if s.ExistKey(toField) {
+		result = s.Json(toField)
 	}
 
-	for k, v := range jb {
+	for k, v := range s {
 		if k != toField {
 			idx := FindIndex(ruleOut, k)
 			if idx == -1 {
@@ -444,8 +444,8 @@ func (jb Json) Consolidate(toField string, ruleOut ...string) Json {
 	return result
 }
 
-func (jb Json) ConsolidateAndUpdate(toField string, ruleOut []string, new Json) (Json, error) {
-	result := jb.Consolidate(toField, ruleOut...)
+func (s Json) ConsolidateAndUpdate(toField string, ruleOut []string, new Json) (Json, error) {
+	result := s.Consolidate(toField, ruleOut...)
 	err := result.Update(new)
 	if err != nil {
 		return Json{}, nil

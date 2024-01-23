@@ -1,6 +1,7 @@
 package json
 
 import (
+	"encoding/json"
 	"reflect"
 	"strings"
 
@@ -12,6 +13,32 @@ type Items struct {
 	Ok     bool   `json:"ok"`
 	Count  int    `json:"count"`
 	Result []Json `json:"result"`
+}
+
+func (it *Items) Scan(src interface{}) error {
+	var ba []byte
+	switch v := src.(type) {
+	case []byte:
+		ba = v
+	case string:
+		ba = []byte(v)
+	default:
+		return logs.Errorf(`json/Scan - Failed to unmarshal JSON value:%s`, src)
+	}
+
+	var t []Json
+	err := json.Unmarshal(ba, &t)
+	if err != nil {
+		return err
+	}
+
+	*it = Items{
+		Ok:     len(t) > 0,
+		Count:  len(t),
+		Result: t,
+	}
+
+	return nil
 }
 
 func (it *Items) ValAny(idx int, _default any, atribs ...string) any {
@@ -143,10 +170,6 @@ func (it *Items) Json(idx int, atribs ...string) Json {
 		logs.Errorf("Not Items.Json type (%v) value:%v", reflect.TypeOf(v), v)
 		return Json{}
 	}
-}
-
-func (it *Items) ToStrings(idx int) string {
-	return it.Result[idx].ToString()
 }
 
 func (it *Items) ToString() string {
