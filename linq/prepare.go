@@ -1,9 +1,7 @@
 package linq
 
 import (
-	"github.com/cgalvisleon/elvis/console"
 	e "github.com/cgalvisleon/elvis/json"
-	"github.com/cgalvisleon/elvis/msg"
 	"github.com/cgalvisleon/elvis/strs"
 	"github.com/cgalvisleon/elvis/utility"
 )
@@ -120,7 +118,7 @@ func (c *Linq) PrepareInsert() error {
 	}
 
 	if current.Ok {
-		return console.NewError(msg.RECORD_FOUND)
+		return nil
 	}
 
 	return nil
