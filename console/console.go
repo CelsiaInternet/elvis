@@ -52,6 +52,11 @@ func Log(args ...any) error {
 	return nil
 }
 
+func Debug(args ...any) error {
+	LogC("Debug", "Green", args...)
+	return nil
+}
+
 func LogF(format string, args ...any) error {
 	message := strs.Format(format, args...)
 	return Log(message)

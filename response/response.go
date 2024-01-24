@@ -25,6 +25,15 @@ func ScanBody(r io.Reader) (e.Json, error) {
 	return result, nil
 }
 
+func ScanStr(value string) (e.Json, error) {
+	return ScanBody(strings.NewReader(value))
+}
+
+func ScanJson(value map[string]interface{}) (e.Json, error) {
+	var result e.Json = value
+	return result, nil
+}
+
 func GetBody(r *http.Request) (e.Json, error) {
 	var result e.Json
 	err := json.NewDecoder(r.Body).Decode(&result)
