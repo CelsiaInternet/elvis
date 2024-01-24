@@ -7,7 +7,6 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/envar"
 	e "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/strs"
@@ -261,8 +260,6 @@ func SendWhatsAppVideo(country, phone, video, caption string) (e.Json, error) {
 		"status": res.Status,
 		"body":   string(body),
 	}
-
-	console.Log(result.ToString())
 
 	return result, nil
 }

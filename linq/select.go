@@ -45,7 +45,6 @@ func (s *Linq) selCols(sel ...any) *Linq {
 			cols2 := s.strToCols(v)
 			if len(cols2) == 0 {
 				c := s.GetCol(v)
-				console.Log(v, ", ", v)
 				if c != nil {
 					cols = append(cols, c)
 				}

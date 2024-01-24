@@ -42,9 +42,6 @@ func UploaderS3(bucket, filename, contentType string, contentFile []byte) (*s3ma
 }
 
 func DeleteS3(bucket, key string) (*s3.DeleteObjectOutput, error) {
-	console.Log("Bucke:", bucket)
-	console.Log("key:", key)
-
 	sess := AwsSession()
 	s3client := s3.New(sess)
 
