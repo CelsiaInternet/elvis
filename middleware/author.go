@@ -16,16 +16,16 @@ import (
 
 func tokenFromAuthorization(authorization string) (string, error) {
 	if authorization == "" {
-		return "", console.ErrorM("Autorization is required")
+		return "", console.Alert("Autorization is required")
 	}
 
 	if !strings.HasPrefix(authorization, "Bearer") {
-		return "", console.ErrorM("Invalid autorization format")
+		return "", console.Alert("Invalid autorization format")
 	}
 
 	l := strings.Split(authorization, " ")
 	if len(l) != 2 {
-		return "", console.ErrorM("Invalid autorization format")
+		return "", console.Alert("Invalid autorization format")
 	}
 
 	return l[1], nil
