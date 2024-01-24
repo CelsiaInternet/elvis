@@ -177,7 +177,7 @@ func DeleteProfile(moduleId, profileTp string) (e.Item, error) {
 	}
 
 	if !current.Ok {
-		return e.Item{}, console.ErrorM(msg.RECORD_NOT_FOUND)
+		return e.Item{}, nil
 	}
 
 	return Profiles.Delete().

@@ -136,7 +136,7 @@ func (c *Linq) PrepareUpdate() (e.Items, error) {
 	}
 
 	if !current.Ok {
-		return e.Items{}, console.NewError(msg.RECORD_NOT_FOUND)
+		return e.Items{}, nil
 	}
 
 	return current, nil
