@@ -181,6 +181,11 @@ func StrToBool(val string) (bool, error) {
 	return false, errors.New("invalid boolean value")
 }
 
+func HtmlToText(html string) string {
+	re := regexp.MustCompile(`<[^>]*>`)
+	return re.ReplaceAllString(html, "")
+}
+
 func RemoveAcents(str string) string {
 	str = strings.ReplaceAll(str, "á", "a")
 	str = strings.ReplaceAll(str, "é", "e")
