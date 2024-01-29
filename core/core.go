@@ -39,13 +39,17 @@ func InitModel(model *linq.Model) error {
 	}
 
 	if model.UseIndex {
-		model.Trigger(linq.BeforeInsert, func(model *linq.Model, old, new *e.Json, data e.Json) error {
+		SetSerie(model.Name)
+	}
+
+	model.Trigger(linq.BeforeInsert, func(model *linq.Model, old, new *e.Json, data e.Json) error {
+		if model.UseIndex {
 			index := GetSerie(model.Name)
 			new.Set("index", index)
+		}
 
-			return nil
-		})
-	}
+		return nil
+	})
 
 	return nil
 }

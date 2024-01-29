@@ -91,21 +91,6 @@ func (s *Linq) Find() (e.Items, error) {
 	return items, nil
 }
 
-func (s *Linq) All() (e.Items, error) {
-	s.sql = s.SqlAll()
-
-	items, err := s.Query()
-	if err != nil {
-		return e.Items{}, err
-	}
-
-	for _, data := range items.Result {
-		s.Details(&data)
-	}
-
-	return items, nil
-}
-
 func (s *Linq) First() (e.Item, error) {
 	s.sql = s.SqlLimit(1)
 

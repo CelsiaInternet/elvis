@@ -1,6 +1,7 @@
 package linq
 
 import (
+	"github.com/cgalvisleon/elvis/console"
 	e "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/strs"
 )
@@ -294,12 +295,6 @@ func (c *Linq) SqlOrderBy() string {
 	return result
 }
 
-func (c *Linq) SqlAll() string {
-	c.SqlSelect()
-
-	return c.sql
-}
-
 func (c *Linq) SqlLimit(limit int) string {
 	c.SqlSelect()
 
@@ -404,6 +399,10 @@ func (c *Linq) SqlInsert() string {
 func (c *Linq) SqlUpdate() string {
 	model := c.from[0].model
 	var fieldValues string
+
+	if c.debug == 2 {
+		console.Debug("SqlUpdate: ", c.new)
+	}
 
 	for key, val := range *c.new {
 		field := strs.Uppcase(key)

@@ -67,8 +67,66 @@ func NextVal(tag string) int {
 }
 
 /**
-*
+* Serie
 **/
+func SetSerie(tag string) error {
+	if !EnabledSeries() {
+		return nil
+	}
+
+	db := 0
+	if MasterIdx != db {
+		db = MasterIdx
+	}
+
+	sql := strs.Format(`
+	SELECT MAX(INDEX) AS INDEX
+	FROM %s;`, tag)
+
+	item, err := jdb.DBQueryOne(db, sql)
+	if err != nil {
+		return err
+	}
+
+	max := item.Int("index")
+
+	sql = `
+	SELECT VALUE
+	FROM core.SERIES
+	WHERE SERIE=$1 LIMIT 1;`
+
+	item, err = jdb.DBQueryOne(db, sql, tag)
+	if err != nil {
+		return err
+	}
+
+	if item.Ok {
+		sql = `
+		UPDATE core.SERIES SET
+		DATE_UPDATE=NOW(),
+		VALUE=$2
+		WHERE SERIE=$1;`
+
+		item, err = jdb.DBQueryOne(db, sql, tag, max)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	sql = `
+	INSERT INTO core.SERIES(SERIE, VALUE)
+	VALUES ($1, $2) RETURNING *;`
+
+	_, err = jdb.DBQueryOne(db, sql, tag, max)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func GetSerie(tag string) int {
 	if !EnabledSeries() {
 		var result int
@@ -95,12 +153,11 @@ func GetSerie(tag string) int {
 	}
 
 	sql := `
-		INSERT INTO core.SERIES AS A (SERIE, VALUE)
-		VALUES ($1, 1)
-		ON CONFLICT(SERIE) DO UPDATE SET
-		DATE_UPDATE = NOW(),
-		VALUE = A.VALUE + 1
-		RETURNING VALUE AS SERIE;`
+	UPDATE core.SERIES SET
+	DATE_UPDATE=NOW(),
+	VALUE=VALUE+1
+	WHERE SERIE=$1
+	RETURNING VALUE;`
 
 	item, err := jdb.DBQueryOne(db, sql, tag)
 	if err != nil {
@@ -108,7 +165,7 @@ func GetSerie(tag string) int {
 		return 0
 	}
 
-	return item.Int("serie")
+	return item.Int("value")
 }
 
 func GetCode(tag, prefix string) string {
@@ -121,14 +178,14 @@ func GetCode(tag, prefix string) string {
 	}
 }
 
-func GetSerieLast(tag string) int {
+func GetLastSerie(tag string) int {
 	db := 0
 	if MasterIdx != db {
 		db = MasterIdx
 	}
 
 	sql := `
-  SELECT VALUE AS SERIE
+  SELECT VALUE
   FROM core.SERIES
   WHERE SERIE=$1 LIMIT 1;`
 	item, err := jdb.DBQueryOne(db, sql, tag)
@@ -138,29 +195,28 @@ func GetSerieLast(tag string) int {
 	}
 
 	if item.Ok {
-		return item.Int("serie")
+		return item.Int("value")
 	}
 
 	return 0
 }
 
-func SetSerieLast(db int, tag string, val int) (int, error) {
+func SetLastSerie(db int, tag string, val int) (int, error) {
 	sql := `
-	INSERT INTO core.SERIES(SERIE, VALUE)
-	VALUES ($1, $2)
-	ON CONFLICT(SERIE)
-	DO UPDATE SET
-	DATE_UPDATE = NOW(),
-	VALUE = $2
-	WHERE VALUE < $2
-	RETURNING VALUE AS SERIE;`
+	UPDATE core.SERIES SET
+	DATE_UPDATE=NOW(),
+	VALUE=$2
+	WHERE SERIE=$1
+	RETURNING VALUE;`
 
 	item, err := jdb.DBQueryOne(db, sql, tag, val)
 	if err != nil {
 		return 0, err
 	}
 
-	return item.Int("serie"), nil
+	result := item.Int("value")
+
+	return result, nil
 }
 
 func SyncSeries(masterIdx int, c chan int) error {
@@ -185,7 +241,7 @@ func SyncSeries(masterIdx int, c chan int) error {
 		for _, item := range items.Result {
 			tag := item.Str("serie")
 			val := item.Int("value")
-			_, err = SetSerieLast(masterIdx, tag, val)
+			_, err = SetLastSerie(masterIdx, tag, val)
 			if err != nil {
 				return console.Error(err)
 			}

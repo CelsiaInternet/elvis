@@ -5,7 +5,13 @@ import (
 )
 
 func (c *Linq) Debug() *Linq {
-	c.debug = true
+	c.debug = 1
+
+	return c
+}
+
+func (c *Linq) Dev() *Linq {
+	c.debug = 2
 
 	return c
 }
@@ -195,16 +201,16 @@ func (c *Linq) insert() (e.Item, error) {
 		return item, nil
 	}
 
-	c.new = &item.Result
+	new := &item.Result
 
 	for _, trigger := range model.AfterInsert {
-		err := trigger(model, nil, c.new, c.data)
+		err := trigger(model, nil, new, c.data)
 		if err != nil {
 			return e.Item{}, err
 		}
 	}
 
-	c.Details(&item.Result)
+	c.Details(new)
 
 	return item, nil
 }
@@ -230,16 +236,16 @@ func (c *Linq) update(current e.Json) (e.Item, error) {
 		return item, nil
 	}
 
-	c.new = &item.Result
+	new := &item.Result
 
 	for _, trigger := range model.AfterUpdate {
-		err := trigger(model, &current, c.new, c.data)
+		err := trigger(model, &current, new, c.data)
 		if err != nil {
 			return e.Item{}, err
 		}
 	}
 
-	c.Details(&item.Result)
+	c.Details(new)
 
 	return item, nil
 }

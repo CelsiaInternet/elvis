@@ -265,7 +265,7 @@ func getProfileFolders(userId, projectId, mainId string) []e.Json {
 
 func GetProfileFolders(userId, projectId string) ([]e.Json, error) {
 	if !utility.ValidId(userId) {
-		return []e.Json{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "clientId")
+		return []e.Json{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "userId")
 	}
 
 	if !utility.ValidId(projectId) {

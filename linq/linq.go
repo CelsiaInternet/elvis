@@ -106,7 +106,7 @@ type Linq struct {
 	data      e.Json
 	new       *e.Json
 	change    bool
-	debug     bool
+	debug     int
 	sql       string
 }
 
@@ -383,10 +383,6 @@ func (c *Linq) AddValidate(col *Column, val any) {
 * Query
 **/
 func (c *Linq) Query() (e.Items, error) {
-	if c.debug {
-		console.Log(c.sql)
-	}
-
 	if c.Tp == TpData {
 		result, err := jdb.DBQueryData(c.db, c.sql)
 		if err != nil {
@@ -405,7 +401,7 @@ func (c *Linq) Query() (e.Items, error) {
 }
 
 func (c *Linq) QueryOne() (e.Item, error) {
-	if c.debug {
+	if c.debug == 1 {
 		console.Log(c.sql)
 	}
 
@@ -427,7 +423,7 @@ func (c *Linq) QueryOne() (e.Item, error) {
 }
 
 func (c *Linq) QueryCount() int {
-	if c.debug {
+	if c.debug == 1 {
 		console.Log(c.sql)
 	}
 

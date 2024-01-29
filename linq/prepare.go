@@ -128,16 +128,16 @@ func (c *Linq) PrepareUpdate() (e.Items, error) {
 	model := c.from[0].model
 	model.Consolidate(c)
 
-	current, err := c.Current()
+	result, err := c.Current()
 	if err != nil {
 		return e.Items{}, err
 	}
 
-	if !current.Ok {
+	if !result.Ok {
 		return e.Items{}, nil
 	}
 
-	return current, nil
+	return result, nil
 }
 
 func (c *Linq) PrepareDelete() (e.Items, error) {
