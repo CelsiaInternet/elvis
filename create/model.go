@@ -271,7 +271,7 @@ import (
 
 func initModels() error {
 	if err := Define$2(); err != nil {
-		return console.PanicE(err)
+		return console.Panic(err)
 	}
 
 	return nil
@@ -487,7 +487,7 @@ var $2 *linq.Model
 
 func Define$2() error {
 	if err := defineSchema(); err != nil {
-		return console.PanicE(err)
+		return console.Panic(err)
 	}
 
 	if $2 != nil {
@@ -537,7 +537,7 @@ func Define$2() error {
 	})
 	
 	if err := core.InitModel($2); err != nil {
-		return console.PanicE(err)
+		return console.Panic(err)
 	}
 
 	return nil
@@ -745,7 +745,7 @@ func (rt *Router) All$2(w http.ResponseWriter, r *http.Request) {
 
 /** Copy this code to func initModel in model.go
 	if err := Define$2(); err != nil {
-		return console.PanicE(err)
+		return console.Panic(err)
 	}
 **/
 `

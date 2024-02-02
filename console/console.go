@@ -1,14 +1,8 @@
-/**
-*
-**/
 package console
 
 import (
 	"errors"
 	"os"
-	"runtime"
-	"slices"
-	"strings"
 
 	"github.com/cgalvisleon/elvis/event"
 	"github.com/cgalvisleon/elvis/logs"
@@ -29,16 +23,14 @@ func NewErrorF(format string, args ...any) error {
 	return err
 }
 
-func LogC(kind string, color string, args ...any) string {
+func LogK(kind string, args ...any) error {
 	event.Action("logs", map[string]interface{}{
 		"kind": kind,
 		"args": args,
 	})
-	return logs.Logln(kind, color, args...)
-}
 
-func LogK(kind string, args ...any) error {
-	LogC(kind, "Green", args...)
+	logs.Log(kind, args...)
+
 	return nil
 }
 
@@ -48,18 +40,22 @@ func LogKF(kind string, format string, args ...any) error {
 }
 
 func Log(args ...any) error {
-	LogC("Log", "Green", args...)
-	return nil
-}
-
-func Debug(args ...any) error {
-	LogC("Debug", "Green", args...)
-	return nil
+	return LogK("Log", args...)
 }
 
 func LogF(format string, args ...any) error {
 	message := strs.Format(format, args...)
 	return Log(message)
+}
+
+func Debug(args ...any) error {
+	logs.Debug(args...)
+	return nil
+}
+
+func DebugF(format string, args ...any) error {
+	message := strs.Format(format, args...)
+	return Debug(message)
 }
 
 func Print(args ...any) error {
@@ -75,7 +71,7 @@ func Print(args ...any) error {
 }
 
 func Info(args ...any) error {
-	LogC("Info", "Blue", args...)
+	logs.Info(args...)
 	return nil
 }
 
@@ -84,14 +80,11 @@ func InfoF(format string, args ...any) error {
 	return Info(message)
 }
 
-func AlertE(err error) error {
-	LogC("Alert", "Yellow", err)
-	return err
-}
-
 func Alert(message string) error {
 	err := NewError(message)
-	return AlertE(err)
+	logs.Traces("Alert", "Yellow", err)
+
+	return err
 }
 
 func AlertF(format string, args ...any) error {
@@ -100,33 +93,11 @@ func AlertF(format string, args ...any) error {
 }
 
 func Error(err error) error {
-	var n int = 1
-	var trces []string = []string{err.Error()}
-
-	logs.Logln("ERROR", "Red", err.Error())
-
-	for {
-		pc, file, line, more := runtime.Caller(n)
-		if !more {
-			break
-		}
-		n++
-		function := runtime.FuncForPC(pc)
-		name := function.Name()
-		list := strings.Split(name, ".")
-		if len(list) > 0 {
-			name = list[len(list)-1]
-		}
-		if !slices.Contains([]string{"ErrorM", "ErrorF"}, name) {
-			trace := strs.Format("%s:%d func:%s", file, line, name)
-			trces = append(trces, trace)
-			logs.Logln("TRACE", "Red", trace)
-		}
-	}
+	traces, err := logs.Traces("Error", "Red", err)
 
 	event.Action("logs", map[string]interface{}{
 		"kind": "ERROR",
-		"args": trces,
+		"args": traces,
 	})
 
 	return err
@@ -144,7 +115,7 @@ func ErrorF(format string, args ...any) error {
 }
 
 func Fatal(v ...any) {
-	LogC("Fatal", "Red", v...)
+	logs.Fatal(v...)
 	os.Exit(1)
 }
 
@@ -153,25 +124,28 @@ func FatalF(format string, args ...any) {
 	Fatal(message)
 }
 
-func Panic(v ...any) {
-	LogC("Panic", "Red", v...)
-	os.Exit(1)
-}
+func Panic(err error) error {
+	traces, err := logs.Traces("Panic", "Red", err)
 
-func PanicE(err error) error {
-	Panic(err)
+	event.Action("logs", map[string]interface{}{
+		"kind": "ERROR",
+		"args": traces,
+	})
+
+	os.Exit(1)
+
 	return err
 }
 
 func PanicM(message string) error {
 	err := ErrorM(message)
-	PanicE(err)
+	Panic(err)
 	return err
 }
 
 func PanicF(format string, args ...any) error {
 	err := ErrorF(format, args...)
-	PanicE(err)
+	Panic(err)
 	return err
 }
 

@@ -52,10 +52,10 @@ func ListenEvent(nodo, url, channel string, listener *pq.Listener, listen func(r
 
 	err := listener.Listen(channel)
 	if err != nil {
-		console.Panic("Listen", err)
+		console.Panic(err)
 	}
 
-	console.LogKF("DB channel", "Start channel:%s nodo:%s", channel, nodo)
+	console.LogF("DB start channel:%s nodo:%s", channel, nodo)
 
 	for IsCloseListen(nodo, channel) {
 		hostNotification(listener, channel, nodo, listen)
@@ -72,7 +72,7 @@ func ListenEvent(nodo, url, channel string, listener *pq.Listener, listen func(r
 		console.Error(err)
 	}
 
-	console.LogKF("DB channel", "Stop channel:%s nodo:%s", channel, nodo)
+	console.LogF("DB stop channel:%s nodo:%s", channel, nodo)
 }
 
 func CloseListen(host, channel string) {
@@ -90,7 +90,7 @@ func hostNotification(l *pq.Listener, channel string, nodo string, listen func(r
 	case n := <-l.Notify:
 		result, err := e.ToJson(n.Extra)
 		if err != nil {
-			console.LogC("DB channel", "Red", strs.Format("hostNotification: Not conver to e.Json nodo:%s channel:%s result:%s", nodo, channel, n.Extra))
+			console.LogF("Db channel hostNotification: Not conver to e.Json nodo:%s channel:%s result:%s", nodo, channel, n.Extra)
 		}
 
 		result["nodo"] = nodo

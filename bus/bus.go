@@ -10,7 +10,7 @@ import (
 
 func InitDefine() error {
 	if err := DefineApimanager(); err != nil {
-		console.PanicE(err)
+		console.Panic(err)
 	}
 
 	console.LogK("BUS", "Init bus")

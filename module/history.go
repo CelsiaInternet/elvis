@@ -10,7 +10,7 @@ var Historys *linq.Model
 
 func DefineHistorys() error {
 	if err := DefineSchemaModule(); err != nil {
-		return console.PanicE(err)
+		return console.Panic(err)
 	}
 
 	if Historys != nil {

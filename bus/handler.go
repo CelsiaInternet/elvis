@@ -13,7 +13,7 @@ var Apibus *linq.Model
 
 func DefineApimanager() error {
 	if err := defineSchema(); err != nil {
-		return console.PanicE(err)
+		return console.Panic(err)
 	}
 
 	if Apibus != nil {
@@ -48,7 +48,7 @@ func DefineApimanager() error {
 	})
 
 	if err := core.InitModel(Apibus); err != nil {
-		return console.PanicE(err)
+		return console.Panic(err)
 	}
 
 	return nil

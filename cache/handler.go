@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -29,7 +30,7 @@ func SetCtx(ctx context.Context, key, val string, second time.Duration) error {
 
 func GetCtx(ctx context.Context, key, def string) (string, error) {
 	if conn == nil {
-		return "", logs.Errorm(msg.ERR_NOT_CACHE_SERVICE)
+		return def, logs.Errorm(msg.ERR_NOT_CACHE_SERVICE)
 	}
 
 	result, err := conn.db.Get(ctx, key).Result()
@@ -210,10 +211,12 @@ func GetItem(key string) (e.Item, error) {
 		return e.Item{}, nil
 	}
 
-	val, err := Get(key, "")
+	val, err := Get(key, "{}")
 	if err != nil {
 		return e.Item{}, err
 	}
+
+	fmt.Sprintln(val)
 
 	var result e.Json = e.Json{}
 	err = result.Scan(val)
@@ -268,7 +271,7 @@ func GetItems(key string) (e.Items, error) {
 		return e.Items{}, nil
 	}
 
-	val, err := Get(key, "")
+	val, err := Get(key, "[]")
 	if err != nil {
 		return e.Items{}, err
 	}

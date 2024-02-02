@@ -18,7 +18,7 @@ var Users *linq.Model
 
 func DefineUsers() error {
 	if err := DefineSchemaModule(); err != nil {
-		return console.PanicE(err)
+		return console.Panic(err)
 	}
 
 	if Users != nil {
@@ -90,7 +90,7 @@ func DefineUsers() error {
 	})
 
 	if err := core.InitModel(Users); err != nil {
-		return console.PanicE(err)
+		return console.Panic(err)
 	}
 
 	return nil
@@ -258,8 +258,10 @@ func UpdateUser(id, fullName, phone, email string, data e.Json) (e.Item, error) 
 		return e.Item{}, console.ErrorM(msg.RECORD_NOT_FOUND)
 	}
 
+	name := strs.Format(`+57%s`, phone)
 	data["_id"] = id
 	data["full_name"] = fullName
+	data["name"] = name
 	data["phone"] = phone
 	data["email"] = email
 	data["avatar"] = ""

@@ -14,7 +14,7 @@ var ProjectModules *linq.Model
 
 func DefineProjects() error {
 	if err := DefineSchemaModule(); err != nil {
-		return console.PanicE(err)
+		return console.Panic(err)
 	}
 
 	if Projects != nil {
@@ -50,7 +50,7 @@ func DefineProjects() error {
 	})
 
 	if err := core.InitModel(Projects); err != nil {
-		return console.PanicE(err)
+		return console.Panic(err)
 	}
 
 	return nil
@@ -58,7 +58,7 @@ func DefineProjects() error {
 
 func DefineProjectModules() error {
 	if err := DefineSchemaModule(); err != nil {
-		return console.PanicE(err)
+		return console.Panic(err)
 	}
 
 	if ProjectModules != nil {
@@ -79,7 +79,7 @@ func DefineProjectModules() error {
 	ProjectModules.DefineForeignKey("module_id", Modules.Column("_id"))
 
 	if err := core.InitModel(ProjectModules); err != nil {
-		return console.PanicE(err)
+		return console.Panic(err)
 	}
 
 	return nil

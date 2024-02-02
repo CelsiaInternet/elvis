@@ -1,6 +1,7 @@
 package event
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/cgalvisleon/elvis/cache"
@@ -10,6 +11,8 @@ import (
 )
 
 func Publish(clientId, channel string, data map[string]interface{}) error {
+	fmt.Sprintln("Publish", clientId, channel, data)
+
 	if conn == nil {
 		return nil
 	}
@@ -57,15 +60,17 @@ func Working(worker, work_id string) {
 	})
 }
 
-func Done(work_id string) {
+func Done(work_id, event string) {
 	go Publish("event", "event/done", e.Json{
 		"work_id": work_id,
+		"event":   event,
 	})
 }
 
-func Rejected(work_id string) {
+func Rejected(work_id, event string) {
 	go Publish("event", "event/rejected", e.Json{
 		"work_id": work_id,
+		"event":   event,
 	})
 }
 

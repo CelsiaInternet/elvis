@@ -14,7 +14,7 @@ var Modules *linq.Model
 
 func DefineModules() error {
 	if err := DefineSchemaModule(); err != nil {
-		return console.PanicE(err)
+		return console.Panic(err)
 	}
 
 	if Modules != nil {
@@ -50,7 +50,7 @@ func DefineModules() error {
 	})
 
 	if err := core.InitModel(Modules); err != nil {
-		return console.PanicE(err)
+		return console.Panic(err)
 	}
 
 	return nil

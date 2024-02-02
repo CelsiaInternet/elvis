@@ -13,7 +13,7 @@ var Types *linq.Model
 
 func DefineTypes() error {
 	if err := DefineSchemaModule(); err != nil {
-		return console.PanicE(err)
+		return console.Panic(err)
 	}
 
 	if Types != nil {
@@ -43,7 +43,7 @@ func DefineTypes() error {
 	})
 
 	if err := core.InitModel(Types); err != nil {
-		return console.PanicE(err)
+		return console.Panic(err)
 	}
 
 	return nil

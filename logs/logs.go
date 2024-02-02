@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"slices"
 	"strings"
 	"time"
 
@@ -35,7 +36,7 @@ func init() {
 	}
 }
 
-func Logln(kind string, color string, args ...any) string {
+func log(kind string, color string, args ...any) string {
 	kind = strings.ToUpper(kind)
 	message := fmt.Sprint(args...)
 	now := time.Now().Format("2006/01/02 15:04:05")
@@ -70,16 +71,45 @@ func Logln(kind string, color string, args ...any) string {
 }
 
 func Log(kind string, args ...any) {
-	Logln(kind, "", args...)
+	log(kind, "", args...)
 }
 
 func Logf(kind string, format string, args ...any) {
 	message := strs.Format(format, args...)
-	Logln(kind, "", message)
+	log(kind, "", message)
+}
+
+func Traces(kind, color string, err error) ([]string, error) {
+	var n int = 1
+	var traces []string = []string{err.Error()}
+
+	log(kind, color, err.Error())
+
+	for {
+		pc, file, line, more := runtime.Caller(n)
+		if !more {
+			break
+		}
+		n++
+		function := runtime.FuncForPC(pc)
+		name := function.Name()
+		list := strings.Split(name, ".")
+		if len(list) > 0 {
+			name = list[len(list)-1]
+		}
+		if !slices.Contains([]string{"ErrorM", "ErrorF"}, name) {
+			trace := strs.Format("%s:%d func:%s", file, line, name)
+			traces = append(traces, trace)
+			log("TRACE", color, trace)
+		}
+	}
+
+	return traces, err
 }
 
 func Error(err error) error {
-	Logln("ERROR", "Red", err.Error())
+	_, err = Traces("Error", "red", err)
+
 	return err
 }
 
@@ -94,12 +124,38 @@ func Errorf(format string, args ...any) error {
 	return Error(err)
 }
 
+func Info(v ...any) {
+	log("Info", "Blue", v...)
+}
+
+func Infof(format string, args ...any) {
+	message := strs.Format(format, args...)
+	log("Info", "Blue", message)
+}
+
 func Fatal(v ...any) {
-	Logln("Fatal", "Red", v...)
+	log("Fatal", "Red", v...)
 	os.Exit(1)
 }
 
 func Panic(v ...any) {
-	Logln("Panic", "Red", v...)
+	log("Panic", "Red", v...)
 	os.Exit(1)
+}
+
+func Ping() {
+	log("PING", "")
+}
+
+func Pong() {
+	log("PONG", "")
+}
+
+func Debug(v ...any) {
+	log("Debug", "Cyan", v...)
+}
+
+func Debugf(format string, args ...any) {
+	message := strs.Format(format, args...)
+	log("Debug", "Cyan", message)
 }

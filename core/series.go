@@ -13,7 +13,7 @@ var (
 
 func DefineSeries() error {
 	if err := DefineSchemaCore(); err != nil {
-		return console.PanicE(err)
+		return console.Panic(err)
 	}
 
 	existSeries, _ = jdb.ExistTable(0, "core", "SERIES")
@@ -34,7 +34,7 @@ func DefineSeries() error {
 
 	_, err := jdb.QDDL(sql)
 	if err != nil {
-		return console.PanicE(err)
+		return console.Panic(err)
 	}
 
 	return nil

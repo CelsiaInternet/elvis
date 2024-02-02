@@ -14,7 +14,7 @@ var ProfileFolders *linq.Model
 
 func DefineProfiles() error {
 	if err := DefineSchemaModule(); err != nil {
-		return console.PanicE(err)
+		return console.Panic(err)
 	}
 
 	if Profiles != nil {
@@ -37,7 +37,7 @@ func DefineProfiles() error {
 	Profiles.DefineForeignKey("module_id", Modules.Column("_id"))
 
 	if err := core.InitModel(Profiles); err != nil {
-		return console.PanicE(err)
+		return console.Panic(err)
 	}
 
 	return nil
@@ -45,7 +45,7 @@ func DefineProfiles() error {
 
 func DefineProfileFolders() error {
 	if err := DefineSchemaModule(); err != nil {
-		return console.PanicE(err)
+		return console.Panic(err)
 	}
 
 	if ProfileFolders != nil {
@@ -66,7 +66,7 @@ func DefineProfileFolders() error {
 	ProfileFolders.DefineForeignKey("module_id", Modules.Column("_id"))
 
 	if err := core.InitModel(ProfileFolders); err != nil {
-		return console.PanicE(err)
+		return console.Panic(err)
 	}
 
 	return nil

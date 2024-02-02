@@ -43,7 +43,7 @@ var Tokens *linq.Model
 
 func DefineTokens() error {
 	if err := DefineSchemaModule(); err != nil {
-		return console.PanicE(err)
+		return console.Panic(err)
 	}
 
 	if Tokens != nil {
@@ -91,7 +91,7 @@ func DefineTokens() error {
 	})
 
 	if err := core.InitModel(Tokens); err != nil {
-		return console.PanicE(err)
+		return console.Panic(err)
 	}
 
 	go LoadTokens()

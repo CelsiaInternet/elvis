@@ -14,7 +14,7 @@ var Roles *linq.Model
 
 func DefineRoles() error {
 	if err := DefineSchemaModule(); err != nil {
-		return console.PanicE(err)
+		return console.Panic(err)
 	}
 
 	if Roles != nil {
@@ -38,7 +38,7 @@ func DefineRoles() error {
 	})
 
 	if err := core.InitModel(Roles); err != nil {
-		return console.PanicE(err)
+		return console.Panic(err)
 	}
 
 	return nil

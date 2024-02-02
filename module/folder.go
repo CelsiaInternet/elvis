@@ -14,7 +14,7 @@ var Folders *linq.Model
 
 func DefineFolders() error {
 	if err := DefineSchemaModule(); err != nil {
-		return console.PanicE(err)
+		return console.Panic(err)
 	}
 
 	if Folders != nil {

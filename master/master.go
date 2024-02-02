@@ -21,10 +21,10 @@ func InitDefine() error {
 	master = &Master{}
 
 	if err := DefineNodes(); err != nil {
-		return console.PanicE(err)
+		return console.Panic(err)
 	}
 	if err := core.DefineSeries(); err != nil {
-		return console.PanicE(err)
+		return console.Panic(err)
 	}
 
 	go jdb.Listen("master", jdb.DB(0).URL, "node", listenNode)

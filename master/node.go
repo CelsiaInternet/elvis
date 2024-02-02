@@ -158,7 +158,7 @@ func DefineNodes() error {
 
 	_, err := jdb.QDDL(sql)
 	if err != nil {
-		return console.PanicE(err)
+		return console.Panic(err)
 	}
 
 	master.InitNodes = true

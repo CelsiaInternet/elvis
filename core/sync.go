@@ -8,7 +8,7 @@ import (
 
 func DefineSync() error {
 	if err := DefineSchemaCore(); err != nil {
-		return console.PanicE(err)
+		return console.Panic(err)
 	}
 
 	existSyncs, _ := jdb.ExistTable(0, "core", "SYNCS")
@@ -117,7 +117,7 @@ func DefineSync() error {
 
 	_, err := jdb.QDDL(sql)
 	if err != nil {
-		return console.PanicE(err)
+		return console.Panic(err)
 	}
 
 	return nil

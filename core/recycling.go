@@ -8,7 +8,7 @@ import (
 
 func DefineRecycling() error {
 	if err := DefineSchemaCore(); err != nil {
-		return console.PanicE(err)
+		return console.Panic(err)
 	}
 
 	existRecicling, _ := jdb.ExistTable(0, "core", "RECYCLING")
@@ -62,7 +62,7 @@ func DefineRecycling() error {
 
 	_, err := jdb.QDDL(sql)
 	if err != nil {
-		return console.PanicE(err)
+		return console.Panic(err)
 	}
 
 	return nil
