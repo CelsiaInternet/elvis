@@ -477,7 +477,7 @@ func (c *Model) DefineReference(thisKey, name, otherKey string, column *Column) 
 		col.Reference = &Reference{thisKey, name, otherKey, column}
 		idx := c.ColIdx(thisKey)
 		if idx != -1 {
-			col.ReferenceKey = true
+			c.Definition[idx].ReferenceKey = true
 		}
 	}
 
