@@ -67,7 +67,7 @@ func (s *Linq) Data(sel ...any) *Linq {
 }
 
 func (s *Linq) Select(sel ...any) *Linq {
-	s.SetTp(TpSelect)
+	s.SetTp(TpRow)
 	return s.selCols(sel...)
 }
 

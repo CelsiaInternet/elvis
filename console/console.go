@@ -81,15 +81,11 @@ func InfoF(format string, args ...any) error {
 }
 
 func Alert(message string) error {
-	err := NewError(message)
-	logs.Traces("Alert", "Yellow", err)
-
-	return err
+	return logs.Alertm(message)
 }
 
 func AlertF(format string, args ...any) error {
-	message := strs.Format(format, args...)
-	return Alert(message)
+	return logs.Alertf(format, args...)
 }
 
 func Error(err error) error {

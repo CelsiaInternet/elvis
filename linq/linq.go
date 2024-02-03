@@ -9,7 +9,7 @@ import (
 	"github.com/cgalvisleon/elvis/strs"
 )
 
-const TpSelect = 1
+const TpRow = 1
 const TpData = 2
 
 const ActSelect = 3
@@ -121,7 +121,7 @@ func NewLinq(act int, model *Model, as ...string) *Linq {
 	}
 	from := &FRom{model: model, as: strs.Uppcase(as[0])}
 	return &Linq{
-		Tp:        TpSelect,
+		Tp:        TpRow,
 		Act:       act,
 		db:        model.Db,
 		from:      []*FRom{from},
@@ -383,6 +383,10 @@ func (c *Linq) AddValidate(col *Column, val any) {
 * Query
 **/
 func (c *Linq) Query() (e.Items, error) {
+	if c.debug == 1 {
+		console.Log(c.sql)
+	}
+
 	if c.Tp == TpData {
 		result, err := jdb.DBQueryData(c.db, c.sql)
 		if err != nil {

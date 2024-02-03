@@ -469,13 +469,28 @@ func (c *Model) DefineReference(thisKey, name, otherKey string, column *Column) 
 	if name == "" {
 		name = thisKey
 	}
-	col := c.Col(name)
-	if col == nil {
-		col = NewColumn(c, name, "", "REFERENCE", e.Json{"_id": "", "name": ""})
+	idx := c.ColIdx(name)
+	if idx == -1 {
+		col := NewColumn(c, name, "", "REFERENCE", e.Json{"_id": "", "name": ""})
 		col.Tp = TpReference
+		col.Title = name
+		col.Reference = &Reference{thisKey, name, otherKey, column}
 	}
-	col.Title = name
-	col.Reference = &Reference{thisKey, name, otherKey, column}
+
+	return c
+}
+
+func (c *Model) DefineCaption(thisKey, name, otherKey string, column *Column, _default any) *Model {
+	if name == "" {
+		name = thisKey
+	}
+	idx := c.ColIdx(name)
+	if idx == -1 {
+		col := NewColumn(c, name, "", "CAPTION", _default)
+		col.Tp = TpCaption
+		col.Title = name
+		col.Reference = &Reference{thisKey, name, otherKey, column}
+	}
 
 	return c
 }
@@ -547,7 +562,7 @@ func (c *Model) Select(sel ...any) *Linq {
 }
 
 func (c *Model) Insert(data e.Json) *Linq {
-	tp := TpSelect
+	tp := TpRow
 	if c.UseSource {
 		tp = TpData
 	}
@@ -560,7 +575,7 @@ func (c *Model) Insert(data e.Json) *Linq {
 }
 
 func (c *Model) Update(data e.Json) *Linq {
-	tp := TpSelect
+	tp := TpRow
 	if c.UseSource {
 		tp = TpData
 	}
@@ -573,7 +588,7 @@ func (c *Model) Update(data e.Json) *Linq {
 }
 
 func (c *Model) Delete() *Linq {
-	tp := TpSelect
+	tp := TpRow
 	if c.UseSource {
 		tp = TpData
 	}
@@ -585,10 +600,52 @@ func (c *Model) Delete() *Linq {
 }
 
 func (c *Model) Upsert(data e.Json) *Linq {
-	tp := TpSelect
+	tp := TpRow
 	if c.UseSource {
 		tp = TpData
 	}
+
+	result := NewLinq(ActUpsert, c)
+	result.SetTp(tp)
+	result.data = data
+
+	return result
+}
+
+/**
+* Row
+**/
+func (c *Model) InsertRow(data e.Json) *Linq {
+	tp := TpRow
+
+	result := NewLinq(ActInsert, c)
+	result.SetTp(tp)
+	result.data = data
+
+	return result
+}
+
+func (c *Model) UpdateRow(data e.Json) *Linq {
+	tp := TpRow
+
+	result := NewLinq(ActUpdate, c)
+	result.SetTp(tp)
+	result.data = data
+
+	return result
+}
+
+func (c *Model) DeleteRow() *Linq {
+	tp := TpRow
+
+	result := NewLinq(ActDelete, c)
+	result.SetTp(tp)
+
+	return result
+}
+
+func (c *Model) UpsertRow(data e.Json) *Linq {
+	tp := TpRow
 
 	result := NewLinq(ActUpsert, c)
 	result.SetTp(tp)

@@ -190,6 +190,10 @@ func (it *Item) Time(atribs ...string) time.Time {
 	return it.Result.Time(atribs...)
 }
 
+func (it *Item) Data(atribs ...string) JsonD {
+	return it.Result.Data(atribs...)
+}
+
 func (it *Item) Json(atribs ...string) Json {
 	val := Val(it.Result, Json{}, atribs...)
 

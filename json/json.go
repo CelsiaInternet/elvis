@@ -14,7 +14,22 @@ import (
 	"github.com/cgalvisleon/elvis/strs"
 )
 
+const TpObject = 1
+const TpArray = 2
+
+type JsonD struct {
+	Type  int
+	Value interface{}
+}
+
 type Json map[string]interface{}
+
+func JsonToArrayJson(src map[string]interface{}) ([]Json, error) {
+	result := []Json{}
+	result = append(result, src)
+
+	return result, nil
+}
 
 func (s Json) Value() (driver.Value, error) {
 	j, err := json.Marshal(s)
@@ -236,11 +251,11 @@ func (s Json) Any(_default any, atribs ...string) *generic.Any {
 }
 
 func (s Json) Id() string {
-	return s.ValStr("", "_id")
+	return s.ValStr("-1", "_id")
 }
 
 func (s Json) IdT() string {
-	return s.ValStr("", "_idT")
+	return s.ValStr("-1", "_idT")
 }
 
 func (s Json) Index() int {
@@ -248,7 +263,7 @@ func (s Json) Index() int {
 }
 
 func (s Json) Key(atribs ...string) string {
-	return s.ValStr("", atribs...)
+	return s.ValStr("-1", atribs...)
 }
 
 func (s Json) Str(atribs ...string) string {
@@ -271,6 +286,45 @@ func (s Json) Time(atribs ...string) time.Time {
 	return s.ValTime(time.Now(), atribs...)
 }
 
+func (s Json) Data(atrib ...string) JsonD {
+	val := Val(s, nil, atrib...)
+	if val == nil {
+		return JsonD{
+			Type:  TpObject,
+			Value: Json{},
+		}
+	}
+
+	switch v := val.(type) {
+	case Json:
+		return JsonD{
+			Type:  TpObject,
+			Value: v,
+		}
+	case map[string]interface{}:
+		return JsonD{
+			Type:  TpObject,
+			Value: Json(v),
+		}
+	case []Json:
+		return JsonD{
+			Type:  TpArray,
+			Value: v,
+		}
+	case []interface{}:
+		return JsonD{
+			Type:  TpArray,
+			Value: v,
+		}
+	default:
+		logs.Errorf("json/Json - Atrib:%s Type:%v Value:%v", atrib, reflect.TypeOf(v), v)
+		return JsonD{
+			Type:  TpObject,
+			Value: Json{},
+		}
+	}
+}
+
 func (s Json) Json(atrib string) Json {
 	val := Val(s, nil, atrib)
 	if val == nil {
@@ -282,6 +336,12 @@ func (s Json) Json(atrib string) Json {
 		return Json(v)
 	case map[string]interface{}:
 		return Json(v)
+	case []interface{}:
+		result := Json{
+			atrib: v,
+		}
+
+		return result
 	default:
 		logs.Errorf("json/Json - Atrib:%s Type:%v Value:%v", atrib, reflect.TypeOf(v), v)
 		return Json{}
@@ -301,6 +361,13 @@ func (s Json) Array(atrib string) []Json {
 		result, err := ToJsonArray(v)
 		if err != nil {
 			logs.Errorf("json/Array - Atrib:%s Type:%v Value:%v", atrib, reflect.TypeOf(v), v)
+			return []Json{}
+		}
+
+		return result
+	case map[string]interface{}:
+		result, err := JsonToArrayJson(v)
+		if err != nil {
 			return []Json{}
 		}
 

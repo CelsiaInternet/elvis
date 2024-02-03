@@ -2,7 +2,6 @@ package cache
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -215,8 +214,6 @@ func GetItem(key string) (e.Item, error) {
 	if err != nil {
 		return e.Item{}, err
 	}
-
-	fmt.Sprintln(val)
 
 	var result e.Json = e.Json{}
 	err = result.Scan(val)

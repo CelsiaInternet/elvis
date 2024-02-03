@@ -12,9 +12,10 @@ const TpColumn = 0
 const TpAtrib = 1
 const TpDetail = 2
 const TpReference = 3
-const TpFunction = 4
-const TpClone = 5
-const TpField = 6
+const TpCaption = 4
+const TpFunction = 5
+const TpClone = 6
+const TpField = 7
 
 /**
 *
@@ -264,6 +265,15 @@ func (c *Column) As(linq *Linq) string {
 		key := strs.Format(`%s.%s`, as, c.Reference.Key)
 		Fkey := strs.Append(from.As(), c.Reference.Fkey, ".")
 		return strs.Format(`(SELECT %s FROM %s WHERE %s=%v LIMIT 1)`, fn, fm, key, Fkey)
+	case TpCaption:
+		from := linq.GetFrom(c)
+		as := linq.GetAs()
+		as = strs.Format(`A%s`, as)
+		fn := strs.Format(`%s.%s`, as, c.Reference.Reference.Up())
+		fm := strs.Format(`%s AS %s`, c.Reference.Reference.Model.Name, as)
+		key := strs.Format(`%s.%s`, as, c.Reference.Key)
+		Fkey := strs.Append(from.As(), c.Reference.Fkey, ".")
+		return strs.Format(`(SELECT %s FROM %s WHERE %s=%v LIMIT 1)`, fn, fm, key, Fkey)
 	case TpDetail:
 		return strs.Format(`%v`, e.Quoted(c.Default))
 	case TpFunction:
@@ -303,6 +313,9 @@ func (c *Column) Def(linq *Linq) string {
 			def := c.As(linq)
 			def = strs.Format(`jsonb_build_object('_id', %s, 'name', %s)`, Fkey, def)
 			return strs.Format(`'%s', %s`, c.Title, def)
+		case TpCaption:
+			def := c.As(linq)
+			return strs.Format(`'%s', %s`, c.Title, def)
 		case TpDetail:
 			def := e.Quoted(c.Default)
 			return strs.Format(`'%s', %s`, c.Low(), def)
@@ -329,6 +342,9 @@ func (c *Column) Def(linq *Linq) string {
 	case TpClone:
 		return strs.Append(strs.Uppcase(c.from), c.Up(), ".")
 	case TpReference:
+		def := c.As(linq)
+		return strs.Format(`%s AS %s`, def, strs.Uppcase(c.Title))
+	case TpCaption:
 		def := c.As(linq)
 		return strs.Format(`%s AS %s`, def, strs.Uppcase(c.Title))
 	case TpDetail:

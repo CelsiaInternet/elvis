@@ -107,6 +107,22 @@ func Traces(kind, color string, err error) ([]string, error) {
 	return traces, err
 }
 
+func Alert(err error) error {
+	log("Alert", "Yellow", err.Error())
+
+	return err
+}
+
+func Alertm(message string) error {
+	return Alert(errors.New(message))
+}
+
+func Alertf(format string, args ...any) error {
+	message := strs.Format(format, args...)
+
+	return Alertm(message)
+}
+
 func Error(err error) error {
 	_, err = Traces("Error", "red", err)
 
