@@ -85,7 +85,7 @@ func (c *Linq) SqlColums(cols ...*Column) string {
 	if c.Tp == TpData && n == 0 {
 		for _, from := range c.from {
 			for _, col := range from.model.Definition {
-				if col.Tp != TpAtrib {
+				if col.Tp != TpAtrib && !col.ReferenceKey {
 					cols = append(cols, col)
 				}
 				if col.Tp == TpDetail {
