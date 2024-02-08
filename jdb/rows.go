@@ -3,18 +3,18 @@ package jdb
 import (
 	"database/sql"
 
-	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/et"
 )
 
 /**
 * Data Definition Language
 **/
 
-func rowsItems(rows *sql.Rows) e.Items {
-	var result e.Items = e.Items{Result: []e.Json{}}
+func rowsItems(rows *sql.Rows) et.Items {
+	var result et.Items = et.Items{Result: []et.Json{}}
 
 	for rows.Next() {
-		var item e.Item
+		var item et.Item
 		item.Scan(rows)
 		result.Result = append(result.Result, item.Result)
 		result.Ok = true
@@ -24,11 +24,11 @@ func rowsItems(rows *sql.Rows) e.Items {
 	return result
 }
 
-func atribItems(rows *sql.Rows, atrib string) e.Items {
-	var result e.Items = e.Items{Result: []e.Json{}}
+func atribItems(rows *sql.Rows, atrib string) et.Items {
+	var result et.Items = et.Items{Result: []et.Json{}}
 
 	for rows.Next() {
-		var item e.Item
+		var item et.Item
 		item.Scan(rows)
 		result.Result = append(result.Result, item.Result.Json(atrib))
 		result.Ok = true

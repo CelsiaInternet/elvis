@@ -1,7 +1,7 @@
 package linq
 
 import (
-	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/strs"
 )
 
@@ -12,8 +12,8 @@ type Reference struct {
 	Reference *Column
 }
 
-func (c *Reference) Describe() e.Json {
-	return e.Json{
+func (c *Reference) Describe() et.Json {
+	return et.Json{
 		"foreignKey": c.Fkey,
 		"title":      c.Name,
 		"key":        c.Key,

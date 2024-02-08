@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/cgalvisleon/elvis/console"
-	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/response"
 	"github.com/cgalvisleon/elvis/strs"
 	"github.com/go-chi/chi"
@@ -23,13 +23,13 @@ type Endpoint struct {
 	Path   string
 	Proto  string
 	Header http.Header
-	Params []e.Json
+	Params []et.Json
 	Query  url.Values
-	Body   e.Json
+	Body   et.Json
 }
 
-func (c *Endpoint) Define() e.Json {
-	return e.Json{
+func (c *Endpoint) Define() et.Json {
+	return et.Json{
 		"method": c.Method,
 		"scheme": c.Scheme,
 		"host":   c.Host,
@@ -134,7 +134,7 @@ func RequestLogger(f LogFormatter) func(next http.Handler) http.Handler {
 			}()
 
 			header := r.Header
-			var params []e.Json = []e.Json{}
+			var params []et.Json = []et.Json{}
 			ctx := r.Context()
 			if rctx := chi.RouteContext(ctx); rctx != nil {
 				for k := len(rctx.URLParams.Keys) - 1; k >= 0; k-- {
@@ -144,7 +144,7 @@ func RequestLogger(f LogFormatter) func(next http.Handler) http.Handler {
 					}
 
 					value := rctx.URLParams.Values[k]
-					params = append(params, e.Json{
+					params = append(params, et.Json{
 						"key":   key,
 						"value": value,
 					})

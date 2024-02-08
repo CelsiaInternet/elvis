@@ -242,7 +242,7 @@ const modelEvent = `package $1
 import (
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/event"
-	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/et"
 )
 
 func initEvents() {
@@ -358,7 +358,7 @@ import (
 
 	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/jdb"
-	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/et"
 )
 
 type Controller struct {
@@ -475,7 +475,7 @@ import (
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/core"
 	"github.com/cgalvisleon/elvis/generic"
-	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/linq"
 	"github.com/cgalvisleon/elvis/msg"
 	"github.com/cgalvisleon/elvis/response"

@@ -3,8 +3,8 @@ package module
 import (
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/core"
+	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/event"
-	e "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/linq"
 	"github.com/cgalvisleon/elvis/msg"
 	"github.com/cgalvisleon/elvis/utility"
@@ -42,7 +42,7 @@ func DefineFolders() error {
 		"index",
 	})
 	Folders.DefineForeignKey("module_id", Modules.Column("_id"))
-	Folders.Trigger(linq.AfterInsert, func(model *linq.Model, old, new *e.Json, data e.Json) error {
+	Folders.Trigger(linq.AfterInsert, func(model *linq.Model, old, new *et.Json, data et.Json) error {
 		id := new.Id()
 		moduleId := new.Key("module_id")
 		CheckProfileFolder(moduleId, "PROFILE.ADMIN", id, true)
@@ -51,7 +51,7 @@ func DefineFolders() error {
 
 		return nil
 	})
-	Folders.Trigger(linq.AfterUpdate, func(model *linq.Model, old, new *e.Json, data e.Json) error {
+	Folders.Trigger(linq.AfterUpdate, func(model *linq.Model, old, new *et.Json, data et.Json) error {
 		event.Action("folder/update", *new)
 		oldState := old.Key("_state")
 		newState := old.Key("_state")
@@ -61,7 +61,7 @@ func DefineFolders() error {
 
 		return nil
 	})
-	Folders.Trigger(linq.AfterDelete, func(model *linq.Model, old, new *e.Json, data e.Json) error {
+	Folders.Trigger(linq.AfterDelete, func(model *linq.Model, old, new *et.Json, data et.Json) error {
 		event.Action("folder/delete", *old)
 
 		return nil
@@ -74,7 +74,7 @@ func DefineFolders() error {
 *	Folder
 *	Handler for CRUD data
  */
-func GetFolderByName(moduleId, mainId, name string) (e.Item, error) {
+func GetFolderByName(moduleId, mainId, name string) (et.Item, error) {
 	return Folders.Data().
 		Where(Folders.Column("module_id").Eq(moduleId)).
 		And(Folders.Column("main_id").Eq(mainId)).
@@ -82,37 +82,37 @@ func GetFolderByName(moduleId, mainId, name string) (e.Item, error) {
 		First()
 }
 
-func InitFolder(moduleId, mainId, id, name, description string, data e.Json) (e.Item, error) {
+func InitFolder(moduleId, mainId, id, name, description string, data et.Json) (et.Item, error) {
 	if !utility.ValidId(moduleId) {
-		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "module_id")
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "module_id")
 	}
 
 	if !utility.ValidId(mainId) {
-		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "main_id")
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "main_id")
 	}
 
 	if !utility.ValidStr(name, 0, []string{""}) {
-		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "name")
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "name")
 	}
 
 	module, err := GetModuleById(moduleId)
 	if err != nil {
-		return e.Item{}, err
+		return et.Item{}, err
 	}
 
 	if !module.Ok {
-		return e.Item{}, console.ErrorM(msg.MODULE_NOT_FOUND)
+		return et.Item{}, console.ErrorM(msg.MODULE_NOT_FOUND)
 	}
 
 	current, err := GetFolderByName(moduleId, mainId, name)
 	if err != nil {
-		return e.Item{}, err
+		return et.Item{}, err
 	}
 
 	if current.Ok && current.Id() != id {
-		return e.Item{
+		return et.Item{
 			Ok: current.Ok,
-			Result: e.Json{
+			Result: et.Json{
 				"message": msg.RECORD_FOUND,
 				"_id":     id,
 			},
@@ -130,32 +130,32 @@ func InitFolder(moduleId, mainId, id, name, description string, data e.Json) (e.
 		And(Folders.Column("_state").Eq(utility.ACTIVE)).
 		CommandOne()
 	if err != nil {
-		return e.Item{}, err
+		return et.Item{}, err
 	}
 
 	return item, nil
 }
 
-func UpSetFolder(moduleId, mainId, name, description string, data e.Json) (e.Item, error) {
+func UpSetFolder(moduleId, mainId, name, description string, data et.Json) (et.Item, error) {
 	if !utility.ValidId(moduleId) {
-		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "module_id")
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "module_id")
 	}
 
 	if !utility.ValidId(mainId) {
-		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "main_id")
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "main_id")
 	}
 
 	if !utility.ValidStr(name, 0, []string{""}) {
-		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "name")
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "name")
 	}
 
 	module, err := GetModuleById(moduleId)
 	if err != nil {
-		return e.Item{}, err
+		return et.Item{}, err
 	}
 
 	if !module.Ok {
-		return e.Item{}, console.ErrorM(msg.MODULE_NOT_FOUND)
+		return et.Item{}, console.ErrorM(msg.MODULE_NOT_FOUND)
 	}
 
 	current, err := Folders.Data(Folders.Column("_id")).
@@ -164,7 +164,7 @@ func UpSetFolder(moduleId, mainId, name, description string, data e.Json) (e.Ite
 		And(Folders.Column("name").Eq(name)).
 		First()
 	if err != nil {
-		return e.Item{}, err
+		return et.Item{}, err
 	}
 
 	id := current.Id()
@@ -179,48 +179,48 @@ func UpSetFolder(moduleId, mainId, name, description string, data e.Json) (e.Ite
 		And(Folders.Column("_state").Eq(utility.ACTIVE)).
 		CommandOne()
 	if err != nil {
-		return e.Item{}, err
+		return et.Item{}, err
 	}
 
 	return item, nil
 }
 
-func GetFolderById(id string) (e.Item, error) {
+func GetFolderById(id string) (et.Item, error) {
 	return Folders.Data().
 		Where(Folders.Column("_id").Eq(id)).
 		First()
 }
 
-func StateFolder(id, state string) (e.Item, error) {
+func StateFolder(id, state string) (et.Item, error) {
 	if !utility.ValidId(state) {
-		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "state")
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "state")
 	}
 
-	item, err := Folders.Update(e.Json{
+	item, err := Folders.Update(et.Json{
 		"_state": state,
 	}).
 		Where(Folders.Column("_id").Eq(id)).
 		And(Folders.Column("_state").Neg(state)).
 		CommandOne()
 	if err != nil {
-		return e.Item{}, err
+		return et.Item{}, err
 	}
 
 	return item, nil
 }
 
-func DeleteFolder(id string) (e.Item, error) {
+func DeleteFolder(id string) (et.Item, error) {
 	item, err := Folders.Delete().
 		Where(Folders.Column("_id").Eq(id)).
 		CommandOne()
 	if err != nil {
-		return e.Item{}, err
+		return et.Item{}, err
 	}
 
 	return item, nil
 }
 
-func AllFolders(state, search string, page, rows int) (e.List, error) {
+func AllFolders(state, search string, page, rows int) (et.List, error) {
 	if state == "" {
 		state = utility.ACTIVE
 	}

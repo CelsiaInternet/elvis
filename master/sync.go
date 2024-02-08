@@ -1,8 +1,8 @@
 package master
 
 import (
+	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/jdb"
-	e "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/strs"
 	"github.com/cgalvisleon/elvis/utility"
 )
@@ -160,7 +160,7 @@ func (c *Node) SyncQuery(query string, index int) error {
 	return nil
 }
 
-func (c *Node) SyncRecord(schema, table, idT string, _data e.Json, action string, _index int) error {
+func (c *Node) SyncRecord(schema, table, idT string, _data et.Json, action string, _index int) error {
 	query := ""
 	if action == "INSERT" {
 		fields := c.SqlField(schema, table, _data)

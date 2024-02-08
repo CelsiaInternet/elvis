@@ -3,8 +3,8 @@ package linq
 import (
 	"strings"
 
+	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/jdb"
-	e "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/msg"
 	"github.com/cgalvisleon/elvis/strs"
 	"github.com/cgalvisleon/elvis/utility"
@@ -17,7 +17,7 @@ const AfterUpdate = 4
 const BeforeDelete = 5
 const AfterDelete = 6
 
-type Trigger func(model *Model, old, new *e.Json, data e.Json) error
+type Trigger func(model *Model, old, new *et.Json, data et.Json) error
 
 type Model struct {
 	Db                 int
@@ -61,13 +61,13 @@ func (c *Model) Driver() string {
 	return c.Database.Driver
 }
 
-func (c *Model) Describe() e.Json {
-	var colums []e.Json = []e.Json{}
+func (c *Model) Describe() et.Json {
+	var colums []et.Json = []et.Json{}
 	for _, atrib := range c.Definition {
 		colums = append(colums, atrib.Describe())
 	}
 
-	var foreignKey []e.Json = []e.Json{}
+	var foreignKey []et.Json = []et.Json{}
 	for _, atrib := range c.ForeignKey {
 		foreignKey = append(foreignKey, atrib.Describe())
 	}
@@ -75,7 +75,7 @@ func (c *Model) Describe() e.Json {
 	var primaryKeys []string = append([]string{}, c.PrimaryKeys...)
 	var index []string = append([]string{}, c.Index...)
 
-	return e.Json{
+	return et.Json{
 		"name":               c.Name,
 		"description":        c.Description,
 		"schema":             c.Schema,
@@ -101,8 +101,8 @@ func (c *Model) Describe() e.Json {
 	}
 }
 
-func (c *Model) Model() e.Json {
-	var result e.Json = e.Json{}
+func (c *Model) Model() et.Json {
+	var result et.Json = et.Json{}
 	for _, col := range c.Definition {
 		if !utility.ContainsInt([]int{TpColumn, TpAtrib, TpDetail}, col.Tp) {
 			continue
@@ -115,13 +115,13 @@ func (c *Model) Model() e.Json {
 		} else if col.name == c.SourceField {
 			continue
 		} else if col.Type == "JSON" && col.Default == "[]" {
-			result.Set(col.name, []e.Json{})
+			result.Set(col.name, []et.Json{})
 		} else if col.Type == "JSON" {
-			result.Set(col.name, e.Json{})
+			result.Set(col.name, et.Json{})
 		} else if col.Type == "JSONB" && col.Default == "[]" {
-			result.Set(col.name, []e.Json{})
+			result.Set(col.name, []et.Json{})
 		} else if col.Type == "JSONB" {
-			result.Set(col.name, e.Json{})
+			result.Set(col.name, et.Json{})
 		} else if col.Type == "TIMESTAMP" && col.Default == "NOW()" {
 			result.Set(col.name, utility.Now())
 		} else if col.Type == "TIMESTAMP" && col.Default == "NULL" {
@@ -381,6 +381,26 @@ func (c *Model) Atrib(name string) *Column {
 	return c.Definition[idx]
 }
 
+func (c *Model) IndexIdx(name string) int {
+	for i, item := range c.Index {
+		if strs.Uppcase(item) == strs.Uppcase(name) {
+			return i
+		}
+	}
+
+	return -1
+}
+
+func (c *Model) IndexAdd(name string) int {
+	idx := c.IndexIdx(name)
+	if idx == -1 {
+		c.Index = append(c.Index, name)
+		idx = len(c.Index) - 1
+	}
+
+	return idx
+}
+
 func (c *Model) All() []*Column {
 	result := c.Definition
 
@@ -408,25 +428,27 @@ func (c *Model) DefineAtrib(name, description, _type string, _default any) *Mode
 }
 
 func (c *Model) DefineIndex(index []string) *Model {
-	c.Index = index
-	for _, key := range c.Index {
-		col := c.Col(key)
+	for _, name := range c.Index {
+		col := c.Col(name)
 		if col != nil {
 			col.Indexed = true
+			c.IndexAdd(name)
 		}
 	}
+
 	return c
 }
 
 func (c *Model) DefineUniqueIndex(index []string) *Model {
-	c.Index = index
-	for _, key := range c.Index {
-		col := c.Col(key)
+	for _, name := range c.Index {
+		col := c.Col(name)
 		if col != nil {
 			col.Indexed = true
 			col.Unique = true
+			c.IndexAdd(name)
 		}
 	}
+
 	return c
 }
 
@@ -437,17 +459,19 @@ func (c *Model) DefineHidden(hiddens []string) *Model {
 			col.Hidden = true
 		}
 	}
+
 	return c
 }
 
 func (c *Model) DefinePrimaryKey(keys []string) *Model {
-	c.PrimaryKeys = keys
-	for _, key := range c.PrimaryKeys {
-		col := c.Col(key)
+	for _, name := range c.PrimaryKeys {
+		col := c.Col(name)
 		if col != nil {
 			col.Unique = true
 			col.Required = true
 			col.PrimaryKey = true
+			c.PrimaryKeys = append(c.PrimaryKeys, name)
+			c.IndexAdd(name)
 		}
 	}
 
@@ -460,6 +484,8 @@ func (c *Model) DefineForeignKey(thisKey string, otherKey *Column) *Model {
 		col.ForeignKey = true
 		col.Reference = NewForeignKey(thisKey, otherKey)
 		c.ForeignKey = append(c.ForeignKey, col.Reference)
+		c.IndexAdd(thisKey)
+		otherKey.ReferencesAdd(col)
 	}
 
 	return c
@@ -471,13 +497,16 @@ func (c *Model) DefineReference(thisKey, name, otherKey string, column *Column) 
 	}
 	idx := c.ColIdx(name)
 	if idx == -1 {
-		col := NewColumn(c, name, "", "REFERENCE", e.Json{"_id": "", "name": ""})
+		col := NewColumn(c, name, "", "REFERENCE", et.Json{"_id": "", "name": ""})
 		col.Tp = TpReference
 		col.Title = name
 		col.Reference = &Reference{thisKey, name, otherKey, column}
 		idx := c.ColIdx(thisKey)
 		if idx != -1 {
 			c.Definition[idx].ReferenceKey = true
+			c.Definition[idx].Indexed = true
+			c.Definition[idx].Model.IndexAdd(c.Definition[idx].name)
+			column.ReferencesAdd(c.Definition[idx])
 		}
 	}
 
@@ -494,6 +523,12 @@ func (c *Model) DefineCaption(thisKey, name, otherKey string, column *Column, _d
 		col.Tp = TpCaption
 		col.Title = name
 		col.Reference = &Reference{thisKey, name, otherKey, column}
+		idx := c.ColIdx(thisKey)
+		if idx != -1 {
+			c.Definition[idx].Indexed = true
+			c.Definition[idx].Model.IndexAdd(c.Definition[idx].name)
+			column.ReferencesAdd(c.Definition[idx])
+		}
 	}
 
 	return c
@@ -525,6 +560,7 @@ func (c *Model) DefineRequired(names []string) *Model {
 			col.RequiredMsg = strs.Format(msg.MSG_ATRIB_REQUIRED, col.name)
 		}
 	}
+
 	return c
 }
 
@@ -565,7 +601,10 @@ func (c *Model) Select(sel ...any) *Linq {
 	return result
 }
 
-func (c *Model) Insert(data e.Json) *Linq {
+/**
+*
+**/
+func (c *Model) Insert(data et.Json) *Linq {
 	tp := TpRow
 	if c.UseSource {
 		tp = TpData
@@ -578,7 +617,7 @@ func (c *Model) Insert(data e.Json) *Linq {
 	return result
 }
 
-func (c *Model) Update(data e.Json) *Linq {
+func (c *Model) Update(data et.Json) *Linq {
 	tp := TpRow
 	if c.UseSource {
 		tp = TpData
@@ -603,7 +642,7 @@ func (c *Model) Delete() *Linq {
 	return result
 }
 
-func (c *Model) Upsert(data e.Json) *Linq {
+func (c *Model) Upsert(data et.Json) *Linq {
 	tp := TpRow
 	if c.UseSource {
 		tp = TpData
@@ -619,7 +658,7 @@ func (c *Model) Upsert(data e.Json) *Linq {
 /**
 * Row
 **/
-func (c *Model) InsertRow(data e.Json) *Linq {
+func (c *Model) InsertRow(data et.Json) *Linq {
 	tp := TpRow
 
 	result := NewLinq(ActInsert, c)
@@ -629,7 +668,7 @@ func (c *Model) InsertRow(data e.Json) *Linq {
 	return result
 }
 
-func (c *Model) UpdateRow(data e.Json) *Linq {
+func (c *Model) UpdateRow(data et.Json) *Linq {
 	tp := TpRow
 
 	result := NewLinq(ActUpdate, c)
@@ -648,7 +687,7 @@ func (c *Model) DeleteRow() *Linq {
 	return result
 }
 
-func (c *Model) UpsertRow(data e.Json) *Linq {
+func (c *Model) UpsertRow(data et.Json) *Linq {
 	tp := TpRow
 
 	result := NewLinq(ActUpsert, c)

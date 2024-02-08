@@ -8,9 +8,9 @@ import (
 	"github.com/cgalvisleon/elvis/cache"
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/envar"
+	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/event"
 	"github.com/cgalvisleon/elvis/generic"
-	e "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/strs"
 	"github.com/cgalvisleon/elvis/utility"
 	"github.com/golang-jwt/jwt/v4"
@@ -55,7 +55,7 @@ func DelTokenCtx(ctx context.Context, app, device, id string) error {
 		return err
 	}
 
-	event.Publish(key, "token/delete", e.Json{
+	event.Publish(key, "token/delete", et.Json{
 		"key": key,
 	})
 
@@ -202,7 +202,7 @@ func GenTokenCtx(ctx context.Context, id, app, name, kind, username, device stri
 		return "", err
 	}
 
-	event.Publish(key, "token/create", e.Json{
+	event.Publish(key, "token/create", et.Json{
 		"key":  key,
 		"toke": token,
 	})
@@ -215,11 +215,11 @@ func GenToken(id, app, name, kind, username, device string, duration time.Durati
 	return GenTokenCtx(ctx, id, app, name, kind, username, device, duration)
 }
 
-func GetClient(r *http.Request) e.Json {
+func GetClient(r *http.Request) et.Json {
 	now := utility.Now()
 	ctx := r.Context()
 
-	return e.Json{
+	return et.Json{
 		"date_of":   now,
 		"client_id": generic.New(ctx.Value("clientId")).Str(),
 		"username":  generic.New(ctx.Value("username")).Str(),

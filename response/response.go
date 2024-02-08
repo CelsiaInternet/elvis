@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/et"
 	"github.com/go-chi/chi"
 )
 
@@ -15,30 +15,30 @@ type Result struct {
 	Result interface{} `json:"result"`
 }
 
-func ScanBody(r io.Reader) (e.Json, error) {
-	var result e.Json
+func ScanBody(r io.Reader) (et.Json, error) {
+	var result et.Json
 	err := json.NewDecoder(r).Decode(&result)
 	if err != nil {
-		return e.Json{}, err
+		return et.Json{}, err
 	}
 
 	return result, nil
 }
 
-func ScanStr(value string) (e.Json, error) {
+func ScanStr(value string) (et.Json, error) {
 	return ScanBody(strings.NewReader(value))
 }
 
-func ScanJson(value map[string]interface{}) (e.Json, error) {
-	var result e.Json = value
+func ScanJson(value map[string]interface{}) (et.Json, error) {
+	var result et.Json = value
 	return result, nil
 }
 
-func GetBody(r *http.Request) (e.Json, error) {
-	var result e.Json
+func GetBody(r *http.Request) (et.Json, error) {
+	var result et.Json
 	err := json.NewDecoder(r.Body).Decode(&result)
 	if err != nil {
-		return e.Json{}, err
+		return et.Json{}, err
 	}
 	defer r.Body.Close()
 
@@ -73,8 +73,8 @@ func JSON(w http.ResponseWriter, r *http.Request, statusCode int, dt interface{}
 	return WriteResponse(w, statusCode, e)
 }
 
-func ITEM(w http.ResponseWriter, r *http.Request, statusCode int, dt e.Item) error {
-	if &dt == (&e.Item{}) {
+func ITEM(w http.ResponseWriter, r *http.Request, statusCode int, dt et.Item) error {
+	if &dt == (&et.Item{}) {
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(statusCode)
 		return nil
@@ -88,8 +88,8 @@ func ITEM(w http.ResponseWriter, r *http.Request, statusCode int, dt e.Item) err
 	return WriteResponse(w, statusCode, e)
 }
 
-func ITEMS(w http.ResponseWriter, r *http.Request, statusCode int, dt e.Items) error {
-	if &dt == (&e.Items{}) {
+func ITEMS(w http.ResponseWriter, r *http.Request, statusCode int, dt et.Items) error {
+	if &dt == (&et.Items{}) {
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(statusCode)
 		return nil
@@ -104,7 +104,7 @@ func ITEMS(w http.ResponseWriter, r *http.Request, statusCode int, dt e.Items) e
 }
 
 func HTTPError(w http.ResponseWriter, r *http.Request, statusCode int, message string) error {
-	msg := e.Json{
+	msg := et.Json{
 		"message": message,
 	}
 

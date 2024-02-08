@@ -4,7 +4,7 @@ import (
 	"reflect"
 
 	"github.com/cgalvisleon/elvis/console"
-	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/strs"
 )
 
@@ -31,7 +31,7 @@ func FunctionDef(linq *Linq, col *Column) string {
 				def = strs.Append(def, v.Up(), ".")
 				def = strs.Append(def, v.cast, "::")
 			case string:
-				def = strs.Format(`%v`, e.Quoted(v))
+				def = strs.Format(`%v`, et.Quoted(v))
 			default:
 				console.ErrorF(`FunctionDef:%s; value:%v`, reflect.TypeOf(v), v)
 			}

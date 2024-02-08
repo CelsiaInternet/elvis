@@ -3,7 +3,7 @@ package bus
 import (
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/core"
-	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/linq"
 	"github.com/cgalvisleon/elvis/msg"
 	"github.com/cgalvisleon/elvis/utility"
@@ -57,35 +57,35 @@ func DefineApimanager() error {
 /**
 *	Handler for CRUD data
  */
-func GetApimanagerById(id string) (e.Item, error) {
+func GetApimanagerById(id string) (et.Item, error) {
 	return Apibus.Data().
 		Where(Apibus.Column("_id").Eq(id)).
 		First()
 }
 
-func GetApimanagerByPath(method, path string) (e.Item, error) {
+func GetApimanagerByPath(method, path string) (et.Item, error) {
 	return Apibus.Data().
 		Where(Apibus.Column("path").Eq(path)).
 		And(Apibus.Column("method").Eq(method)).
 		First()
 }
 
-func UpSertApimanager(package_name, kind, method, path string, data e.Json) (e.Item, error) {
+func UpSertApimanager(package_name, kind, method, path string, data et.Json) (et.Item, error) {
 	if !utility.ValidStr(package_name, 0, []string{""}) {
-		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "package_name")
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "package_name")
 	}
 
 	if !utility.ValidStr(kind, 0, []string{""}) {
-		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "kind")
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "kind")
 	}
 
 	if !utility.ValidStr(method, 0, []string{""}) {
-		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "method")
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "method")
 	}
 
 	current, err := GetApimanagerByPath(method, path)
 	if err != nil {
-		return e.Item{}, err
+		return et.Item{}, err
 	}
 
 	var id string
@@ -105,12 +105,12 @@ func UpSertApimanager(package_name, kind, method, path string, data e.Json) (e.I
 		CommandOne()
 }
 
-func StateApimanager(id, state string) (e.Item, error) {
+func StateApimanager(id, state string) (et.Item, error) {
 	if !utility.ValidId(state) {
-		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "state")
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "state")
 	}
 
-	return Apibus.Update(e.Json{
+	return Apibus.Update(et.Json{
 		"_state": state,
 	}).
 		Where(Apibus.Column("_id").Eq(id)).
@@ -118,11 +118,11 @@ func StateApimanager(id, state string) (e.Item, error) {
 		CommandOne()
 }
 
-func DeleteApimanager(id string) (e.Item, error) {
+func DeleteApimanager(id string) (et.Item, error) {
 	return StateApimanager(id, utility.FOR_DELETE)
 }
 
-func AllApimanager(package_name, state, search string, page, rows int, _select string) (e.List, error) {
+func AllApimanager(package_name, state, search string, page, rows int, _select string) (et.List, error) {
 	if state == "" {
 		state = utility.ACTIVE
 	}

@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/cgalvisleon/elvis/cache"
-	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/et"
 	"github.com/google/uuid"
 	"github.com/nats-io/nats.go"
 )
@@ -39,14 +39,14 @@ func Publish(clientId, channel string, data map[string]interface{}) error {
 }
 
 func Event(event string, data interface{}) {
-	go Publish("event", "event/publish", e.Json{
+	go Publish("event", "event/publish", et.Json{
 		"event": event,
 		"data":  data,
 	})
 }
 
 func Work(work, work_id string, data interface{}) {
-	go Publish("event", work, e.Json{
+	go Publish("event", work, et.Json{
 		"work":    work,
 		"work_id": work_id,
 		"data":    data,
@@ -54,21 +54,21 @@ func Work(work, work_id string, data interface{}) {
 }
 
 func Working(worker, work_id string) {
-	go Publish("event", "event/working", e.Json{
+	go Publish("event", "event/working", et.Json{
 		"worker":  worker,
 		"work_id": work_id,
 	})
 }
 
 func Done(work_id, event string) {
-	go Publish("event", "event/done", e.Json{
+	go Publish("event", "event/done", et.Json{
 		"work_id": work_id,
 		"event":   event,
 	})
 }
 
 func Rejected(work_id, event string) {
-	go Publish("event", "event/rejected", e.Json{
+	go Publish("event", "event/rejected", et.Json{
 		"work_id": work_id,
 		"event":   event,
 	})

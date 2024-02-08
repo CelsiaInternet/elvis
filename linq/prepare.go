@@ -1,7 +1,7 @@
 package linq
 
 import (
-	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/strs"
 	"github.com/cgalvisleon/elvis/utility"
 )
@@ -11,8 +11,8 @@ import (
 **/
 func (c *Model) Consolidate(linq *Linq) *Linq {
 	var col *Column
-	var source e.Json = e.Json{}
-	var new e.Json = e.Json{}
+	var source et.Json = et.Json{}
+	var new et.Json = et.Json{}
 
 	setValue := func(key string, val interface{}) {
 		new.Set(key, val)
@@ -79,7 +79,7 @@ func (c *Model) Consolidate(linq *Linq) *Linq {
 	return linq
 }
 
-func (c *Model) Changue(current e.Json, linq *Linq) *Linq {
+func (c *Model) Changue(current et.Json, linq *Linq) *Linq {
 	var change bool
 	new := linq.new
 
@@ -124,33 +124,33 @@ func (c *Linq) PrepareInsert() error {
 	return nil
 }
 
-func (c *Linq) PrepareUpdate() (e.Items, error) {
+func (c *Linq) PrepareUpdate() (et.Items, error) {
 	model := c.from[0].model
 	model.Consolidate(c)
 
 	result, err := c.Current()
 	if err != nil {
-		return e.Items{}, err
+		return et.Items{}, err
 	}
 
 	if !result.Ok {
-		return e.Items{}, nil
+		return et.Items{}, nil
 	}
 
 	return result, nil
 }
 
-func (c *Linq) PrepareDelete() (e.Items, error) {
+func (c *Linq) PrepareDelete() (et.Items, error) {
 	return c.PrepareUpdate()
 }
 
-func (c *Linq) PrepareUpsert() (e.Items, error) {
+func (c *Linq) PrepareUpsert() (et.Items, error) {
 	model := c.from[0].model
 	model.Consolidate(c)
 
 	current, err := c.Current()
 	if err != nil {
-		return e.Items{}, err
+		return et.Items{}, err
 	}
 
 	return current, nil

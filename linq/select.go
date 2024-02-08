@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/cgalvisleon/elvis/console"
-	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/strs"
 )
 
@@ -74,14 +74,14 @@ func (s *Linq) Select(sel ...any) *Linq {
 /**
 *
 **/
-func (s *Linq) Find() (e.Items, error) {
+func (s *Linq) Find() (et.Items, error) {
 	s.SqlSelect()
 
 	s.sql = strs.Format(`%s;`, s.sql)
 
 	items, err := s.Query()
 	if err != nil {
-		return e.Items{}, err
+		return et.Items{}, err
 	}
 
 	for _, data := range items.Result {
@@ -91,12 +91,12 @@ func (s *Linq) Find() (e.Items, error) {
 	return items, nil
 }
 
-func (s *Linq) First() (e.Item, error) {
+func (s *Linq) First() (et.Item, error) {
 	s.sql = s.SqlLimit(1)
 
 	item, err := s.QueryOne()
 	if err != nil {
-		return e.Item{}, err
+		return et.Item{}, err
 	}
 
 	s.Details(&item.Result)
@@ -104,12 +104,12 @@ func (s *Linq) First() (e.Item, error) {
 	return item, nil
 }
 
-func (s *Linq) Limit(limit int) (e.Items, error) {
+func (s *Linq) Limit(limit int) (et.Items, error) {
 	s.sql = s.SqlLimit(limit)
 
 	items, err := s.Query()
 	if err != nil {
-		return e.Items{}, err
+		return et.Items{}, err
 	}
 
 	for _, data := range items.Result {
@@ -119,13 +119,13 @@ func (s *Linq) Limit(limit int) (e.Items, error) {
 	return items, nil
 }
 
-func (s *Linq) Page(page, rows int) (e.Items, error) {
+func (s *Linq) Page(page, rows int) (et.Items, error) {
 	offset := (page - 1) * rows
 	s.sql = s.SqlOffset(rows, offset)
 
 	items, err := s.Query()
 	if err != nil {
-		return e.Items{}, err
+		return et.Items{}, err
 	}
 
 	for _, data := range items.Result {
@@ -141,12 +141,12 @@ func (s *Linq) Count() int {
 	return s.QueryCount()
 }
 
-func (s *Linq) List(page, rows int) (e.List, error) {
+func (s *Linq) List(page, rows int) (et.List, error) {
 	all := s.Count()
 
 	items, err := s.Page(page, rows)
 	if err != nil {
-		return e.List{}, err
+		return et.List{}, err
 	}
 
 	return items.ToList(all, page, rows), nil

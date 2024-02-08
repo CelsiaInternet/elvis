@@ -3,8 +3,8 @@ package master
 import (
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/core"
+	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/jdb"
-	e "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/strs"
 	_ "github.com/joho/godotenv/autoload"
 )
@@ -53,7 +53,7 @@ func (c *Master) GetNodeByID(id string) *Node {
 	return nil
 }
 
-func (c *Master) LoadNode(params e.Json) error {
+func (c *Master) LoadNode(params et.Json) error {
 	id := params.Key()
 
 	node := c.GetNodeByID(id)
@@ -142,7 +142,7 @@ func (c *Master) UnloadNodeById(id string) error {
 	return nil
 }
 
-func (c *Master) GetSyncById(idT string) (e.Item, error) {
+func (c *Master) GetSyncById(idT string) (et.Item, error) {
 	sql := `
   SELECT *
   FROM core.SYNC
@@ -151,13 +151,13 @@ func (c *Master) GetSyncById(idT string) (e.Item, error) {
 
 	item, err := jdb.QueryOne(sql, idT)
 	if err != nil {
-		return e.Item{}, err
+		return et.Item{}, err
 	}
 
 	return item, nil
 }
 
-func (c *Master) SetSync(schema, table, action, node, idT string, data e.Json, query string) (int, error) {
+func (c *Master) SetSync(schema, table, action, node, idT string, data et.Json, query string) (int, error) {
 	index := core.GetSerie("main.SYNC")
 
 	sql := `

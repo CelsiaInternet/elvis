@@ -1,26 +1,26 @@
 package linq
 
 import (
+	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/jdb"
-	e "github.com/cgalvisleon/elvis/json"
 )
 
-func Describe(db int, schema, model, filter string) e.Json {
+func Describe(db int, schema, model, filter string) et.Json {
 	if len(model) > 0 {
 		_schema := GetSchema(schema)
 		if _schema == nil {
-			return e.Json{}
+			return et.Json{}
 		}
 
 		_model := _schema.Model(model)
 		if _model == nil {
-			return e.Json{}
+			return et.Json{}
 		}
 
 		result := _model.Describe()
 
 		if len(filter) > 0 {
-			return e.Json{
+			return et.Json{
 				filter: result.Get(filter),
 			}
 		}
@@ -31,13 +31,13 @@ func Describe(db int, schema, model, filter string) e.Json {
 	if len(schema) > 0 {
 		_schema := GetSchema(schema)
 		if _schema == nil {
-			return e.Json{}
+			return et.Json{}
 		}
 
 		return _schema.Describe()
 	}
 
-	var describes []e.Json = []e.Json{}
+	var describes []et.Json = []et.Json{}
 	for _, schema := range schemas {
 		describes = append(describes, schema.Describe())
 	}

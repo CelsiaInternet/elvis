@@ -3,7 +3,7 @@ package module
 import (
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/core"
-	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/linq"
 	"github.com/cgalvisleon/elvis/msg"
 	"github.com/cgalvisleon/elvis/utility"
@@ -38,11 +38,11 @@ func DefineModules() error {
 		"name",
 		"index",
 	})
-	Modules.Trigger(linq.AfterInsert, func(model *linq.Model, old, new *e.Json, data e.Json) error {
+	Modules.Trigger(linq.AfterInsert, func(model *linq.Model, old, new *et.Json, data et.Json) error {
 		id := new.Id()
-		InitProfile(id, "PROFILE.ADMIN", e.Json{})
-		InitProfile(id, "PROFILE.DEV", e.Json{})
-		InitProfile(id, "PROFILE.SUPORT", e.Json{})
+		InitProfile(id, "PROFILE.ADMIN", et.Json{})
+		InitProfile(id, "PROFILE.DEV", et.Json{})
+		InitProfile(id, "PROFILE.SUPORT", et.Json{})
 		CheckProjectModule("-1", id, true)
 		CheckRole("-1", id, "PROFILE.ADMIN", "USER.ADMIN", true)
 
@@ -60,44 +60,44 @@ func DefineModules() error {
 * Module
 *	Handler for CRUD data
  */
-func GetModuleByName(name string) (e.Item, error) {
+func GetModuleByName(name string) (et.Item, error) {
 	return Modules.Data().
 		Where(Modules.Column("name").Eq(name)).
 		First()
 }
 
-func GetModuleById(id string) (e.Item, error) {
+func GetModuleById(id string) (et.Item, error) {
 	return Modules.Data().
 		Where(Modules.Column("_id").Eq(id)).
 		First()
 }
 
-func IsInit() (e.Item, error) {
+func IsInit() (et.Item, error) {
 	count := Users.Data().
 		Count()
 
-	return e.Item{
+	return et.Item{
 		Ok: count > 0,
-		Result: e.Json{
+		Result: et.Json{
 			"message": utility.OkOrNot(count > 0, msg.SYSTEM_HAVE_ADMIN, msg.SYSTEM_NOT_HAVE_ADMIN),
 		},
 	}, nil
 }
 
-func InitModule(id, name, description string, data e.Json) (e.Item, error) {
+func InitModule(id, name, description string, data et.Json) (et.Item, error) {
 	if !utility.ValidStr(name, 0, []string{""}) {
-		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "name")
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "name")
 	}
 
 	current, err := GetModuleByName(name)
 	if err != nil {
-		return e.Item{}, err
+		return et.Item{}, err
 	}
 
 	if current.Ok && current.Id() != id {
-		return e.Item{
+		return et.Item{
 			Ok: current.Ok,
-			Result: e.Json{
+			Result: et.Json{
 				"message": msg.RECORD_FOUND,
 			},
 		}, nil
@@ -111,26 +111,26 @@ func InitModule(id, name, description string, data e.Json) (e.Item, error) {
 		Where(Modules.Column("_id").Eq(id)).
 		CommandOne()
 	if err != nil {
-		return e.Item{}, err
+		return et.Item{}, err
 	}
 
 	return item, nil
 }
 
-func UpSetModule(id, name, description string, data e.Json) (e.Item, error) {
+func UpSetModule(id, name, description string, data et.Json) (et.Item, error) {
 	if !utility.ValidStr(name, 0, []string{""}) {
-		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "name")
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "name")
 	}
 
 	current, err := GetModuleByName(name)
 	if err != nil {
-		return e.Item{}, err
+		return et.Item{}, err
 	}
 
 	if current.Ok && current.Id() != id {
-		return e.Item{
+		return et.Item{
 			Ok: current.Ok,
-			Result: e.Json{
+			Result: et.Json{
 				"message": msg.RECORD_FOUND,
 				"_id":     current.Id(),
 				"index":   current.Index(),
@@ -146,18 +146,18 @@ func UpSetModule(id, name, description string, data e.Json) (e.Item, error) {
 		Where(Modules.Column("_id").Eq(id)).
 		CommandOne()
 	if err != nil {
-		return e.Item{}, err
+		return et.Item{}, err
 	}
 
 	return item, nil
 }
 
-func StateModule(id, state string) (e.Item, error) {
+func StateModule(id, state string) (et.Item, error) {
 	if !utility.ValidId(state) {
-		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "state")
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "state")
 	}
 
-	return Modules.Update(e.Json{
+	return Modules.Update(et.Json{
 		"_state": state,
 	}).
 		Where(Modules.Column("_id").Eq(id)).
@@ -165,11 +165,11 @@ func StateModule(id, state string) (e.Item, error) {
 		CommandOne()
 }
 
-func DeleteModule(id string) (e.Item, error) {
+func DeleteModule(id string) (et.Item, error) {
 	return StateModule(id, utility.FOR_DELETE)
 }
 
-func AllModules(state, search string, page, rows int, _select string) (e.List, error) {
+func AllModules(state, search string, page, rows int, _select string) (et.List, error) {
 	if state == "" {
 		state = utility.ACTIVE
 	}

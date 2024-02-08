@@ -3,8 +3,8 @@ package router
 import (
 	"net/http"
 
+	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/event"
-	e "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/middleware"
 	"github.com/go-chi/chi"
 )
@@ -40,7 +40,7 @@ func PublicRoute(r *chi.Mux, method, path string, h http.HandlerFunc, packageNam
 		r.HandleFunc(path, h)
 	}
 
-	event.Publish("router", "apimanager/upsert", e.Json{
+	event.Publish("router", "apimanager/upsert", et.Json{
 		"kind":         "public",
 		"method":       method,
 		"path":         path,
@@ -72,7 +72,7 @@ func ProtectRoute(r *chi.Mux, method, path string, h http.HandlerFunc, packageNa
 		r.With(middleware.Authorization).HandleFunc(path, h)
 	}
 
-	event.Publish("router", "apimanager/upsert", e.Json{
+	event.Publish("router", "apimanager/upsert", et.Json{
 		"kind":         "protect",
 		"method":       method,
 		"path":         path,

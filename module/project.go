@@ -3,7 +3,7 @@ package module
 import (
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/core"
-	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/linq"
 	"github.com/cgalvisleon/elvis/msg"
 	"github.com/cgalvisleon/elvis/utility"
@@ -38,7 +38,7 @@ func DefineProjects() error {
 		"name",
 		"index",
 	})
-	Projects.Trigger(linq.AfterInsert, func(model *linq.Model, old, new *e.Json, data e.Json) error {
+	Projects.Trigger(linq.AfterInsert, func(model *linq.Model, old, new *et.Json, data et.Json) error {
 		moduleId := data.Key("module_id")
 		if moduleId != "" {
 			id := new.Id()
@@ -89,28 +89,28 @@ func DefineProjectModules() error {
 * Project
 *	Handler for CRUD data
  */
-func GetProjectById(id string) (e.Item, error) {
+func GetProjectById(id string) (et.Item, error) {
 	return Projects.Data().
 		Where(Projects.Column("_id").Eq(id)).
 		First()
 }
 
-func GetProjectName(name string) (e.Item, error) {
+func GetProjectName(name string) (et.Item, error) {
 	return Projects.Data().
 		Where(Projects.Column("name").Eq(name)).
 		First()
 }
 
-func GetProjectByModule(projectId, moduleId string) (e.Item, error) {
+func GetProjectByModule(projectId, moduleId string) (et.Item, error) {
 	return ProjectModules.Data(ProjectModules.Column("index")).
 		Where(ProjectModules.Column("project_id").Eq(projectId)).
 		And(ProjectModules.Column("module_id").Eq(moduleId)).
 		First()
 }
 
-func InitProject(id, name, description string, data e.Json) (e.Item, error) {
+func InitProject(id, name, description string, data et.Json) (et.Item, error) {
 	if !utility.ValidStr(name, 0, []string{""}) {
-		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "name")
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "name")
 	}
 
 	id = utility.GenId(id)
@@ -121,30 +121,30 @@ func InitProject(id, name, description string, data e.Json) (e.Item, error) {
 		Where(Projects.Column("_id").Eq(id)).
 		CommandOne()
 	if err != nil {
-		return e.Item{}, err
+		return et.Item{}, err
 	}
 
 	return item, nil
 }
 
-func UpSetProject(id, moduleId, name, description string, data e.Json) (e.Item, error) {
+func UpSetProject(id, moduleId, name, description string, data et.Json) (et.Item, error) {
 	if !utility.ValidId(moduleId) {
-		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "module_id")
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "module_id")
 	}
 
 	if !utility.ValidStr(name, 0, []string{""}) {
-		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "name")
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "name")
 	}
 
 	current, err := GetProjectName(name)
 	if err != nil {
-		return e.Item{}, err
+		return et.Item{}, err
 	}
 
 	if current.Ok && current.Id() != id {
-		return e.Item{
+		return et.Item{
 			Ok: current.Ok,
-			Result: e.Json{
+			Result: et.Json{
 				"message": msg.RECORD_FOUND,
 			},
 		}, nil
@@ -159,18 +159,18 @@ func UpSetProject(id, moduleId, name, description string, data e.Json) (e.Item, 
 		Where(Projects.Column("_id").Eq(id)).
 		CommandOne()
 	if err != nil {
-		return e.Item{}, err
+		return et.Item{}, err
 	}
 
 	return item, nil
 }
 
-func StateProject(id, state string) (e.Item, error) {
+func StateProject(id, state string) (et.Item, error) {
 	if !utility.ValidId(state) {
-		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "state")
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "state")
 	}
 
-	return Projects.Update(e.Json{
+	return Projects.Update(et.Json{
 		"_state": state,
 	}).
 		Where(Projects.Column("_id").Eq(id)).
@@ -178,11 +178,11 @@ func StateProject(id, state string) (e.Item, error) {
 		CommandOne()
 }
 
-func DeleteProject(id string) (e.Item, error) {
+func DeleteProject(id string) (et.Item, error) {
 	return StateProject(id, utility.FOR_DELETE)
 }
 
-func AllProjects(state, search string, page, rows int, _select string) (e.List, error) {
+func AllProjects(state, search string, page, rows int, _select string) (et.List, error) {
 	if state == "" {
 		state = utility.ACTIVE
 	}
@@ -214,7 +214,7 @@ func AllProjects(state, search string, page, rows int, _select string) (e.List, 
 	}
 }
 
-func GetProjectModules(projectId, state, search string, page, rows int) (e.List, error) {
+func GetProjectModules(projectId, state, search string, page, rows int) (et.List, error) {
 	if state == "" {
 		state = utility.ACTIVE
 	}
@@ -253,28 +253,28 @@ func GetProjectModules(projectId, state, search string, page, rows int) (e.List,
 	}
 }
 
-func CheckProjectModule(project_id, module_id string, chk bool) (e.Item, error) {
+func CheckProjectModule(project_id, module_id string, chk bool) (et.Item, error) {
 	if !utility.ValidId(project_id) {
-		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "project_id")
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "project_id")
 	}
 
 	if !utility.ValidId(module_id) {
-		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "module_id")
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "module_id")
 	}
 
-	data := e.Json{}
+	data := et.Json{}
 	data.Set("project_id", project_id)
 	data.Set("module_id", module_id)
 	if chk {
 		current, err := GetProjectByModule(project_id, module_id)
 		if err != nil {
-			return e.Item{}, err
+			return et.Item{}, err
 		}
 
 		if current.Ok {
-			return e.Item{
+			return et.Item{
 				Ok: current.Ok,
-				Result: e.Json{
+				Result: et.Json{
 					"message": msg.RECORD_NOT_UPDATE,
 					"index":   current.Index(),
 				},

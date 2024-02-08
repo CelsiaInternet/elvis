@@ -1,9 +1,9 @@
 package linq
 
 import (
+	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/generic"
 	"github.com/cgalvisleon/elvis/jdb"
-	e "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/strs"
 )
 
@@ -27,7 +27,7 @@ func DDLColumn(col *Column) string {
 		if _default.Str() == "NOW()" {
 			result = strs.Append(`DEFAULT NOW()`, result, " ")
 		} else {
-			result = strs.Append(strs.Format(`DEFAULT %v`, e.Quoted(col.Default)), result, " ")
+			result = strs.Append(strs.Format(`DEFAULT %v`, et.Quoted(col.Default)), result, " ")
 		}
 
 		if col.Type == "SERIAL" {

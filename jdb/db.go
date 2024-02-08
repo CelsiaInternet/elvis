@@ -3,7 +3,7 @@ package jdb
 import (
 	"database/sql"
 
-	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/strs"
 )
 
@@ -33,9 +33,9 @@ func (c *Db) Close() error {
 	return nil
 }
 
-func (c *Db) Describe() e.Json {
+func (c *Db) Describe() et.Json {
 	host := strs.Format(`%s:%d`, c.Host, c.Port)
-	return e.Json{
+	return et.Json{
 		"name":        c.Dbname,
 		"description": c.Description,
 		"driver":      c.Driver,

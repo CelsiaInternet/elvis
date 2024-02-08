@@ -10,8 +10,8 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/event"
-	e "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/utility"
 	"github.com/shirou/gopsutil/v3/mem"
 )
@@ -80,11 +80,11 @@ func RequestLogger(f LogFormatter) func(next http.Handler) http.Handler {
 				scheme = "https"
 			}
 			defer func() {
-				telemetry := e.Json{
+				telemetry := et.Json{
 					"reqID":     reqID,
 					"date_time": t1,
 					"host_name": hostName,
-					"request": e.Json{
+					"request": et.Json{
 						"method":   method,
 						"endpoint": endPoint,
 						"status":   http.StatusOK,
@@ -92,18 +92,18 @@ func RequestLogger(f LogFormatter) func(next http.Handler) http.Handler {
 						"scheme":   scheme,
 						"host":     r.Host,
 					},
-					"since": e.Json{
+					"since": et.Json{
 						"value": time.Since(t1),
 						"unity": "Milliseconds",
 					},
-					"memory": e.Json{
+					"memory": et.Json{
 						"unity":        "MB",
 						"total":        mTotal / 1024 / 1024,
 						"used":         mUsed / 1024 / 1024,
 						"free":         mFree / 1024 / 1024,
 						"percent_free": math.Floor(pFree*100) / 100,
 					},
-					"request_host": e.Json{
+					"request_host": et.Json{
 						"host":   requests_host.Tag,
 						"day":    requests_host.Day,
 						"hour":   requests_host.Hour,
@@ -111,7 +111,7 @@ func RequestLogger(f LogFormatter) func(next http.Handler) http.Handler {
 						"second": requests_host.Seccond,
 						"limit":  requests_host.Limit,
 					},
-					"requests_endpoint": e.Json{
+					"requests_endpoint": et.Json{
 						"endpoint": requests_endpoint.Tag,
 						"day":      requests_endpoint.Day,
 						"hour":     requests_endpoint.Hour,

@@ -3,7 +3,7 @@ package module
 import (
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/core"
-	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/linq"
 	"github.com/cgalvisleon/elvis/msg"
 	"github.com/cgalvisleon/elvis/utility"
@@ -53,50 +53,50 @@ func DefineTypes() error {
 * Types
 *	Handler for CRUD data
  */
-func GetTypeByName(kind, name string) (e.Item, error) {
+func GetTypeByName(kind, name string) (et.Item, error) {
 	return Types.Data().
 		Where(Types.Column("kind").Eq(kind)).
 		And(Types.Column("name").Eq(name)).
 		First()
 }
 
-func GetTypeById(id string) (e.Item, error) {
+func GetTypeById(id string) (et.Item, error) {
 	return Types.Data().
 		Where(Types.Column("_id").Eq(id)).
 		First()
 }
 
-func GetTypeByIndex(idx int) (e.Item, error) {
+func GetTypeByIndex(idx int) (et.Item, error) {
 	return Types.Data().
 		Where(Types.Column("index").Eq(idx)).
 		First()
 }
 
-func InitType(projectId, id, state, kind, name, description string) (e.Item, error) {
+func InitType(projectId, id, state, kind, name, description string) (et.Item, error) {
 	if !utility.ValidId(kind) {
-		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "kind")
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "kind")
 	}
 
 	if !utility.ValidStr(name, 0, []string{""}) {
-		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "name")
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "name")
 	}
 
 	current, err := GetTypeByName(kind, name)
 	if err != nil {
-		return e.Item{}, err
+		return et.Item{}, err
 	}
 
 	if current.Ok && current.Id() != id {
-		return e.Item{
+		return et.Item{
 			Ok: current.Ok,
-			Result: e.Json{
+			Result: et.Json{
 				"message": msg.RECORD_FOUND,
 			},
 		}, nil
 	}
 
 	id = utility.GenId(id)
-	data := e.Json{}
+	data := et.Json{}
 	data["project_id"] = projectId
 	data["_id"] = id
 	data["kind"] = kind
@@ -107,28 +107,28 @@ func InitType(projectId, id, state, kind, name, description string) (e.Item, err
 		CommandOne()
 }
 
-func UpSetType(projectId, id, kind, name, description string) (e.Item, error) {
+func UpSetType(projectId, id, kind, name, description string) (et.Item, error) {
 	if !utility.ValidId(id) {
-		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "_id")
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "_id")
 	}
 
 	if !utility.ValidId(kind) {
-		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "kind")
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "kind")
 	}
 
 	if !utility.ValidStr(name, 0, []string{""}) {
-		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "name")
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "name")
 	}
 
 	current, err := GetTypeByName(kind, name)
 	if err != nil {
-		return e.Item{}, err
+		return et.Item{}, err
 	}
 
 	if current.Ok && current.Id() != id {
-		return e.Item{
+		return et.Item{
 			Ok: current.Ok,
-			Result: e.Json{
+			Result: et.Json{
 				"message": msg.RECORD_FOUND,
 				"_id":     id,
 				"index":   current.Index(),
@@ -137,7 +137,7 @@ func UpSetType(projectId, id, kind, name, description string) (e.Item, error) {
 	}
 
 	id = utility.GenId(id)
-	data := e.Json{}
+	data := et.Json{}
 	data["project_id"] = projectId
 	data["_id"] = id
 	data["kind"] = kind
@@ -148,12 +148,12 @@ func UpSetType(projectId, id, kind, name, description string) (e.Item, error) {
 		CommandOne()
 }
 
-func StateType(id, state string) (e.Item, error) {
+func StateType(id, state string) (et.Item, error) {
 	if !utility.ValidId(state) {
-		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "state")
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "state")
 	}
 
-	return Types.Update(e.Json{
+	return Types.Update(et.Json{
 		"_state": state,
 	}).
 		Where(Types.Column("_id").Eq(id)).
@@ -161,13 +161,13 @@ func StateType(id, state string) (e.Item, error) {
 		CommandOne()
 }
 
-func DeleteType(id string) (e.Item, error) {
+func DeleteType(id string) (et.Item, error) {
 	return StateType(id, utility.FOR_DELETE)
 }
 
-func AllTypes(projectId, kind, state, search string, page, rows int, _select string) (e.List, error) {
+func AllTypes(projectId, kind, state, search string, page, rows int, _select string) (et.List, error) {
 	if !utility.ValidId(kind) {
-		return e.List{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "kind")
+		return et.List{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "kind")
 	}
 
 	if state == "" {

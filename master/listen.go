@@ -1,11 +1,11 @@
 package master
 
 import (
-	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/strs"
 )
 
-func listenSync(res e.Json) {
+func listenSync(res et.Json) {
 	idT := res.Str("_idt")
 	nodeId := res.Str("nodo")
 
@@ -17,7 +17,7 @@ func listenSync(res e.Json) {
 	go node.SyncIdT(idT)
 }
 
-func listenNode(res e.Json) {
+func listenNode(res et.Json) {
 	action := res.Str("action")
 	nodeId := res.Str("nodo")
 

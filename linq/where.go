@@ -1,7 +1,7 @@
 package linq
 
 import (
-	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/strs"
 )
 
@@ -66,7 +66,7 @@ func (c *Where) Def(val any) string {
 	case SQL:
 		return strs.Format(`%v`, v.val)
 	default:
-		return strs.Format(`%v`, e.Quoted(v))
+		return strs.Format(`%v`, et.Quoted(v))
 	}
 }
 

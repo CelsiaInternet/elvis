@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/logs"
 	"github.com/cgalvisleon/elvis/msg"
 	"github.com/cgalvisleon/elvis/strs"
@@ -183,11 +183,11 @@ func DelVerify(device string, key string) (int64, error) {
 	return Del(key)
 }
 
-func AllCache(search string, page, rows int) (e.List, error) {
+func AllCache(search string, page, rows int) (et.List, error) {
 	ctx := context.Background()
 	var cursor uint64
 	var count int64
-	var items e.Items = e.Items{}
+	var items et.Items = et.Items{}
 	offset := (page - 1) * rows
 	cursor = uint64(offset)
 	count = int64(rows)
@@ -195,7 +195,7 @@ func AllCache(search string, page, rows int) (e.List, error) {
 	iter := conn.db.Scan(ctx, cursor, search, count).Iterator()
 	for iter.Next(ctx) {
 		key := iter.Val()
-		items.Result = append(items.Result, e.Json{"key": key})
+		items.Result = append(items.Result, et.Json{"key": key})
 		items.Count++
 	}
 
@@ -205,57 +205,57 @@ func AllCache(search string, page, rows int) (e.List, error) {
 /**
 * Item
 **/
-func GetItem(key string) (e.Item, error) {
+func GetItem(key string) (et.Item, error) {
 	if conn == nil {
-		return e.Item{}, nil
+		return et.Item{}, nil
 	}
 
 	val, err := Get(key, "{}")
 	if err != nil {
-		return e.Item{}, err
+		return et.Item{}, err
 	}
 
-	var result e.Json = e.Json{}
+	var result et.Json = et.Json{}
 	err = result.Scan(val)
 	if err != nil {
-		return e.Item{}, err
+		return et.Item{}, err
 	}
 
-	return e.Item{
+	return et.Item{
 		Ok:     true,
 		Result: result,
 	}, nil
 }
 
-func SetItem(key string, val e.Item, second time.Duration) (e.Item, error) {
+func SetItem(key string, val et.Item, second time.Duration) (et.Item, error) {
 	if conn == nil {
 		return val, nil
 	}
 
 	err := Set(key, val.ToString(), second)
 	if err != nil {
-		return e.Item{}, err
+		return et.Item{}, err
 	}
 
 	return val, nil
 }
 
-func SetItemD(key string, val e.Item) (e.Item, error) {
+func SetItemD(key string, val et.Item) (et.Item, error) {
 	day := time.Hour * 24
 	return SetItem(key, val, day)
 }
 
-func SetItemW(key string, val e.Item) (e.Item, error) {
+func SetItemW(key string, val et.Item) (et.Item, error) {
 	week := time.Hour * 24 * 7
 	return SetItem(key, val, week)
 }
 
-func SetItemM(key string, val e.Item) (e.Item, error) {
+func SetItemM(key string, val et.Item) (et.Item, error) {
 	month := time.Hour * 24 * 30
 	return SetItem(key, val, month)
 }
 
-func SetItemY(key string, val e.Item) (e.Item, error) {
+func SetItemY(key string, val et.Item) (et.Item, error) {
 	year := time.Hour * 24 * 365
 	return SetItem(key, val, year)
 }
@@ -263,33 +263,33 @@ func SetItemY(key string, val e.Item) (e.Item, error) {
 /**
 * Items
 **/
-func GetItems(key string) (e.Items, error) {
+func GetItems(key string) (et.Items, error) {
 	if conn == nil {
-		return e.Items{}, nil
+		return et.Items{}, nil
 	}
 
 	val, err := Get(key, "[]")
 	if err != nil {
-		return e.Items{}, err
+		return et.Items{}, err
 	}
 
-	var result e.Items = e.Items{}
+	var result et.Items = et.Items{}
 	err = result.Scan(val)
 	if err != nil {
-		return e.Items{}, err
+		return et.Items{}, err
 	}
 
 	return result, nil
 }
 
-func SetItems(key string, val e.Items, second time.Duration) (e.Items, error) {
+func SetItems(key string, val et.Items, second time.Duration) (et.Items, error) {
 	if conn == nil {
 		return val, nil
 	}
 
 	err := Set(key, val.ToString(), second)
 	if err != nil {
-		return e.Items{}, err
+		return et.Items{}, err
 	}
 
 	return val, nil

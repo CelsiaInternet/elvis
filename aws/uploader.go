@@ -14,8 +14,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/envar"
+	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/file"
-	e "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/msg"
 	"github.com/cgalvisleon/elvis/strs"
 	"github.com/cgalvisleon/elvis/utility"
@@ -78,11 +78,11 @@ func DownloadS3(bucket, key string) (*s3.GetObjectOutput, error) {
 /**
 *
 **/
-func UploaderFile(r *http.Request, folder, name string) (e.Json, error) {
+func UploaderFile(r *http.Request, folder, name string) (et.Json, error) {
 	r.ParseMultipartForm(2000)
 	fileparts, fileInfo, err := r.FormFile("myFile")
 	if err != nil {
-		return e.Json{}, err
+		return et.Json{}, err
 	}
 	defer fileparts.Close()
 
@@ -101,15 +101,15 @@ func UploaderFile(r *http.Request, folder, name string) (e.Json, error) {
 	if storageType == "S3" {
 		contentFile, err := io.ReadAll(fileparts)
 		if err != nil {
-			return e.Json{}, err
+			return et.Json{}, err
 		}
 
 		output, err := UploaderS3(bucket, filename, contentType, contentFile)
 		if err != nil {
-			return e.Json{}, err
+			return et.Json{}, err
 		}
 
-		return e.Json{
+		return et.Json{
 			"url": output.Location,
 		}, nil
 	} else {
@@ -118,35 +118,35 @@ func UploaderFile(r *http.Request, folder, name string) (e.Json, error) {
 
 		output, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE, 0666)
 		if err != nil {
-			return e.Json{}, err
+			return et.Json{}, err
 		}
 		defer output.Close()
 
 		_, err = io.Copy(output, fileparts)
 		if err != nil {
-			return e.Json{}, err
+			return et.Json{}, err
 		}
 
 		hostname := envar.EnvarStr("", "HOST")
 		url := strs.Format(`%s/%s`, hostname, filename)
 
-		return e.Json{
+		return et.Json{
 			"url": url,
 		}, nil
 	}
 }
 
-func UploaderB64(b64, filename, contentType string) (e.Json, error) {
+func UploaderB64(b64, filename, contentType string) (et.Json, error) {
 	if !utility.ValidStr(b64, 0, []string{""}) {
-		return e.Json{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "b64")
+		return et.Json{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "b64")
 	}
 
 	if !utility.ValidStr(filename, 0, []string{""}) {
-		return e.Json{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "filename")
+		return et.Json{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "filename")
 	}
 
 	if !utility.ValidStr(contentType, 0, []string{""}) {
-		return e.Json{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "content-type")
+		return et.Json{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "content-type")
 	}
 
 	storageType := envar.EnvarStr("", "STORAGE_TYPE")
@@ -154,15 +154,15 @@ func UploaderB64(b64, filename, contentType string) (e.Json, error) {
 	if storageType == "S3" {
 		contentFile, err := base64.StdEncoding.DecodeString(b64)
 		if err != nil {
-			return e.Json{}, err
+			return et.Json{}, err
 		}
 
 		output, err := UploaderS3(bucket, filename, contentType, contentFile)
 		if err != nil {
-			return e.Json{}, err
+			return et.Json{}, err
 		}
 
-		return e.Json{
+		return et.Json{
 			"url": output.Location,
 		}, nil
 	} else {
@@ -175,22 +175,22 @@ func UploaderB64(b64, filename, contentType string) (e.Json, error) {
 
 		output, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE, 0666)
 		if err != nil {
-			return e.Json{}, err
+			return et.Json{}, err
 		}
 		defer output.Close()
 
 		if _, err := output.Write(dec); err != nil {
-			return e.Json{}, err
+			return et.Json{}, err
 		}
 
 		if err := output.Sync(); err != nil {
-			return e.Json{}, err
+			return et.Json{}, err
 		}
 
 		hostname := envar.EnvarStr("", "HOST")
 		url := strs.Format(`%s/%s`, hostname, filename)
 
-		return e.Json{
+		return et.Json{
 			"url": url,
 		}, nil
 	}

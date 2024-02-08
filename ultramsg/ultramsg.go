@@ -8,12 +8,12 @@ import (
 	"strings"
 
 	"github.com/cgalvisleon/elvis/envar"
-	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/strs"
 	_ "github.com/joho/godotenv/autoload"
 )
 
-func SendWhatsApp(country, phone, message string) (e.Json, error) {
+func SendWhatsApp(country, phone, message string) (et.Json, error) {
 	ultramsgID := envar.EnvarStr("", "ULTRAMSG_ID")
 	ultramsgToken := envar.EnvarStr("", "ULTRAMSG_TOKEN")
 	apiurl := strs.Format(`https://api.ultramsg.com/%s/messages/chat`, ultramsgID)
@@ -28,19 +28,19 @@ func SendWhatsApp(country, phone, message string) (e.Json, error) {
 	params := bytes.NewBufferString(data.Encode())
 	req, err := http.NewRequest("POST", apiurl, params)
 	if err != nil {
-		return e.Json{}, err
+		return et.Json{}, err
 	}
 
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return e.Json{}, err
+		return et.Json{}, err
 	}
 
 	defer resp.Body.Close()
 
-	return e.Json{
+	return et.Json{
 		"status": resp.Status,
 		"body":   resp.Body,
 	}, nil
@@ -49,7 +49,7 @@ func SendWhatsApp(country, phone, message string) (e.Json, error) {
 /**
 * .jpg
 **/
-func SendWhatsAppImage(country, phone, image, caption string) (e.Json, error) {
+func SendWhatsAppImage(country, phone, image, caption string) (et.Json, error) {
 	ultramsgID := envar.EnvarStr("", "ULTRAMSG_ID")
 	ultramsgToken := envar.EnvarStr("", "ULTRAMSG_TOKEN")
 	apiurl := strs.Format(`https://api.ultramsg.com/%s/messages/image`, ultramsgID)
@@ -64,19 +64,19 @@ func SendWhatsAppImage(country, phone, image, caption string) (e.Json, error) {
 	params := bytes.NewBufferString(data.Encode())
 	req, err := http.NewRequest("POST", apiurl, params)
 	if err != nil {
-		return e.Json{}, err
+		return et.Json{}, err
 	}
 
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return e.Json{}, err
+		return et.Json{}, err
 	}
 
 	defer resp.Body.Close()
 
-	return e.Json{
+	return et.Json{
 		"status": resp.Status,
 		"body":   resp.Body,
 	}, nil
@@ -85,7 +85,7 @@ func SendWhatsAppImage(country, phone, image, caption string) (e.Json, error) {
 /**
 * .webp
 **/
-func SendWhatsAppSticker(country, phone, sticker string) (e.Json, error) {
+func SendWhatsAppSticker(country, phone, sticker string) (et.Json, error) {
 	ultramsgID := envar.EnvarStr("", "ULTRAMSG_ID")
 	ultramsgToken := envar.EnvarStr("", "ULTRAMSG_TOKEN")
 	apiurl := strs.Format(`https://api.ultramsg.com/%s/messages/chat`, ultramsgID)
@@ -99,19 +99,19 @@ func SendWhatsAppSticker(country, phone, sticker string) (e.Json, error) {
 	params := bytes.NewBufferString(data.Encode())
 	req, err := http.NewRequest("POST", apiurl, params)
 	if err != nil {
-		return e.Json{}, err
+		return et.Json{}, err
 	}
 
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return e.Json{}, err
+		return et.Json{}, err
 	}
 
 	defer resp.Body.Close()
 
-	return e.Json{
+	return et.Json{
 		"status": resp.Status,
 		"body":   resp.Body,
 	}, nil
@@ -120,7 +120,7 @@ func SendWhatsAppSticker(country, phone, sticker string) (e.Json, error) {
 /**
 * .pdf
 **/
-func SendWhatsAppDocument(country, phone, filename, document, caption string) (e.Json, error) {
+func SendWhatsAppDocument(country, phone, filename, document, caption string) (et.Json, error) {
 	ultramsgID := envar.EnvarStr("", "ULTRAMSG_ID")
 	ultramsgToken := envar.EnvarStr("", "ULTRAMSG_TOKEN")
 	apiurl := strs.Format(`https://api.ultramsg.com/%s/messages/chat`, ultramsgID)
@@ -136,19 +136,19 @@ func SendWhatsAppDocument(country, phone, filename, document, caption string) (e
 	params := bytes.NewBufferString(data.Encode())
 	req, err := http.NewRequest("POST", apiurl, params)
 	if err != nil {
-		return e.Json{}, err
+		return et.Json{}, err
 	}
 
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return e.Json{}, err
+		return et.Json{}, err
 	}
 
 	defer resp.Body.Close()
 
-	return e.Json{
+	return et.Json{
 		"status": resp.Status,
 		"body":   resp.Body,
 	}, nil
@@ -157,7 +157,7 @@ func SendWhatsAppDocument(country, phone, filename, document, caption string) (e
 /**
 * .mp3
 **/
-func SendWhatsAppAudio(country, phone, audio string) (e.Json, error) {
+func SendWhatsAppAudio(country, phone, audio string) (et.Json, error) {
 	ultramsgID := envar.EnvarStr("", "ULTRAMSG_ID")
 	ultramsgToken := envar.EnvarStr("", "ULTRAMSG_TOKEN")
 	apiurl := strs.Format(`https://api.ultramsg.com/%s/messages/chat`, ultramsgID)
@@ -171,19 +171,19 @@ func SendWhatsAppAudio(country, phone, audio string) (e.Json, error) {
 	params := bytes.NewBufferString(data.Encode())
 	req, err := http.NewRequest("POST", apiurl, params)
 	if err != nil {
-		return e.Json{}, err
+		return et.Json{}, err
 	}
 
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return e.Json{}, err
+		return et.Json{}, err
 	}
 
 	defer resp.Body.Close()
 
-	return e.Json{
+	return et.Json{
 		"status": resp.Status,
 		"body":   resp.Body,
 	}, nil
@@ -192,7 +192,7 @@ func SendWhatsAppAudio(country, phone, audio string) (e.Json, error) {
 /**
 * .ogg
 **/
-func SendWhatsAppVoice(country, phone, audio string) (e.Json, error) {
+func SendWhatsAppVoice(country, phone, audio string) (et.Json, error) {
 	ultramsgID := envar.EnvarStr("", "ULTRAMSG_ID")
 	ultramsgToken := envar.EnvarStr("", "ULTRAMSG_TOKEN")
 	apiurl := strs.Format(`https://api.ultramsg.com/%s/messages/voice`, ultramsgID)
@@ -207,19 +207,19 @@ func SendWhatsAppVoice(country, phone, audio string) (e.Json, error) {
 	params := bytes.NewBufferString(data.Encode())
 	req, err := http.NewRequest("POST", apiurl, params)
 	if err != nil {
-		return e.Json{}, err
+		return et.Json{}, err
 	}
 
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return e.Json{}, err
+		return et.Json{}, err
 	}
 
 	defer resp.Body.Close()
 
-	return e.Json{
+	return et.Json{
 		"status": resp.Status,
 		"body":   resp.Body,
 	}, nil
@@ -228,7 +228,7 @@ func SendWhatsAppVoice(country, phone, audio string) (e.Json, error) {
 /**
 * .mp4
 **/
-func SendWhatsAppVideo(country, phone, video, caption string) (e.Json, error) {
+func SendWhatsAppVideo(country, phone, video, caption string) (et.Json, error) {
 	ultramsgID := envar.EnvarStr("", "ULTRAMSG_ID")
 	ultramsgToken := envar.EnvarStr("", "ULTRAMSG_TOKEN")
 	apiurl := strs.Format(`https://api.ultramsg.com/%s/messages/video`, ultramsgID)
@@ -243,19 +243,19 @@ func SendWhatsAppVideo(country, phone, video, caption string) (e.Json, error) {
 	payload := strings.NewReader(data.Encode())
 	req, err := http.NewRequest("POST", apiurl, payload)
 	if err != nil {
-		return e.Json{}, err
+		return et.Json{}, err
 	}
 
 	req.Header.Add("content-type", "application/x-www-form-urlencoded")
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return e.Json{}, err
+		return et.Json{}, err
 	}
 	defer res.Body.Close()
 
 	body, _ := io.ReadAll(res.Body)
 
-	result := e.Json{
+	result := et.Json{
 		"to":     to,
 		"status": res.Status,
 		"body":   string(body),

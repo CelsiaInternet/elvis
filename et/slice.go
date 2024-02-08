@@ -1,4 +1,4 @@
-package json
+package et
 
 func SliceFindIndex(item Json, list []Json, key string) int {
 	result := -1

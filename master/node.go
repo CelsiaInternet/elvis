@@ -4,8 +4,8 @@ import (
 	"time"
 
 	"github.com/cgalvisleon/elvis/console"
+	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/jdb"
-	e "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/msg"
 	"github.com/cgalvisleon/elvis/utility"
 )
@@ -23,12 +23,12 @@ type Node struct {
 	Date_update time.Time `json:"date_update"`
 	Id          string    `json:"_id"`
 	Mode        int       `json:"mode"`
-	Data        e.Json    `json:"_data"`
+	Data        et.Json   `json:"_data"`
 	Status      int       `json:"status"`
 	Index       int       `json:"index"`
 }
 
-func (n *Node) Scan(data *e.Json) error {
+func (n *Node) Scan(data *et.Json) error {
 	n.Date_make = data.Time("date_make")
 	n.Date_update = data.Time("date_update")
 	n.Id = data.Str("_id")
@@ -53,7 +53,7 @@ func (c *Node) LatIndex() int {
 	return item.Index()
 }
 
-func (c *Node) GetSyncByIdT(idT string) (e.Item, error) {
+func (c *Node) GetSyncByIdT(idT string) (et.Item, error) {
 	sql := `
   SELECT *
   FROM core.SYNC
@@ -62,7 +62,7 @@ func (c *Node) GetSyncByIdT(idT string) (e.Item, error) {
 
 	item, err := jdb.DBQueryOne(c.Db, sql, idT)
 	if err != nil {
-		return e.Item{}, err
+		return et.Item{}, err
 	}
 
 	return item, nil
@@ -81,7 +81,7 @@ func (c *Node) DelSyncByIndex(index int) error {
 	return nil
 }
 
-func NewNode(params *e.Json) (*Node, error) {
+func NewNode(params *et.Json) (*Node, error) {
 	result := &Node{}
 	err := result.Scan(params)
 	if err != nil {
@@ -172,7 +172,7 @@ func DefineNodes() error {
 * Mode
 *	Handler for CRUD data
  */
-func GetNodeById(id string) (e.Item, error) {
+func GetNodeById(id string) (et.Item, error) {
 	sql := `
 	SELECT
 	A._DATA||
@@ -186,7 +186,7 @@ func GetNodeById(id string) (e.Item, error) {
 
 	item, err := jdb.QueryDataOne(sql, id)
 	if err != nil {
-		return e.Item{}, err
+		return et.Item{}, err
 	}
 
 	delete(item.Result, "password")
@@ -194,18 +194,18 @@ func GetNodeById(id string) (e.Item, error) {
 	return item, nil
 }
 
-func UpSertNode(id string, mode int, driver, host string, port int, dbname, user, password string) (e.Item, error) {
+func UpSertNode(id string, mode int, driver, host string, port int, dbname, user, password string) (et.Item, error) {
 	if !utility.ValidId(id) {
-		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "id")
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "id")
 	}
 
 	current, err := GetNodeById(id)
 	if err != nil {
-		return e.Item{}, err
+		return et.Item{}, err
 	}
 
 	now := utility.Now()
-	data := e.Json{
+	data := et.Json{
 		"driver": driver,
 		"host":   host,
 		"port":   port,
@@ -225,12 +225,12 @@ func UpSertNode(id string, mode int, driver, host string, port int, dbname, user
 
 		item, err := jdb.QueryOne(sql, id, now, mode, password, data)
 		if err != nil {
-			return e.Item{}, err
+			return et.Item{}, err
 		}
 
-		return e.Item{
+		return et.Item{
 			Ok: item.Ok,
-			Result: e.Json{
+			Result: et.Json{
 				"message": msg.RECORD_UPDATE,
 				"_id":     id,
 				"index":   item.Index(),
@@ -245,12 +245,12 @@ func UpSertNode(id string, mode int, driver, host string, port int, dbname, user
 
 	item, err := jdb.QueryOne(sql, now, id, mode, data)
 	if err != nil {
-		return e.Item{}, err
+		return et.Item{}, err
 	}
 
-	return e.Item{
+	return et.Item{
 		Ok: item.Ok,
-		Result: e.Json{
+		Result: et.Json{
 			"message": msg.RECORD_CREATE,
 			"_id":     id,
 			"index":   item.Index(),
@@ -258,7 +258,7 @@ func UpSertNode(id string, mode int, driver, host string, port int, dbname, user
 	}, nil
 }
 
-func DeleteNodeById(id string) (e.Item, error) {
+func DeleteNodeById(id string) (et.Item, error) {
 	sql := `
 	DELETE FROM core.NODES	
 	WHERE _ID=$1
@@ -266,7 +266,7 @@ func DeleteNodeById(id string) (e.Item, error) {
 
 	item, err := jdb.QueryDataOne(sql, id)
 	if err != nil {
-		return e.Item{}, err
+		return et.Item{}, err
 	}
 
 	delete(item.Result, "password")
@@ -274,7 +274,7 @@ func DeleteNodeById(id string) (e.Item, error) {
 	return item, nil
 }
 
-func AllNodes(search string, page, rows int) (e.List, error) {
+func AllNodes(search string, page, rows int) (et.List, error) {
 	sql := `
 	SELECT COUNT(*) AS COUNT
 	FROM core.NODES A
@@ -298,7 +298,7 @@ func AllNodes(search string, page, rows int) (e.List, error) {
 	offset := (page - 1) * rows
 	items, err := jdb.Query(sql, search, rows, offset)
 	if err != nil {
-		return e.List{}, err
+		return et.List{}, err
 	}
 
 	return items.ToList(all, page, rows), nil

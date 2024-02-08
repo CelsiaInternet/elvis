@@ -6,12 +6,12 @@ import (
 	"net/url"
 
 	"github.com/cgalvisleon/elvis/envar"
-	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/strs"
 	_ "github.com/joho/godotenv/autoload"
 )
 
-func SendWhatsApp(country, phone, message string) (e.Json, error) {
+func SendWhatsApp(country, phone, message string) (et.Json, error) {
 	twilioSID := envar.EnvarStr("", "TWILIO_SID")
 	twilioAUT := envar.EnvarStr("", "TWILIO_AUT")
 	twilioFrom := envar.EnvarStr("", "TWILIO_FROM")
@@ -30,7 +30,7 @@ func SendWhatsApp(country, phone, message string) (e.Json, error) {
 	params := bytes.NewBufferString(data.Encode())
 	req, err := http.NewRequest("POST", apiURL, params)
 	if err != nil {
-		return e.Json{}, err
+		return et.Json{}, err
 	}
 
 	req.SetBasicAuth(twilioSID, twilioAUT)
@@ -38,12 +38,12 @@ func SendWhatsApp(country, phone, message string) (e.Json, error) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return e.Json{}, err
+		return et.Json{}, err
 	}
 
 	defer resp.Body.Close()
 
-	return e.Json{
+	return et.Json{
 		"status": resp.Status,
 		"body":   resp.Body,
 	}, nil

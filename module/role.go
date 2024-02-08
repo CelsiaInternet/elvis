@@ -3,8 +3,8 @@ package module
 import (
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/core"
+	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/jdb"
-	e "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/linq"
 	"github.com/cgalvisleon/elvis/msg"
 	"github.com/cgalvisleon/elvis/utility"
@@ -48,7 +48,7 @@ func DefineRoles() error {
 * Role
 *	Handler for CRUD data
  */
-func GetRoleById(projectId, moduleId, userId, profileTp string) (e.Item, error) {
+func GetRoleById(projectId, moduleId, userId, profileTp string) (et.Item, error) {
 	return Roles.Data().
 		Where(Roles.Column("project_id").Eq(projectId)).
 		And(Roles.Column("module_id").Eq(moduleId)).
@@ -57,7 +57,7 @@ func GetRoleById(projectId, moduleId, userId, profileTp string) (e.Item, error) 
 		First()
 }
 
-func GetUserRoleByIndex(idx int) (e.Item, error) {
+func GetUserRoleByIndex(idx int) (et.Item, error) {
 	sql := `
 	SELECT
 	D._ID AS PROJECT_ID,
@@ -77,13 +77,13 @@ func GetUserRoleByIndex(idx int) (e.Item, error) {
 
 	item, err := jdb.QueryOne(sql, idx)
 	if err != nil {
-		return e.Item{}, err
+		return et.Item{}, err
 	}
 
 	return item, nil
 }
 
-func GetUserProjects(userId string) ([]e.Json, error) {
+func GetUserProjects(userId string) ([]et.Json, error) {
 	sql := `
 	SELECT
 	B._ID,
@@ -97,13 +97,13 @@ func GetUserProjects(userId string) ([]e.Json, error) {
 
 	modules, err := jdb.Query(sql, userId)
 	if err != nil {
-		return []e.Json{}, err
+		return []et.Json{}, err
 	}
 
 	return modules.Result, nil
 }
 
-func GetUserModules(userId string) ([]e.Json, error) {
+func GetUserModules(userId string) ([]et.Json, error) {
 	sql := `
 	SELECT
 	D._ID AS PROJECT_ID,
@@ -124,60 +124,60 @@ func GetUserModules(userId string) ([]e.Json, error) {
 
 	modules, err := jdb.Query(sql, userId)
 	if err != nil {
-		return []e.Json{}, err
+		return []et.Json{}, err
 	}
 
 	return modules.Result, nil
 }
 
-func CheckRole(projectId, moduleId, profileTp, userId string, chk bool) (e.Item, error) {
+func CheckRole(projectId, moduleId, profileTp, userId string, chk bool) (et.Item, error) {
 	if !utility.ValidId(projectId) {
-		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "project_id")
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "project_id")
 	}
 
 	if !utility.ValidId(moduleId) {
-		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "module_id")
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "module_id")
 	}
 
 	if !utility.ValidId(userId) {
-		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "user_id")
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "user_id")
 	}
 
 	if !utility.ValidId(profileTp) {
-		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "profile_tp")
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "profile_tp")
 	}
 
 	project, err := GetProjectById(projectId)
 	if err != nil {
-		return e.Item{}, err
+		return et.Item{}, err
 	}
 
 	if !project.Ok {
-		return e.Item{}, console.AlertF(msg.PROJECT_NOT_FOUND, projectId)
+		return et.Item{}, console.AlertF(msg.PROJECT_NOT_FOUND, projectId)
 	}
 
 	module, err := GetModuleById(moduleId)
 	if err != nil {
-		return e.Item{}, err
+		return et.Item{}, err
 	}
 
 	if !module.Ok {
-		return e.Item{}, console.Alert(msg.MODULE_NOT_FOUND)
+		return et.Item{}, console.Alert(msg.MODULE_NOT_FOUND)
 	}
 
 	profile, err := GetProfileById(moduleId, profileTp)
 	if err != nil {
-		return e.Item{}, err
+		return et.Item{}, err
 	}
 
 	if !profile.Ok {
-		return e.Item{}, console.AlertF(msg.PROFILE_NOT_FOUND, profileTp)
+		return et.Item{}, console.AlertF(msg.PROFILE_NOT_FOUND, profileTp)
 	}
 
 	if chk {
 		current, err := GetRoleById(projectId, moduleId, userId, profileTp)
 		if err != nil {
-			return e.Item{}, err
+			return et.Item{}, err
 		}
 
 		now := utility.Now()
@@ -191,17 +191,17 @@ func CheckRole(projectId, moduleId, profileTp, userId string, chk bool) (e.Item,
 
 			item, err := jdb.QueryOne(sql, index, profileTp, now)
 			if err != nil {
-				return e.Item{}, err
+				return et.Item{}, err
 			}
 
 			item, err = GetUserRoleByIndex(index)
 			if err != nil {
-				return e.Item{}, err
+				return et.Item{}, err
 			}
 
-			return e.Item{
+			return et.Item{
 				Ok: item.Ok,
-				Result: e.OkOrNotJson(item.Ok, item.Result, e.Json{
+				Result: et.OkOrNotJson(item.Ok, item.Result, et.Json{
 					"message": msg.RECORD_NOT_UPDATE,
 					"index":   index,
 				}),
@@ -217,17 +217,17 @@ func CheckRole(projectId, moduleId, profileTp, userId string, chk bool) (e.Item,
 
 		item, err := jdb.QueryOne(sql, now, projectId, moduleId, userId, profileTp, index)
 		if err != nil {
-			return e.Item{}, err
+			return et.Item{}, err
 		}
 
 		item, err = GetUserRoleByIndex(index)
 		if err != nil {
-			return e.Item{}, err
+			return et.Item{}, err
 		}
 
-		return e.Item{
+		return et.Item{
 			Ok: item.Ok,
-			Result: e.OkOrNotJson(item.Ok, item.Result, e.Json{
+			Result: et.OkOrNotJson(item.Ok, item.Result, et.Json{
 				"message": msg.RECORD_NOT_UPDATE,
 				"index":   index,
 			}),
@@ -243,12 +243,12 @@ func CheckRole(projectId, moduleId, profileTp, userId string, chk bool) (e.Item,
 
 		item, err := jdb.QueryOne(sql, projectId, moduleId, profileTp, userId)
 		if err != nil {
-			return e.Item{}, err
+			return et.Item{}, err
 		}
 
-		return e.Item{
+		return et.Item{
 			Ok: item.Ok,
-			Result: e.Json{
+			Result: et.Json{
 				"message": utility.OkOrNot(item.Ok, msg.RECORD_DELETE, msg.RECORD_NOT_DELETE),
 				"index":   item.Index(),
 			},

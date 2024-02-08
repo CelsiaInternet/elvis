@@ -8,8 +8,8 @@ import (
 
 	"github.com/cgalvisleon/elvis/claim"
 	"github.com/cgalvisleon/elvis/console"
+	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/event"
-	e "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/response"
 	"github.com/cgalvisleon/elvis/utility"
 )
@@ -65,7 +65,7 @@ func Authorization(next http.Handler) http.Handler {
 
 		now := utility.Now()
 		hostName, _ := os.Hostname()
-		data := e.Json{
+		data := et.Json{
 			"clientId":  c.ID,
 			"last_use":  now,
 			"host_name": hostName,

@@ -2,7 +2,7 @@ package linq
 
 import (
 	"github.com/cgalvisleon/elvis/console"
-	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/strs"
 )
 
@@ -353,9 +353,9 @@ func (c *Linq) SqlKeys() string {
 	var wh string
 	for _, obj := range c.keys {
 		if len(result) == 0 {
-			wh = strs.Format(`%s=%v`, strs.Uppcase(obj.Col.name), e.Quoted(obj.Value))
+			wh = strs.Format(`%s=%v`, strs.Uppcase(obj.Col.name), et.Quoted(obj.Value))
 		} else {
-			wh = strs.Format(`AND %s=%v`, strs.Uppcase(obj.Col.name), e.Quoted(obj.Value))
+			wh = strs.Format(`AND %s=%v`, strs.Uppcase(obj.Col.name), et.Quoted(obj.Value))
 		}
 		result = strs.Append(result, wh, "\n")
 	}
@@ -381,7 +381,7 @@ func (c *Linq) SqlInsert() string {
 
 	for key, val := range *c.new {
 		field := strs.Uppcase(key)
-		value := e.Quoted(val)
+		value := et.Quoted(val)
 
 		fields = strs.Append(fields, field, ", ")
 		values = strs.Append(values, strs.Format(`%v`, value), ", ")
@@ -406,7 +406,7 @@ func (c *Linq) SqlUpdate() string {
 
 	for key, val := range *c.new {
 		field := strs.Uppcase(key)
-		value := e.Quoted(val)
+		value := et.Quoted(val)
 
 		if model.UseSource && field == strs.Uppcase(model.SourceField) {
 			vals := strs.Uppcase(model.SourceField)
@@ -414,7 +414,7 @@ func (c *Linq) SqlUpdate() string {
 
 			for ak, av := range atribs {
 				ak = strs.Lowcase(ak)
-				av = e.DoubleQuoted(av)
+				av = et.DoubleQuoted(av)
 
 				vals = strs.Format(`jsonb_set(%s, '{%s}', '%v', true)`, vals, ak, av)
 			}

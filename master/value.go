@@ -1,14 +1,14 @@
 package master
 
 import (
-	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/strs"
 )
 
-func (c *Node) InsertValues(data e.Json) (fields, values string) {
+func (c *Node) InsertValues(data et.Json) (fields, values string) {
 	for k, v := range data {
 		k = strs.Uppcase(k)
-		v = e.Quoted(v)
+		v = et.Quoted(v)
 
 		if len(fields) == 0 {
 			fields = k
@@ -22,10 +22,10 @@ func (c *Node) InsertValues(data e.Json) (fields, values string) {
 	return
 }
 
-func (c *Node) UpsertValues(data e.Json) (fields, values, fieldValue string) {
+func (c *Node) UpsertValues(data et.Json) (fields, values, fieldValue string) {
 	for k, v := range data {
 		k = strs.Uppcase(k)
-		v = e.Quoted(v)
+		v = et.Quoted(v)
 
 		if len(fieldValue) == 0 {
 			fields = k
@@ -47,14 +47,14 @@ func (c *Node) UpsertValues(data e.Json) (fields, values, fieldValue string) {
 	return
 }
 
-func (c *Node) SqlField(schema, table string, data e.Json) string {
+func (c *Node) SqlField(schema, table string, data et.Json) string {
 	fields, _ := c.InsertValues(data)
 	result := strs.Format(`INSERT INTO %s.%s (%s)`, strs.Lowcase(schema), strs.Uppcase(table), fields)
 	result = strs.Append(result, "VALUES", "\n")
 	return result
 }
 
-func (c *Node) ToSql(schema, table, idT string, data e.Json, action string) (string, bool) {
+func (c *Node) ToSql(schema, table, idT string, data et.Json, action string) (string, bool) {
 	var result string
 	var ok bool
 	if action == "INSERT" {

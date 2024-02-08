@@ -1,4 +1,4 @@
-package json
+package et
 
 import (
 	"database/sql/driver"

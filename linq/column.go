@@ -3,7 +3,7 @@ package linq
 import (
 	"errors"
 
-	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/strs"
 	"github.com/cgalvisleon/elvis/utility"
 )
@@ -60,7 +60,7 @@ func (c *Col) AsLow() string {
 /**
 *
 **/
-type Details func(col *Column, data *e.Json)
+type Details func(col *Column, data *et.Json)
 
 type Column struct {
 	Model        *Model
@@ -76,6 +76,7 @@ type Column struct {
 	Definition   interface{}
 	Function     string
 	Details      Details
+	References   []*Column
 	Indexed      bool
 	Unique       bool
 	Required     bool
@@ -92,8 +93,8 @@ func (c *Column) Driver() string {
 	return c.Model.Driver()
 }
 
-func (c *Column) describe() e.Json {
-	return e.Json{
+func (c *Column) describe() et.Json {
+	return et.Json{
 		"name":         c.name,
 		"description":  c.Description,
 		"type":         c.Type,
@@ -106,21 +107,22 @@ func (c *Column) describe() e.Json {
 		"foreignKey":   c.ForeignKey,
 		"referenceKey": c.ReferenceKey,
 		"hidden":       c.Hidden,
+		"references":   c.References,
 	}
 }
 
-func (c *Column) Describe() e.Json {
-	var atribs []e.Json = []e.Json{}
+func (c *Column) Describe() et.Json {
+	var atribs []et.Json = []et.Json{}
 	for _, atrib := range c.Atribs {
 		atribs = append(atribs, atrib.describe())
 	}
 
-	reference := e.Json{}
+	reference := et.Json{}
 	if c.Reference != nil {
 		reference = c.Reference.Describe()
 	}
 
-	return e.Json{
+	return et.Json{
 		"name":        c.name,
 		"description": c.Description,
 		"type":        c.Type,
@@ -132,6 +134,7 @@ func (c *Column) Describe() e.Json {
 		"unique":      c.Unique,
 		"required":    c.Required,
 		"hidden":      c.Hidden,
+		"references":  c.References,
 	}
 }
 
@@ -161,6 +164,7 @@ func NewColumn(model *Model, name, description, _type string, _default any) *Col
 		Type:        _type,
 		Default:     _default,
 		Atribs:      []*Column{},
+		References:  []*Column{},
 		Indexed:     false,
 	}
 
@@ -227,6 +231,32 @@ func (c *Column) DDLUniqueIndex() string {
 }
 
 /**
+* References
+**/
+
+func (c *Column) ReferencesIdx(col *Column) int {
+	for i, _col := range c.References {
+		if _col.name == col.name {
+			return i
+		}
+	}
+
+	return -1
+}
+
+func (c *Column) ReferencesAdd(col *Column) int {
+	idx := c.ReferencesIdx(col)
+	if idx == -1 {
+		c.Indexed = true
+		c.Model.IndexAdd(c.name)
+		c.References = append(c.References, col)
+		idx = len(c.References) - 1
+	}
+
+	return idx
+}
+
+/**
 *
 **/
 func (c *Column) Up() string {
@@ -277,7 +307,7 @@ func (c *Column) As(linq *Linq) string {
 		Fkey := strs.Append(from.As(), c.Reference.Fkey, ".")
 		return strs.Format(`(SELECT %s FROM %s WHERE %s=%v LIMIT 1)`, fn, fm, key, Fkey)
 	case TpDetail:
-		return strs.Format(`%v`, e.Quoted(c.Default))
+		return strs.Format(`%v`, et.Quoted(c.Default))
 	case TpFunction:
 		def := FunctionDef(linq, c)
 		return strs.Append(def, c.Up(), " AS ")
@@ -306,7 +336,7 @@ func (c *Column) Def(linq *Linq) string {
 			return strs.Format(`'%s', %s`, c.Low(), def)
 		case TpAtrib:
 			def := c.As(linq)
-			def = strs.Format(`COALESCE(%s, %v)`, def, e.Quoted(c.Default))
+			def = strs.Format(`COALESCE(%s, %v)`, def, et.Quoted(c.Default))
 			return strs.Format(`'%s', %s`, c.Low(), def)
 		case TpClone:
 			return c.As(linq)
@@ -319,7 +349,7 @@ func (c *Column) Def(linq *Linq) string {
 			def := c.As(linq)
 			return strs.Format(`'%s', %s`, c.Title, def)
 		case TpDetail:
-			def := e.Quoted(c.Default)
+			def := et.Quoted(c.Default)
 			return strs.Format(`'%s', %s`, c.Low(), def)
 		case TpFunction:
 			def := FunctionDef(linq, c)
@@ -328,7 +358,7 @@ func (c *Column) Def(linq *Linq) string {
 			def := c.As(linq)
 			return strs.Format(`'%s', %s`, c.Low(), def)
 		default:
-			def := e.Quoted(c.Default)
+			def := et.Quoted(c.Default)
 			return strs.Format(`'%s', %s`, c.Low(), def)
 		}
 	}
@@ -339,7 +369,7 @@ func (c *Column) Def(linq *Linq) string {
 	case TpAtrib:
 		col := strs.Append(from.As(), c.Column.Up(), ".")
 		def := strs.Format(`%s#>>'{%s}'`, col, c.Low())
-		def = strs.Format(`COALESCE(%s, %v)`, def, e.Quoted(c.Default))
+		def = strs.Format(`COALESCE(%s, %v)`, def, et.Quoted(c.Default))
 		return strs.Format(`%s AS %s`, def, c.Up())
 	case TpClone:
 		return strs.Append(strs.Uppcase(c.from), c.Up(), ".")
@@ -350,7 +380,7 @@ func (c *Column) Def(linq *Linq) string {
 		def := c.As(linq)
 		return strs.Format(`%s AS %s`, def, strs.Uppcase(c.Title))
 	case TpDetail:
-		def := e.Quoted(c.Default)
+		def := et.Quoted(c.Default)
 		return strs.Format(`%v AS %s`, def, c.Up())
 	case TpFunction:
 		def := FunctionDef(linq, c)

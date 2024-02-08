@@ -7,8 +7,8 @@ import (
 	"os"
 	"sync"
 
+	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/event"
-	e "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/logs"
 	"github.com/cgalvisleon/elvis/utility"
 	"github.com/gorilla/websocket"
@@ -79,7 +79,7 @@ func (hub *Hub) onConnect(client *Client) {
 	client.Addr = client.socket.RemoteAddr().String()
 	client.isClose = false
 
-	event.Action("websocket/connect", e.Json{"hub": hub.Id, "client": client})
+	event.Action("websocket/connect", et.Json{"hub": hub.Id, "client": client})
 
 	logs.Logf("Websocket", MSG_CLIENT_CONNECT, client.Id, hub.Id)
 }
@@ -90,19 +90,19 @@ func (hub *Hub) onDisconnect(client *Client) {
 
 	client.Close()
 	client.Clear()
-	idx := slices.IndexFunc(hub.clients, func(e *Client) bool { return e.Id == client.Id })
+	idx := slices.IndexFunc(hub.clients, func(c *Client) bool { return c.Id == client.Id })
 
 	copy(hub.clients[idx:], hub.clients[idx+1:])
 	hub.clients[len(hub.clients)-1] = nil
 	hub.clients = hub.clients[:len(hub.clients)-1]
 
-	event.Action("websocket/disconnect", e.Json{"hub": hub.Id, "client_id": client.Id})
+	event.Action("websocket/disconnect", et.Json{"hub": hub.Id, "client_id": client.Id})
 
 	logs.Logf("Websocket", MSG_CLIENT_DISCONNECT, client.Id, hub.Id)
 }
 
 func (hub *Hub) indexClient(clientId string) int {
-	return slices.IndexFunc(hub.clients, func(e *Client) bool { return e.Id == clientId })
+	return slices.IndexFunc(hub.clients, func(c *Client) bool { return c.Id == clientId })
 }
 
 func (hub *Hub) connect(socket *websocket.Conn, id, name string) (*Client, error) {
@@ -118,9 +118,9 @@ func (hub *Hub) connect(socket *websocket.Conn, id, name string) (*Client, error
 }
 
 func (hub *Hub) listen(client *Client, messageType int, message []byte) {
-	data, err := e.ToJson(message)
+	data, err := et.ToJson(message)
 	if err != nil {
-		data = e.Json{
+		data = et.Json{
 			"type":    messageType,
 			"message": bytes.NewBuffer(message).String(),
 		}
@@ -131,7 +131,7 @@ func (hub *Hub) listen(client *Client, messageType int, message []byte) {
 
 func (hub *Hub) Broadcast(message interface{}, ignoreId string) {
 	var client *Client = nil
-	idx := slices.IndexFunc(hub.clients, func(e *Client) bool { return e.Id == ignoreId })
+	idx := slices.IndexFunc(hub.clients, func(c *Client) bool { return c.Id == ignoreId })
 	if idx != -1 {
 		client = hub.clients[idx]
 	}
@@ -141,7 +141,7 @@ func (hub *Hub) Broadcast(message interface{}, ignoreId string) {
 
 func (hub *Hub) Publish(channel string, message interface{}, ignoreId string) {
 	data, _ := json.Marshal(message)
-	idx := slices.IndexFunc(hub.channels, func(e *Channel) bool { return e.Name == channel })
+	idx := slices.IndexFunc(hub.channels, func(c *Channel) bool { return c.Name == channel })
 	if idx != -1 {
 		_channel := hub.channels[idx]
 
@@ -155,11 +155,11 @@ func (hub *Hub) Publish(channel string, message interface{}, ignoreId string) {
 
 func (hub *Hub) SendMessage(clientId, channel string, message interface{}) bool {
 	data, _ := json.Marshal(message)
-	idx := slices.IndexFunc(hub.clients, func(e *Client) bool { return e.Id == clientId })
+	idx := slices.IndexFunc(hub.clients, func(c *Client) bool { return c.Id == clientId })
 	if idx != -1 {
 		client := hub.clients[idx]
 
-		idx = slices.IndexFunc(client.channels, func(e *Channel) bool { return e.Name == channel })
+		idx = slices.IndexFunc(client.channels, func(c *Channel) bool { return c.Name == channel })
 		if idx != -1 {
 			client.SendMessage(data)
 			return true
@@ -170,13 +170,13 @@ func (hub *Hub) SendMessage(clientId, channel string, message interface{}) bool 
 }
 
 func (hub *Hub) Subscribe(clientId string, channel string) bool {
-	idx := slices.IndexFunc(hub.clients, func(e *Client) bool { return e.Id == clientId })
+	idx := slices.IndexFunc(hub.clients, func(c *Client) bool { return c.Id == clientId })
 
 	if idx != -1 {
 		client := hub.clients[idx]
 		client.Subscribe(channel)
 
-		event.Action("websocket/subscribe", e.Json{"hub": hub.Id, "client": client, "channel": channel})
+		event.Action("websocket/subscribe", et.Json{"hub": hub.Id, "client": client, "channel": channel})
 
 		return true
 	}
@@ -185,13 +185,13 @@ func (hub *Hub) Subscribe(clientId string, channel string) bool {
 }
 
 func (hub *Hub) Unsubscribe(clientId string, channel string) bool {
-	idx := slices.IndexFunc(hub.clients, func(e *Client) bool { return e.Id == clientId })
+	idx := slices.IndexFunc(hub.clients, func(c *Client) bool { return c.Id == clientId })
 
 	if idx != -1 {
 		client := hub.clients[idx]
 		client.Unsubscribe(channel)
 
-		event.Action("websocket/unsubscribe", e.Json{"hub": hub.Id, "client": client, "channel": channel})
+		event.Action("websocket/unsubscribe", et.Json{"hub": hub.Id, "client": client, "channel": channel})
 
 		return true
 	}
@@ -200,7 +200,7 @@ func (hub *Hub) Unsubscribe(clientId string, channel string) bool {
 }
 
 func (hub *Hub) GetSubscribers(channel string) []*Client {
-	idx := slices.IndexFunc(hub.channels, func(e *Channel) bool { return e.Name == channel })
+	idx := slices.IndexFunc(hub.channels, func(c *Channel) bool { return c.Name == channel })
 	if idx != -1 {
 		_channel := hub.channels[idx]
 		return _channel.Subscribers

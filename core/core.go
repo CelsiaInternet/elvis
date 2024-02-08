@@ -2,7 +2,7 @@ package core
 
 import (
 	"github.com/cgalvisleon/elvis/console"
-	e "github.com/cgalvisleon/elvis/json"
+	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/linq"
 )
 
@@ -42,7 +42,7 @@ func InitModel(model *linq.Model) error {
 		SetSerie(model.Name)
 	}
 
-	model.Trigger(linq.BeforeInsert, func(model *linq.Model, old, new *e.Json, data e.Json) error {
+	model.Trigger(linq.BeforeInsert, func(model *linq.Model, old, new *et.Json, data et.Json) error {
 		if model.UseIndex {
 			index := GetSerie(model.Name)
 			new.Set("index", index)

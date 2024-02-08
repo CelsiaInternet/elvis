@@ -1,4 +1,4 @@
-package json
+package et
 
 type List struct {
 	Rows   int    `json:"rows"`

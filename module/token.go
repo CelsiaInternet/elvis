@@ -7,8 +7,8 @@ import (
 	"github.com/cgalvisleon/elvis/claim"
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/core"
+	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/jdb"
-	e "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/linq"
 	"github.com/cgalvisleon/elvis/msg"
 	"github.com/cgalvisleon/elvis/strs"
@@ -26,7 +26,7 @@ type Token struct {
 	Index       int       `json:"index"`
 }
 
-func (n *Token) Scan(js *e.Json) error {
+func (n *Token) Scan(js *et.Json) error {
 	n.Date_make = js.Time("date_make")
 	n.Date_update = js.Time("date_update")
 	n.Id = js.Str("_id")
@@ -70,7 +70,7 @@ func DefineTokens() error {
 		"device",
 		"index",
 	})
-	Tokens.Details("last_use", "", "", func(col *linq.Column, data *e.Json) {
+	Tokens.Details("last_use", "", "", func(col *linq.Column, data *et.Json) {
 		id := data.Id()
 		last_use, err := cache.HGetAtrib(id, "telemetry.token.last_use")
 		if err != nil {
@@ -79,7 +79,7 @@ func DefineTokens() error {
 
 		data.Set(col.Low(), last_use)
 	})
-	Tokens.Details("token", "", "", func(col *linq.Column, data *e.Json) {
+	Tokens.Details("token", "", "", func(col *linq.Column, data *et.Json) {
 		token := data.Str("token")
 		newToken := token
 		if len(token) > 6 {
@@ -119,36 +119,36 @@ func unLoadTokenById(app, device, id string) error {
 	return nil
 }
 
-func GetTokenById(id string) (e.Item, error) {
+func GetTokenById(id string) (et.Item, error) {
 	item, err := Tokens.Data().
 		Where(Tokens.Col("_id").Eq(id)).
 		First()
 	if err != nil {
-		return e.Item{}, err
+		return et.Item{}, err
 	}
 
 	return item, nil
 }
 
-func UpSetToken(projeectId, id, app, device, name, userId string) (e.Item, error) {
+func UpSetToken(projeectId, id, app, device, name, userId string) (et.Item, error) {
 	user, err := GetUserById(userId)
 	if err != nil {
-		return e.Item{}, err
+		return et.Item{}, err
 	}
 
 	if !user.Ok {
-		return e.Item{}, console.ErrorM(msg.USER_NOT_FONUND)
+		return et.Item{}, console.ErrorM(msg.USER_NOT_FONUND)
 	}
 
 	id = utility.GenId(id)
 	current, err := GetTokenById(id)
 	if err != nil {
-		return e.Item{}, err
+		return et.Item{}, err
 	}
 
 	if current.Ok {
 		id := current.Id()
-		data := e.Json{
+		data := et.Json{
 			"name": name,
 		}
 
@@ -156,12 +156,12 @@ func UpSetToken(projeectId, id, app, device, name, userId string) (e.Item, error
 			Where(Tokens.Col("_id").Eq(id)).
 			CommandOne()
 		if err != nil {
-			return e.Item{}, err
+			return et.Item{}, err
 		}
 
-		return e.Item{
+		return et.Item{
 			Ok: item.Ok,
-			Result: e.OkOrNotJson(item.Ok, item.Result, e.Json{
+			Result: et.OkOrNotJson(item.Ok, item.Result, et.Json{
 				"message": msg.RECORD_NOT_UPDATE,
 				"_id":     id,
 			}),
@@ -170,10 +170,10 @@ func UpSetToken(projeectId, id, app, device, name, userId string) (e.Item, error
 		id := utility.NewId()
 		token, err := claim.GenToken(id, app, name, "token", app, device, 0)
 		if err != nil {
-			return e.Item{}, console.Error(err)
+			return et.Item{}, console.Error(err)
 		}
 
-		data := e.Json{}
+		data := et.Json{}
 		data.Set("project_id", projeectId)
 		data.Set("_id", id)
 		data.Set("user_id", userId)
@@ -185,7 +185,7 @@ func UpSetToken(projeectId, id, app, device, name, userId string) (e.Item, error
 		item, err := Tokens.Insert(data).
 			CommandOne()
 		if err != nil {
-			return e.Item{}, console.Error(err)
+			return et.Item{}, console.Error(err)
 		}
 
 		err = loadToken(&Token{
@@ -199,12 +199,12 @@ func UpSetToken(projeectId, id, app, device, name, userId string) (e.Item, error
 			Index:       item.Index(),
 		})
 		if err != nil {
-			return e.Item{}, console.Error(err)
+			return et.Item{}, console.Error(err)
 		}
 
-		return e.Item{
+		return et.Item{
 			Ok: item.Ok,
-			Result: e.OkOrNotJson(item.Ok, item.Result, e.Json{
+			Result: et.OkOrNotJson(item.Ok, item.Result, et.Json{
 				"message": msg.RECORD_NOT_CREATE,
 				"_id":     id,
 			}),
@@ -289,7 +289,7 @@ func UnLoadTokens() error {
 	return nil
 }
 
-func GetTokensByUserId(userId, search string, page, rows int) (e.List, error) {
+func GetTokensByUserId(userId, search string, page, rows int) (et.List, error) {
 	sql := `
   SELECT COUNT(*) AS COUNT
   FROM module.TOKENS A
@@ -309,14 +309,14 @@ func GetTokensByUserId(userId, search string, page, rows int) (e.List, error) {
 
 	items, err := jdb.Query(sql, userId, search, rows, offset)
 	if err != nil {
-		return e.List{}, err
+		return et.List{}, err
 	}
 
 	for _, item := range items.Result {
 		id := item.Id()
 		last_use, err := cache.HGetAtrib(id, "telemetry.token.last_use")
 		if err != nil {
-			return e.List{}, err
+			return et.List{}, err
 		}
 
 		token := item["token"].(string)
@@ -331,14 +331,14 @@ func GetTokensByUserId(userId, search string, page, rows int) (e.List, error) {
 	return items.ToList(all, page, rows), nil
 }
 
-func DeleteToken(id string) (e.Item, error) {
+func DeleteToken(id string) (et.Item, error) {
 	current, err := GetTokenById(id)
 	if err != nil {
-		return e.Item{}, err
+		return et.Item{}, err
 	}
 
 	if !current.Ok {
-		return e.Item{}, nil
+		return et.Item{}, nil
 	}
 
 	sql := `
@@ -348,19 +348,19 @@ func DeleteToken(id string) (e.Item, error) {
 
 	item, err := jdb.QueryOne(sql, id)
 	if err != nil {
-		return e.Item{}, err
+		return et.Item{}, err
 	}
 
 	app := item.Str("app")
 	device := item.Str("device")
 	err = unLoadTokenById(app, device, id)
 	if err != nil {
-		return e.Item{}, err
+		return et.Item{}, err
 	}
 
-	return e.Item{
+	return et.Item{
 		Ok: item.Ok,
-		Result: e.Json{
+		Result: et.Json{
 			"message": utility.OkOrNot(item.Ok, msg.RECORD_DELETE, msg.RECORD_NOT_DELETE),
 			"index":   item.Index(),
 		},

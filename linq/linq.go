@@ -4,8 +4,8 @@ import (
 	"strings"
 
 	"github.com/cgalvisleon/elvis/console"
+	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/jdb"
-	e "github.com/cgalvisleon/elvis/json"
 	"github.com/cgalvisleon/elvis/strs"
 )
 
@@ -103,8 +103,8 @@ type Linq struct {
 	details   []*Column
 	validates []*Validate
 	keys      []*Validate
-	data      e.Json
-	new       *e.Json
+	data      et.Json
+	new       *et.Json
 	change    bool
 	debug     int
 	sql       string
@@ -133,8 +133,8 @@ func NewLinq(act int, model *Model, as ...string) *Linq {
 		details:   []*Column{},
 		validates: []*Validate{},
 		keys:      []*Validate{},
-		data:      e.Json{},
-		new:       &e.Json{},
+		data:      et.Json{},
+		new:       &et.Json{},
 		as:        1,
 	}
 }
@@ -194,7 +194,7 @@ func (c *Linq) GetAs() string {
 	return result
 }
 
-func (c *Linq) Details(data *e.Json) *e.Json {
+func (c *Linq) Details(data *et.Json) *et.Json {
 	for _, col := range c.details {
 		col.Details(col, data)
 	}
@@ -382,7 +382,7 @@ func (c *Linq) AddValidate(col *Column, val any) {
 /**
 * Query
 **/
-func (c *Linq) Query() (e.Items, error) {
+func (c *Linq) Query() (et.Items, error) {
 	if c.debug == 1 {
 		console.Log(c.sql)
 	}
@@ -390,7 +390,7 @@ func (c *Linq) Query() (e.Items, error) {
 	if c.Tp == TpData {
 		result, err := jdb.DBQueryData(c.db, c.sql)
 		if err != nil {
-			return e.Items{}, err
+			return et.Items{}, err
 		}
 
 		return result, nil
@@ -398,13 +398,13 @@ func (c *Linq) Query() (e.Items, error) {
 
 	result, err := jdb.DBQuery(c.db, c.sql)
 	if err != nil {
-		return e.Items{}, err
+		return et.Items{}, err
 	}
 
 	return result, nil
 }
 
-func (c *Linq) QueryOne() (e.Item, error) {
+func (c *Linq) QueryOne() (et.Item, error) {
 	if c.debug == 1 {
 		console.Log(c.sql)
 	}
@@ -412,7 +412,7 @@ func (c *Linq) QueryOne() (e.Item, error) {
 	if c.Tp == TpData {
 		result, err := jdb.DBQueryDataOne(c.db, c.sql)
 		if err != nil {
-			return e.Item{}, err
+			return et.Item{}, err
 		}
 
 		return result, nil
@@ -420,7 +420,7 @@ func (c *Linq) QueryOne() (e.Item, error) {
 
 	result, err := jdb.DBQueryOne(c.db, c.sql)
 	if err != nil {
-		return e.Item{}, err
+		return et.Item{}, err
 	}
 
 	return result, nil
