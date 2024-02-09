@@ -280,3 +280,70 @@ func ChangePassword(db int, name, password string) (bool, error) {
 
 	return true, nil
 }
+
+/**
+*
+**/
+func DropDatabase(db int, name string) error {
+	name = strs.Lowcase(name)
+	sql := strs.Format(`DROP DATABASE %s;`, name)
+	_, err := DBQuery(db, sql)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func DropSchema(db int, name string) error {
+	name = strs.Lowcase(name)
+	sql := strs.Format(`DROP SCHEMA %s CASCADE;`, name)
+	_, err := DBQuery(db, sql)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func DropTable(db int, schema, name string) error {
+	sql := strs.Format(`DROP TABLE %s.%s CASCADE;`, schema, name)
+	_, err := DBQuery(db, sql)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func DropColumn(db int, schema, table, name string) error {
+	sql := strs.Format(`ALTER TABLE %s.%s DROP COLUMN %s;`, schema, table, name)
+	_, err := DBQuery(db, sql)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func DropIndex(db int, schema, table, field string) error {
+	indexName := strs.Format(`%s_%s_IDX`, strs.Uppcase(table), strs.Uppcase(field))
+	sql := strs.Format(`DROP INDEX %s.%s CASCADE;`, schema, indexName)
+	_, err := DBQuery(db, sql)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func DropUser(db int, name string) error {
+	name = strs.Uppcase(name)
+	sql := strs.Format(`DROP USER %s;`, name)
+	_, err := DBQuery(db, sql)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
