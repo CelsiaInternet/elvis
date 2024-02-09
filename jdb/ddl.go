@@ -201,7 +201,9 @@ func CreateIndex(db int, schema, table, field string) (bool, error) {
 	}
 
 	if !exists {
-		sql := SQLDDL(`CREATE INDEX IF NOT EXISTS $2_$3_IDX ON $1.$2($3);`, strs.Uppcase(schema), strs.Uppcase(table), strs.Uppcase(field))
+		sql := SQLDDL(`
+		CREATE INDEX IF NOT EXISTS $2_$3_IDX ON $1.$2($3);`,
+			strs.Uppcase(schema), strs.Uppcase(table), strs.Uppcase(field))
 
 		_, err := QDDL(sql)
 		if err != nil {

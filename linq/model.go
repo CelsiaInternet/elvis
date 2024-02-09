@@ -177,22 +177,13 @@ func NewModel(schema *Schema, table, description string, version int) *Model {
 * DDL
 **/
 func (c *Model) Init() error {
-	sql := `
-	SELECT EXISTS(
-		SELECT 1
-		FROM information_schema.tables
-		WHERE table_schema = $1
-		AND table_name = $2);`
-
-	item, err := jdb.DBQueryOne(c.Db, sql, c.Schema, c.Table)
+	exists, err := jdb.ExistTable(c.Db, c.Schema, c.Table)
 	if err != nil {
 		return err
 	}
 
-	exists := item.Bool("exists")
-
 	if !exists {
-		sql = c.DDL()
+		sql := c.DDL()
 
 		_, err := jdb.DBQDDL(c.Db, sql)
 		if err != nil {
@@ -382,8 +373,8 @@ func (c *Model) Atrib(name string) *Column {
 }
 
 func (c *Model) IndexIdx(name string) int {
-	for i, item := range c.Index {
-		if strs.Uppcase(item) == strs.Uppcase(name) {
+	for i, _name := range c.Index {
+		if strs.Uppcase(_name) == strs.Uppcase(name) {
 			return i
 		}
 	}
@@ -428,10 +419,10 @@ func (c *Model) DefineAtrib(name, description, _type string, _default any) *Mode
 }
 
 func (c *Model) DefineIndex(index []string) *Model {
-	for _, name := range c.Index {
-		col := c.Col(name)
-		if col != nil {
-			col.Indexed = true
+	for _, name := range index {
+		idx := c.ColIdx(name)
+		if idx != -1 {
+			c.Definition[idx].Indexed = true
 			c.IndexAdd(name)
 		}
 	}

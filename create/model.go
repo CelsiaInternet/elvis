@@ -420,13 +420,13 @@ type Router struct {
 func (rt *Router) Routes() http.Handler {
 	r := chi.NewRouter()
 
-	er.PublicRoute(r, er.Get, "/version", rt.Version, PackageName, PackagePath, Host)
+	er.PublicRoute(r, er.Get, "/version", rt.version, PackageName, PackagePath, Host)
 	// $2
-	er.ProtectRoute(r, er.Get, "/$1/{id}", rt.Get$2ById, PackageName, PackagePath, Host)
-	er.ProtectRoute(r, er.Post, "/$1", rt.UpSert$2, PackageName, PackagePath, Host)
-	er.ProtectRoute(r, er.Put, "/$1/state/{id}", rt.State$2, PackageName, PackagePath, Host)
-	er.ProtectRoute(r, er.Delete, "/$1/{id}", rt.Delete$2, PackageName, PackagePath, Host)
-	er.ProtectRoute(r, er.Get, "/$1/all", rt.All$2, PackageName, PackagePath, Host)
+	er.ProtectRoute(r, er.Get, "/$1/{id}", rt.get$2ById, PackageName, PackagePath, Host)
+	er.ProtectRoute(r, er.Post, "/$1", rt.upSert$2, PackageName, PackagePath, Host)
+	er.ProtectRoute(r, er.Put, "/$1/state/{id}", rt.state$2, PackageName, PackagePath, Host)
+	er.ProtectRoute(r, er.Delete, "/$1/{id}", rt.delete$2, PackageName, PackagePath, Host)
+	er.ProtectRoute(r, er.Get, "/$1/all", rt.all$2, PackageName, PackagePath, Host)
 
 	ctx := context.Background()
 	rt.Repository.Init(ctx)
@@ -435,7 +435,7 @@ func (rt *Router) Routes() http.Handler {
 	return r
 }
 
-func (rt *Router) Version(w http.ResponseWriter, r *http.Request) {
+func (rt *Router) version(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	result, err := rt.Repository.Version(ctx)
 	if err != nil {
@@ -655,7 +655,7 @@ func All$2(project_id, state, search string, page, rows int, _select string) (e.
 /**
 * Router
 **/
-func (rt *Router) UpSert$2(w http.ResponseWriter, r *http.Request) {
+func (rt *Router) upSert$2(w http.ResponseWriter, r *http.Request) {
 	body, _ := response.GetBody(r)
 	project_id := body.Str("project_id")
 	id := body.Str("id")	
@@ -669,7 +669,7 @@ func (rt *Router) UpSert$2(w http.ResponseWriter, r *http.Request) {
 	response.ITEM(w, r, http.StatusOK, result)
 }
 
-func (rt *Router) Get$2ById(w http.ResponseWriter, r *http.Request) {
+func (rt *Router) get$2ById(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
 	result, err := Get$2ById(id)
@@ -681,7 +681,7 @@ func (rt *Router) Get$2ById(w http.ResponseWriter, r *http.Request) {
 	response.ITEM(w, r, http.StatusOK, result)
 }
 
-func (rt *Router) State$2(w http.ResponseWriter, r *http.Request) {
+func (rt *Router) state$2(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	body, _ := response.GetBody(r)
 	state := body.Str("state")
@@ -695,7 +695,7 @@ func (rt *Router) State$2(w http.ResponseWriter, r *http.Request) {
 	response.ITEM(w, r, http.StatusOK, result)
 }
 
-func (rt *Router) Delete$2(w http.ResponseWriter, r *http.Request) {
+func (rt *Router) delete$2(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
 	result, err := Delete$2(id)
@@ -707,7 +707,7 @@ func (rt *Router) Delete$2(w http.ResponseWriter, r *http.Request) {
 	response.ITEM(w, r, http.StatusOK, result)
 }
 
-func (rt *Router) All$2(w http.ResponseWriter, r *http.Request) {
+func (rt *Router) all$2(w http.ResponseWriter, r *http.Request) {
 	project_id := r.URL.Query().Get("project_id")
 	state := r.URL.Query().Get("state")
 	search := r.URL.Query().Get("search")
@@ -736,11 +736,11 @@ func (rt *Router) All$2(w http.ResponseWriter, r *http.Request) {
 
 /** Copy this code to router.go
 	// $2
-	er.ProtectRoute(r, er.Get, "/$5/{id}", rt.Get$2ById, PackageName, PackagePath, Host)
-	er.ProtectRoute(r, er.Post, "/$5", rt.UpSert$2, PackageName, PackagePath, Host)
-	er.ProtectRoute(r, er.Put, "/$5/state/{id}", rt.State$2, PackageName, PackagePath, Host)
-	er.ProtectRoute(r, er.Delete, "/$5/{id}", rt.Delete$2, PackageName, PackagePath, Host)
-	er.ProtectRoute(r, er.Get, "/$5/all", rt.All$2, PackageName, PackagePath, Host)
+	er.ProtectRoute(r, er.Get, "/$5/{id}", rt.get$2ById, PackageName, PackagePath, Host)
+	er.ProtectRoute(r, er.Post, "/$5", rt.upSert$2, PackageName, PackagePath, Host)
+	er.ProtectRoute(r, er.Put, "/$5/state/{id}", rt.state$2, PackageName, PackagePath, Host)
+	er.ProtectRoute(r, er.Delete, "/$5/{id}", rt.delete$2, PackageName, PackagePath, Host)
+	er.ProtectRoute(r, er.Get, "/$5/all", rt.all$2, PackageName, PackagePath, Host)
 **/
 
 /** Copy this code to func initModel in model.go

@@ -101,6 +101,10 @@ func (c *Linq) commandUpdate() (et.Items, error) {
 				result.Ok = true
 				result.Count++
 			}
+		} else {
+			result.Result = append(result.Result, current)
+			result.Ok = true
+			result.Count++
 		}
 	}
 
@@ -159,6 +163,10 @@ func (c *Linq) commandUpsert() (et.Items, error) {
 					result.Ok = true
 					result.Count++
 				}
+			} else {
+				result.Result = append(result.Result, current)
+				result.Ok = true
+				result.Count++
 			}
 		}
 	}
