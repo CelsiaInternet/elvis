@@ -506,7 +506,10 @@ func (c *Model) DefineReference(thisKey, name, otherKey string, column *Column) 
 			c.Definition[idx].ReferenceKey = true
 			c.Definition[idx].Indexed = true
 			c.Definition[idx].Model.IndexAdd(c.Definition[idx].name)
-			column.ReferencesAdd(c.Definition[idx])
+			_otherKey := column.Model.Col(otherKey)
+			if _otherKey != nil {
+				_otherKey.ReferencesAdd(c.Definition[idx])
+			}
 		}
 	}
 
@@ -527,7 +530,10 @@ func (c *Model) DefineCaption(thisKey, name, otherKey string, column *Column, _d
 		if idx != -1 {
 			c.Definition[idx].Indexed = true
 			c.Definition[idx].Model.IndexAdd(c.Definition[idx].name)
-			column.ReferencesAdd(c.Definition[idx])
+			_otherKey := column.Model.Col(otherKey)
+			if _otherKey != nil {
+				_otherKey.ReferencesAdd(c.Definition[idx])
+			}
 		}
 	}
 
