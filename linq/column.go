@@ -188,8 +188,8 @@ func NewColumn(model *Model, name, description, _type string, _default any) *Col
 		model.UseProject = strs.Uppcase(result.name) == strs.Uppcase(model.ProjectField)
 	}
 
-	if !model.UseIndex {
-		model.UseIndex = strs.Uppcase(result.name) == strs.Uppcase(model.IndexField)
+	if !model.UseSerie {
+		model.UseSerie = strs.Uppcase(result.name) == strs.Uppcase(model.SerieField)
 	}
 
 	if !model.UseSource {

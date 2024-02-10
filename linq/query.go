@@ -319,8 +319,8 @@ func (c *Linq) SqlIndex() string {
 	var result string
 	var cols []*Column = []*Column{}
 	from := c.from[0].model
-	if from.UseIndex {
-		col := from.Col(from.IndexField)
+	if from.UseSerie {
+		col := from.Col(from.SerieField)
 		cols = append(cols, col)
 	} else {
 		for _, key := range from.PrimaryKeys {

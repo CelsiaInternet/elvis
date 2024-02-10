@@ -2,22 +2,33 @@ package core
 
 import (
 	"github.com/cgalvisleon/elvis/console"
+	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/jdb"
+	"github.com/cgalvisleon/elvis/linq"
 	"github.com/cgalvisleon/elvis/strs"
 )
 
 var (
-	existSeries bool
-	series      map[string]int
+	_db         int = 0
+	makedSeries bool
+	series      map[string]bool = make(map[string]bool)
 )
 
-func DefineSeries() error {
-	if err := DefineSchemaCore(); err != nil {
+func SetmasterDB(idx int) {
+	_db = idx
+}
+
+func defineSeries() error {
+	if makedSeries {
+		return nil
+	}
+
+	if err := defineSchemaCore(); err != nil {
 		return console.Panic(err)
 	}
 
-	existSeries, _ = jdb.ExistTable(0, "core", "SERIES")
-	if existSeries {
+	makedSeries, _ = jdb.ExistTable(0, "core", "SERIES")
+	if makedSeries {
 		return nil
 	}
 
@@ -30,12 +41,57 @@ func DefineSeries() error {
 		SERIE VARCHAR(250) DEFAULT '',
 		VALUE BIGINT DEFAULT 0,
 		PRIMARY KEY(SERIE)
-	);`
+	);
+	
+	CREATE OR REPLACE FUNCTION core.nextserie(serie VARCHAR(250))
+	RETURNS BIGINT AS $$
+	DECLARE
+	 result BIGINT;
+	BEGIN
+	 INSERT INTO core.SERIES AS A (SERIE, VALUE)
+	 SELECT serie, 1
+	 ON CONFLICT (SERIE) DO UPDATE SET
+	 VALUE = A.VALUE + 1
+	 RETURNING VALUE INTO result;
+
+	 RETURN COALESCE(result, 0);
+	EDN;
+	$$ LANGUAGE plpgsql;
+	
+	CREATE OR REPLACE FUNCTION core.setserie(serie VARCHAR(250), val BIGINT)
+	RETURNS BIGINT AS $$
+	DECLARE
+	 result BIGINT;
+	BEGIN
+	 INSERT INTO core.SERIES AS A (SERIE, VALUE)
+	 SELECT serie, val
+	 ON CONFLICT (SERIE) DO UPDATE SET
+	 VALUE = val
+	 RETURNING VALUE INTO result;
+
+	 RETURN COALESCE(result, 0);
+	EDN;
+	$$ LANGUAGE plpgsql;
+	
+	CREATE OR REPLACE FUNCTION core.currserie(serie VARCHAR(250))
+	RETURNS BIGINT AS $$
+	DECLARE
+	 result BIGINT;
+	BEGIN
+	 SELECT VALUE INTO result
+	 FROM core.SERIES
+	 WHERE SERIE = serie LIMIT 1;
+
+	 RETURN COALESCE(result, 0);
+	EDN;
+	$$ LANGUAGE plpgsql;`
 
 	_, err := jdb.QDDL(sql)
 	if err != nil {
 		return console.Panic(err)
 	}
+
+	makedSeries = true
 
 	return nil
 }
@@ -43,24 +99,49 @@ func DefineSeries() error {
 /**
 *
 **/
-func EnabledSeries() bool {
-	if series == nil {
-		series = make(map[string]int)
-		existSeries, _ := jdb.ExistTable(0, "core", "SERIES")
-		return existSeries
+func NextSerie(tag string) int {
+	tag = strs.Replace(tag, ".", "_")
+	tag = strs.Replace(tag, " ", "_")
+	if makedSeries {
+		sql := `SELECT core.nextserie($1) AS SERIE;`
+
+		item, err := jdb.DBQueryOne(_db, sql, tag)
+		if err != nil {
+			console.Error(err)
+			return 0
+		}
+
+		result := item.Int("serie")
+
+		return result
 	}
 
-	return existSeries
-}
+	if _, ok := series[tag]; !ok {
+		exist, err := jdb.ExistSerie(_db, "public", tag)
+		if err != nil {
+			console.Error(err)
+			return 0
+		}
 
-func NextVal(tag string) int {
+		if !exist {
+			_, err := jdb.CreateSerie(_db, "public", tag)
+			if err != nil {
+				console.Error(err)
+				return 0
+			}
+		}
+
+		series[tag] = true
+	}
+
 	sql := `SELECT nextval($1) AS SERIE;`
 
-	item, err := jdb.DBQueryOne(0, sql, tag)
+	item, err := jdb.DBQueryOne(_db, sql, tag)
 	if err != nil {
 		console.Error(err)
 		return 0
 	}
+
 	result := item.Int("serie")
 
 	return result
@@ -69,107 +150,49 @@ func NextVal(tag string) int {
 /**
 * Serie
 **/
-func SetSerie(tag string) error {
-	if !EnabledSeries() {
-		return nil
+func DefineSerie(model *linq.Model) error {
+	if model.UseSerie {
+		err := defineSeries()
+		if err != nil {
+			return err
+		}
 	}
 
-	db := 0
-	if MasterIdx != db {
-		db = MasterIdx
-	}
+	tableName := model.Name
+	fieldName := model.SerieField
 
 	sql := strs.Format(`
-	SELECT MAX(INDEX) AS INDEX
-	FROM %s;`, tag)
+	SELECT MAX(%s) AS INDEX
+	FROM %s;`, strs.Uppcase(fieldName), tableName)
 
-	item, err := jdb.DBQueryOne(db, sql)
+	item, err := jdb.DBQueryOne(_db, sql)
 	if err != nil {
 		return err
 	}
 
 	max := item.Int("index")
+	tag := strs.Replace(tableName, ".", "_")
+	tag = strs.Replace(tag, " ", "_")
 
-	sql = `
-	SELECT VALUE
-	FROM core.SERIES
-	WHERE SERIE=$1 LIMIT 1;`
-
-	item, err = jdb.DBQueryOne(db, sql, tag)
+	_, err = SetSerie(tag, max)
 	if err != nil {
 		return err
 	}
 
-	if item.Ok {
-		sql = `
-		UPDATE core.SERIES SET
-		DATE_UPDATE=NOW(),
-		VALUE=$2
-		WHERE SERIE=$1;`
-
-		item, err = jdb.DBQueryOne(db, sql, tag, max)
-		if err != nil {
-			return err
+	model.Trigger(linq.BeforeInsert, func(model *linq.Model, old, new *et.Json, data et.Json) error {
+		if model.UseSerie {
+			index := NextSerie(model.Name)
+			new.Set(model.SerieField, index)
 		}
 
 		return nil
-	}
-
-	sql = `
-	INSERT INTO core.SERIES(SERIE, VALUE)
-	VALUES ($1, $2) RETURNING *;`
-
-	_, err = jdb.DBQueryOne(db, sql, tag, max)
-	if err != nil {
-		return err
-	}
+	})
 
 	return nil
 }
 
-func GetSerie(tag string) int {
-	if !EnabledSeries() {
-		var result int
-		tag = strs.Replace(tag, ".", "")
-		if _, ok := series[tag]; ok {
-			result = NextVal(tag)
-		} else {
-			ok, _ := jdb.ExistSerie(0, "public", tag)
-			if !ok {
-				jdb.CreateSerie(0, "public", tag)
-				result = NextVal(tag)
-			} else {
-				result = NextVal(tag)
-			}
-		}
-
-		series[tag] = result
-		return result
-	}
-
-	db := 0
-	if MasterIdx != db {
-		db = MasterIdx
-	}
-
-	sql := `
-	UPDATE core.SERIES SET
-	DATE_UPDATE=NOW(),
-	VALUE=VALUE+1
-	WHERE SERIE=$1
-	RETURNING VALUE;`
-
-	item, err := jdb.DBQueryOne(db, sql, tag)
-	if err != nil {
-		console.Error(err)
-		return 0
-	}
-
-	return item.Int("value")
-}
-
-func GetCode(tag, prefix string) string {
-	num := GetSerie(tag)
+func NextCode(tag, prefix string) string {
+	num := NextSerie(tag)
 
 	if len(prefix) == 0 {
 		return strs.Format("%08v", num)
@@ -178,48 +201,87 @@ func GetCode(tag, prefix string) string {
 	}
 }
 
-func GetLastSerie(tag string) int {
-	db := 0
-	if MasterIdx != db {
-		db = MasterIdx
+func SetSerie(tag string, val int) (int, error) {
+	if makedSeries {
+		sql := `SELECT setserie($1, $2);`
+
+		_, err := jdb.DBQueryOne(_db, sql, tag, val)
+		if err != nil {
+			return 0, err
+		}
+
+		return val, nil
 	}
 
-	sql := `
-  SELECT VALUE
-  FROM core.SERIES
-  WHERE SERIE=$1 LIMIT 1;`
-	item, err := jdb.DBQueryOne(db, sql, tag)
-	if err != nil {
-		console.Error(err)
-		return 0
+	if _, ok := series[tag]; !ok {
+		exist, err := jdb.ExistSerie(_db, "public", tag)
+		if err != nil {
+			return 0, err
+		}
+
+		if !exist {
+			_, err := jdb.CreateSerie(_db, "public", tag)
+			if err != nil {
+				return 0, err
+			}
+		}
+
+		series[tag] = true
 	}
 
-	if item.Ok {
-		return item.Int("value")
-	}
+	sql := `SELECT setval($1, $2);`
 
-	return 0
-}
-
-func SetLastSerie(db int, tag string, val int) (int, error) {
-	sql := `
-	UPDATE core.SERIES SET
-	DATE_UPDATE=NOW(),
-	VALUE=$2
-	WHERE SERIE=$1
-	RETURNING VALUE;`
-
-	item, err := jdb.DBQueryOne(db, sql, tag, val)
+	_, err := jdb.DBQueryOne(_db, sql, tag, val)
 	if err != nil {
 		return 0, err
 	}
 
-	result := item.Int("value")
-
-	return result, nil
+	return val, nil
 }
 
-func SyncSeries(masterIdx int, c chan int) error {
+func LastSerie(tag string) int {
+	if makedSeries {
+		sql := `SELECT currserie($1) AS SERIE;`
+
+		item, err := jdb.DBQueryOne(_db, sql, tag)
+		if err != nil {
+			return 0
+		}
+
+		result := item.Int("serie")
+
+		return result
+	}
+
+	if _, ok := series[tag]; !ok {
+		exist, err := jdb.ExistSerie(_db, "public", tag)
+		if err != nil {
+			return 0
+		}
+
+		if !exist {
+			_, err := jdb.CreateSerie(_db, "public", tag)
+			if err != nil {
+				return 0
+			}
+		}
+
+		series[tag] = true
+	}
+
+	sql := `SELECT currval($1) AS SERIE;`
+
+	item, err := jdb.DBQueryOne(_db, sql, tag)
+	if err != nil {
+		return 0
+	}
+
+	result := item.Int("serie")
+
+	return result
+}
+
+func SyncSerie(c chan int) error {
 	var ok bool = true
 	var rows int = 30
 	var page int = 1
@@ -241,7 +303,7 @@ func SyncSeries(masterIdx int, c chan int) error {
 		for _, item := range items.Result {
 			tag := item.Str("serie")
 			val := item.Int("value")
-			_, err = SetLastSerie(masterIdx, tag, val)
+			_, err = SetSerie(tag, val)
 			if err != nil {
 				return console.Error(err)
 			}
@@ -252,7 +314,7 @@ func SyncSeries(masterIdx int, c chan int) error {
 		page++
 	}
 
-	c <- masterIdx
+	c <- _db
 
 	return nil
 }

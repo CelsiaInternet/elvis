@@ -1,29 +1,9 @@
 package core
 
 import (
-	"github.com/cgalvisleon/elvis/console"
-	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/jdb"
 	"github.com/cgalvisleon/elvis/linq"
 )
-
-var MasterIdx int = 0
-
-func InitDefine() error {
-	if err := DefineSync(); err != nil {
-		return err
-	}
-	if err := DefineSeries(); err != nil {
-		return err
-	}
-	if err := DefineRecycling(); err != nil {
-		return err
-	}
-
-	console.LogK("CORE", "Init core")
-
-	return nil
-}
 
 func InitModel(model *linq.Model) error {
 	err := model.Init()
@@ -38,30 +18,19 @@ func InitModel(model *linq.Model) error {
 		}
 	}
 
-	if model.UseSync {
-		SetSyncTrigger(model.Schema, model.Table)
+	if model.UseSync() {
+		SetSyncTrigger(model)
+	} else {
+		SetListenerTrigger(model)
 	}
 
 	if model.UseRecycle {
-		SetRecycligTrigger(model.Schema, model.Table)
+		SetRecycligTrigger(model)
 	}
 
-	if model.UseIndex {
-		SetSerie(model.Name)
+	if model.UseSerie {
+		DefineSerie(model)
 	}
-
-	model.Trigger(linq.BeforeInsert, func(model *linq.Model, old, new *et.Json, data et.Json) error {
-		if model.UseIndex {
-			index := GetSerie(model.Name)
-			new.Set("index", index)
-		}
-
-		return nil
-	})
 
 	return nil
-}
-
-func SetMasterIdx(idx int) {
-	MasterIdx = idx
 }

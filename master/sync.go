@@ -20,7 +20,7 @@ func (c *Node) SyncNode() error {
 		return err
 	}
 
-	go jdb.Listen(c.Id, c.URL, "sync", listenSync)
+	go jdb.Listen(c.URL, "sync", "sync", listenSync)
 
 	c.Status = NodeStatusActive
 

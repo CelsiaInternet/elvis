@@ -24,7 +24,7 @@ func ListenClose(listen *pq.Listener) error {
 	return nil
 }
 
-func Listen(nodo, url, channel string, listen func(res et.Json)) {
+func Listen(url, channel, tag string, listen func(res et.Json)) {
 	reportProblem := func(ev pq.ListenerEventType, err error) {
 		if err != nil {
 			console.Error(err)
@@ -34,10 +34,10 @@ func Listen(nodo, url, channel string, listen func(res et.Json)) {
 	minReconn := 10 * time.Second
 	maxReconn := time.Minute
 	listener := pq.NewListener(url, minReconn, maxReconn, reportProblem)
-	ListenEvent(nodo, url, channel, listener, listen)
+	listenEvent(url, channel, tag, listener, listen)
 }
 
-func ListenEvent(nodo, url, channel string, listener *pq.Listener, listen func(res et.Json)) {
+func listenEvent(url, channel, tag string, listener *pq.Listener, listen func(res et.Json)) {
 	if url == "" {
 		return
 	}
@@ -55,10 +55,10 @@ func ListenEvent(nodo, url, channel string, listener *pq.Listener, listen func(r
 		console.Panic(err)
 	}
 
-	console.LogF("DB start channel:%s nodo:%s", channel, nodo)
+	console.LogF("DB listen channel:%s", channel)
 
-	for IsCloseListen(nodo, channel) {
-		hostNotification(listener, channel, nodo, listen)
+	for isCloseListen(channel) {
+		notification(listener, channel, tag, listen)
 	}
 	closeListen = ""
 
@@ -72,28 +72,24 @@ func ListenEvent(nodo, url, channel string, listener *pq.Listener, listen func(r
 		console.Error(err)
 	}
 
-	console.LogF("DB stop channel:%s nodo:%s", channel, nodo)
+	console.LogF("DB stop channel:%s", channel)
 }
 
-func CloseListen(host, channel string) {
-	closeListen = strs.Format(`%s/%s`, host, channel)
-}
-
-func IsCloseListen(host, channel string) bool {
-	key := strs.Format(`%s/%s`, host, channel)
+func isCloseListen(channel string) bool {
+	key := strs.Format(`%s`, channel)
 	result := closeListen == key
 	return !result
 }
 
-func hostNotification(l *pq.Listener, channel string, nodo string, listen func(res et.Json)) {
+func notification(l *pq.Listener, channel, tag string, listen func(res et.Json)) {
 	select {
 	case n := <-l.Notify:
 		result, err := et.ToJson(n.Extra)
 		if err != nil {
-			console.LogF("Db channel hostNotification: Not conver to et.Json nodo:%s channel:%s result:%s", nodo, channel, n.Extra)
+			console.AlertF("notification: Not conver to et.Json channel:%s result:%s", channel, n.Extra)
 		}
 
-		result["nodo"] = nodo
+		result.Set("tag", tag)
 		listen(result)
 	case <-time.After(90 * time.Second):
 		go l.Ping()

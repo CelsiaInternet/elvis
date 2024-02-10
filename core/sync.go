@@ -3,16 +3,23 @@ package core
 import (
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/jdb"
+	"github.com/cgalvisleon/elvis/linq"
 	"github.com/cgalvisleon/elvis/strs"
 )
 
-func DefineSync() error {
-	if err := DefineSchemaCore(); err != nil {
+var makedSyncs bool
+
+func defineSync() error {
+	if makedSyncs {
+		return nil
+	}
+
+	if err := defineSchemaCore(); err != nil {
 		return console.Panic(err)
 	}
 
-	existSyncs, _ := jdb.ExistTable(0, "core", "SYNCS")
-	if existSyncs {
+	makedSyncs, _ = jdb.ExistTable(0, "core", "SYNCS")
+	if makedSyncs {
 		return nil
 	}
 
@@ -37,6 +44,8 @@ func DefineSync() error {
   CREATE OR REPLACE FUNCTION core.SYNC_INSERT()
   RETURNS
     TRIGGER AS $$
+  DECLARE
+   CHANNEL VARCHAR(250);
   BEGIN
     IF NEW._IDT = '-1' THEN
       NEW._IDT = uuid_generate_v4();
@@ -47,6 +56,16 @@ func DefineSync() error {
       PERFORM pg_notify(
       'sync',
       json_build_object(
+        'option', TG_OP,        
+        '_idt', NEW._IDT
+      )::text
+      );
+
+      CHANNEL = TG_TABLE_SCHEMA || '.' || TG_TABLE_NAME;
+      PERFORM pg_notify(
+      CHANNEL,
+      json_build_object(
+        'option', TG_OP,
         '_idt', NEW._IDT
       )::text
       );
@@ -58,13 +77,18 @@ func DefineSync() error {
 
   CREATE OR REPLACE FUNCTION core.SYNC_UPDATE()
   RETURNS
-    TRIGGER AS $$  
+    TRIGGER AS $$
+  DECLARE
+    CHANNEL VARCHAR(250);
   BEGIN
-    IF NEW._IDT = '-1' THEN
+    IF NEW._IDT = '-1' && OLD._IDT != '-1' THEN
       NEW._IDT = OLD._IDT;
     ELSE
-     INSERT INTO core.SYNCS(TABLE_SCHEMA, TABLE_NAME, _IDT, ACTION)
-     VALUES (TG_TABLE_SCHEMA, TG_TABLE_NAME, NEW._IDT, TG_OP)
+     IF NEW._IDT = '-1' THEN
+       NEW._IDT = uuid_generate_v4();
+     END IF;
+     INSERT INTO core.SYNCS(TABLE_SCHEMA, TABLE_NAME, _IDT, ACTION, _ID)
+     VALUES (TG_TABLE_SCHEMA, TG_TABLE_NAME, NEW._IDT, TG_OP, uuid_generate_v4())
 		 ON CONFLICT(TABLE_SCHEMA, TABLE_NAME, _IDT) DO UPDATE SET
      DATE_UPDATE = NOW(),
      ACTION = TG_OP,
@@ -74,7 +98,17 @@ func DefineSync() error {
      PERFORM pg_notify(
      'sync',
      json_build_object(
+       'option', TG_OP,
        '_idt', NEW._IDT
+     )::text
+     );
+
+     CHANNEL = TG_TABLE_SCHEMA || '.' || TG_TABLE_NAME;
+     PERFORM pg_notify(
+     CHANNEL,
+     json_build_object(
+       'option', TG_OP,
+       '_idt', NEW._IDT  
      )::text
      );
     END IF; 
@@ -88,6 +122,7 @@ func DefineSync() error {
     TRIGGER AS $$
   DECLARE
     VINDEX INTEGER;
+    CHANNEL VARCHAR(250);
   BEGIN
     SELECT INDEX INTO VINDEX
     FROM core.SYNCS
@@ -106,9 +141,19 @@ func DefineSync() error {
       PERFORM pg_notify(
       'sync',
       json_build_object(
+        'option', TG_OP,
         '_idt', OLD._IDT
       )::text
       );
+
+      CHANNEL = TG_TABLE_SCHEMA || '.' || TG_TABLE_NAME;
+      PERFORM pg_notify(
+      CHANNEL,
+      json_build_object(
+        'option', TG_OP,
+        '_idt', OLD._IDT
+      )::text
+      );      
     END IF;
 
   RETURN OLD;
@@ -120,21 +165,30 @@ func DefineSync() error {
 		return console.Panic(err)
 	}
 
+	makedSyncs = true
+
 	return nil
 }
 
-func SetSyncTrigger(schema, table string) error {
-	exist, _ := jdb.ExistTable(0, "core", "SYNCS")
-	if !exist {
-		return nil
+func SetSyncTrigger(model *linq.Model) error {
+	err := defineSync()
+	if err != nil {
+		return err
 	}
 
+	schema := model.Schema
+	table := model.Table
 	created, err := jdb.CreateColumn(0, schema, table, "_IDT", "VARCHAR(80)", "-1")
 	if err != nil {
 		return err
 	}
 
 	if created {
+		_, err := jdb.CreateIndex(0, schema, table, "_IDT")
+		if err != nil {
+			return err
+		}
+
 		tableName := strs.Append(strs.Lowcase(schema), strs.Uppcase(table), ".")
 		sql := jdb.SQLDDL(`
     CREATE INDEX IF NOT EXISTS $2_IDT_IDX ON $1(_IDT);
@@ -157,11 +211,15 @@ func SetSyncTrigger(schema, table string) error {
     FOR EACH ROW
     EXECUTE PROCEDURE core.SYNC_DELETE();`, tableName, strs.Uppcase(table))
 
-		_, err := jdb.QDDL(sql)
+		_, err = jdb.QDDL(sql)
 		if err != nil {
 			return err
 		}
 	}
+
+	channel := strs.Append(strs.Lowcase(schema), ".", strs.Uppcase(table))
+	url := jdb.DB(model.Db).URL
+	jdb.Listen(url, channel, "sync", model.Listen)
 
 	return nil
 }

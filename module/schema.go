@@ -11,7 +11,7 @@ func DefineSchemaModule() error {
 		return nil
 	}
 
-	SchemaModule = linq.NewSchema(0, "module")
+	SchemaModule = linq.NewSchema(0, "module", true, true, true)
 
 	return nil
 }

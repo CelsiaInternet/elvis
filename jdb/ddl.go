@@ -93,6 +93,23 @@ func ExistIndex(db int, schema, table, field string) (bool, error) {
 	return item.Bool("exists"), nil
 }
 
+func ExistTrigger(db int, schema, table, name string) (bool, error) {
+	sql := `
+	SELECT EXISTS(
+		SELECT 1
+		FROM information_schema.triggers
+		WHERE UPPER(event_object_schema) = UPPER($1)
+		AND UPPER(event_object_table) = UPPER($2)
+		AND UPPER(trigger_name) = UPPER($3));`
+
+	item, err := DBQueryOne(db, sql, schema, table, name)
+	if err != nil {
+		return false, err
+	}
+
+	return item.Bool("exists"), nil
+}
+
 func ExistSerie(db int, schema, name string) (bool, error) {
 	sql := `
 	SELECT EXISTS(
@@ -204,6 +221,30 @@ func CreateIndex(db int, schema, table, field string) (bool, error) {
 		sql := SQLDDL(`
 		CREATE INDEX IF NOT EXISTS $2_$3_IDX ON $1.$2($3);`,
 			strs.Uppcase(schema), strs.Uppcase(table), strs.Uppcase(field))
+
+		_, err := QDDL(sql)
+		if err != nil {
+			return false, err
+		}
+	}
+
+	return !exists, nil
+}
+
+func CreateTrigger(db int, schema, table, name, when, event, function string) (bool, error) {
+	exists, err := ExistTrigger(db, schema, table, name)
+	if err != nil {
+		return false, err
+	}
+
+	if !exists {
+		sql := SQLDDL(`
+		DROP TRIGGER IF EXISTS $3 ON $1.$2 CASCADE;
+		CREATE TRIGGER $3
+		$4 $5 ON $1.$2
+		FOR EACH ROW
+		EXECUTE PROCEDURE $6;`,
+			strs.Uppcase(schema), strs.Uppcase(table), strs.Uppcase(name), when, event, function)
 
 		_, err := QDDL(sql)
 		if err != nil {
@@ -329,6 +370,26 @@ func DropColumn(db int, schema, table, name string) error {
 func DropIndex(db int, schema, table, field string) error {
 	indexName := strs.Format(`%s_%s_IDX`, strs.Uppcase(table), strs.Uppcase(field))
 	sql := strs.Format(`DROP INDEX %s.%s CASCADE;`, schema, indexName)
+	_, err := DBQuery(db, sql)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func DropTrigger(db int, schema, table, name string) error {
+	sql := strs.Format(`DROP TRIGGER %s.%s CASCADE;`, schema, name)
+	_, err := DBQuery(db, sql)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func DropSerie(db int, schema, name string) error {
+	sql := strs.Format(`DROP SEQUENCE %s.%s CASCADE;`, schema, name)
 	_, err := DBQuery(db, sql)
 	if err != nil {
 		return err

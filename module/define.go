@@ -2,7 +2,6 @@ package module
 
 import (
 	"github.com/cgalvisleon/elvis/console"
-	"github.com/cgalvisleon/elvis/core"
 )
 
 var initDefine bool
@@ -12,9 +11,6 @@ func InitDefine() error {
 		return nil
 	}
 
-	if err := core.InitDefine(); err != nil {
-		return console.Panic(err)
-	}
 	if err := DefineTypes(); err != nil {
 		return console.Panic(err)
 	}
@@ -22,9 +18,6 @@ func InitDefine() error {
 		return console.Panic(err)
 	}
 	if err := DefineUsers(); err != nil {
-		return console.Panic(err)
-	}
-	if err := DefineHistorys(); err != nil {
 		return console.Panic(err)
 	}
 	if err := DefineTokens(); err != nil {
@@ -46,9 +39,6 @@ func InitDefine() error {
 		return console.Panic(err)
 	}
 	if err := DefineRoles(); err != nil {
-		return console.Panic(err)
-	}
-	if err := DefineHistorys(); err != nil {
 		return console.Panic(err)
 	}
 

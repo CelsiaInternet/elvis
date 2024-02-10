@@ -23,11 +23,8 @@ func InitDefine() error {
 	if err := DefineNodes(); err != nil {
 		return console.Panic(err)
 	}
-	if err := core.DefineSeries(); err != nil {
-		return console.Panic(err)
-	}
 
-	go jdb.Listen("master", jdb.DB(0).URL, "node", listenNode)
+	go jdb.Listen(jdb.DB(0).URL, "node", "node", listenNode)
 
 	console.LogK("CORE", "Init Master")
 
@@ -158,7 +155,7 @@ func (c *Master) GetSyncById(idT string) (et.Item, error) {
 }
 
 func (c *Master) SetSync(schema, table, action, node, idT string, data et.Json, query string) (int, error) {
-	index := core.GetSerie("main.SYNC")
+	index := core.NextSerie("main.SYNC")
 
 	sql := `
 	INSERT INTO core.SYNC(TABLE_SCHEMA, TABLE_NAME, ACTION, _IDT, _DATA, QUERY, NODE, INDEX)

@@ -24,6 +24,7 @@ type Model struct {
 	Database           *jdb.Db
 	Name               string
 	Description        string
+	schema             *Schema
 	Schema             string
 	Table              string
 	Definition         []*Column
@@ -33,7 +34,7 @@ type Model struct {
 	SourceField        string
 	DateMakeField      string
 	DateUpdateField    string
-	IndexField         string
+	SerieField         string
 	CodeField          string
 	ProjectField       string
 	StateField         string
@@ -45,8 +46,7 @@ type Model struct {
 	UseDateMake        bool
 	UseDateUpdate      bool
 	UseProject         bool
-	UseIndex           bool
-	UseSync            bool
+	UseSerie           bool
 	UseRecycle         bool
 	BeforeInsert       []Trigger
 	AfterInsert        []Trigger
@@ -87,7 +87,7 @@ func (c *Model) Describe() et.Json {
 		"sourceField":        c.SourceField,
 		"dateMakeField":      c.DateMakeField,
 		"dateUpdateField":    c.DateUpdateField,
-		"indexField":         c.IndexField,
+		"serieField":         c.SerieField,
 		"codeField":          c.CodeField,
 		"projectField":       c.ProjectField,
 		"integrityAtrib":     c.integrityAtrib,
@@ -97,6 +97,9 @@ func (c *Model) Describe() et.Json {
 		"useDateUpdate":      c.UseDateUpdate,
 		"useProject":         c.UseProject,
 		"useReciclig":        c.UseRecycle,
+		"useSerie":           c.UseSerie,
+		"useSync":            c.UseSync(),
+		"useListener":        !c.UseSync(),
 		"model":              c.Model(),
 	}
 }
@@ -138,6 +141,10 @@ func (c *Model) Model() et.Json {
 	return result
 }
 
+func (c *Model) UseSync() bool {
+	return c.schema.UseSync
+}
+
 /**
 *
 **/
@@ -145,19 +152,20 @@ func NewModel(schema *Schema, table, description string, version int) *Model {
 	result := &Model{
 		Db:                 schema.Db,
 		Database:           schema.Database,
+		schema:             schema,
 		Schema:             schema.Name,
 		Name:               strs.Append(strs.Lowcase(schema.Name), strs.Uppcase(table), "."),
 		Description:        description,
 		Table:              strs.Uppcase(table),
-		UseSync:            schema.UseSync,
 		Version:            version,
 		SourceField:        schema.SourceField,
 		DateMakeField:      schema.DateMakeField,
 		DateUpdateField:    schema.DateUpdateField,
-		IndexField:         schema.IndexField,
+		SerieField:         schema.SerieField,
 		CodeField:          schema.CodeField,
 		ProjectField:       schema.ProjectField,
 		StateField:         schema.StateField,
+		UseRecycle:         schema.UseRecycle,
 		integrityReference: true,
 	}
 
@@ -192,12 +200,6 @@ func (c *Model) Init() error {
 	}
 
 	return nil
-}
-
-func (c *Model) SetUseSync(val bool) *Model {
-	c.UseSync = val
-
-	return c
 }
 
 func (c *Model) DDL() string {
@@ -289,6 +291,16 @@ func (c *Model) Trigger(event int, trigger Trigger) {
 	}
 }
 
+/**
+*
+**/
+func (c *Model) Listen(data et.Json) {
+
+}
+
+/**
+*
+**/
 func (c *Model) Details(name, description string, _default any, details Details) {
 	col := NewColumn(c, name, "", "DETAIL", _default)
 	col.Tp = TpDetail

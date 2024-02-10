@@ -1,21 +1,24 @@
 package core
 
 import (
+	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/jdb"
 )
 
-var makeCore bool
+var makedCore bool
 
-func DefineSchemaCore() error {
+func defineSchemaCore() error {
 	var err error
-	if makeCore {
+	if makedCore {
 		return nil
 	}
 
-	makeCore, err = jdb.CreateSchema(0, "core")
+	makedCore, err = jdb.CreateSchema(0, "core")
 	if err != nil {
 		return err
 	}
+
+	console.LogK("CORE", "Init core")
 
 	return nil
 }

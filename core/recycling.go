@@ -3,16 +3,23 @@ package core
 import (
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/jdb"
+	"github.com/cgalvisleon/elvis/linq"
 	"github.com/cgalvisleon/elvis/strs"
 )
 
-func DefineRecycling() error {
-	if err := DefineSchemaCore(); err != nil {
+var makedRecycling bool
+
+func defineRecycling() error {
+	if makedRecycling {
+		return nil
+	}
+
+	if err := defineSchemaCore(); err != nil {
 		return console.Panic(err)
 	}
 
-	existRecicling, _ := jdb.ExistTable(0, "core", "RECYCLING")
-	if existRecicling {
+	makedRecycling, _ = jdb.ExistTable(0, "core", "RECYCLING")
+	if makedRecycling {
 		return nil
 	}
 
@@ -37,7 +44,7 @@ func DefineRecycling() error {
     	VALUES (TG_TABLE_SCHEMA, TG_TABLE_NAME, NEW._IDT);
 
       PERFORM pg_notify(
-      'for_delete',
+      'recycling',
       json_build_object(
         '_idt', NEW._IDT
       )::text
@@ -57,24 +64,47 @@ func DefineRecycling() error {
 		DELETE FROM core.RECYCLING WHERE _IDT=OLD._IDT;
   	RETURN OLD;
   END;
-  $$ LANGUAGE plpgsql;
-  `
+  $$ LANGUAGE plpgsql;`
 
 	_, err := jdb.QDDL(sql)
 	if err != nil {
 		return console.Panic(err)
 	}
 
+	makedRecycling = true
+
 	return nil
 }
 
-func SetRecycligTrigger(schema, table string) error {
+func SetRecycligTrigger(model *linq.Model) error {
+	err := defineRecycling()
+	if err != nil {
+		return err
+	}
+
+	schema := model.Schema
+	table := model.Table
+	_, err = jdb.CreateColumn(0, schema, table, "_IDT", "VARCHAR(80)", "-1")
+	if err != nil {
+		return err
+	}
+
+	_, err = jdb.CreateIndex(0, schema, table, "_IDT")
+	if err != nil {
+		return err
+	}
+
 	created, err := jdb.CreateColumn(0, schema, table, "_STATE", "VARCHAR(80)", "0")
 	if err != nil {
 		return err
 	}
 
 	if created {
+		_, err = jdb.CreateIndex(0, schema, table, "_STATE")
+		if err != nil {
+			return err
+		}
+
 		tableName := strs.Append(strs.Lowcase(schema), strs.Uppcase(table), ".")
 		sql := jdb.SQLDDL(`
     CREATE INDEX IF NOT EXISTS $2_IDT_IDX ON $1(_STATE);

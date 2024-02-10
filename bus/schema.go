@@ -9,7 +9,7 @@ func defineSchema() error {
 		return nil
 	}
 
-	SchemaBus = linq.NewSchema(0, "bus")
+	SchemaBus = linq.NewSchema(0, "bus", false, false, false)
 
 	return nil
 }

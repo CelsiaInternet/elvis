@@ -14,26 +14,30 @@ type Schema struct {
 	Name            string
 	Description     string
 	UseSync         bool
+	UseRecycle      bool
+	UseSerie        bool
 	SourceField     string
 	DateMakeField   string
 	DateUpdateField string
-	IndexField      string
+	SerieField      string
 	CodeField       string
 	ProjectField    string
 	StateField      string
 	Models          []*Model
 }
 
-func NewSchema(db int, name string) *Schema {
+func NewSchema(db int, name string, sync, recycle, serie bool) *Schema {
 	result := &Schema{
 		Db:              db,
 		Name:            strs.Lowcase(name),
 		Database:        jdb.DB(db),
-		UseSync:         true,
+		UseSync:         sync,
+		UseRecycle:      recycle,
+		UseSerie:        serie,
 		SourceField:     "_DATA",
 		DateMakeField:   "DATE_MAKE",
 		DateUpdateField: "DATE_UPDATE",
-		IndexField:      "INDEX",
+		SerieField:      "INDEX",
 		CodeField:       "CODE",
 		ProjectField:    "PROJECT_ID",
 		StateField:      "_STATE",
@@ -69,10 +73,13 @@ func (c *Schema) Describe() et.Json {
 		"name":            c.Name,
 		"description":     c.Description,
 		"database":        c.Database.Dbname,
+		"useSync":         c.UseSync,
+		"useRecycle":      c.UseRecycle,
+		"useSerie":        c.UseSerie,
 		"source_field":    c.SourceField,
 		"dateMakeField":   c.DateMakeField,
 		"dateUpdateField": c.DateUpdateField,
-		"indexField":      c.IndexField,
+		"serieField":      c.SerieField,
 		"codeField":       c.CodeField,
 		"projectField":    c.ProjectField,
 		"models":          models,
@@ -99,10 +106,4 @@ func (c *Schema) Model(name string) *Model {
 	}
 
 	return nil
-}
-
-func (c *Schema) SetUseSync(val bool) *Schema {
-	c.UseSync = val
-
-	return c
 }

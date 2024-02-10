@@ -208,7 +208,7 @@ func CheckRole(projectId, moduleId, profileTp, userId string, chk bool) (et.Item
 			}, nil
 		}
 
-		index := core.GetSerie("module.ROLES")
+		index := core.NextSerie("module.ROLES")
 
 		sql := `
 		INSERT INTO module.ROLES(DATE_MAKE, DATE_UPDATE, PROJECT_ID, MODULE_ID, USER_ID, PROFILE_TP, INDEX)
