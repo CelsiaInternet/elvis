@@ -294,7 +294,7 @@ func (c *Model) Trigger(event int, trigger Trigger) {
 /**
 *
 **/
-func (c *Model) Listener(data et.Json) {
+func (c *Model) OnListener(data et.Json) {
 
 }
 
