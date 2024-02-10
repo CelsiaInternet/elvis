@@ -141,7 +141,7 @@ func SetListenerTrigger(model *linq.Model) error {
 
 	channel := strs.Append(strs.Lowcase(schema), ".", strs.Uppcase(table))
 	url := jdb.DB(model.Db).URL
-	jdb.Listen(url, channel, "listen", model.Listen)
+	jdb.Listen(url, channel, "listen", model.Listener)
 
 	return nil
 }
