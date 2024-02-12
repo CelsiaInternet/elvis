@@ -254,7 +254,7 @@ func initEvents() {
 }
 
 func eventAction(m event.CreatedEvenMessage) {
-	data, err := e.ToJson(m.Data)
+	data, err := et.ToJson(m.Data)
 	if err != nil {
 		console.Error(err)
 	}
@@ -365,11 +365,11 @@ type Controller struct {
 	Db *jdb.Conn
 }
 
-func (c *Controller) Version(ctx context.Context) (e.Json, error) {
+func (c *Controller) Version(ctx context.Context) (et.Json, error) {
 	company := envar.EnvarStr("", "COMPANY")
 	web := envar.EnvarStr("", "WEB")
 	version := envar.EnvarStr("", "VERSION")
-  service := e.Json{
+  service := et.Json{
 		"version": version,
 		"service": PackageName,
 		"host":    HostName,
@@ -387,7 +387,7 @@ func (c *Controller) Init(ctx context.Context) {
 }
 
 type Repository interface {
-	Version(ctx context.Context) (e.Json, error)
+	Version(ctx context.Context) (et.Json, error)
 	Init(ctx context.Context)
 }
 `
@@ -517,22 +517,22 @@ func Define$2() error {
 		"name:Atributo requerido (name)",
 	})
 	$2.IntegrityAtrib(true)
-	$2.Trigger(linq.BeforeInsert, func(model *linq.Model, old, new *e.Json, data e.Json) error {
+	$2.Trigger(linq.BeforeInsert, func(model *linq.Model, old, new *et.Json, data et.Json) error {
 		return nil
 	})
-	$2.Trigger(linq.AfterInsert, func(model *linq.Model, old, new *e.Json, data e.Json) error {
+	$2.Trigger(linq.AfterInsert, func(model *linq.Model, old, new *et.Json, data et.Json) error {
 		return nil
 	})
-	$2.Trigger(linq.BeforeUpdate, func(model *linq.Model, old, new *e.Json, data e.Json) error {
+	$2.Trigger(linq.BeforeUpdate, func(model *linq.Model, old, new *et.Json, data et.Json) error {
 		return nil
 	})
-	$2.Trigger(linq.AfterUpdate, func(model *linq.Model, old, new *e.Json, data e.Json) error {
+	$2.Trigger(linq.AfterUpdate, func(model *linq.Model, old, new *et.Json, data et.Json) error {
 		return nil
 	})
-	$2.Trigger(linq.BeforeDelete, func(model *linq.Model, old, new *e.Json, data e.Json) error {
+	$2.Trigger(linq.BeforeDelete, func(model *linq.Model, old, new *et.Json, data et.Json) error {
 		return nil
 	})
-	$2.Trigger(linq.AfterDelete, func(model *linq.Model, old, new *e.Json, data e.Json) error {
+	$2.Trigger(linq.AfterDelete, func(model *linq.Model, old, new *et.Json, data et.Json) error {
 		return nil
 	})
 	
@@ -546,7 +546,7 @@ func Define$2() error {
 /**
 *	Handler for CRUD data
  */
-func Get$2ById(id string) (e.Item, error) {
+func Get$2ById(id string) (et.Item, error) {
 	return $2.Select().
 		Where($2.Column("_id").Eq(id)).
 		First()
@@ -563,13 +563,13 @@ func Value$2ById(_default any, id, atrib string) *generic.Any {
 	return item.Any(_default, atrib)
 }
 
-func UpSert$2(project_id, id string, data e.Json) (e.Item, error) {
+func UpSert$2(project_id, id string, data et.Json) (et.Item, error) {
 	if !utility.ValidId(project_id) {
-		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "project_id")
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "project_id")
 	}
 
 	if !utility.ValidId(id) {
-		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "_id")
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "_id")
 	}
 
 	id = utility.GenId(id)
@@ -580,43 +580,43 @@ func UpSert$2(project_id, id string, data e.Json) (e.Item, error) {
 		CommandOne()
 }
 
-func State$2(id, state string) (e.Item, error) {
+func State$2(id, state string) (et.Item, error) {
 	if !utility.ValidId(state) {
-		return e.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "state")
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "state")
 	}
 
 	item, err := $2.Select("_state").
 		Where($2.Column("_id").Eq(id)).
 		First()
 	if err != nil {
-		return e.Item{}, err
+		return et.Item{}, err
 	}
 
 	if !item.Ok {
-		return e.Item{}, console.Alert(msg.RECORD_NOT_FOUND)
+		return et.Item{}, console.Alert(msg.RECORD_NOT_FOUND)
 	}
 
 	old_state := item.Key("_state")
 	if old_state == state {
-		return e.Item{
+		return et.Item{
 			Ok: true,
-			Result: e.Json{
+			Result: et.Json{
 				"message": msg.RECORD_NOT_UPDATE,
 			}}, nil
 	}
 
-	return $2.Update(e.Json{
+	return $2.Update(et.Json{
 		"_state":   state,
 	}).
 		Where($2.Column("_id").Eq(id)).
 		CommandOne()	
 }
 
-func Delete$2(id string) (e.Item, error) {
+func Delete$2(id string) (et.Item, error) {
 	return State$2(id, utility.FOR_DELETE)
 }
 
-func All$2(project_id, state, search string, page, rows int, _select string) (e.List, error) {	
+func All$2(project_id, state, search string, page, rows int, _select string) (et.List, error) {	
 	if state == "" {
 		state = utility.ACTIVE
 	}
