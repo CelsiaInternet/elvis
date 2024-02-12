@@ -286,7 +286,7 @@ var $2 *linq.Schema
 
 func defineSchema() error {
 	if $2 == nil {
-		$2 = linq.NewSchema(0, "$3")
+		$2 = linq.NewSchema(0, "$3", true, false, true)
 	}
 
 	return nil
