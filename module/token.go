@@ -62,6 +62,7 @@ func DefineTokens() error {
 	Tokens.DefineColum("token", "", "TEXT", "")
 	Tokens.DefineColum("index", "", "INTEGER", 0)
 	Tokens.DefinePrimaryKey([]string{"_id"})
+	Tokens.DefineForeignKey("project_id", Projects.Col("_id"))
 	Tokens.DefineIndex([]string{
 		"date_make",
 		"date_update",

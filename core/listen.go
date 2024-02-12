@@ -7,10 +7,10 @@ import (
 	"github.com/cgalvisleon/elvis/strs"
 )
 
-var makedListen bool
+var makedListener bool
 
-func defineListens() error {
-	if makedListen {
+func DefineListener() error {
+	if makedListener {
 		return nil
 	}
 
@@ -89,15 +89,14 @@ func defineListens() error {
 		return console.Panic(err)
 	}
 
-	makedListen = true
+	makedListener = true
 
 	return nil
 }
 
 func SetListenerTrigger(model *linq.Model) error {
-	err := defineListens()
-	if err != nil {
-		return err
+	if !makedListener {
+		return nil
 	}
 
 	schema := model.Schema

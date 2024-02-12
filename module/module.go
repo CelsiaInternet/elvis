@@ -40,11 +40,13 @@ func DefineModules() error {
 	})
 	Modules.Trigger(linq.AfterInsert, func(model *linq.Model, old, new *et.Json, data et.Json) error {
 		id := new.Id()
-		InitProfile(id, "PROFILE.ADMIN", et.Json{})
-		InitProfile(id, "PROFILE.DEV", et.Json{})
-		InitProfile(id, "PROFILE.SUPORT", et.Json{})
-		CheckProjectModule("-1", id, true)
-		CheckRole("-1", id, "PROFILE.ADMIN", "USER.ADMIN", true)
+		if id != "-1" {
+			InitProfile(id, "PROFILE.ADMIN", et.Json{})
+			InitProfile(id, "PROFILE.DEV", et.Json{})
+			InitProfile(id, "PROFILE.SUPORT", et.Json{})
+			CheckProjectModule("-1", id, true)
+			CheckRole("-1", id, "PROFILE.ADMIN", "USER.ADMIN", true)
+		}
 
 		return nil
 	})

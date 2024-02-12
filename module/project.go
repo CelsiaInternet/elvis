@@ -40,7 +40,7 @@ func DefineProjects() error {
 	})
 	Projects.Trigger(linq.AfterInsert, func(model *linq.Model, old, new *et.Json, data et.Json) error {
 		moduleId := data.Key("module_id")
-		if moduleId != "" {
+		if moduleId != "-1" {
 			id := new.Id()
 			CheckProjectModule(id, moduleId, true)
 			CheckRole(id, moduleId, "PROFILE.ADMIN", "USER.ADMIN", true)
@@ -71,12 +71,12 @@ func DefineProjectModules() error {
 	ProjectModules.DefineColum("module_id", "", "VARCHAR(80)", "-1")
 	ProjectModules.DefineColum("index", "", "INTEGER", 0)
 	ProjectModules.DefinePrimaryKey([]string{"project_id", "module_id"})
+	ProjectModules.DefineForeignKey("project_id", Projects.Col("_id"))
+	ProjectModules.DefineForeignKey("module_id", Modules.Col("_id"))
 	ProjectModules.DefineIndex([]string{
 		"date_make",
 		"index",
 	})
-	ProjectModules.DefineForeignKey("project_id", Projects.Column("_id"))
-	ProjectModules.DefineForeignKey("module_id", Modules.Column("_id"))
 
 	if err := core.InitModel(ProjectModules); err != nil {
 		return console.Panic(err)

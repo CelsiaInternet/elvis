@@ -18,11 +18,6 @@ func defineRecycling() error {
 		return console.Panic(err)
 	}
 
-	makedRecycling, _ = jdb.ExistTable(0, "core", "RECYCLING")
-	if makedRecycling {
-		return nil
-	}
-
 	sql := `  
   -- DROP TABLE IF EXISTS core.RECYCLING CASCADE;
 
@@ -34,6 +29,9 @@ func defineRecycling() error {
 		PRIMARY KEY(TABLE_SCHEMA, TABLE_NAME, _IDT)
 	);
   CREATE INDEX IF NOT EXISTS RECYCLING_INDEX_IDX ON core.RECYCLING(INDEX);
+	CREATE INDEX IF NOT EXISTS RECYCLING_TABLE_SCHEMA_IDX ON core.RECYCLING(TABLE_SCHEMA);
+	CREATE INDEX IF NOT EXISTS RECYCLING_TABLE_NAME_IDX ON core.RECYCLING(TABLE_NAME);
+	CREATE INDEX IF NOT EXISTS RECYCLING__IDT_IDX ON core.RECYCLING(INDEX);
 
 	CREATE OR REPLACE FUNCTION core.RECYCLING()
   RETURNS
@@ -77,14 +75,13 @@ func defineRecycling() error {
 }
 
 func SetRecycligTrigger(model *linq.Model) error {
-	err := defineRecycling()
-	if err != nil {
+	if err := defineRecycling(); err != nil {
 		return err
 	}
 
 	schema := model.Schema
 	table := model.Table
-	_, err = jdb.CreateColumn(0, schema, table, "_IDT", "VARCHAR(80)", "-1")
+	_, err := jdb.CreateColumn(0, schema, table, "_IDT", "VARCHAR(80)", "-1")
 	if err != nil {
 		return err
 	}

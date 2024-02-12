@@ -5,7 +5,6 @@ import (
 
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/jdb"
-	"github.com/cgalvisleon/elvis/msg"
 	"github.com/cgalvisleon/elvis/strs"
 	"github.com/cgalvisleon/elvis/utility"
 )
@@ -18,6 +17,8 @@ const BeforeDelete = 5
 const AfterDelete = 6
 
 type Trigger func(model *Model, old, new *et.Json, data et.Json) error
+
+type Listener func(data et.Json)
 
 type Model struct {
 	Db                 int
@@ -41,19 +42,19 @@ type Model struct {
 	Ddl                string
 	integrityAtrib     bool
 	integrityReference bool
-	UseState           bool
-	UseSource          bool
 	UseDateMake        bool
 	UseDateUpdate      bool
+	UseState           bool
 	UseProject         bool
+	UseSource          bool
 	UseSerie           bool
-	UseRecycle         bool
 	BeforeInsert       []Trigger
 	AfterInsert        []Trigger
 	BeforeUpdate       []Trigger
 	AfterUpdate        []Trigger
 	BeforeDelete       []Trigger
 	AfterDelete        []Trigger
+	OnListener         Listener
 	Version            int
 }
 
@@ -92,11 +93,11 @@ func (c *Model) Describe() et.Json {
 		"projectField":       c.ProjectField,
 		"integrityAtrib":     c.integrityAtrib,
 		"integrityReference": c.integrityReference,
-		"useState":           c.UseState,
 		"useDateMake":        c.UseDateMake,
 		"useDateUpdate":      c.UseDateUpdate,
+		"useState":           c.UseState,
 		"useProject":         c.UseProject,
-		"useReciclig":        c.UseRecycle,
+		"useReciclig":        c.UseRecycle(),
 		"useSerie":           c.UseSerie,
 		"useSync":            c.UseSync(),
 		"useListener":        !c.UseSync(),
@@ -145,6 +146,10 @@ func (c *Model) UseSync() bool {
 	return c.schema.UseSync
 }
 
+func (c *Model) UseRecycle() bool {
+	return c.schema.UseSync
+}
+
 /**
 *
 **/
@@ -165,7 +170,6 @@ func NewModel(schema *Schema, table, description string, version int) *Model {
 		CodeField:          schema.CodeField,
 		ProjectField:       schema.ProjectField,
 		StateField:         schema.StateField,
-		UseRecycle:         schema.UseRecycle,
 		integrityReference: true,
 	}
 
@@ -185,18 +189,11 @@ func NewModel(schema *Schema, table, description string, version int) *Model {
 * DDL
 **/
 func (c *Model) Init() error {
-	exists, err := jdb.ExistTable(c.Db, c.Schema, c.Table)
+	sql := c.DDL()
+
+	_, err := jdb.DBQDDL(c.Db, sql)
 	if err != nil {
 		return err
-	}
-
-	if !exists {
-		sql := c.DDL()
-
-		_, err := jdb.DBQDDL(c.Db, sql)
-		if err != nil {
-			return err
-		}
 	}
 
 	return nil
@@ -220,15 +217,7 @@ func (c *Model) DDL() string {
 		}
 	}
 
-	if len(c.PrimaryKeys) > 0 {
-		keys := strs.Format(`PRIMARY KEY (%s)`, strings.Join(c.PrimaryKeys, ", "))
-		fields = append(fields, strs.Uppcase(keys))
-	}
-
-	for _, def := range index {
-		result = strs.Append(result, def, "\n")
-	}
-
+	// Definition create table with fields
 	_fields := ""
 	for i, def := range fields {
 		if i == 0 {
@@ -237,8 +226,41 @@ func (c *Model) DDL() string {
 		_fields = strs.Append(_fields, def, ",\n")
 	}
 
-	str := strs.Format(`CREATE TABLE IF NOT EXISTS %s(%s);`, c.Name, _fields)
-	result = strs.Append(str, result, "\n")
+	def := strs.Format(`CREATE TABLE IF NOT EXISTS %s(%s);`, c.Name, _fields) + "\n"
+	result = strs.Append(result, def, "\n")
+
+	// Definition create index
+	for _, def := range index {
+		result = strs.Append(result, def, "\n")
+	}
+
+	if len(c.Index) > 0 {
+		result = result + "\n"
+	}
+
+	// Definition create primary key
+	if len(c.PrimaryKeys) > 0 {
+		pkey := strs.Replace(c.Table, ".", "_")
+		pkey = strs.Replace(pkey, "-", "_") + "_pkey"
+		pkey = strs.Lowcase(pkey)
+		def = strs.Format(`ALTER TABLE IF EXISTS %s ADD CONSTRAINT %s PRIMARY KEY (%s);`, c.Name, pkey, strings.Join(c.PrimaryKeys, ", "))
+		def = strs.Format(`SELECT core.create_constraint_if_not_exists('%s', '%s', '%s', '%s');`, c.Schema, c.Table, pkey, def)
+		result = strs.Append(result, def, "\n")
+	}
+
+	// Definition create foreign key
+	for _, ref := range c.ForeignKey {
+		fkey := strs.Replace(c.Table, ".", "_")
+		fkey = strs.Replace(fkey, "-", "_") + "_" + ref.Fkey + "_fkey"
+		fkey = strs.Lowcase(fkey)
+		def = strs.Format(`ALTER TABLE IF EXISTS %s ADD CONSTRAINT %s FOREIGN KEY (%s) %s;`, c.Name, fkey, ref.Fkey, ref.DDL())
+		def = strs.Format(`SELECT core.create_constraint_if_not_exists('%s', '%s', '%s', '%s');`, c.Schema, c.Table, fkey, def)
+		result = strs.Append(result, def, "\n")
+	}
+
+	if len(c.ForeignKey) > 0 {
+		result = result + "\n"
+	}
 
 	c.Ddl = result
 
@@ -289,13 +311,6 @@ func (c *Model) Trigger(event int, trigger Trigger) {
 	} else if event == AfterDelete {
 		c.AfterDelete = append(c.BeforeDelete, trigger)
 	}
-}
-
-/**
-*
-**/
-func (c *Model) OnListener(data et.Json) {
-
 }
 
 /**
@@ -408,169 +423,6 @@ func (c *Model) All() []*Column {
 	result := c.Definition
 
 	return result
-}
-
-/**
-*
-**/
-func (c *Model) DefineColum(name, description, _type string, _default any) *Model {
-	NewColumn(c, name, description, _type, _default)
-
-	return c
-}
-
-func (c *Model) DefineAtrib(name, description, _type string, _default any) *Model {
-	source := c.Col(c.SourceField)
-	result := NewColumn(c, name, description, _type, _default)
-	result.Tp = TpAtrib
-	result.Column = source
-	result.name = strs.Lowcase(name)
-	source.Atribs = append(source.Atribs, result)
-
-	return c
-}
-
-func (c *Model) DefineIndex(index []string) *Model {
-	for _, name := range index {
-		idx := c.ColIdx(name)
-		if idx != -1 {
-			c.Definition[idx].Indexed = true
-			c.IndexAdd(name)
-		}
-	}
-
-	return c
-}
-
-func (c *Model) DefineUniqueIndex(index []string) *Model {
-	for _, name := range c.Index {
-		col := c.Col(name)
-		if col != nil {
-			col.Indexed = true
-			col.Unique = true
-			c.IndexAdd(name)
-		}
-	}
-
-	return c
-}
-
-func (c *Model) DefineHidden(hiddens []string) *Model {
-	for _, key := range hiddens {
-		col := c.Col(key)
-		if col != nil {
-			col.Hidden = true
-		}
-	}
-
-	return c
-}
-
-func (c *Model) DefinePrimaryKey(keys []string) *Model {
-	for _, name := range c.PrimaryKeys {
-		col := c.Col(name)
-		if col != nil {
-			col.Unique = true
-			col.Required = true
-			col.PrimaryKey = true
-			c.PrimaryKeys = append(c.PrimaryKeys, name)
-			c.IndexAdd(name)
-		}
-	}
-
-	return c
-}
-
-func (c *Model) DefineForeignKey(thisKey string, otherKey *Column) *Model {
-	col := c.Col(thisKey)
-	if col != nil {
-		col.ForeignKey = true
-		col.Reference = NewForeignKey(thisKey, otherKey)
-		c.ForeignKey = append(c.ForeignKey, col.Reference)
-		c.IndexAdd(thisKey)
-		otherKey.ReferencesAdd(col)
-	}
-
-	return c
-}
-
-func (c *Model) DefineReference(thisKey, name, otherKey string, column *Column) *Model {
-	if name == "" {
-		name = thisKey
-	}
-	idx := c.ColIdx(name)
-	if idx == -1 {
-		col := NewColumn(c, name, "", "REFERENCE", et.Json{"_id": "", "name": ""})
-		col.Tp = TpReference
-		col.Title = name
-		col.Reference = &Reference{thisKey, name, otherKey, column}
-		idx := c.ColIdx(thisKey)
-		if idx != -1 {
-			c.Definition[idx].ReferenceKey = true
-			c.Definition[idx].Indexed = true
-			c.Definition[idx].Model.IndexAdd(c.Definition[idx].name)
-			_otherKey := column.Model.Col(otherKey)
-			if _otherKey != nil {
-				_otherKey.ReferencesAdd(c.Definition[idx])
-			}
-		}
-	}
-
-	return c
-}
-
-func (c *Model) DefineCaption(thisKey, name, otherKey string, column *Column, _default any) *Model {
-	if name == "" {
-		name = thisKey
-	}
-	idx := c.ColIdx(name)
-	if idx == -1 {
-		col := NewColumn(c, name, "", "CAPTION", _default)
-		col.Tp = TpCaption
-		col.Title = name
-		col.Reference = &Reference{thisKey, name, otherKey, column}
-		idx := c.ColIdx(thisKey)
-		if idx != -1 {
-			c.Definition[idx].Indexed = true
-			c.Definition[idx].Model.IndexAdd(c.Definition[idx].name)
-			_otherKey := column.Model.Col(otherKey)
-			if _otherKey != nil {
-				_otherKey.ReferencesAdd(c.Definition[idx])
-			}
-		}
-	}
-
-	return c
-}
-
-func (c *Model) DefineField(name, description string, _default any, definition string) *Model {
-	result := NewColumn(c, name, "", "FIELD", _default)
-	result.Tp = TpField
-	result.Definition = definition
-
-	return c
-}
-
-func (c *Model) DefineRequired(names []string) *Model {
-	for _, name := range names {
-		list := strings.Split(name, ":")
-		key := list[0]
-		col := c.Col(key)
-		if col != nil {
-			col.Required = true
-		}
-
-		if len(list) > 1 {
-			msg := list[1]
-			if msg == "" {
-				col.RequiredMsg = msg
-			}
-		} else {
-			col.RequiredMsg = strs.Format(msg.MSG_ATRIB_REQUIRED, col.name)
-		}
-	}
-
-	return c
 }
 
 func (c *Model) IntegrityAtrib(ok bool) *Model {

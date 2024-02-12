@@ -33,6 +33,7 @@ func DefineFolders() error {
 	Folders.DefineColum("_data", "", "JSONB", "{}")
 	Folders.DefineColum("index", "", "INTEGER", 0)
 	Folders.DefinePrimaryKey([]string{"_id"})
+	Folders.DefineForeignKey("module_id", Modules.Col("_id"))
 	Folders.DefineIndex([]string{
 		"date_make",
 		"date_update",
@@ -41,7 +42,6 @@ func DefineFolders() error {
 		"name",
 		"index",
 	})
-	Folders.DefineForeignKey("module_id", Modules.Column("_id"))
 	Folders.Trigger(linq.AfterInsert, func(model *linq.Model, old, new *et.Json, data et.Json) error {
 		id := new.Id()
 		moduleId := new.Key("module_id")
@@ -67,7 +67,11 @@ func DefineFolders() error {
 		return nil
 	})
 
-	return core.InitModel(Folders)
+	if err := core.InitModel(Folders); err != nil {
+		return console.Panic(err)
+	}
+
+	return nil
 }
 
 /**

@@ -32,6 +32,7 @@ func DefineTypes() error {
 	Types.DefineColum("_data", "", "JSONB", "{}")
 	Types.DefineColum("index", "", "INTEGER", 0)
 	Types.DefinePrimaryKey([]string{"_id"})
+	Types.DefineForeignKey("project_id", Projects.Col("_id"))
 	Types.DefineIndex([]string{
 		"date_make",
 		"date_update",

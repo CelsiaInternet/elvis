@@ -27,11 +27,6 @@ func defineSeries() error {
 		return console.Panic(err)
 	}
 
-	makedSeries, _ = jdb.ExistTable(0, "core", "SERIES")
-	if makedSeries {
-		return nil
-	}
-
 	sql := `  
   -- DROP TABLE IF EXISTS core.SERIES CASCADE;
 
@@ -43,47 +38,48 @@ func defineSeries() error {
 		PRIMARY KEY(SERIE)
 	);
 	
-	CREATE OR REPLACE FUNCTION core.nextserie(serie VARCHAR(250))
+	CREATE OR REPLACE FUNCTION core.nextserie(tag VARCHAR(250))
 	RETURNS BIGINT AS $$
 	DECLARE
 	 result BIGINT;
 	BEGIN
 	 INSERT INTO core.SERIES AS A (SERIE, VALUE)
-	 SELECT serie, 1
+	 SELECT tag, 1
 	 ON CONFLICT (SERIE) DO UPDATE SET
 	 VALUE = A.VALUE + 1
 	 RETURNING VALUE INTO result;
 
 	 RETURN COALESCE(result, 0);
-	EDN;
+	END;
 	$$ LANGUAGE plpgsql;
 	
-	CREATE OR REPLACE FUNCTION core.setserie(serie VARCHAR(250), val BIGINT)
+	CREATE OR REPLACE FUNCTION core.setserie(tag VARCHAR(250), val BIGINT)
 	RETURNS BIGINT AS $$
 	DECLARE
 	 result BIGINT;
 	BEGIN
 	 INSERT INTO core.SERIES AS A (SERIE, VALUE)
-	 SELECT serie, val
+	 SELECT tag, val
 	 ON CONFLICT (SERIE) DO UPDATE SET
 	 VALUE = val
+	 WHERE A.VALUE < val
 	 RETURNING VALUE INTO result;
 
 	 RETURN COALESCE(result, 0);
-	EDN;
+	END;
 	$$ LANGUAGE plpgsql;
 	
-	CREATE OR REPLACE FUNCTION core.currserie(serie VARCHAR(250))
+	CREATE OR REPLACE FUNCTION core.currserie(tag VARCHAR(250))
 	RETURNS BIGINT AS $$
 	DECLARE
 	 result BIGINT;
 	BEGIN
 	 SELECT VALUE INTO result
 	 FROM core.SERIES
-	 WHERE SERIE = serie LIMIT 1;
+	 WHERE SERIE = tag LIMIT 1;
 
 	 RETURN COALESCE(result, 0);
-	EDN;
+	END;
 	$$ LANGUAGE plpgsql;`
 
 	_, err := jdb.QDDL(sql)
@@ -151,11 +147,8 @@ func NextSerie(tag string) int {
 * Serie
 **/
 func DefineSerie(model *linq.Model) error {
-	if model.UseSerie {
-		err := defineSeries()
-		if err != nil {
-			return err
-		}
+	if err := defineSeries(); err != nil {
+		return err
 	}
 
 	tableName := model.Name
@@ -203,7 +196,7 @@ func NextCode(tag, prefix string) string {
 
 func SetSerie(tag string, val int) (int, error) {
 	if makedSeries {
-		sql := `SELECT setserie($1, $2);`
+		sql := `SELECT core.setserie($1, $2);`
 
 		_, err := jdb.DBQueryOne(_db, sql, tag, val)
 		if err != nil {
@@ -241,7 +234,7 @@ func SetSerie(tag string, val int) (int, error) {
 
 func LastSerie(tag string) int {
 	if makedSeries {
-		sql := `SELECT currserie($1) AS SERIE;`
+		sql := `SELECT core.currserie($1) AS SERIE;`
 
 		item, err := jdb.DBQueryOne(_db, sql, tag)
 		if err != nil {

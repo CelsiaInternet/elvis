@@ -180,15 +180,11 @@ func NewColumn(model *Model, name, description, _type string, _default any) *Col
 		model.UseState = strs.Uppcase(result.name) == strs.Uppcase(model.StateField)
 	}
 
-	if !model.UseRecycle {
-		model.UseRecycle = strs.Uppcase(result.name) == strs.Uppcase(model.StateField)
-	}
-
 	if !model.UseProject {
 		model.UseProject = strs.Uppcase(result.name) == strs.Uppcase(model.ProjectField)
 	}
 
-	if !model.UseSerie {
+	if !model.UseSerie && model.schema.UseSerie {
 		model.UseSerie = strs.Uppcase(result.name) == strs.Uppcase(model.SerieField)
 	}
 

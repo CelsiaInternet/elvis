@@ -18,10 +18,6 @@ func DDLColumn(col *Column) string {
 
 	switch col.Driver() {
 	default:
-		if col.Model.integrityReference && col.ForeignKey {
-			result = col.Reference.DDL()
-		}
-
 		_default := generic.New(col.Default)
 
 		if _default.Str() == "NOW()" {

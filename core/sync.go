@@ -18,11 +18,6 @@ func defineSync() error {
 		return console.Panic(err)
 	}
 
-	makedSyncs, _ = jdb.ExistTable(0, "core", "SYNCS")
-	if makedSyncs {
-		return nil
-	}
-
 	sql := `
   -- DROP SCHEMA IF EXISTS core CASCADE;
   -- DROP TABLE IF EXISTS core.SYNCS CASCADE;
@@ -40,6 +35,12 @@ func defineSync() error {
     PRIMARY KEY (TABLE_SCHEMA, TABLE_NAME, _IDT)
   );  
   CREATE INDEX IF NOT EXISTS SYNCS_INDEX_IDX ON core.SYNCS(INDEX);
+  CREATE INDEX IF NOT EXISTS SYNCS_TABLE_SCHEMA_IDX ON core.SYNCS(TABLE_SCHEMA);
+  CREATE INDEX IF NOT EXISTS SYNCS_TABLE_NAME_IDX ON core.SYNCS(TABLE_NAME);
+  CREATE INDEX IF NOT EXISTS SYNCS__IDT_IDX ON core.SYNCS(_IDT);
+  CREATE INDEX IF NOT EXISTS SYNCS_ACTION_IDX ON core.SYNCS(ACTION);
+  CREATE INDEX IF NOT EXISTS SYNCS__ID_IDX ON core.SYNCS(_ID);
+  CREATE INDEX IF NOT EXISTS SYNCS__SYNC_IDX ON core.SYNCS(_SYNC);
 
   CREATE OR REPLACE FUNCTION core.SYNC_INSERT()
   RETURNS
@@ -81,7 +82,7 @@ func defineSync() error {
   DECLARE
     CHANNEL VARCHAR(250);
   BEGIN
-    IF NEW._IDT = '-1' && OLD._IDT != '-1' THEN
+    IF NEW._IDT = '-1' AND OLD._IDT != '-1' THEN
       NEW._IDT = OLD._IDT;
     ELSE
      IF NEW._IDT = '-1' THEN
@@ -171,8 +172,7 @@ func defineSync() error {
 }
 
 func SetSyncTrigger(model *linq.Model) error {
-	err := defineSync()
-	if err != nil {
+	if err := defineSync(); err != nil {
 		return err
 	}
 
