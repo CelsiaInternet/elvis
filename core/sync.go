@@ -217,9 +217,11 @@ func SetSyncTrigger(model *linq.Model) error {
 		}
 	}
 
-	channel := strs.Append(strs.Lowcase(schema), ".", strs.Uppcase(table))
-	url := jdb.DB(model.Db).URL
-	jdb.Listen(url, channel, "sync", model.OnListener)
+	if model.OnListener != nil {
+		channel := strs.Append(strs.Lowcase(schema), ".", strs.Uppcase(table))
+		url := jdb.DB(model.Db).URL
+		jdb.Listen(url, channel, "sync", model.OnListener)
+	}
 
 	return nil
 }
