@@ -35,7 +35,7 @@ func MkProject(packageName, name, author, schema string) error {
 		return err
 	}
 
-	ProgressNext(60)
+	ProgressNext(50)
 	_, err = Command([]string{
 		strs.Format("cd ./%s", name),
 		strs.Format("go mod init github.com/%s/%s", author, name),

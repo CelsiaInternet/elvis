@@ -750,7 +750,30 @@ func (rt *Router) all$2(w http.ResponseWriter, r *http.Request) {
 **/
 `
 
-const modelReadme = `### $1`
+const modelReadme = `
+## Project $1
+
+## Create project
+
+go mod init github.com/$1/api
+
+### Dependencias
+
+go get -u github.com/joho/godotenv/autoload &&
+go get -u github.com/redis/go-redis/v9 &&
+go get -u github.com/google/uuid &&
+go get -u github.com/nats-io/nats.go &&
+go get -u golang.org/x/crypto/bcrypt &&
+go get -u golang.org/x/exp/slices &&
+go get -u github.com/manifoldco/promptui &&
+go get -u github.com/schollz/progressbar/v3 &&
+go get -u github.com/spf13/cobra &&
+go get -u github.com/cgalvisleon/elvis@v0.0.114
+
+### Crear projecto, microservicios, modelos
+
+go run github.com/cgalvisleon/elvis/cmd/create-go create
+`
 
 const modelEnvar = `APP=
 PORT=3300
