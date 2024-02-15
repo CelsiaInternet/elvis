@@ -248,6 +248,5 @@ func init() {
 	if runtime.GOOS == "windows" {
 		color = false
 	}
-
 	DefaultLogger = RequestLogger(&DefaultLogFormatter{Logger: log.New(os.Stdout, "", log.LstdFlags), NoColor: !color})
 }

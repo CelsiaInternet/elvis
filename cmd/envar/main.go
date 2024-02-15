@@ -8,7 +8,5 @@ import (
 func main() {
 	if runtime.GOOS == "windows" {
 		fmt.Println("This program is not aplicable for windows machine.")
-	} else {
-
 	}
 }
