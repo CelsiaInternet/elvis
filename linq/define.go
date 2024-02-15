@@ -88,7 +88,7 @@ func (c *Model) DefineForeignKey(thisKey string, otherKey *Column) *Model {
 	return c
 }
 
-func (c *Model) DefineReference(thisKey, name, otherKey string, column *Column) *Model {
+func (c *Model) DefineReference(thisKey, name, otherKey string, column *Column, show bool) *Model {
 	if name == "" {
 		name = thisKey
 	}
@@ -100,7 +100,7 @@ func (c *Model) DefineReference(thisKey, name, otherKey string, column *Column) 
 		col.Reference = &Reference{thisKey, name, otherKey, column}
 		idx := c.ColIdx(thisKey)
 		if idx != -1 {
-			c.Definition[idx].ReferenceKey = true
+			c.Definition[idx].ReferenceKey = !show
 			c.Definition[idx].Indexed = true
 			c.Definition[idx].Model.IndexAdd(c.Definition[idx].name)
 			_otherKey := column.Model.Col(otherKey)
