@@ -29,6 +29,11 @@ func ValidId(val string) bool {
 	return !ok
 }
 
+func ValidKey(val string) bool {
+	ok := Contains([]string{"-1", "", "*", "new"}, val)
+	return !ok
+}
+
 func ValidInt(val int, notIn []int) bool {
 	ok := slices.Contains(notIn, val)
 

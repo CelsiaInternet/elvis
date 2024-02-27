@@ -203,6 +203,66 @@ func AllCache(search string, page, rows int) (et.List, error) {
 }
 
 /**
+* Json
+**/
+func GetJson(key string) (et.Json, error) {
+	if conn == nil {
+		return et.Json{}, nil
+	}
+
+	_default := "{}"
+	val, err := Get(key, _default)
+	if err != nil {
+		return et.Json{}, err
+	}
+
+	if val == _default {
+		return et.Json{}, nil
+	}
+
+	var result et.Json = et.Json{}
+	err = result.Scan(val)
+	if err != nil {
+		return et.Json{}, err
+	}
+
+	return result, nil
+}
+
+func SetJson(key string, val et.Json, second time.Duration) (et.Json, error) {
+	if conn == nil {
+		return val, nil
+	}
+
+	err := Set(key, val.ToString(), second)
+	if err != nil {
+		return et.Json{}, err
+	}
+
+	return val, nil
+}
+
+func SetJsonD(key string, val et.Json) (et.Json, error) {
+	day := time.Hour * 24
+	return SetJson(key, val, day)
+}
+
+func SetJsonW(key string, val et.Json) (et.Json, error) {
+	week := time.Hour * 24 * 7
+	return SetJson(key, val, week)
+}
+
+func SetJsonM(key string, val et.Json) (et.Json, error) {
+	month := time.Hour * 24 * 30
+	return SetJson(key, val, month)
+}
+
+func SetJsonY(key string, val et.Json) (et.Json, error) {
+	year := time.Hour * 24 * 365
+	return SetJson(key, val, year)
+}
+
+/**
 * Item
 **/
 func GetItem(key string) (et.Item, error) {
@@ -210,9 +270,14 @@ func GetItem(key string) (et.Item, error) {
 		return et.Item{}, nil
 	}
 
-	val, err := Get(key, "{}")
+	_default := "{}"
+	val, err := Get(key, _default)
 	if err != nil {
 		return et.Item{}, err
+	}
+
+	if val == _default {
+		return et.Item{}, nil
 	}
 
 	var result et.Json = et.Json{}
@@ -268,9 +333,14 @@ func GetItems(key string) (et.Items, error) {
 		return et.Items{}, nil
 	}
 
-	val, err := Get(key, "[]")
+	_default := "[]"
+	val, err := Get(key, _default)
 	if err != nil {
 		return et.Items{}, err
+	}
+
+	if val == _default {
+		return et.Items{}, nil
 	}
 
 	var result et.Items = et.Items{}
@@ -293,4 +363,24 @@ func SetItems(key string, val et.Items, second time.Duration) (et.Items, error) 
 	}
 
 	return val, nil
+}
+
+func SetItemsD(key string, val et.Items) (et.Items, error) {
+	day := time.Hour * 24
+	return SetItems(key, val, day)
+}
+
+func SetItemsW(key string, val et.Items) (et.Items, error) {
+	week := time.Hour * 24 * 7
+	return SetItems(key, val, week)
+}
+
+func SetItemsM(key string, val et.Items) (et.Items, error) {
+	month := time.Hour * 24 * 30
+	return SetItems(key, val, month)
+}
+
+func SetItemsY(key string, val et.Items) (et.Items, error) {
+	year := time.Hour * 24 * 365
+	return SetItems(key, val, year)
 }
