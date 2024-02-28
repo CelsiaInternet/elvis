@@ -57,9 +57,17 @@ func (c *Linq) CommandOne() (et.Item, error) {
 * Exec
 **/
 func (c *Linq) commandInsert() (et.Items, error) {
-	err := c.PrepareInsert()
+	currents, err := c.PrepareInsert()
 	if err != nil {
 		return et.Items{}, err
+	}
+
+	if currents.Count > 0 {
+		return et.Items{
+			Ok:     false,
+			Count:  currents.Count,
+			Result: []et.Json{},
+		}, nil
 	}
 
 	result, err := c.insert()
@@ -179,8 +187,12 @@ func (c *Linq) commandUpsert() (et.Items, error) {
 **/
 func (c *Linq) Current() (et.Items, error) {
 	c.sql = c.SqlCurrent()
+	result, err := c.Query()
+	if err != nil {
+		return et.Items{}, err
+	}
 
-	return c.Query()
+	return result, nil
 }
 
 /**

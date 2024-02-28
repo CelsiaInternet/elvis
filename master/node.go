@@ -18,7 +18,7 @@ const NodeStatusError = 4
 
 type Node struct {
 	Db          int
-	URL         string
+	ConnStr     string
 	Date_make   time.Time `json:"date_make"`
 	Date_update time.Time `json:"date_update"`
 	Id          string    `json:"_id"`

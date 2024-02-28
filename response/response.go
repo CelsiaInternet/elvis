@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/cgalvisleon/elvis/et"
+	"github.com/cgalvisleon/elvis/generic"
 	"github.com/go-chi/chi"
 )
 
@@ -43,6 +44,25 @@ func GetBody(r *http.Request) (et.Json, error) {
 	defer r.Body.Close()
 
 	return result, nil
+}
+
+func GetQuery(r *http.Request) et.Json {
+	var result et.Json = et.Json{}
+	values := r.URL.Query()
+	for key, value := range values {
+		if len(value) > 0 {
+			result.Set(key, value[0])
+		}
+	}
+
+	return result
+}
+
+func GetParam(r *http.Request, key string) *generic.Any {
+	val := chi.URLParam(r, key)
+	result := generic.New(val)
+
+	return result
 }
 
 func WriteResponse(w http.ResponseWriter, statusCode int, e []byte) error {

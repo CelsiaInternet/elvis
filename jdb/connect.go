@@ -45,21 +45,21 @@ func connect() {
 }
 
 func Connected(driver, host string, port int, dbname, user, password string) (int, error) {
-	url := ""
+	var connStr string
 	switch driver {
 	case Postgres:
-		url = strs.Format(`%s://%s:%s@%s:%d/%s?sslmode=disable`, driver, user, password, host, port, dbname)
+		connStr = strs.Format(`%s://%s:%s@%s:%d/%s?sslmode=disable`, driver, user, password, host, port, dbname)
 	case Mysql:
-		url = strs.Format(`%s:%s@tcp(%s:%d)/%s`, user, password, host, port, dbname)
+		connStr = strs.Format(`%s:%s@tcp(%s:%d)/%s`, user, password, host, port, dbname)
 	case Sqlserver:
-		url = strs.Format(`server=%s;user id=%s;password=%s;port=%d;database=%s;`, host, user, password, port, dbname)
+		connStr = strs.Format(`server=%s;user id=%s;password=%s;port=%d;database=%s;`, host, user, password, port, dbname)
 	case Firebird:
-		url = strs.Format(`%s/%s@%s;`, user, password, host)
+		connStr = strs.Format(`%s/%s@%s;`, user, password, host)
 	default:
 		panic(msg.NOT_SELECT_DRIVE)
 	}
 
-	sqlDB, err := sql.Open(driver, url)
+	sqlDB, err := sql.Open(driver, connStr)
 	if err != nil {
 		return -1, console.Error(err)
 	}
@@ -74,14 +74,14 @@ func Connected(driver, host string, port int, dbname, user, password string) (in
 
 	idx := len(conn.Db)
 	db := &Db{
-		Index:  idx,
-		Driver: driver,
-		Host:   host,
-		Port:   port,
-		Dbname: dbname,
-		User:   user,
-		URL:    url,
-		Db:     sqlDB,
+		Index:   idx,
+		Driver:  driver,
+		Host:    host,
+		Port:    port,
+		Dbname:  dbname,
+		User:    user,
+		ConnStr: connStr,
+		Db:      sqlDB,
 	}
 
 	conn.Db = append(conn.Db, db)

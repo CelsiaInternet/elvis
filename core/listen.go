@@ -94,7 +94,7 @@ func DefineListener() error {
 	return nil
 }
 
-func SetListenerTrigger(model *linq.Model) error {
+func SetListenTrigger(model *linq.Model) error {
 	if !makedListener {
 		return nil
 	}
@@ -138,11 +138,9 @@ func SetListenerTrigger(model *linq.Model) error {
 		}
 	}
 
-	if model.OnListener != nil {
-		channel := strs.Append(strs.Lowcase(schema), ".", strs.Uppcase(table))
-		url := jdb.DB(model.Db).URL
-		jdb.Listen(url, channel, "listen", model.OnListener)
-	}
+	channel := strs.Append(strs.Lowcase(schema), ".", strs.Uppcase(table))
+	connStr := jdb.DB(model.Db).ConnStr
+	go jdb.Listen(connStr, channel, "listen", model.OnListener)
 
 	return nil
 }

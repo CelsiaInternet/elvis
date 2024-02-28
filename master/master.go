@@ -24,7 +24,7 @@ func InitDefine() error {
 		return console.Panic(err)
 	}
 
-	go jdb.Listen(jdb.DB(0).URL, "node", "node", listenNode)
+	go jdb.Listen(jdb.DB(0).ConnStr, "node", "node", listenNode)
 
 	console.LogK("CORE", "Init Master")
 
@@ -73,7 +73,7 @@ func (c *Master) LoadNode(params et.Json) error {
 		}
 
 		node.Db = idx
-		node.URL = jdb.DB(idx).URL
+		node.ConnStr = jdb.DB(idx).ConnStr
 		node.Index = len(c.Nodes)
 		c.Nodes = append(c.Nodes, *node)
 

@@ -17,7 +17,7 @@ func InitModel(model *linq.Model) error {
 	if model.UseSync() {
 		SetSyncTrigger(model)
 	} else {
-		SetListenerTrigger(model)
+		SetListenTrigger(model)
 	}
 
 	if model.UseRecycle() && model.UseState {

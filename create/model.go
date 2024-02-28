@@ -535,6 +535,9 @@ func Define$2() error {
 	$2.Trigger(linq.AfterDelete, func(model *linq.Model, old, new *et.Json, data et.Json) error {
 		return nil
 	})
+	$2.OnListener = func(data et.Json) {
+		console.Debug($2.Table+" Listen", data)
+	}
 	
 	if err := core.InitModel($2); err != nil {
 		return console.Panic(err)

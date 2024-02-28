@@ -103,25 +103,21 @@ func (c *Model) Changue(current et.Json, linq *Linq) *Linq {
 /**
 *	Prepare command data
 **/
-func (c *Linq) PrepareInsert() error {
+func (c *Linq) PrepareInsert() (et.Items, error) {
 	model := c.from[0].model
 	model.Consolidate(c)
 	for _, validate := range c.validates {
 		if err := validate.Col.Valid(validate.Value); err != nil {
-			return err
+			return et.Items{}, err
 		}
 	}
 
-	current, err := c.Current()
+	result, err := c.Current()
 	if err != nil {
-		return err
+		return et.Items{}, err
 	}
 
-	if current.Ok {
-		return nil
-	}
-
-	return nil
+	return result, nil
 }
 
 func (c *Linq) PrepareUpdate() (et.Items, error) {
