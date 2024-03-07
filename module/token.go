@@ -121,8 +121,6 @@ func DefineTokens() error {
 			cache.Del(_idt)
 			cache.Del(_id)
 		}
-
-		console.Debug(Tokens.Name+" Listen", data)
 	}
 
 	if err := core.InitModel(Tokens); err != nil {

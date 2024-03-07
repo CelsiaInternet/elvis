@@ -119,8 +119,6 @@ func DefineUsers() error {
 			cache.Del(_idt)
 			cache.Del(_id)
 		}
-
-		console.Debug(Users.Name+" Listen", data)
 	}
 
 	if err := core.InitModel(Users); err != nil {

@@ -568,8 +568,6 @@ func Define$2() error {
 			cache.Del(_idt)
 			cache.Del(_id)
 		}
-
-		console.Debug($2.Table+" Listen", data)
 	}
 	
 	if err := core.InitModel($2); err != nil {

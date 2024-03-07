@@ -67,8 +67,6 @@ func DefineProfiles() error {
 			cache.Del(_idt)
 			cache.Del(_id)
 		}
-
-		console.Debug(Profiles.Name+" Listen", data)
 	}
 
 	if err := core.InitModel(Profiles); err != nil {
@@ -129,8 +127,6 @@ func DefineProfileFolders() error {
 			cache.Del(_idt)
 			cache.Del(_id)
 		}
-
-		console.Debug(ProfileFolders.Name+" Listen", data)
 	}
 
 	if err := core.InitModel(ProfileFolders); err != nil {

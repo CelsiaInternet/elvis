@@ -82,8 +82,6 @@ func DefineModules() error {
 			cache.Del(_idt)
 			cache.Del(_id)
 		}
-
-		console.Debug(Modules.Name+" Listen", data)
 	}
 
 	if err := core.InitModel(Modules); err != nil {

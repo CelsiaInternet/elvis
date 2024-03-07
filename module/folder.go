@@ -97,8 +97,6 @@ func DefineFolders() error {
 			cache.Del(_idt)
 			cache.Del(_id)
 		}
-
-		console.Debug(Folders.Name+" Listen", data)
 	}
 
 	if err := core.InitModel(Folders); err != nil {

@@ -80,8 +80,6 @@ func DefineProjects() error {
 			cache.Del(_idt)
 			cache.Del(_id)
 		}
-
-		console.Debug(Projects.Name+" Listen", data)
 	}
 
 	if err := core.InitModel(Projects); err != nil {
@@ -142,8 +140,6 @@ func DefineProjectModules() error {
 			cache.Del(_idt)
 			cache.Del(_id)
 		}
-
-		console.Debug(ProjectModules.Name+" Listen", data)
 	}
 
 	if err := core.InitModel(ProjectModules); err != nil {

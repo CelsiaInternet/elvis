@@ -74,8 +74,6 @@ func DefineTypes() error {
 			cache.Del(_idt)
 			cache.Del(_id)
 		}
-
-		console.Debug(Types.Name+" Listen", data)
 	}
 
 	if err := core.InitModel(Types); err != nil {

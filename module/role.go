@@ -68,8 +68,6 @@ func DefineRoles() error {
 			cache.Del(_idt)
 			cache.Del(_id)
 		}
-
-		console.Debug(Roles.Name+" Listen", data)
 	}
 
 	if err := core.InitModel(Roles); err != nil {
