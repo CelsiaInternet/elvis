@@ -8,6 +8,7 @@ import (
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/core"
 	"github.com/cgalvisleon/elvis/et"
+	"github.com/cgalvisleon/elvis/event"
 	"github.com/cgalvisleon/elvis/jdb"
 	"github.com/cgalvisleon/elvis/linq"
 	"github.com/cgalvisleon/elvis/msg"
@@ -90,6 +91,39 @@ func DefineTokens() error {
 		data.Set(col.Low(), newToken)
 		data.Set("long_token", token)
 	})
+	Tokens.OnListener = func(data et.Json) {
+		option := data.Str("option")
+		_idt := data.Str("_idt")
+		if option == "insert" {
+			item, err := GetTokenByIdT(_idt)
+			if err != nil {
+				return
+			}
+
+			_id := item.Key("_id")
+			event.WsPublish(_id, item.Result, "")
+		} else if option == "update" {
+			item, err := GetTokenByIdT(_idt)
+			if err != nil {
+				return
+			}
+
+			_id := item.Key("_id")
+			cache.Del(_idt)
+			cache.Del(_id)
+			event.WsPublish(_id, item.Result, "")
+		} else if option == "delete" {
+			_id, err := cache.Get(_idt, "-1")
+			if err != nil {
+				return
+			}
+
+			cache.Del(_idt)
+			cache.Del(_id)
+		}
+
+		console.Debug(Tokens.Name+" Listen", data)
+	}
 
 	if err := core.InitModel(Tokens); err != nil {
 		return console.Panic(err)
@@ -118,6 +152,16 @@ func unLoadTokenById(app, device, id string) error {
 	}
 
 	return nil
+}
+
+/**
+* Token
+*	Handler for CRUD data
+**/
+func GetTokenByIdT(_idt string) (et.Item, error) {
+	return Tokens.Data().
+		Where(Tokens.Col("_idt").Eq(_idt)).
+		First()
 }
 
 func GetTokenById(id string) (et.Item, error) {

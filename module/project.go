@@ -1,9 +1,11 @@
 package module
 
 import (
+	"github.com/cgalvisleon/elvis/cache"
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/core"
 	"github.com/cgalvisleon/elvis/et"
+	"github.com/cgalvisleon/elvis/event"
 	"github.com/cgalvisleon/elvis/linq"
 	"github.com/cgalvisleon/elvis/msg"
 	"github.com/cgalvisleon/elvis/utility"
@@ -48,6 +50,39 @@ func DefineProjects() error {
 
 		return nil
 	})
+	Projects.OnListener = func(data et.Json) {
+		option := data.Str("option")
+		_idt := data.Str("_idt")
+		if option == "insert" {
+			item, err := GetProjectByIdT(_idt)
+			if err != nil {
+				return
+			}
+
+			_id := item.Key("_id")
+			event.WsPublish(_id, item.Result, "")
+		} else if option == "update" {
+			item, err := GetProjectByIdT(_idt)
+			if err != nil {
+				return
+			}
+
+			_id := item.Key("_id")
+			cache.Del(_idt)
+			cache.Del(_id)
+			event.WsPublish(_id, item.Result, "")
+		} else if option == "delete" {
+			_id, err := cache.Get(_idt, "-1")
+			if err != nil {
+				return
+			}
+
+			cache.Del(_idt)
+			cache.Del(_id)
+		}
+
+		console.Debug(Projects.Name+" Listen", data)
+	}
 
 	if err := core.InitModel(Projects); err != nil {
 		return console.Panic(err)
@@ -77,6 +112,39 @@ func DefineProjectModules() error {
 		"date_make",
 		"index",
 	})
+	ProjectModules.OnListener = func(data et.Json) {
+		option := data.Str("option")
+		_idt := data.Str("_idt")
+		if option == "insert" {
+			item, err := GetProjectModulesByIdT(_idt)
+			if err != nil {
+				return
+			}
+
+			_id := item.Key("project_id") + "/" + item.Key("module_id")
+			event.WsPublish(_id, item.Result, "")
+		} else if option == "update" {
+			item, err := GetProjectModulesByIdT(_idt)
+			if err != nil {
+				return
+			}
+
+			_id := item.Key("project_id") + "/" + item.Key("module_id")
+			cache.Del(_idt)
+			cache.Del(_id)
+			event.WsPublish(_id, item.Result, "")
+		} else if option == "delete" {
+			_id, err := cache.Get(_idt, "-1")
+			if err != nil {
+				return
+			}
+
+			cache.Del(_idt)
+			cache.Del(_id)
+		}
+
+		console.Debug(ProjectModules.Name+" Listen", data)
+	}
 
 	if err := core.InitModel(ProjectModules); err != nil {
 		return console.Panic(err)
@@ -88,7 +156,13 @@ func DefineProjectModules() error {
 /**
 * Project
 *	Handler for CRUD data
- */
+**/
+func GetProjectByIdT(_idt string) (et.Item, error) {
+	return Projects.Data().
+		Where(Projects.Column("_idt").Eq(_idt)).
+		First()
+}
+
 func GetProjectById(id string) (et.Item, error) {
 	return Projects.Data().
 		Where(Projects.Column("_id").Eq(id)).
@@ -98,6 +172,15 @@ func GetProjectById(id string) (et.Item, error) {
 func GetProjectName(name string) (et.Item, error) {
 	return Projects.Data().
 		Where(Projects.Column("name").Eq(name)).
+		First()
+}
+
+/**
+* ProjectModules
+**/
+func GetProjectModulesByIdT(_idt string) (et.Item, error) {
+	return ProjectModules.Data().
+		Where(ProjectModules.Column("_idt").Eq(_idt)).
 		First()
 }
 

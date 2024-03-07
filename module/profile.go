@@ -1,9 +1,11 @@
 package module
 
 import (
+	"github.com/cgalvisleon/elvis/cache"
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/core"
 	"github.com/cgalvisleon/elvis/et"
+	"github.com/cgalvisleon/elvis/event"
 	"github.com/cgalvisleon/elvis/linq"
 	"github.com/cgalvisleon/elvis/msg"
 	"github.com/cgalvisleon/elvis/utility"
@@ -35,6 +37,39 @@ func DefineProfiles() error {
 		"index",
 	})
 	Profiles.DefineForeignKey("module_id", Modules.Column("_id"))
+	Profiles.OnListener = func(data et.Json) {
+		option := data.Str("option")
+		_idt := data.Str("_idt")
+		if option == "insert" {
+			item, err := GetProfileByIdT(_idt)
+			if err != nil {
+				return
+			}
+
+			_id := item.Key("module_id") + "/" + item.Key("profile_tp")
+			event.WsPublish(_id, item.Result, "")
+		} else if option == "update" {
+			item, err := GetProfileByIdT(_idt)
+			if err != nil {
+				return
+			}
+
+			_id := item.Key("module_id") + "/" + item.Key("profile_tp")
+			cache.Del(_idt)
+			cache.Del(_id)
+			event.WsPublish(_id, item.Result, "")
+		} else if option == "delete" {
+			_id, err := cache.Get(_idt, "-1")
+			if err != nil {
+				return
+			}
+
+			cache.Del(_idt)
+			cache.Del(_id)
+		}
+
+		console.Debug(Profiles.Name+" Listen", data)
+	}
 
 	if err := core.InitModel(Profiles); err != nil {
 		return console.Panic(err)
@@ -64,6 +99,39 @@ func DefineProfileFolders() error {
 		"index",
 	})
 	ProfileFolders.DefineForeignKey("module_id", Modules.Column("_id"))
+	ProfileFolders.OnListener = func(data et.Json) {
+		option := data.Str("option")
+		_idt := data.Str("_idt")
+		if option == "insert" {
+			item, err := GetProfileFolderByIdT(_idt)
+			if err != nil {
+				return
+			}
+
+			_id := item.Key("module_id") + "/" + item.Key("profile_tp") + "/" + item.Key("folder_id")
+			event.WsPublish(_id, item.Result, "")
+		} else if option == "update" {
+			item, err := GetProfileFolderByIdT(_idt)
+			if err != nil {
+				return
+			}
+
+			_id := item.Key("module_id") + "/" + item.Key("profile_tp") + "/" + item.Key("folder_id")
+			cache.Del(_idt)
+			cache.Del(_id)
+			event.WsPublish(_id, item.Result, "")
+		} else if option == "delete" {
+			_id, err := cache.Get(_idt, "-1")
+			if err != nil {
+				return
+			}
+
+			cache.Del(_idt)
+			cache.Del(_id)
+		}
+
+		console.Debug(ProfileFolders.Name+" Listen", data)
+	}
 
 	if err := core.InitModel(ProfileFolders); err != nil {
 		return console.Panic(err)
@@ -76,6 +144,12 @@ func DefineProfileFolders() error {
 * Profile
 *	Handler for CRUD data
 **/
+func GetProfileByIdT(_idt string) (et.Item, error) {
+	return Profiles.Data().
+		Where(Profiles.Column("_idt").Eq(_idt)).
+		First()
+}
+
 func GetProfileById(moduleId, profileTp string) (et.Item, error) {
 	return Profiles.Data().
 		Where(Profiles.Column("module_id").Eq(moduleId)).
@@ -184,6 +258,15 @@ func DeleteProfile(moduleId, profileTp string) (et.Item, error) {
 		Where(Profiles.Column("module_id").Eq(moduleId)).
 		And(Profiles.Column("profile_tp").Eq(profileTp)).
 		CommandOne()
+}
+
+/**
+* Profile Folder
+**/
+func GetProfileFolderByIdT(_idt string) (et.Item, error) {
+	return ProfileFolders.Data().
+		Where(ProfileFolders.Column("_idt").Eq(_idt)).
+		First()
 }
 
 func GetProfileFolderById(moduleId, profileTp, folderId string) (et.Item, error) {
