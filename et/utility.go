@@ -304,9 +304,7 @@ func Val(data Json, _default any, atribs ...string) any {
 }
 
 func ApendJson(m Json, n Json) Json {
-	var result Json
-
-	result = m
+	result := m
 	for k, v := range n {
 		result[k] = v
 	}

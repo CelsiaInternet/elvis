@@ -63,30 +63,29 @@ func (c *Col) AsLow() string {
 type Details func(col *Column, data *et.Json)
 
 type Column struct {
-	Model        *Model
-	Tp           int
-	Column       *Column
-	name         string
-	Title        string
-	Description  string
-	Type         string
-	Default      any
-	Atribs       []*Column
-	Reference    *Reference
-	Definition   interface{}
-	Function     string
-	Details      Details
-	References   []*Column
-	Indexed      bool
-	Unique       bool
-	Required     bool
-	RequiredMsg  string
-	PrimaryKey   bool
-	ForeignKey   bool
-	ReferenceKey bool
-	Hidden       bool
-	from         string
-	cast         string
+	Model       *Model
+	Tp          int
+	Column      *Column
+	name        string
+	Title       string
+	Description string
+	Type        string
+	Default     any
+	Atribs      []*Column
+	Reference   *Reference
+	Definition  interface{}
+	Function    string
+	Details     Details
+	References  []*Column
+	Indexed     bool
+	Unique      bool
+	Required    bool
+	RequiredMsg string
+	PrimaryKey  bool
+	ForeignKey  bool
+	Hidden      bool
+	from        string
+	cast        string
 }
 
 func (c *Column) Driver() string {
@@ -95,19 +94,18 @@ func (c *Column) Driver() string {
 
 func (c *Column) describe() et.Json {
 	return et.Json{
-		"name":         c.name,
-		"description":  c.Description,
-		"type":         c.Type,
-		"default":      c.Default,
-		"tp":           c.Tp,
-		"indexed":      c.Indexed,
-		"unique":       c.Unique,
-		"required":     c.Required,
-		"primaryKey":   c.PrimaryKey,
-		"foreignKey":   c.ForeignKey,
-		"referenceKey": c.ReferenceKey,
-		"hidden":       c.Hidden,
-		"references":   c.References,
+		"name":        c.name,
+		"description": c.Description,
+		"type":        c.Type,
+		"default":     c.Default,
+		"tp":          c.Tp,
+		"indexed":     c.Indexed,
+		"unique":      c.Unique,
+		"required":    c.Required,
+		"primaryKey":  c.PrimaryKey,
+		"foreignKey":  c.ForeignKey,
+		"hidden":      c.Hidden,
+		"references":  c.References,
 	}
 }
 
@@ -166,6 +164,7 @@ func NewColumn(model *Model, name, description, _type string, _default any) *Col
 		Atribs:      []*Column{},
 		References:  []*Column{},
 		Indexed:     false,
+		Hidden:      false,
 	}
 
 	if !model.UseDateMake {

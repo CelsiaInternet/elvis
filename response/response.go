@@ -8,7 +8,7 @@ import (
 
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/generic"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 )
 
 type Result struct {

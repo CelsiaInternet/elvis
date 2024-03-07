@@ -431,14 +431,6 @@ func (s Json) Update(fromJson Json) error {
 	return nil
 }
 
-func (s Json) Apend(n Json) error {
-	for k, v := range n {
-		s[k] = v
-	}
-
-	return nil
-}
-
 func (s Json) IsDiferent(new Json) bool {
 	return IsDiferent(s, new)
 }
@@ -469,6 +461,17 @@ func (s Json) Set(key string, val interface{}) bool {
 
 	s[key] = val
 	return false
+}
+
+func (s *Json) Append(obj Json) *Json {
+	var result Json = *s
+	for k, v := range obj {
+		if _, ok := result[k]; !ok {
+			result[k] = v
+		}
+	}
+
+	return &result
 }
 
 func (s Json) Del(key string) bool {

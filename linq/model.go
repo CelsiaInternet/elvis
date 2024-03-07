@@ -25,6 +25,7 @@ type Model struct {
 	Database           *jdb.Db
 	Name               string
 	Description        string
+	Define             string
 	schema             *Schema
 	Schema             string
 	Table              string
@@ -196,6 +197,8 @@ func (c *Model) Init() error {
 		return err
 	}
 
+	c.Define = sql
+
 	return nil
 }
 
@@ -319,6 +322,7 @@ func (c *Model) Trigger(event int, trigger Trigger) {
 func (c *Model) Details(name, description string, _default any, details Details) {
 	col := NewColumn(c, name, "", "DETAIL", _default)
 	col.Tp = TpDetail
+	col.Hidden = true
 	col.Details = details
 }
 

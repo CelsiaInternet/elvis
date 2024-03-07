@@ -79,6 +79,7 @@ func RequestLogger(f LogFormatter) func(next http.Handler) http.Handler {
 			if r.TLS != nil {
 				scheme = "https"
 			}
+
 			defer func() {
 				telemetry := et.Json{
 					"reqID":     reqID,
@@ -87,8 +88,9 @@ func RequestLogger(f LogFormatter) func(next http.Handler) http.Handler {
 					"request": et.Json{
 						"method":   method,
 						"endpoint": endPoint,
-						"status":   http.StatusOK,
+						"status":   ww.Status(),
 						"bytes":    ww.BytesWritten(),
+						"header":   ww.Header(),
 						"scheme":   scheme,
 						"host":     r.Host,
 					},

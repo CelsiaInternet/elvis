@@ -6,7 +6,7 @@ import (
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/event"
 	"github.com/cgalvisleon/elvis/middleware"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 )
 
 const (
@@ -20,7 +20,7 @@ const (
 	HandlerFunc = "HandlerFunc"
 )
 
-func PublicRoute(r *chi.Mux, method, path string, h http.HandlerFunc, packageName, packagepath, host string) *chi.Mux {
+func PublicRoute(r *chi.Mux, method, path string, h http.HandlerFunc, packageName, packagePath, host string) *chi.Mux {
 	switch method {
 	case "GET":
 		r.Get(path, h)
@@ -40,19 +40,19 @@ func PublicRoute(r *chi.Mux, method, path string, h http.HandlerFunc, packageNam
 		r.HandleFunc(path, h)
 	}
 
-	event.Publish("router", "apimanager/upsert", et.Json{
+	event.Publish("apimanager", "apimanager/upsert", et.Json{
 		"kind":         "public",
 		"method":       method,
 		"path":         path,
 		"package_name": packageName,
-		"package_path": packagepath,
+		"package_path": packagePath,
 		"host":         host,
 	})
 
 	return r
 }
 
-func ProtectRoute(r *chi.Mux, method, path string, h http.HandlerFunc, packageName, packagepath, host string) *chi.Mux {
+func ProtectRoute(r *chi.Mux, method, path string, h http.HandlerFunc, packageName, packagePath, host string) *chi.Mux {
 	switch method {
 	case "GET":
 		r.With(middleware.Authorization).Get(path, h)
@@ -72,12 +72,12 @@ func ProtectRoute(r *chi.Mux, method, path string, h http.HandlerFunc, packageNa
 		r.With(middleware.Authorization).HandleFunc(path, h)
 	}
 
-	event.Publish("router", "apimanager/upsert", et.Json{
+	event.Publish("apimanager", "apimanager/upsert", et.Json{
 		"kind":         "protect",
 		"method":       method,
 		"path":         path,
 		"package_name": packageName,
-		"package_path": packagepath,
+		"package_path": packagePath,
 		"host":         host,
 	})
 

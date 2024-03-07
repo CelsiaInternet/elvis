@@ -13,6 +13,7 @@ type Schema struct {
 	Database        *jdb.Db
 	Name            string
 	Description     string
+	Define          string
 	UseSync         bool
 	UseRecycle      bool
 	UseSerie        bool
@@ -91,6 +92,8 @@ func (c *Schema) Init() error {
 	if err != nil {
 		return err
 	}
+
+	c.Define = strs.Format(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"; CREATE SCHEMA IF NOT EXISTS "%s";`, c.Name)
 
 	return nil
 }

@@ -88,24 +88,24 @@ func (c *Model) DefineForeignKey(thisKey string, otherKey *Column) *Model {
 	return c
 }
 
-func (c *Model) DefineReference(thisKey, name, otherKey string, column *Column, show bool) *Model {
+func (c *Model) DefineReference(thisKey, name, otherKey string, column *Column, showThisKey bool) *Model {
 	if name == "" {
 		name = thisKey
 	}
-	idx := c.ColIdx(name)
-	if idx == -1 {
+	idxName := c.ColIdx(name)
+	if idxName == -1 {
 		col := NewColumn(c, name, "", "REFERENCE", et.Json{"_id": "", "name": ""})
 		col.Tp = TpReference
 		col.Title = name
 		col.Reference = &Reference{thisKey, name, otherKey, column}
-		idx := c.ColIdx(thisKey)
-		if idx != -1 {
-			c.Definition[idx].ReferenceKey = !show
-			c.Definition[idx].Indexed = true
-			c.Definition[idx].Model.IndexAdd(c.Definition[idx].name)
+		idxThisKey := c.ColIdx(thisKey)
+		if idxThisKey != -1 {
+			c.Definition[idxThisKey].Hidden = !showThisKey
+			c.Definition[idxThisKey].Indexed = true
+			c.Definition[idxThisKey].Model.IndexAdd(c.Definition[idxThisKey].name)
 			_otherKey := column.Model.Col(otherKey)
 			if _otherKey != nil {
-				_otherKey.ReferencesAdd(c.Definition[idx])
+				_otherKey.ReferencesAdd(c.Definition[idxThisKey])
 			}
 		}
 	}

@@ -91,6 +91,10 @@ func (s *Linq) Find() (et.Items, error) {
 	return items, nil
 }
 
+func (s *Linq) All() (et.Items, error) {
+	return s.Find()
+}
+
 func (s *Linq) First() (et.Item, error) {
 	s.sql = s.SqlLimit(1)
 

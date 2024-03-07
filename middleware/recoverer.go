@@ -47,7 +47,6 @@ func PrintPrettyStack(rvr interface{}) {
 	if err == nil {
 		os.Stderr.Write(out)
 	} else {
-		// print stdlib output as a fallback
 		os.Stderr.Write(debugStack)
 	}
 }

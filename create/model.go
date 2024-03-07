@@ -75,8 +75,9 @@ import (
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/middleware"
+	"github.com/cgalvisleon/elvis/response"
 	"github.com/cgalvisleon/elvis/strs"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/rs/cors"
 )
@@ -101,6 +102,10 @@ func New() (*Server, error) {
 		r.Use(middleware.Recoverer)
 
 		latest := v1.New()
+
+		r.NotFound(func(w http.ResponseWriter, r *http.Request) {
+			response.HTTPError(w, r, http.StatusNotFound, "404 Not Found")
+		})
 
 		r.Mount("/", latest)
 		r.Mount("/v1", latest)
@@ -177,7 +182,7 @@ import (
 	"github.com/cgalvisleon/elvis/utility"
 	"github.com/cgalvisleon/elvis/ws"
 	"github.com/dimiro1/banner"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/mattn/go-colorable"
 )
 
@@ -190,11 +195,6 @@ func New() http.Handler {
 	}
 
 	_, err = event.Load()
-	if err != nil {
-		panic(err)
-	}
-
-	_, err = ws.Load()
 	if err != nil {
 		panic(err)
 	}
@@ -403,7 +403,7 @@ import (
 	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/response"
 	er "github.com/cgalvisleon/elvis/router"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 )
 
 var PackageName = "$1"
@@ -422,11 +422,11 @@ func (rt *Router) Routes() http.Handler {
 
 	er.PublicRoute(r, er.Get, "/version", rt.version, PackageName, PackagePath, Host)
 	// $2
-	er.ProtectRoute(r, er.Get, "/$1/{id}", rt.get$2ById, PackageName, PackagePath, Host)
-	er.ProtectRoute(r, er.Post, "/$1", rt.upSert$2, PackageName, PackagePath, Host)
-	er.ProtectRoute(r, er.Put, "/$1/state/{id}", rt.state$2, PackageName, PackagePath, Host)
-	er.ProtectRoute(r, er.Delete, "/$1/{id}", rt.delete$2, PackageName, PackagePath, Host)
-	er.ProtectRoute(r, er.Get, "/$1/all", rt.all$2, PackageName, PackagePath, Host)
+	er.ProtectRoute(r, er.Get, "/{id}", rt.get$2ById, PackageName, PackagePath, Host)
+	er.ProtectRoute(r, er.Post, "", rt.upSert$2, PackageName, PackagePath, Host)
+	er.ProtectRoute(r, er.Put, "/state/{id}", rt.state$2, PackageName, PackagePath, Host)
+	er.ProtectRoute(r, er.Delete, "/{id}", rt.delete$2, PackageName, PackagePath, Host)
+	er.ProtectRoute(r, er.Get, "/all", rt.all$2, PackageName, PackagePath, Host)
 
 	ctx := context.Background()
 	rt.Repository.Init(ctx)
@@ -472,7 +472,9 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/cgalvisleon/elvis/cache"
 	"github.com/cgalvisleon/elvis/console"
+	"github.com/cgalvisleon/elvis/event"
 	"github.com/cgalvisleon/elvis/core"
 	"github.com/cgalvisleon/elvis/generic"
 	"github.com/cgalvisleon/elvis/et"
@@ -480,7 +482,7 @@ import (
 	"github.com/cgalvisleon/elvis/msg"
 	"github.com/cgalvisleon/elvis/response"
 	"github.com/cgalvisleon/elvis/utility"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 )
 
 var $2 *linq.Model
@@ -536,6 +538,37 @@ func Define$2() error {
 		return nil
 	})
 	$2.OnListener = func(data et.Json) {
+		option := data.Str("option")
+		_idt := data.Str("_idt")
+		if option == "insert" {
+			asset, err := Get$2ByIdT(_idt)
+			if err != nil {
+				return
+			}
+
+			_id := asset.Key("_id")
+			cache.SetW(_idt, _id)
+			event.WsPublish(_id, asset.Result, "")
+		} else if option == "update" {
+			asset, err := Get$2ByIdT(_idt)
+			if err != nil {
+				return
+			}
+
+			_id := asset.Key("_id")
+			cache.Del(_idt)
+			cache.Del(_id)
+			event.WsPublish(_id, asset.Result, "")
+		} else if option == "delete" {
+			_id, err := cache.Get(_idt, "-1")
+			if err != nil {
+				return
+			}
+
+			cache.Del(_idt)
+			cache.Del(_id)
+		}
+
 		console.Debug($2.Table+" Listen", data)
 	}
 	
@@ -550,13 +583,37 @@ func Define$2() error {
 *	Handler for CRUD data
  */
 func Get$2ById(id string) (et.Item, error) {
-	return $2.Select().
+	result, err := cache.GetItem(id)
+	if err != nil {
+		return et.Item{}, err
+	}
+
+	if result.Ok {
+		return result, nil
+	}
+
+	result, err = $2.Data().
 		Where($2.Column("_id").Eq(id)).
+		First()
+	if err != nil {
+		return et.Item{}, err
+	}
+
+	if result.Ok {
+		cache.SetItemW(id, result)
+	}
+
+	return result, nil	
+}
+
+func Get$2ByIdT(idt string) (et.Item, error) {
+	return $2.Data().
+		Where($2.Column("_idt").Eq(idt)).
 		First()
 }
 
 func Value$2ById(_default any, id, atrib string) *generic.Any {
-	item, err := $2.Select(atrib).
+	item, err := $2.Data(atrib).
 		Where($2.Column("_id").Eq(id)).
 		First()
 	if err != nil {
@@ -588,7 +645,7 @@ func State$2(id, state string) (et.Item, error) {
 		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "state")
 	}
 
-	item, err := $2.Select("_state").
+	item, err := $2.Data("_state").
 		Where($2.Column("_id").Eq(id)).
 		First()
 	if err != nil {
@@ -627,7 +684,7 @@ func All$2(project_id, state, search string, page, rows int, _select string) (et
 	auxState := state
 
 	if search != "" {
-		return $2.Select(_select).
+		return $2.Data(_select).
 			Where($2.Column("project_id").In("-1", project_id)).
 			And($2.Concat("NAME:", $2.Column("name"), "DESCRIPTION:", $2.Column("description"), "DATA:", $2.Column("_data"), ":").Like("%"+search+"%")).
 			OrderBy($2.Column("name"), true).
@@ -635,19 +692,19 @@ func All$2(project_id, state, search string, page, rows int, _select string) (et
 	} else if auxState == "*" {
 		state = utility.FOR_DELETE
 
-		return $2.Select(_select).
+		return $2.Data(_select).
 			Where($2.Column("_state").Neg(state)).
 			And($2.Column("project_id").In("-1", project_id)).
 			OrderBy($2.Column("name"), true).
 			List(page, rows)
 	} else if auxState == "0" {
-		return $2.Select(_select).
+		return $2.Data(_select).
 			Where($2.Column("_state").In("-1", state)).
 			And($2.Column("project_id").In("-1", project_id)).
 			OrderBy($2.Column("name"), true).
 			List(page, rows)
 	} else {
-		return $2.Select(_select).
+		return $2.Data(_select).
 			Where($2.Column("_state").Eq(state)).
 			And($2.Column("project_id").In("-1", project_id)).
 			OrderBy($2.Column("name"), true).
@@ -711,22 +768,13 @@ func (rt *Router) delete$2(w http.ResponseWriter, r *http.Request) {
 }
 
 func (rt *Router) all$2(w http.ResponseWriter, r *http.Request) {
-	project_id := r.URL.Query().Get("project_id")
-	state := r.URL.Query().Get("state")
-	search := r.URL.Query().Get("search")
-	pageStr := r.URL.Query().Get("page")
-	rowsStr := r.URL.Query().Get("rows")
-	_select := r.URL.Query().Get("select")
-
-	page, err := strconv.Atoi(pageStr)
-	if err != nil {
-		page = 1
-	}
-
-	rows, err := strconv.Atoi(rowsStr)
-	if err != nil {
-		rows = 30
-	}
+	query := response.GetQuery(r)
+	project_id := query.Str("project_id")
+	state := query.Str("state")
+	search := query.Str("search")
+	page := query.ValInt(1, "page")
+	rows := query.ValInt(30, "rows")
+	_select := query.Str("select")
 
 	result, err := All$2(project_id, state, search, page, rows, _select)
 	if err != nil {

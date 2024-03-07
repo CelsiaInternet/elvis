@@ -1,8 +1,6 @@
 package core
 
-import (
-	"github.com/cgalvisleon/elvis/linq"
-)
+import "github.com/cgalvisleon/elvis/linq"
 
 func InitModel(model *linq.Model) error {
 	if err := defineSchemaCore(); err != nil {
@@ -10,6 +8,11 @@ func InitModel(model *linq.Model) error {
 	}
 
 	err := model.Init()
+	if err != nil {
+		return err
+	}
+
+	err = SetStruct("TABLE", model.Schema, model.Table, model.Define)
 	if err != nil {
 		return err
 	}

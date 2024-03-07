@@ -93,16 +93,35 @@ func HDelCtx(ctx context.Context, key, atr string) error {
 	return nil
 }
 
-func Set(key, val string, second time.Duration) error {
-	return SetCtx(conn.ctx, key, val, second)
-}
-
+/**
+*
+**/
 func Get(key, def string) (string, error) {
 	return GetCtx(conn.ctx, key, def)
 }
 
 func Del(key string) (int64, error) {
 	return DelCtx(conn.ctx, key)
+}
+
+func Set(key, val string, second time.Duration) error {
+	return SetCtx(conn.ctx, key, val, second)
+}
+
+func SetD(key, val string) error {
+	return Set(key, val, time.Hour*24)
+}
+
+func SetW(key, val string) error {
+	return Set(key, val, time.Hour*24*7)
+}
+
+func SetM(key, val string) error {
+	return Set(key, val, time.Hour*24*30)
+}
+
+func SetY(key, val string) error {
+	return Set(key, val, time.Hour*24*365)
 }
 
 func Empty() error {

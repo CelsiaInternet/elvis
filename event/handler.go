@@ -1,7 +1,6 @@
 package event
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/cgalvisleon/elvis/cache"
@@ -11,8 +10,6 @@ import (
 )
 
 func Publish(clientId, channel string, data map[string]interface{}) error {
-	fmt.Sprintln("Publish", clientId, channel, data)
-
 	if conn == nil {
 		return nil
 	}
@@ -116,4 +113,27 @@ func Stack(channel string, f func(CreatedEvenMessage)) (err error) {
 	})
 
 	return
+}
+
+func WsBroadcast(message interface{}, ignoreId string) {
+	go Publish("ws", "ws/broadcast", et.Json{
+		"message":   message,
+		"ignore_id": ignoreId,
+	})
+}
+
+func WsPublish(channel string, message interface{}, ignoreId string) {
+	go Publish("ws", "ws/publish", et.Json{
+		"channel":   channel,
+		"message":   message,
+		"ignore_id": ignoreId,
+	})
+}
+
+func WsSendMessage(clientId, channel string, message interface{}) {
+	go Publish("ws", "ws/send_message", et.Json{
+		"client_id": clientId,
+		"channel":   channel,
+		"message":   message,
+	})
 }

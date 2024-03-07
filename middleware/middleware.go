@@ -1,6 +1,8 @@
 package middleware
 
-import "net/http"
+import (
+	"net/http"
+)
 
 // New will create a new middleware handler from a http.Handler.
 func New(h http.Handler) func(next http.Handler) http.Handler {
@@ -19,5 +21,5 @@ type contextKey struct {
 }
 
 func (k *contextKey) String() string {
-	return "chi/middleware context value " + k.name
+	return "elvis/middleware context value " + k.name
 }

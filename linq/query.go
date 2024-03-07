@@ -55,6 +55,7 @@ func (c *Linq) SqlColumDef(cols ...*Column) string {
 			if n == 20 {
 				def := strs.Format(`jsonb_build_object(%s)`, objects)
 				json = strs.Append(json, def, "||")
+				data = strs.Append(data, json, "||")
 				objects = ""
 				n = 0
 			}
@@ -82,31 +83,33 @@ func (c *Linq) SqlColums(cols ...*Column) string {
 	var result string
 	n := len(cols)
 
-	if c.Tp == TpData && n == 0 {
-		for _, from := range c.from {
-			for _, col := range from.model.Definition {
-				if col.Tp != TpAtrib && !col.ReferenceKey {
-					cols = append(cols, col)
+	if c.Tp == TpData {
+		if n == 0 {
+			for _, from := range c.from {
+				for _, col := range from.model.Definition {
+					if col.Tp != TpAtrib && !col.Hidden {
+						cols = append(cols, col)
+					}
+					if col.Tp == TpDetail {
+						c.details = append(c.details, col)
+					}
 				}
+
+				res := c.SqlColumDef(cols...)
+				result = strs.Append(result, res, ",")
+			}
+
+			result = strs.Format(`%s AS %s`, result, c.from[0].model.SourceField)
+		} else {
+			for _, col := range cols {
 				if col.Tp == TpDetail {
 					c.details = append(c.details, col)
 				}
 			}
 
-			res := c.SqlColumDef(cols...)
-			result = strs.Append(result, res, ",")
+			result = c.SqlColumDef(cols...)
+			result = strs.Format(`%s AS %s`, result, c.from[0].model.SourceField)
 		}
-
-		result = strs.Format(`%s AS %s`, result, c.from[0].model.SourceField)
-	} else if c.Tp == TpData {
-		for _, col := range cols {
-			if col.Tp == TpDetail {
-				c.details = append(c.details, col)
-			}
-		}
-
-		result = c.SqlColumDef(cols...)
-		result = strs.Format(`%s AS %s`, result, c.from[0].model.SourceField)
 	} else if n > 0 {
 		for _, col := range cols {
 			if col.Tp == TpDetail {
