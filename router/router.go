@@ -40,12 +40,13 @@ func PublicRoute(r *chi.Mux, method, path string, h http.HandlerFunc, packageNam
 		r.HandleFunc(path, h)
 	}
 
-	event.Publish("apimanager", "apimanager/upsert", et.Json{
+	event.Publish("apigateway", "apigateway/upsert", et.Json{
 		"kind":         "public",
 		"method":       method,
-		"path":         path,
+		"path":         packagePath + path,
+		"resolve":      host + packagePath + path,
 		"package_name": packageName,
-		"package_path": packagePath,
+		"package":      packagePath,
 		"host":         host,
 	})
 
@@ -72,12 +73,13 @@ func ProtectRoute(r *chi.Mux, method, path string, h http.HandlerFunc, packageNa
 		r.With(middleware.Authorization).HandleFunc(path, h)
 	}
 
-	event.Publish("apimanager", "apimanager/upsert", et.Json{
+	event.Publish("apigateway", "apigateway/upsert", et.Json{
 		"kind":         "protect",
 		"method":       method,
-		"path":         path,
+		"path":         packagePath + path,
+		"resolve":      host + packagePath + path,
 		"package_name": packageName,
-		"package_path": packagePath,
+		"package":      packagePath,
 		"host":         host,
 	})
 

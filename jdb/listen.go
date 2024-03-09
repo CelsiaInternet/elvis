@@ -55,7 +55,7 @@ func listenEvent(url, channel, tag string, listener *pq.Listener, listen func(re
 		console.Panic(err)
 	}
 
-	console.LogF("DB listen channel:%s", channel)
+	console.LogKF("Listen", "channel:%s", channel)
 
 	for isCloseListen(channel) {
 		notification(listener, channel, tag, listen)

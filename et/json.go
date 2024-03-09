@@ -31,6 +31,21 @@ func JsonToArrayJson(src map[string]interface{}) ([]Json, error) {
 	return result, nil
 }
 
+func Marshal(src interface{}) (Json, error) {
+	j, err := json.Marshal(src)
+	if err != nil {
+		return Json{}, err
+	}
+
+	result := Json{}
+	err = json.Unmarshal(j, &result)
+	if err != nil {
+		return Json{}, err
+	}
+
+	return result, nil
+}
+
 func (s Json) Value() (driver.Value, error) {
 	j, err := json.Marshal(s)
 

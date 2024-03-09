@@ -43,7 +43,7 @@ import (
 
 func main() {
 	envar.SetvarInt("port", 3000, "Port server", "PORT")
-	envar.SetvarInt("rpc", 4200, "Port rpc server", "RPC_PORT")
+	envar.SetvarInt("rpc", 4200, "Port rpc server", "RPC")
 	envar.SetvarStr("dbhost", "localhost", "Database host", "DB_HOST")
 	envar.SetvarInt("dbport", 5432, "Database port", "DB_PORT")
 	envar.SetvarStr("dbname", "", "Database name", "DB_NAME")
@@ -123,10 +123,10 @@ func New() (*Server, error) {
 	/**
 	 * RPC
 	 **/
-	port = envar.EnvarInt(4200, "RPC_PORT")
+	rpc := envar.EnvarInt(4200, "RPC")
 
-	if port != 0 {
-		serv := v1.NewRpc(port)
+	if rpc != 0 {
+		serv := v1.NewRpc(rpc)
 
 		server.rpc = &serv
 	}
@@ -179,8 +179,7 @@ import (
 	"github.com/cgalvisleon/elvis/cache"
 	"github.com/cgalvisleon/elvis/event"
 	"github.com/cgalvisleon/elvis/jdb"
-	"github.com/cgalvisleon/elvis/utility"
-	"github.com/cgalvisleon/elvis/ws"
+	"github.com/cgalvisleon/elvis/utility"	
 	"github.com/dimiro1/banner"
 	"github.com/go-chi/chi/v5"
 	"github.com/mattn/go-colorable"
@@ -403,6 +402,7 @@ import (
 	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/response"
 	er "github.com/cgalvisleon/elvis/router"
+	"github.com/cgalvisleon/elvis/strs"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -411,22 +411,23 @@ var PackageTitle = "$1"
 var PackagePath = "/api/$1"
 var PackageVersion = envar.EnvarStr("0.0.1", "VERSION")
 var HostName, _ = os.Hostname()
-var Host = "$1"
 
 type Router struct {
 	Repository Repository
 }
 
 func (rt *Router) Routes() http.Handler {
+	var host = strs.Format("%s:%d", envar.EnvarStr("http://localhost", "HOST"), envar.EnvarInt(3300, "PORT"))
+
 	r := chi.NewRouter()
 
-	er.PublicRoute(r, er.Get, "/version", rt.version, PackageName, PackagePath, Host)
+	er.PublicRoute(r, er.Get, "/version", rt.version, PackageName, PackagePath, host)
 	// $2
-	er.ProtectRoute(r, er.Get, "/{id}", rt.get$2ById, PackageName, PackagePath, Host)
-	er.ProtectRoute(r, er.Post, "", rt.upSert$2, PackageName, PackagePath, Host)
-	er.ProtectRoute(r, er.Put, "/state/{id}", rt.state$2, PackageName, PackagePath, Host)
-	er.ProtectRoute(r, er.Delete, "/{id}", rt.delete$2, PackageName, PackagePath, Host)
-	er.ProtectRoute(r, er.Get, "/all", rt.all$2, PackageName, PackagePath, Host)
+	er.ProtectRoute(r, er.Get, "/{id}", rt.get$2ById, PackageName, PackagePath, host)
+	er.ProtectRoute(r, er.Post, "/", rt.upSert$2, PackageName, PackagePath, host)
+	er.ProtectRoute(r, er.Put, "/state/{id}", rt.state$2, PackageName, PackagePath, host)
+	er.ProtectRoute(r, er.Delete, "/{id}", rt.delete$2, PackageName, PackagePath, host)
+	er.ProtectRoute(r, er.Get, "/all", rt.all$2, PackageName, PackagePath, host)
 
 	ctx := context.Background()
 	rt.Repository.Init(ctx)

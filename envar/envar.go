@@ -6,6 +6,7 @@ import (
 	"github.com/cgalvisleon/elvis/generic"
 	"github.com/cgalvisleon/elvis/logs"
 	"github.com/cgalvisleon/elvis/strs"
+	_ "github.com/joho/godotenv/autoload"
 )
 
 func MetaSet(name string, _default any, usage, _var string) *generic.Any {

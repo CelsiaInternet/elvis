@@ -13,6 +13,7 @@ require (
 	github.com/manifoldco/promptui v0.9.0
 	github.com/nats-io/nats.go v1.28.0
 	github.com/redis/go-redis/v9 v9.1.0
+	github.com/rs/cors v1.10.1
 	github.com/schollz/progressbar/v3 v3.13.1
 	github.com/shirou/gopsutil/v3 v3.23.10
 	github.com/xhit/go-simple-mail/v2 v2.16.0
