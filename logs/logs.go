@@ -70,8 +70,9 @@ func log(kind string, color string, args ...any) string {
 	return result
 }
 
-func Log(kind string, args ...any) {
+func Log(kind string, args ...any) error {
 	log(kind, "", args...)
+	return nil
 }
 
 func Logf(kind string, format string, args ...any) {

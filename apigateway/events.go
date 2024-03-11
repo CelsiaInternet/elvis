@@ -25,8 +25,11 @@ func eventAction(m event.CreatedEvenMessage) {
 	method := data.Str("method")
 	path := data.Str("path")
 	resolve := data.Str("resolve")
+	kind := data.ValStr("HTTP", "kind")
+	stage := data.ValStr("default", "stage")
+	packageName := data.Str("package")
 
-	AddRoute(method, path, resolve)
+	AddRoute(method, path, resolve, kind, stage, packageName)
 
 	console.LogK("Event", m.Channel)
 }

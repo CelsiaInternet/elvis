@@ -14,6 +14,11 @@ import (
 	"github.com/cgalvisleon/elvis/ws"
 )
 
+type Server struct {
+	http *HttpServer
+	rpc  *net.Listener
+}
+
 var PackageName = "apigateway"
 var PackageTitle = envar.EnvarStr("Apigateway", "PACKAGE_TITLE")
 var PackagePath = "/api/apigateway"
@@ -22,11 +27,7 @@ var Company = envar.EnvarStr("", "COMPANY")
 var Web = envar.EnvarStr("", "WEB")
 var HostName, _ = os.Hostname()
 var Host = strs.Format(`%s:%d`, envar.EnvarStr("http://localhost", "HOST"), envar.EnvarInt(3300, "PORT"))
-
-type Server struct {
-	http *HttpServer
-	rpc  *net.Listener
-}
+var conn *Server
 
 func New() (*Server, error) {
 	// Create cache server
@@ -54,12 +55,12 @@ func New() (*Server, error) {
 	rpcServer := NewRpc()
 
 	// Create a new server
-	result := &Server{
+	conn = &Server{
 		http: httpServer,
 		rpc:  &rpcServer,
 	}
 
-	return result, nil
+	return conn, nil
 }
 
 func (serv *Server) Close() error {
