@@ -1,4 +1,4 @@
-package middleware
+package logs
 
 // Ported from Goji's middleware, source:
 // https://github.com/zenazn/goji/tree/master/web/middleware
@@ -11,23 +11,23 @@ import (
 
 var (
 	// Normal colors
-	nBlack   = []byte{'\033', '[', '3', '0', 'm'}
-	nRed     = []byte{'\033', '[', '3', '1', 'm'}
-	nGreen   = []byte{'\033', '[', '3', '2', 'm'}
-	nYellow  = []byte{'\033', '[', '3', '3', 'm'}
-	nBlue    = []byte{'\033', '[', '3', '4', 'm'}
-	nMagenta = []byte{'\033', '[', '3', '5', 'm'}
-	nCyan    = []byte{'\033', '[', '3', '6', 'm'}
-	nWhite   = []byte{'\033', '[', '3', '7', 'm'}
+	NBlack   = []byte{'\033', '[', '3', '0', 'm'}
+	NRed     = []byte{'\033', '[', '3', '1', 'm'}
+	NGreen   = []byte{'\033', '[', '3', '2', 'm'}
+	NYellow  = []byte{'\033', '[', '3', '3', 'm'}
+	NBlue    = []byte{'\033', '[', '3', '4', 'm'}
+	NMagenta = []byte{'\033', '[', '3', '5', 'm'}
+	NCyan    = []byte{'\033', '[', '3', '6', 'm'}
+	NWhite   = []byte{'\033', '[', '3', '7', 'm'}
 	// Bright colors
-	bBlack   = []byte{'\033', '[', '3', '0', ';', '1', 'm'}
-	bRed     = []byte{'\033', '[', '3', '1', ';', '1', 'm'}
-	bGreen   = []byte{'\033', '[', '3', '2', ';', '1', 'm'}
-	bYellow  = []byte{'\033', '[', '3', '3', ';', '1', 'm'}
-	bBlue    = []byte{'\033', '[', '3', '4', ';', '1', 'm'}
-	bMagenta = []byte{'\033', '[', '3', '5', ';', '1', 'm'}
-	bCyan    = []byte{'\033', '[', '3', '6', ';', '1', 'm'}
-	bWhite   = []byte{'\033', '[', '3', '7', ';', '1', 'm'}
+	BBlack   = []byte{'\033', '[', '3', '0', ';', '1', 'm'}
+	BRed     = []byte{'\033', '[', '3', '1', ';', '1', 'm'}
+	BGreen   = []byte{'\033', '[', '3', '2', ';', '1', 'm'}
+	BYellow  = []byte{'\033', '[', '3', '3', ';', '1', 'm'}
+	BBlue    = []byte{'\033', '[', '3', '4', ';', '1', 'm'}
+	BMagenta = []byte{'\033', '[', '3', '5', ';', '1', 'm'}
+	BCyan    = []byte{'\033', '[', '3', '6', ';', '1', 'm'}
+	BWhite   = []byte{'\033', '[', '3', '7', ';', '1', 'm'}
 
 	reset = []byte{'\033', '[', '0', 'm'}
 )
@@ -52,7 +52,7 @@ func init() {
 }
 
 // colorWrite
-func cW(w io.Writer, useColor bool, color []byte, s string, args ...interface{}) {
+func CW(w io.Writer, color []byte, s string, args ...interface{}) {
 	if IsTTY && useColor {
 		w.Write(color)
 	}

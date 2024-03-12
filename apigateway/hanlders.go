@@ -20,14 +20,15 @@ func notFounder(w http.ResponseWriter, r *http.Request) {
 
 func handlerFn(w http.ResponseWriter, r *http.Request) {
 	// Begin telemetry
-	telemetry := telemetryNew(r)
+	metric := NewMetric(r)
 
 	// Get resolute
 	resolute := GetResolute(r)
 
 	// Call search time since begin
-	telemetry.SearchTime = time.Since(telemetry.TimeBegin)
-	telemetry.TimeExec = time.Now()
+	metric.SearchTime = time.Since(metric.TimeBegin)
+	metric.TimeExec = time.Now()
+	metric.EndPoint = resolute.URL
 
 	if resolute.Resolve == nil {
 		conn.http.notFoundHandler(w, r)
@@ -71,8 +72,7 @@ func handlerFn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer func() {
-		telemetry.EndPoint = resolute.URL
-		telemetry.done(res)
+		go metric.done(res)
 		res.Body.Close()
 	}()
 

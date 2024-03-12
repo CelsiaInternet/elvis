@@ -11,6 +11,8 @@ import (
 	"os"
 	"runtime/debug"
 	"strings"
+
+	lg "github.com/cgalvisleon/elvis/logs"
 )
 
 // Recoverer is a middleware that recovers from panics, logs the panic (and a
@@ -56,13 +58,12 @@ type prettyStack struct {
 
 func (s prettyStack) parse(debugStack []byte, rvr interface{}) ([]byte, error) {
 	var err error
-	useColor := true
 	buf := &bytes.Buffer{}
 
-	cW(buf, false, bRed, "\n")
-	cW(buf, useColor, bCyan, " panic: ")
-	cW(buf, useColor, bBlue, "%v", rvr)
-	cW(buf, false, bWhite, "\n \n")
+	lg.CW(buf, lg.BRed, "\n")
+	lg.CW(buf, lg.BCyan, " panic: ")
+	lg.CW(buf, lg.BBlue, "%v", rvr)
+	lg.CW(buf, lg.BWhite, "\n \n")
 
 	// process debug stack info
 	stack := strings.Split(string(debugStack), "\n")
@@ -85,7 +86,7 @@ func (s prettyStack) parse(debugStack []byte, rvr interface{}) ([]byte, error) {
 
 	// decorate
 	for i, line := range lines {
-		lines[i], err = s.decorateLine(line, useColor, i)
+		lines[i], err = s.decorateLine(line, i)
 		if err != nil {
 			return nil, err
 		}
@@ -97,12 +98,12 @@ func (s prettyStack) parse(debugStack []byte, rvr interface{}) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func (s prettyStack) decorateLine(line string, useColor bool, num int) (string, error) {
+func (s prettyStack) decorateLine(line string, num int) (string, error) {
 	line = strings.TrimSpace(line)
 	if strings.HasPrefix(line, "\t") || strings.Contains(line, ".go:") {
-		return s.decorateSourceLine(line, useColor, num)
+		return s.decorateSourceLine(line, num)
 	} else if strings.HasSuffix(line, ")") {
-		return s.decorateFuncCallLine(line, useColor, num)
+		return s.decorateFuncCallLine(line, num)
 	} else {
 		if strings.HasPrefix(line, "\t") {
 			return strings.Replace(line, "\t", "      ", 1), nil
@@ -112,7 +113,7 @@ func (s prettyStack) decorateLine(line string, useColor bool, num int) (string, 
 	}
 }
 
-func (s prettyStack) decorateFuncCallLine(line string, useColor bool, num int) (string, error) {
+func (s prettyStack) decorateFuncCallLine(line string, num int) (string, error) {
 	idx := strings.LastIndex(line, "(")
 	if idx < 0 {
 		return "", errors.New("not a func call line")
@@ -135,23 +136,23 @@ func (s prettyStack) decorateFuncCallLine(line string, useColor bool, num int) (
 		pkg += method[0:idx]
 		method = method[idx:]
 	}
-	pkgColor := nYellow
-	methodColor := bGreen
+	pkgColor := lg.NYellow
+	methodColor := lg.BGreen
 
 	if num == 0 {
-		cW(buf, useColor, bRed, " -> ")
-		pkgColor = bMagenta
-		methodColor = bRed
+		lg.CW(buf, lg.BRed, " -> ")
+		pkgColor = lg.BMagenta
+		methodColor = lg.BRed
 	} else {
-		cW(buf, useColor, bWhite, "    ")
+		lg.CW(buf, lg.BWhite, "    ")
 	}
-	cW(buf, useColor, pkgColor, "%s", pkg)
-	cW(buf, useColor, methodColor, "%s\n", method)
-	// cW(buf, useColor, nBlack, "%s", addr)
+	lg.CW(buf, pkgColor, "%s", pkg)
+	lg.CW(buf, methodColor, "%s\n", method)
+	// lg.CW(buf,  nBlack, "%s", addr)
 	return buf.String(), nil
 }
 
-func (s prettyStack) decorateSourceLine(line string, useColor bool, num int) (string, error) {
+func (s prettyStack) decorateSourceLine(line string, num int) (string, error) {
 	idx := strings.LastIndex(line, ".go:")
 	if idx < 0 {
 		return "", errors.New("not a source line")
@@ -169,23 +170,23 @@ func (s prettyStack) decorateSourceLine(line string, useColor bool, num int) (st
 	if idx > 0 {
 		lineno = lineno[0:idx]
 	}
-	fileColor := bCyan
-	lineColor := bGreen
+	fileColor := lg.BCyan
+	lineColor := lg.BGreen
 
 	if num == 1 {
-		cW(buf, useColor, bRed, " ->   ")
-		fileColor = bRed
-		lineColor = bMagenta
+		lg.CW(buf, lg.BRed, " ->   ")
+		fileColor = lg.BRed
+		lineColor = lg.BMagenta
 	} else {
-		cW(buf, false, bWhite, "      ")
+		lg.CW(buf, lg.BWhite, "      ")
 	}
-	cW(buf, useColor, bWhite, "%s", dir)
-	cW(buf, useColor, fileColor, "%s", file)
-	cW(buf, useColor, lineColor, "%s", lineno)
+	lg.CW(buf, lg.BWhite, "%s", dir)
+	lg.CW(buf, fileColor, "%s", file)
+	lg.CW(buf, lineColor, "%s", lineno)
 	if num == 1 {
-		cW(buf, false, bWhite, "\n")
+		lg.CW(buf, lg.BWhite, "\n")
 	}
-	cW(buf, false, bWhite, "\n")
+	lg.CW(buf, lg.BWhite, "\n")
 
 	return buf.String(), nil
 }

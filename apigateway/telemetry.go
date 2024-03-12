@@ -1,16 +1,18 @@
 package apigateway
 
 import (
+	"bytes"
+	"fmt"
 	"math"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/cgalvisleon/elvis/cache"
-	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/event"
+	"github.com/cgalvisleon/elvis/logs"
 	"github.com/cgalvisleon/elvis/strs"
 	"github.com/cgalvisleon/elvis/utility"
 	"github.com/shirou/gopsutil/v3/mem"
@@ -25,7 +27,7 @@ type Metrics struct {
 	TimeExec         time.Time
 	SearchTime       time.Duration
 	ResponseTime     time.Duration
-	TotalTime        time.Duration
+	Latency          time.Duration
 	EndPoint         string
 	Method           string
 	RemoteAddr       string
@@ -60,7 +62,7 @@ func CallRequests(tag string) Request {
 	}
 }
 
-func telemetryNew(r *http.Request) *Metrics {
+func NewMetric(r *http.Request) *Metrics {
 	result := &Metrics{}
 	result.TimeBegin = time.Now()
 	result.ReqID = utility.NewId()
@@ -94,15 +96,40 @@ func telemetryNew(r *http.Request) *Metrics {
 func (m *Metrics) done(res *http.Response) et.Json {
 	m.TimeEnd = time.Now()
 	m.ResponseTime = time.Since(m.TimeExec)
-	m.TotalTime = time.Since(m.TimeBegin)
+	m.Latency = time.Since(m.TimeBegin)
 
-	console.LogKF(m.Method, "%s://%s %s %v%s %s %v %s", m.Scheme, m.EndPoint, m.Proto, res.ContentLength, "KB", res.Status, m.TotalTime, "ms")
+	var w *bytes.Buffer = new(bytes.Buffer)
+	now := time.Now().Format("2006/01/02 15:04:05")
+	logs.CW(w, logs.NWhite, now)
+	logs.CW(w, logs.NMagenta, fmt.Sprintf(" [%s]: ", m.Method))
+	logs.CW(w, logs.NCyan, fmt.Sprintf("%s %s", m.EndPoint, m.Proto))
+	logs.CW(w, logs.NWhite, fmt.Sprintf("from %s", m.RemoteAddr))
+	logs.CW(w, logs.NCyan, fmt.Sprintf(" %v%s", res.ContentLength, "KB"))
+	if res.StatusCode >= 500 {
+		logs.CW(w, logs.NRed, fmt.Sprintf(" %s", res.Status))
+	} else if res.StatusCode >= 400 {
+		logs.CW(w, logs.NYellow, fmt.Sprintf(" %s", res.Status))
+	} else if res.StatusCode >= 300 {
+		logs.CW(w, logs.NCyan, fmt.Sprintf(" %s", res.Status))
+	} else {
+		logs.CW(w, logs.NCyan, fmt.Sprintf(" %s", res.Status))
+	}
+	if m.Latency < 500*time.Millisecond {
+		logs.CW(w, logs.NGreen, "%s", m.Latency)
+	} else if m.Latency < 5*time.Second {
+		logs.CW(w, logs.NYellow, "%s", m.Latency)
+	} else {
+		logs.CW(w, logs.NRed, "%s", m.Latency)
+	}
+
+	println(w.String())
 
 	result := et.Json{
 		"reqID":         m.ReqID,
 		"time_begin":    m.TimeBegin,
 		"time_end":      m.TimeEnd,
 		"time_exec":     m.TimeExec,
+		"latency":       m.Latency,
 		"search_time":   m.SearchTime,
 		"response_time": m.ResponseTime,
 		"host_name":     m.HostName,

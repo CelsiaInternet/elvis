@@ -12,6 +12,7 @@ import (
 
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/event"
+	lg "github.com/cgalvisleon/elvis/logs"
 	"github.com/cgalvisleon/elvis/utility"
 	"github.com/shirou/gopsutil/v3/mem"
 )
@@ -178,26 +179,24 @@ type DefaultLogFormatter struct {
 
 // NewLogEntry creates a new LogEntry for the request.
 func (l *DefaultLogFormatter) NewLogEntry(r *http.Request) LogEntry {
-	useColor := !l.NoColor
 	entry := &defaultLogEntry{
 		DefaultLogFormatter: l,
 		request:             r,
 		buf:                 &bytes.Buffer{},
-		useColor:            useColor,
 	}
 
 	reqID := GetReqID(r.Context())
 	if reqID != "" {
-		cW(entry.buf, useColor, nYellow, "[%s] ", reqID)
+		lg.CW(entry.buf, lg.NYellow, "[%s] ", reqID)
 	}
-	cW(entry.buf, useColor, nCyan, "")
-	cW(entry.buf, useColor, bMagenta, "[%s]: ", r.Method)
+	lg.CW(entry.buf, lg.NCyan, "")
+	lg.CW(entry.buf, lg.BMagenta, "[%s]: ", r.Method)
 
 	scheme := "http"
 	if r.TLS != nil {
 		scheme = "https"
 	}
-	cW(entry.buf, useColor, nCyan, "%s://%s%s %s ", scheme, r.Host, r.RequestURI, r.Proto)
+	lg.CW(entry.buf, lg.NCyan, "%s://%s%s %s ", scheme, r.Host, r.RequestURI, r.Proto)
 
 	entry.buf.WriteString("from ")
 	entry.buf.WriteString(r.RemoteAddr)
@@ -208,34 +207,33 @@ func (l *DefaultLogFormatter) NewLogEntry(r *http.Request) LogEntry {
 
 type defaultLogEntry struct {
 	*DefaultLogFormatter
-	request  *http.Request
-	buf      *bytes.Buffer
-	useColor bool
+	request *http.Request
+	buf     *bytes.Buffer
 }
 
 func (l *defaultLogEntry) Write(status, bytes int, header http.Header, elapsed time.Duration, extra interface{}) {
 	switch {
 	case status < 200:
-		cW(l.buf, l.useColor, bBlue, "%03d", status)
+		lg.CW(l.buf, lg.BBlue, "%03d", status)
 	case status < 300:
-		cW(l.buf, l.useColor, bGreen, "%03d", status)
+		lg.CW(l.buf, lg.BGreen, "%03d", status)
 	case status < 400:
-		cW(l.buf, l.useColor, bCyan, "%03d", status)
+		lg.CW(l.buf, lg.BCyan, "%03d", status)
 	case status < 500:
-		cW(l.buf, l.useColor, bYellow, "%03d", status)
+		lg.CW(l.buf, lg.BYellow, "%03d", status)
 	default:
-		cW(l.buf, l.useColor, bRed, "%03d", status)
+		lg.CW(l.buf, lg.BRed, "%03d", status)
 	}
 
-	cW(l.buf, l.useColor, bBlue, " %dB", bytes)
+	lg.CW(l.buf, lg.BBlue, " %dB", bytes)
 
 	l.buf.WriteString(" in ")
 	if elapsed < 500*time.Millisecond {
-		cW(l.buf, l.useColor, nGreen, "%s", elapsed)
+		lg.CW(l.buf, lg.NGreen, "%s", elapsed)
 	} else if elapsed < 5*time.Second {
-		cW(l.buf, l.useColor, nYellow, "%s", elapsed)
+		lg.CW(l.buf, lg.NYellow, "%s", elapsed)
 	} else {
-		cW(l.buf, l.useColor, nRed, "%s", elapsed)
+		lg.CW(l.buf, lg.NRed, "%s", elapsed)
 	}
 
 	l.Logger.Print(l.buf.String())
