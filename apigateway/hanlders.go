@@ -7,17 +7,30 @@ import (
 
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/response"
+	"github.com/cgalvisleon/elvis/ws"
 )
 
+// Version information this package
 func version(w http.ResponseWriter, r *http.Request) {
 	result := Version()
 	response.JSON(w, r, http.StatusOK, result)
 }
 
+// Handler for not found
 func notFounder(w http.ResponseWriter, r *http.Request) {
 	response.HTTPError(w, r, http.StatusNotFound, "404 Not Found.")
 }
 
+// Handler for websocket
+func handlerWS(w http.ResponseWriter, r *http.Request) {
+	_, err := ws.Connect(w, r)
+	if err != nil {
+		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+}
+
+// Handler function
 func handlerFn(w http.ResponseWriter, r *http.Request) {
 	// Begin telemetry
 	metric := NewMetric(r)
@@ -32,11 +45,12 @@ func handlerFn(w http.ResponseWriter, r *http.Request) {
 
 	if resolute.Resolve == nil {
 		conn.http.notFoundHandler(w, r)
+		metric.notFounder()
 		return
 	}
 
 	kind := resolute.Resolve.Node.Resolve.ValStr("HTTP", "kind")
-	if kind == "HANDLER" {
+	if kind == HANDLER {
 		metric.Downtime = time.Since(metric.TimeBegin)
 		handler := handlers[resolute.Resolve.Node._id]
 		if handler == nil {
@@ -48,17 +62,6 @@ func handlerFn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	/*
-		if kind == "REST" {
-
-		}
-
-		if kind == "WEBSOCKET" {
-
-		}
-	*/
-
-	// http.Redirect(w, r, resolute.URL, http.StatusSeeOther)
 	request, err := http.NewRequest(resolute.Method, resolute.URL, resolute.Body)
 	if err != nil {
 		response.HTTPError(w, r, http.StatusInternalServerError, err.Error())
@@ -73,6 +76,7 @@ func handlerFn(w http.ResponseWriter, r *http.Request) {
 		response.HTTPError(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
+
 	defer func() {
 		go metric.done(res)
 		res.Body.Close()
@@ -82,7 +86,6 @@ func handlerFn(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set(key, value[0])
 	}
 	w.WriteHeader(res.StatusCode)
-
 	_, err = io.Copy(w, res.Body)
 	if err != nil {
 		response.HTTPError(w, r, http.StatusInternalServerError, err.Error())

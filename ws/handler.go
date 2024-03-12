@@ -1,11 +1,10 @@
 package ws
 
 import (
-	"errors"
 	"net/http"
 
-	"github.com/cgalvisleon/elvis/generic"
 	"github.com/cgalvisleon/elvis/logs"
+	"github.com/cgalvisleon/elvis/utility"
 )
 
 func Connect(w http.ResponseWriter, r *http.Request) (*Client, error) {
@@ -13,13 +12,24 @@ func Connect(w http.ResponseWriter, r *http.Request) (*Client, error) {
 		return nil, logs.Log(ERR_NOT_WS_SERVICE)
 	}
 
+	var clientId string
+	var userName string
 	ctx := r.Context()
-	clientId := generic.New(ctx.Value("clientId"))
-	if clientId.IsNil() {
-		return nil, errors.New(ERR_NOT_DEFINE_CLIENTID)
+	val := ctx.Value("clientId")
+	if val == nil {
+		clientId = utility.UUID()
+	} else {
+		clientId = val.(string)
 	}
 
-	idxC := conn.hub.indexClient(clientId.Str())
+	val = ctx.Value("username")
+	if val == nil {
+		userName = "Anonimo"
+	} else {
+		userName = val.(string)
+	}
+
+	idxC := conn.hub.indexClient(clientId)
 	if idxC != -1 {
 		return conn.hub.clients[idxC], nil
 	}
@@ -29,12 +39,7 @@ func Connect(w http.ResponseWriter, r *http.Request) (*Client, error) {
 		return nil, err
 	}
 
-	userName := generic.New(ctx.Value("username"))
-	if userName.IsNil() {
-		return nil, errors.New(ERR_NOT_DEFINE_USERNAME)
-	}
-
-	return conn.hub.connect(socket, clientId.Str(), userName.Str())
+	return conn.hub.connect(socket, clientId, userName)
 }
 
 func Broadcast(message interface{}, ignoreId string) error {

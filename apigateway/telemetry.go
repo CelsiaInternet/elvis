@@ -28,6 +28,7 @@ type Metrics struct {
 	ResponseTime     time.Duration
 	Downtime         time.Duration
 	Latency          time.Duration
+	NotFount         bool
 	EndPoint         string
 	Method           string
 	RemoteAddr       string
@@ -110,6 +111,11 @@ func (m *Metrics) done(res *http.Response) et.Json {
 	} else {
 		logs.CW(w, logs.NGreen, fmt.Sprintf(" - %s", res.Status))
 	}
+	if m.NotFount {
+		logs.CW(w, logs.NWhite, " Not Found ")
+	} else {
+		logs.CW(w, logs.NWhite, " Found ")
+	}
 	logs.CW(w, logs.NCyan, fmt.Sprintf(" %v%s", res.ContentLength, "KB"))
 	logs.CW(w, logs.NWhite, " in ")
 	if m.Latency < 500*time.Millisecond {
@@ -121,9 +127,9 @@ func (m *Metrics) done(res *http.Response) et.Json {
 	}
 	logs.CW(w, logs.NRed, " Downtime:%s", m.Downtime)
 	if m.RequestsHost.Seccond > m.RequestsHost.Limit {
-		logs.CW(w, logs.NRed, " - Request per second:%v", m.RequestsHost.Seccond)
+		logs.CW(w, logs.NRed, " - Request S:%vM:%vH:%vL:%v", m.RequestsHost.Seccond, m.RequestsHost.Minute, m.RequestsHost.Hour, m.RequestsHost.Limit)
 	} else {
-		logs.CW(w, logs.NYellow, " - Request per second:%v minute:%v hour:%v", m.RequestsHost.Seccond, m.RequestsHost.Minute, m.RequestsHost.Hour)
+		logs.CW(w, logs.NYellow, " - Request S:%vM:%vH:%vL:%v", m.RequestsHost.Seccond, m.RequestsHost.Minute, m.RequestsHost.Hour, m.RequestsHost.Limit)
 	}
 	logs.Println(w)
 
@@ -145,6 +151,82 @@ func (m *Metrics) done(res *http.Response) et.Json {
 			"header":    res.Header,
 			"scheme":    m.Scheme,
 			"host":      res.Request.Host,
+		},
+		"memory": et.Json{
+			"unity":        "MB",
+			"total":        m.MTotal / 1024 / 1024,
+			"used":         m.MUsed / 1024 / 1024,
+			"free":         m.MFree / 1024 / 1024,
+			"percent_free": math.Floor(m.PFree*100) / 100,
+		},
+		"request_host": et.Json{
+			"host":   m.RequestsHost.Tag,
+			"day":    m.RequestsHost.Day,
+			"hour":   m.RequestsHost.Hour,
+			"minute": m.RequestsHost.Minute,
+			"second": m.RequestsHost.Seccond,
+			"limit":  m.RequestsHost.Limit,
+		},
+		"requests_endpoint": et.Json{
+			"endpoint": m.RequestsEndpoint.Tag,
+			"day":      m.RequestsEndpoint.Day,
+			"hour":     m.RequestsEndpoint.Hour,
+			"minute":   m.RequestsEndpoint.Minute,
+			"second":   m.RequestsEndpoint.Seccond,
+			"limit":    m.RequestsEndpoint.Limit,
+		},
+	}
+
+	go event.Action("telemetry", result)
+
+	if m.RequestsHost.Seccond > m.RequestsHost.Limit {
+		go event.Action("requests/overflow", result)
+	}
+
+	return result
+}
+
+func (m *Metrics) notFounder() et.Json {
+	m.NotFount = true
+	m.TimeEnd = time.Now()
+	m.ResponseTime = time.Since(m.TimeExec)
+	m.Latency = time.Since(m.TimeBegin)
+
+	w := logs.Color(logs.NMagenta, fmt.Sprintf(" [%s]: ", m.Method))
+	logs.CW(w, logs.NCyan, m.Proto)
+	logs.CW(w, logs.NWhite, fmt.Sprintf(" from %s", m.RemoteAddr))
+	logs.CW(w, logs.NYellow, " - 404")
+	if m.NotFount {
+		logs.CW(w, logs.NWhite, " Not Found")
+	} else {
+		logs.CW(w, logs.NWhite, " Found")
+	}
+	logs.CW(w, logs.NWhite, " in ")
+	if m.Latency < 500*time.Millisecond {
+		logs.CW(w, logs.NGreen, "%s", m.Latency)
+	} else if m.Latency < 5*time.Second {
+		logs.CW(w, logs.NYellow, "%s", m.Latency)
+	} else {
+		logs.CW(w, logs.NRed, "%s", m.Latency)
+	}
+	logs.CW(w, logs.NRed, " Downtime:%s", m.Downtime)
+	logs.Println(w)
+
+	result := et.Json{
+		"reqID":         m.ReqID,
+		"time_begin":    m.TimeBegin,
+		"time_end":      m.TimeEnd,
+		"time_exec":     m.TimeExec,
+		"latency":       m.Latency,
+		"search_time":   m.SearchTime,
+		"response_time": m.ResponseTime,
+		"host_name":     m.HostName,
+		"remote_addr":   m.RemoteAddr,
+		"request": et.Json{
+			"end_point": m.EndPoint,
+			"method":    m.Method,
+			"status":    http.StatusNotFound,
+			"scheme":    m.Scheme,
 		},
 		"memory": et.Json{
 			"unity":        "MB",
