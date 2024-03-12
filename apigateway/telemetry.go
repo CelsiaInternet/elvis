@@ -112,11 +112,11 @@ func (m *Metrics) done(res *http.Response) et.Json {
 	logs.CW(w, logs.NCyan, fmt.Sprintf(" %v%s", res.ContentLength, "KB"))
 	logs.CW(w, logs.NWhite, " in ")
 	if m.Latency < 500*time.Millisecond {
-		logs.CW(w, logs.NGreen, " %s", m.Latency)
+		logs.CW(w, logs.NGreen, "%s", m.Latency)
 	} else if m.Latency < 5*time.Second {
-		logs.CW(w, logs.NYellow, " %s", m.Latency)
+		logs.CW(w, logs.NYellow, "%s", m.Latency)
 	} else {
-		logs.CW(w, logs.NRed, " %s", m.Latency)
+		logs.CW(w, logs.NRed, "%s", m.Latency)
 	}
 	logs.Println(w)
 
