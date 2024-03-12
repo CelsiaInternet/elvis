@@ -2,6 +2,7 @@ package apigateway
 
 import (
 	"encoding/json"
+	"net/http"
 	"regexp"
 	"strings"
 
@@ -25,6 +26,7 @@ type Nodes struct {
 type Pakage struct {
 	Name  string
 	Nodes []*Node
+	Count int
 }
 
 type Pakages struct {
@@ -37,9 +39,12 @@ type Resolve struct {
 	Resolve string
 }
 
+type Handlers map[string]http.HandlerFunc
+
 // List of routes
 var routes *Nodes
 var pakages *Pakages
+var handlers Handlers
 var routesKey = "apigateway/routes"
 var pakagesKey = "apigateway/packages"
 
@@ -201,10 +206,45 @@ func AddRoute(method, path, resolve, kind, stage, packageName string) {
 		pakage := findPakage(packageName)
 		if pakage == nil {
 			pakage = newPakage(packageName)
-			pakage.Nodes = append(pakage.Nodes, node)
 		}
+		pakage.Nodes = append(pakage.Nodes, node)
+		pakage.Count = len(pakage.Nodes)
 
 		save()
+	}
+}
+
+func AddHandleMethod(method, path string, handlerFn http.HandlerFunc, packageName string) {
+	node := findNode(method, routes.Routes)
+	if node == nil {
+		node, routes.Routes = newNode(method, routes.Routes)
+	}
+
+	tags := strings.Split(path, "/")
+	for _, tag := range tags {
+		if len(tag) > 0 {
+			find := findNode(tag, node.Nodes)
+			if find == nil {
+				node, node.Nodes = newNode(tag, node.Nodes)
+			} else {
+				node = find
+			}
+		}
+	}
+
+	if node != nil {
+		node.Resolve = et.Json{
+			"method": method,
+			"kind":   "HANDLER",
+		}
+		handlers[node._id] = handlerFn
+
+		pakage := findPakage(packageName)
+		if pakage == nil {
+			pakage = newPakage(packageName)
+		}
+		pakage.Nodes = append(pakage.Nodes, node)
+		pakage.Count = len(pakage.Nodes)
 	}
 }
 
@@ -248,6 +288,8 @@ func init() {
 	pakages = &Pakages{
 		Pakages: []*Pakage{},
 	}
+
+	handlers = make(Handlers)
 
 	load()
 }

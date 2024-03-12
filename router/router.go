@@ -30,6 +30,7 @@ func eventApiGateway(method, path, packageName, packagePath, host string) {
 
 	path = packagePath + path
 	resolve := host + path
+
 	event.Publish("apigateway", "apigateway/upsert", et.Json{
 		"kind":    kind,
 		"method":  method,

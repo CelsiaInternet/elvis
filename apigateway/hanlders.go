@@ -3,7 +3,9 @@ package apigateway
 import (
 	"io"
 	"net/http"
+	"time"
 
+	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/response"
 )
 
@@ -17,7 +19,15 @@ func notFounder(w http.ResponseWriter, r *http.Request) {
 }
 
 func handlerFn(w http.ResponseWriter, r *http.Request) {
-	resolute := NewResolute(r)
+	// Begin telemetry
+	telemetry := telemetryNew(r)
+
+	// Get resolute
+	resolute := GetResolute(r)
+
+	// Call search time since begin
+	telemetry.SearchTime = time.Since(telemetry.TimeBegin)
+	telemetry.TimeExec = time.Now()
 
 	if resolute.Resolve == nil {
 		conn.http.notFoundHandler(w, r)
@@ -25,44 +35,59 @@ func handlerFn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	kind := resolute.Resolve.Node.Resolve.ValStr("HTTP", "kind")
-	if kind == "REST" {
-		request, err := http.NewRequest(resolute.Method, resolute.URL, resolute.Body)
-		if err != nil {
-			response.HTTPError(w, r, http.StatusInternalServerError, err.Error())
+	if kind == "HANDLER" {
+		handler := handlers[resolute.Resolve.Node._id]
+		if handler == nil {
+			response.HTTPError(w, r, http.StatusNotFound, "404 Not Found.")
 			return
 		}
 
-		request.Header = resolute.Header
-		client := &http.Client{}
-		res, err := client.Do(request)
-		if err != nil {
-			response.HTTPError(w, r, http.StatusInternalServerError, err.Error())
-			return
-		}
-		defer res.Body.Close()
-
-		for key, value := range res.Header {
-			w.Header().Set(key, value[0])
-		}
-		_, err = io.Copy(w, res.Body)
-		if err != nil {
-			response.HTTPError(w, r, http.StatusInternalServerError, err.Error())
-		}
-
+		handler(w, r)
 		return
 	}
 
 	/*
+		if kind == "REST" {
+
+		}
+
 		if kind == "WEBSOCKET" {
-			// TODO
 
 		}
 	*/
 
-	http.Redirect(w, r, resolute.URL, http.StatusSeeOther)
+	// http.Redirect(w, r, resolute.URL, http.StatusSeeOther)
+	request, err := http.NewRequest(resolute.Method, resolute.URL, resolute.Body)
+	if err != nil {
+		response.HTTPError(w, r, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	request.Header = resolute.Header
+	client := &http.Client{}
+	res, err := client.Do(request)
+	if err != nil {
+		response.HTTPError(w, r, http.StatusInternalServerError, err.Error())
+		return
+	}
+	defer func() {
+		telemetry.EndPoint = resolute.URL
+		telemetry.done(res)
+		res.Body.Close()
+	}()
+
+	for key, value := range res.Header {
+		w.Header().Set(key, value[0])
+	}
+	w.WriteHeader(res.StatusCode)
+
+	_, err = io.Copy(w, res.Body)
+	if err != nil {
+		response.HTTPError(w, r, http.StatusInternalServerError, err.Error())
+	}
 }
 
-/*
+// Upsert a update or new route
 func upsert(w http.ResponseWriter, r *http.Request) {
 	body, _ := response.GetBody(r)
 	method := body.Str("method")
@@ -79,13 +104,13 @@ func upsert(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// Getall list of routes
 func getAll(w http.ResponseWriter, r *http.Request) {
-	_routes, err := et.Marshal(routes)
+	_pakages, err := et.Marshal(pakages)
 	if err != nil {
 		response.HTTPError(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	response.JSON(w, r, http.StatusOK, _routes)
+	response.JSON(w, r, http.StatusOK, _pakages)
 }
-*/

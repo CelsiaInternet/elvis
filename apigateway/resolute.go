@@ -25,7 +25,7 @@ type Resolute struct {
 	URL        string
 }
 
-func NewResolute(r *http.Request) *Resolute {
+func GetResolute(r *http.Request) *Resolute {
 	scheme := "http"
 	if r.TLS != nil {
 		scheme = "https"

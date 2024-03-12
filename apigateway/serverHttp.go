@@ -8,6 +8,35 @@ import (
 	"github.com/rs/cors"
 )
 
+const (
+	HANDLER   = "HANDLER"
+	HTTP      = "HTTP"
+	REST      = "REST"
+	WEBSOCKET = "WEBSOCKET"
+	// Methods
+	CONNECT = "CONNECT"
+	DELETE  = "DELETE"
+	GET     = "GET"
+	HEAD    = "HEAD"
+	OPTIONS = "OPTIONS"
+	PATCH   = "PATCH"
+	POST    = "POST"
+	PUT     = "PUT"
+	TRACE   = "TRACE"
+)
+
+var methodMap = map[string]bool{
+	CONNECT: true,
+	DELETE:  true,
+	GET:     true,
+	HEAD:    true,
+	OPTIONS: true,
+	PATCH:   true,
+	POST:    true,
+	PUT:     true,
+	TRACE:   true,
+}
+
 type HttpServer struct {
 	addr            string
 	handler         http.Handler
@@ -30,22 +59,27 @@ func NewHttpServer() *HttpServer {
 	}
 	result.notFoundHandler = notFounder
 	result.handlerFn = handlerFn
+	result.Get("/version", version, "Api Gateway")
+	result.Get("/apigateway/all", getAll, "Api Gateway")
+	result.Post("/apigateway", upsert, "Api Gateway")
 
 	// Handler router
-	mux.HandleFunc("/version", version)
 	mux.HandleFunc("/", result.handlerFn)
 
 	return result
 }
 
+// NotFound sets the handler function for the server.
 func (s *HttpServer) NotFound(handlerFn http.HandlerFunc) {
 	s.notFoundHandler = handlerFn
 }
 
+// Handler sets the handler function for the server.
 func (s *HttpServer) Handler(handlerFn http.HandlerFunc) {
 	s.handlerFn = handlerFn
 }
 
+// HandlerWebSocket sets the handler function for the server.
 func (s *HttpServer) HandlerWebSocket(handlerFn http.HandlerFunc) {
 	s.handlerWS = handlerFn
 }

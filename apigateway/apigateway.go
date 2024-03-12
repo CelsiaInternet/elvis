@@ -1,9 +1,11 @@
 package apigateway
 
 import (
+	"fmt"
 	"net"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/cgalvisleon/elvis/cache"
 	"github.com/cgalvisleon/elvis/console"
@@ -12,6 +14,8 @@ import (
 	"github.com/cgalvisleon/elvis/event"
 	"github.com/cgalvisleon/elvis/strs"
 	"github.com/cgalvisleon/elvis/ws"
+	"github.com/dimiro1/banner"
+	"github.com/mattn/go-colorable"
 )
 
 type Server struct {
@@ -93,6 +97,9 @@ func (serv *Server) Start() {
 	// Init events
 	initEvents()
 
+	// Banner
+	Banner()
+
 	<-make(chan struct{})
 }
 
@@ -107,4 +114,11 @@ func Version() et.Json {
 	}
 
 	return service
+}
+
+func Banner() {
+	time.Sleep(3 * time.Second)
+	templ := fmt.Sprintf(`{{ .Title "%s V%s" "" 4 }}`, PackageName, PackageVersion)
+	banner.InitString(colorable.NewColorableStdout(), true, true, templ)
+	fmt.Println()
 }
