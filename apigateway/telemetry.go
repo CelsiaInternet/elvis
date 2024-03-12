@@ -1,7 +1,6 @@
 package apigateway
 
 import (
-	"bytes"
 	"fmt"
 	"math"
 	"net/http"
@@ -98,31 +97,28 @@ func (m *Metrics) done(res *http.Response) et.Json {
 	m.ResponseTime = time.Since(m.TimeExec)
 	m.Latency = time.Since(m.TimeBegin)
 
-	var w *bytes.Buffer = new(bytes.Buffer)
-	now := time.Now().Format("2006/01/02 15:04:05")
-	logs.CW(w, logs.NWhite, now)
-	logs.CW(w, logs.NMagenta, fmt.Sprintf(" [%s]: ", m.Method))
+	w := logs.Color(logs.NMagenta, fmt.Sprintf(" [%s]: ", m.Method))
 	logs.CW(w, logs.NCyan, fmt.Sprintf("%s %s", m.EndPoint, m.Proto))
-	logs.CW(w, logs.NWhite, fmt.Sprintf("from %s", m.RemoteAddr))
-	logs.CW(w, logs.NCyan, fmt.Sprintf(" %v%s", res.ContentLength, "KB"))
+	logs.CW(w, logs.NWhite, fmt.Sprintf(" from %s", m.RemoteAddr))
 	if res.StatusCode >= 500 {
-		logs.CW(w, logs.NRed, fmt.Sprintf(" %s", res.Status))
+		logs.CW(w, logs.NRed, fmt.Sprintf(" - %s", res.Status))
 	} else if res.StatusCode >= 400 {
-		logs.CW(w, logs.NYellow, fmt.Sprintf(" %s", res.Status))
+		logs.CW(w, logs.NYellow, fmt.Sprintf(" - %s", res.Status))
 	} else if res.StatusCode >= 300 {
-		logs.CW(w, logs.NCyan, fmt.Sprintf(" %s", res.Status))
+		logs.CW(w, logs.NCyan, fmt.Sprintf(" - %s", res.Status))
 	} else {
-		logs.CW(w, logs.NCyan, fmt.Sprintf(" %s", res.Status))
+		logs.CW(w, logs.NGreen, fmt.Sprintf(" - %s", res.Status))
 	}
+	logs.CW(w, logs.NCyan, fmt.Sprintf(" %v%s", res.ContentLength, "KB"))
+	logs.CW(w, logs.NWhite, " in ")
 	if m.Latency < 500*time.Millisecond {
-		logs.CW(w, logs.NGreen, "%s", m.Latency)
+		logs.CW(w, logs.NGreen, " %s", m.Latency)
 	} else if m.Latency < 5*time.Second {
-		logs.CW(w, logs.NYellow, "%s", m.Latency)
+		logs.CW(w, logs.NYellow, " %s", m.Latency)
 	} else {
-		logs.CW(w, logs.NRed, "%s", m.Latency)
+		logs.CW(w, logs.NRed, " %s", m.Latency)
 	}
-
-	println(w.String())
+	logs.Println(w)
 
 	result := et.Json{
 		"reqID":         m.ReqID,

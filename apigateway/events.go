@@ -31,5 +31,5 @@ func eventAction(m event.CreatedEvenMessage) {
 
 	AddRoute(method, path, resolve, kind, stage, packageName)
 
-	console.LogK("Event", m.Channel)
+	console.LogKF("Api gateway", `[%s] %s - %s`, method, path, packageName)
 }

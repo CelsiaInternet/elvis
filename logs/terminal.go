@@ -4,9 +4,11 @@ package logs
 // https://github.com/zenazn/goji/tree/master/web/middleware
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"os"
+	"time"
 )
 
 var (
@@ -60,4 +62,17 @@ func CW(w io.Writer, color []byte, s string, args ...interface{}) {
 	if IsTTY && useColor {
 		w.Write(reset)
 	}
+}
+
+func Color(color []byte, s string, args ...interface{}) *bytes.Buffer {
+	var w *bytes.Buffer = new(bytes.Buffer)
+	now := time.Now().Format("2006/01/02 15:04:05")
+	CW(w, NWhite, now)
+	CW(w, color, s, args...)
+
+	return w
+}
+
+func Println(w *bytes.Buffer) {
+	println(w.String())
 }
