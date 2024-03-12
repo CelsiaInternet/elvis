@@ -6,7 +6,7 @@
 go mod tidy &&
 gofmt -w . &&
 git update &&
-git tag v0.0.126 &&
+git tag v0.0.127 &&
 git tags
 git push origin --tags
 
@@ -17,5 +17,6 @@ gofmt -w . && go run github.com/cgalvisleon/elvis/cmd/create-go create
 go run github.com/cgalvisleon/elvis/cmd/create-go create
 go run github.com/cgalvisleon/elvis/cmd/apigateway
 
-go get -u github.com/cgalvisleon/elvis@v0.0.124
+go get -u github.com/cgalvisleon/elvis@v0.0.127
+go get github.com/cgalvisleon/elvis@v0.0.127
 ```
