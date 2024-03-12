@@ -37,6 +37,7 @@ func handlerFn(w http.ResponseWriter, r *http.Request) {
 
 	kind := resolute.Resolve.Node.Resolve.ValStr("HTTP", "kind")
 	if kind == "HANDLER" {
+		metric.Downtime = time.Since(metric.TimeBegin)
 		handler := handlers[resolute.Resolve.Node._id]
 		if handler == nil {
 			response.HTTPError(w, r, http.StatusNotFound, "404 Not Found.")
@@ -64,6 +65,7 @@ func handlerFn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	metric.Downtime = time.Since(metric.TimeBegin)
 	request.Header = resolute.Header
 	client := &http.Client{}
 	res, err := client.Do(request)

@@ -26,6 +26,7 @@ type Metrics struct {
 	TimeExec         time.Time
 	SearchTime       time.Duration
 	ResponseTime     time.Duration
+	Downtime         time.Duration
 	Latency          time.Duration
 	EndPoint         string
 	Method           string
@@ -117,6 +118,12 @@ func (m *Metrics) done(res *http.Response) et.Json {
 		logs.CW(w, logs.NYellow, "%s", m.Latency)
 	} else {
 		logs.CW(w, logs.NRed, "%s", m.Latency)
+	}
+	logs.CW(w, logs.NRed, " downtime:%s", m.Downtime)
+	if m.RequestsHost.Seccond > m.RequestsHost.Limit {
+		logs.CW(w, logs.NRed, " - Request per second:%v", m.RequestsHost.Seccond)
+	} else {
+		logs.CW(w, logs.NYellow, " - Request per second:%v", m.RequestsHost.Seccond)
 	}
 	logs.Println(w)
 
