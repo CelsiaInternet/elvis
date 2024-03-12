@@ -119,11 +119,11 @@ func (m *Metrics) done(res *http.Response) et.Json {
 	} else {
 		logs.CW(w, logs.NRed, "%s", m.Latency)
 	}
-	logs.CW(w, logs.NRed, " downtime:%s", m.Downtime)
+	logs.CW(w, logs.NRed, " Downtime:%s", m.Downtime)
 	if m.RequestsHost.Seccond > m.RequestsHost.Limit {
 		logs.CW(w, logs.NRed, " - Request per second:%v", m.RequestsHost.Seccond)
 	} else {
-		logs.CW(w, logs.NYellow, " - Request per second:%v", m.RequestsHost.Seccond)
+		logs.CW(w, logs.NYellow, " - Request per second:%v minute:%v hour:%v", m.RequestsHost.Seccond, m.RequestsHost.Minute, m.RequestsHost.Hour)
 	}
 	logs.Println(w)
 
