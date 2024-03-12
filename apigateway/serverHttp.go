@@ -62,6 +62,7 @@ func NewHttpServer() *HttpServer {
 	result.Get("/version", version, "Api Gateway")
 	result.Get("/apigateway/all", getAll, "Api Gateway")
 	result.Post("/apigateway", upsert, "Api Gateway")
+	result.Get("/ws", connectWS, "Api Gateway")
 
 	// Handler router
 	mux.HandleFunc("/", result.handlerFn)

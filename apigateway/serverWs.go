@@ -7,8 +7,7 @@ import (
 	"github.com/cgalvisleon/elvis/ws"
 )
 
-func connectWs(w http.ResponseWriter, r *http.Request) {
-
+func connectWS(w http.ResponseWriter, r *http.Request) {
 	_, err := ws.Connect(w, r)
 	if err != nil {
 		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
