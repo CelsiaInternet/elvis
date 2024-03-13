@@ -33,7 +33,7 @@ func GetResolute(r *http.Request) *Resolute {
 	url := ""
 	resolve := GetResolve(r.Method, r.URL.Path)
 	if resolve != nil {
-		url = strs.Append(resolve.Resolve, r.URL.RawQuery, "")
+		url = strs.Append(resolve.Resolve, r.URL.RawQuery, "?")
 	}
 
 	return &Resolute{

@@ -186,7 +186,7 @@ func (m *Metrics) done(res *http.Response) et.Json {
 	return result
 }
 
-func (m *Metrics) notFounder() et.Json {
+func (m *Metrics) notFounder(r *http.Request) et.Json {
 	m.NotFount = true
 	m.TimeEnd = time.Now()
 	m.ResponseTime = time.Since(m.TimeExec)
@@ -194,7 +194,7 @@ func (m *Metrics) notFounder() et.Json {
 
 	w := logs.Color(logs.NMagenta, fmt.Sprintf(" [%s]: ", m.Method))
 	logs.CW(w, logs.NCyan, m.Proto)
-	logs.CW(w, logs.NWhite, fmt.Sprintf(" from %s", m.RemoteAddr))
+	logs.CW(w, logs.NWhite, fmt.Sprintf(" %s from %s", r.RequestURI, m.RemoteAddr))
 	logs.CW(w, logs.NYellow, " - 404")
 	if m.NotFount {
 		logs.CW(w, logs.NWhite, " Not Found")

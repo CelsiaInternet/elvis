@@ -1,10 +1,12 @@
 package apigateway
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"time"
 
+	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/response"
 	"github.com/cgalvisleon/elvis/ws"
@@ -18,7 +20,10 @@ func version(w http.ResponseWriter, r *http.Request) {
 
 // Handler for not found
 func notFounder(w http.ResponseWriter, r *http.Request) {
-	response.HTTPError(w, r, http.StatusNotFound, "404 Not Found.")
+	response.JSON(w, r, http.StatusNotFound, et.Json{
+		"message": "404 Not Found.",
+		"route":   r.RequestURI,
+	})
 }
 
 // Handler for websocket
@@ -43,9 +48,10 @@ func handlerFn(w http.ResponseWriter, r *http.Request) {
 	metric.TimeExec = time.Now()
 	metric.EndPoint = resolute.URL
 
-	if resolute.Resolve == nil {
+	if resolute.Resolve == nil || resolute.URL == "" {
+		r.RequestURI = fmt.Sprintf(`%s://%s%s`, resolute.Scheme, resolute.Host, resolute.Path)
 		conn.http.notFoundHandler(w, r)
-		metric.notFounder()
+		metric.notFounder(r)
 		return
 	}
 
@@ -62,6 +68,8 @@ func handlerFn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	console.Debug(resolute.ToString())
+
 	request, err := http.NewRequest(resolute.Method, resolute.URL, resolute.Body)
 	if err != nil {
 		response.HTTPError(w, r, http.StatusInternalServerError, err.Error())
@@ -73,7 +81,7 @@ func handlerFn(w http.ResponseWriter, r *http.Request) {
 	client := &http.Client{}
 	res, err := client.Do(request)
 	if err != nil {
-		response.HTTPError(w, r, http.StatusInternalServerError, err.Error())
+		response.HTTPError(w, r, http.StatusBadGateway, err.Error())
 		return
 	}
 
