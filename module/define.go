@@ -34,13 +34,16 @@ func InitDefine() error {
 	if err := DefineProfiles(); err != nil {
 		return console.Panic(err)
 	}
+	if err := DefineRoles(); err != nil {
+		return console.Panic(err)
+	}
+	if err := DefineModuleFolders(); err != nil {
+		return console.Panic(err)
+	}
 	if err := DefineProjectModules(); err != nil {
 		return console.Panic(err)
 	}
 	if err := DefineProfileFolders(); err != nil {
-		return console.Panic(err)
-	}
-	if err := DefineRoles(); err != nil {
 		return console.Panic(err)
 	}
 	if err := initData(); err != nil {

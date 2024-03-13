@@ -49,6 +49,7 @@ func DefineFolders() error {
 		CheckProfileFolder(moduleId, "PROFILE.ADMIN", id, true)
 		CheckProfileFolder(moduleId, "PROFILE.DEV", id, true)
 		CheckProfileFolder(moduleId, "PROFILE.SUPORT", id, true)
+		CheckModuleFolder(moduleId, id, true)
 
 		return nil
 	})
@@ -174,6 +175,8 @@ func InitFolder(moduleId, mainId, id, name, description string, data et.Json) (e
 	if err != nil {
 		return et.Item{}, err
 	}
+
+	CheckModuleFolder(moduleId, id, true)
 
 	return item, nil
 }

@@ -13,6 +13,7 @@ import (
 )
 
 var Modules *linq.Model
+var ModelFolders *linq.Model
 
 func DefineModules() error {
 	if err := DefineSchemaModule(); err != nil {
@@ -85,6 +86,64 @@ func DefineModules() error {
 	}
 
 	if err := core.InitModel(Modules); err != nil {
+		return console.Panic(err)
+	}
+
+	return nil
+}
+
+func DefineModuleFolders() error {
+	if err := DefineSchemaModule(); err != nil {
+		return console.Panic(err)
+	}
+
+	if ModelFolders != nil {
+		return nil
+	}
+
+	ModelFolders = linq.NewModel(SchemaModule, "MODULE_FOLDERS", "Tabla de folders por modulo", 1)
+	ModelFolders.DefineColum("date_make", "", "TIMESTAMP", "NOW()")
+	ModelFolders.DefineColum("module_id", "", "VARCHAR(80)", "-1")
+	ModelFolders.DefineColum("folder_id", "", "VARCHAR(80)", "-1")
+	ModelFolders.DefineColum("index", "", "INTEGER", 0)
+	ModelFolders.DefinePrimaryKey([]string{"module_id", "folder_id"})
+	Modules.DefineIndex([]string{
+		"date_make",
+		"index",
+	})
+	Modules.OnListener = func(data et.Json) {
+		option := data.Str("option")
+		_idt := data.Str("_idt")
+		if option == "insert" {
+			item, err := GetModuleFolderByIdT(_idt)
+			if err != nil {
+				return
+			}
+
+			_id := item.Key("module_id") + "/" + item.Key("folder_id")
+			event.WsPublish(_id, item.Result, "")
+		} else if option == "update" {
+			item, err := GetModuleFolderByIdT(_idt)
+			if err != nil {
+				return
+			}
+
+			_id := item.Key("module_id") + "/" + item.Key("folder_id")
+			cache.Del(_idt)
+			cache.Del(_id)
+			event.WsPublish(_id, item.Result, "")
+		} else if option == "delete" {
+			_id, err := cache.Get(_idt, "-1")
+			if err != nil {
+				return
+			}
+
+			cache.Del(_idt)
+			cache.Del(_id)
+		}
+	}
+
+	if err := core.InitModel(ModelFolders); err != nil {
 		return console.Panic(err)
 	}
 
@@ -239,5 +298,58 @@ func AllModules(state, search string, page, rows int, _select string) (et.List, 
 			Where(Modules.Column("_state").Eq(state)).
 			OrderBy(Modules.Column("name"), true).
 			List(page, rows)
+	}
+}
+
+// Module Folder
+func GetModuleFolderByIdT(_idt string) (et.Item, error) {
+	return ModelFolders.Data().
+		Where(ModelFolders.Column("_idt").Eq(_idt)).
+		First()
+}
+
+func GetModuleFolderById(module_id, folder_id string) (et.Item, error) {
+	return ModelFolders.Data().
+		Where(ModelFolders.Column("module_id").Eq(module_id)).
+		And(ModelFolders.Column("folder_id").Eq(folder_id)).
+		First()
+}
+
+// Check folder that module
+func CheckModuleFolder(module_id, folder_id string, chk bool) (et.Item, error) {
+	if !utility.ValidId(module_id) {
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "module_id")
+	}
+
+	if !utility.ValidId(folder_id) {
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "folder_id")
+	}
+
+	data := et.Json{}
+	data.Set("module_id", module_id)
+	data.Set("folder_id", folder_id)
+	if chk {
+		current, err := GetModuleFolderById(module_id, folder_id)
+		if err != nil {
+			return et.Item{}, err
+		}
+
+		if current.Ok {
+			return et.Item{
+				Ok: current.Ok,
+				Result: et.Json{
+					"message": msg.RECORD_NOT_UPDATE,
+					"index":   current.Index(),
+				},
+			}, nil
+		}
+
+		return ModelFolders.Insert(data).
+			CommandOne()
+	} else {
+		return ModelFolders.Delete().
+			Where(ModelFolders.Column("module_id").Eq(module_id)).
+			And(ModelFolders.Column("folder_id").Eq(folder_id)).
+			CommandOne()
 	}
 }

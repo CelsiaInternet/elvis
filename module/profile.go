@@ -318,8 +318,9 @@ func CheckProfileFolder(moduleId, profileTp, folderId string, chk bool) (et.Item
 func getProfileFolders(userId, projectId, mainId string) []et.Json {
 	items, err := linq.From(Folders, "A").
 		Join(Folders.As("A"), ProfileFolders.As("B"), ProfileFolders.Column("folder_id").Eq(Folders.Column("_id"))).
+		Join(Folders.As("A"), ModelFolders.As("C"), ModelFolders.Column("folder_id").Eq(Folders.Column("_id"))).
 		Where(Folders.Column("main_id").Eq(mainId)).
-		And(Folders.Column("module_id").In(
+		And(ModelFolders.Column("module_id").In(
 			linq.From(ProjectModules, "C").
 				Where(ProjectModules.Column("project_id").Eq(projectId)).
 				Select(ProjectModules.Column("module_id")).SQL())).
