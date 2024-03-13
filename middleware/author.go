@@ -56,23 +56,12 @@ func Authorization(next http.Handler) http.Handler {
 			return
 		}
 
-		type contextKey string
-
-		const (
-			clientIDKey contextKey = "clientId"
-			appKey      contextKey = "app"
-			nameKey     contextKey = "name"
-			kindKey     contextKey = "kind"
-			usernameKey contextKey = "username"
-			tokenKey    contextKey = "token"
-		)
-
-		ctx = context.WithValue(ctx, clientIDKey, c.ID)
-		ctx = context.WithValue(ctx, appKey, c.App)
-		ctx = context.WithValue(ctx, nameKey, c.Name)
-		ctx = context.WithValue(ctx, kindKey, c.Kind)
-		ctx = context.WithValue(ctx, usernameKey, c.Username)
-		ctx = context.WithValue(ctx, tokenKey, tokenString)
+		ctx = context.WithValue(ctx, "clientId", c.ID)
+		ctx = context.WithValue(ctx, "app", c.App)
+		ctx = context.WithValue(ctx, "name", c.Name)
+		ctx = context.WithValue(ctx, "kind", c.Kind)
+		ctx = context.WithValue(ctx, "username", c.Username)
+		ctx = context.WithValue(ctx, "token", tokenString)
 
 		now := utility.Now()
 		hostName, _ := os.Hostname()
