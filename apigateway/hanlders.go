@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/response"
 	"github.com/cgalvisleon/elvis/ws"
@@ -67,8 +66,6 @@ func handlerFn(w http.ResponseWriter, r *http.Request) {
 		handler(w, r)
 		return
 	}
-
-	console.Debug(resolute.ToString())
 
 	request, err := http.NewRequest(resolute.Method, resolute.URL, resolute.Body)
 	if err != nil {
