@@ -259,7 +259,9 @@ func SetUser(name, password, fullName, phone, email string) (et.Item, error) {
 
 	id := utility.NewId()
 	data := et.Json{}
+	data["_state"] = utility.ACTIVE
 	data["_id"] = id
+	data["name"] = name
 	data["full_name"] = fullName
 	data["phone"] = phone
 	data["email"] = email

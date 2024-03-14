@@ -100,6 +100,9 @@ func (serv *Server) Start() {
 	// Banner
 	Banner()
 
+	// Load routes
+	loadRouter()
+
 	<-make(chan struct{})
 }
 

@@ -49,7 +49,7 @@ var routesKey = "apigateway/routes"
 var pakagesKey = "apigateway/packages"
 
 // Load routes from file
-func load() error {
+func loadRouter() error {
 	_routes, err := cache.Get(routesKey, "{routes:[]}")
 	if err != nil {
 		return err
@@ -290,6 +290,4 @@ func init() {
 	}
 
 	handlers = make(Handlers)
-
-	load()
 }
