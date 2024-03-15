@@ -235,38 +235,32 @@ func UpSetAdmin(fullName, country, phone, email string) (et.Item, error) {
 	return item, nil
 }
 
-func SetUser(name, password, fullName, phone, email string) (et.Item, error) {
-	if !utility.ValidStr(name, 0, []string{""}) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "name")
+func InsertUser(fullName, country, phone, email, password string) (et.Item, error) {
+	if !utility.ValidStr(country, 0, []string{""}) {
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "country")
 	}
 
-	if !utility.ValidStr(phone, 3, []string{""}) {
+	if !utility.ValidStr(phone, 9, []string{""}) {
 		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "phone")
 	}
 
-	if !utility.ValidStr(fullName, 3, []string{""}) {
+	if !utility.ValidStr(fullName, 0, []string{""}) {
 		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "full_name")
-	}
-
-	current, err := GetUserByName(name)
-	if err != nil {
-		return et.Item{}, err
-	}
-
-	if current.Ok {
-		return et.Item{}, console.Alert(msg.RECORD_FOUND)
 	}
 
 	id := utility.NewId()
 	data := et.Json{}
-	data["_state"] = utility.ACTIVE
+	name := country + phone
 	data["_id"] = id
+	data["_state"] = utility.ACTIVE
 	data["name"] = name
 	data["full_name"] = fullName
+	data["country"] = country
 	data["phone"] = phone
 	data["email"] = email
+	data["password"] = password
 	data["avatar"] = ""
-	_, err = Users.Insert(data).
+	_, err := Users.Insert(data).
 		CommandOne()
 	if err != nil {
 		return et.Item{}, err
@@ -278,6 +272,37 @@ func SetUser(name, password, fullName, phone, email string) (et.Item, error) {
 	}
 
 	return item, nil
+}
+
+func SetUser(fullName, country, phone, email, password string) (et.Item, error) {
+	if !utility.ValidStr(country, 0, []string{""}) {
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "country")
+	}
+
+	if !utility.ValidStr(phone, 9, []string{""}) {
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "phone")
+	}
+
+	if !utility.ValidStr(fullName, 0, []string{""}) {
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "full_name")
+	}
+
+	name := country + phone
+	current, err := GetUserByName(name)
+	if err != nil {
+		return et.Item{}, err
+	}
+
+	if current.Ok {
+		return et.Item{}, console.Alert(msg.RECORD_FOUND)
+	}
+
+	result, err := InsertUser(fullName, country, phone, email, password)
+	if err != nil {
+		return et.Item{}, err
+	}
+
+	return result, nil
 }
 
 func UpdateUser(id, fullName, phone, email string, data et.Json) (et.Item, error) {
