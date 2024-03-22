@@ -1,7 +1,6 @@
 package linq
 
 import (
-	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/strs"
 )
@@ -402,10 +401,6 @@ func (c *Linq) SqlInsert() string {
 func (c *Linq) SqlUpdate() string {
 	model := c.from[0].model
 	var fieldValues string
-
-	if c.debug == 2 {
-		console.Debug("SqlUpdate: ", c.new)
-	}
 
 	for key, val := range *c.new {
 		field := strs.Uppcase(key)

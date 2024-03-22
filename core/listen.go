@@ -138,7 +138,7 @@ func SetListenTrigger(model *linq.Model) error {
 		}
 	}
 
-	channel := strs.Append(strs.Lowcase(schema), ".", strs.Uppcase(table))
+	channel := strs.Append(strs.Lowcase(schema), strs.Uppcase(table), ".")
 	connStr := jdb.DB(model.Db).ConnStr
 	go jdb.Listen(connStr, channel, "listen", model.OnListener)
 

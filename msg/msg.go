@@ -16,6 +16,7 @@ const (
 	ERR_RECORS_STATE        = "Not edit for register state. (%s)"
 	ERR_ENV_REQUIRED        = "Variables de entorno requerida (%s)"
 	ERR_NOT_CACHE_SERVICE   = "Not cache service"
+	ERR_COMM                = "Not connect db"
 	NOT_SELECT_DRIVE        = "Not select drive"
 	NOT_CONNECT_DB          = "Not connect db"
 	NOT_INIT_CORE           = "Not init core schema"

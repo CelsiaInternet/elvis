@@ -26,9 +26,6 @@ func quote(str string) string {
 	result := strconv.Quote(str)
 	result = strs.Replace(result, `'`, ``)
 
-	logs.Debug("str", str)
-	logs.Debug("quote", result)
-
 	return result
 }
 

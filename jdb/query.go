@@ -55,6 +55,10 @@ func SQLParse(sql string, args ...any) string {
 * DBQDDL
 **/
 func DBQDDL(db int, sql string, args ...any) (et.Items, error) {
+	if conn == nil || len(conn.Db) == 0 || conn.Db[db].Db == nil {
+		return et.Items{}, console.AlertF(msg.ERR_COMM)
+	}
+
 	sql = SQLParse(sql, args...)
 	rows, err := conn.Db[db].Db.Query(sql)
 	if err != nil {
@@ -72,6 +76,10 @@ func DBQDDL(db int, sql string, args ...any) (et.Items, error) {
 }
 
 func DBQuery(db int, sql string, args ...any) (et.Items, error) {
+	if conn == nil || len(conn.Db) == 0 || conn.Db[db].Db == nil {
+		return et.Items{}, console.AlertF(msg.ERR_COMM)
+	}
+
 	sql = SQLParse(sql, args...)
 	rows, err := conn.Db[db].Db.Query(sql)
 	if err != nil {
@@ -120,6 +128,10 @@ func DBQueryCount(db int, sql string, args ...any) int {
 *
 **/
 func DBQueryAtrib(db int, sql, atrib string, args ...any) (et.Items, error) {
+	if conn == nil || len(conn.Db) == 0 || conn.Db[db].Db == nil {
+		return et.Items{}, console.AlertF(msg.ERR_COMM)
+	}
+
 	sql = SQLParse(sql, args...)
 	rows, err := conn.Db[db].Db.Query(sql)
 	if err != nil {
