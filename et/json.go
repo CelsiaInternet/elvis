@@ -107,21 +107,43 @@ func (s Json) ToByte() []byte {
 }
 
 func (s Json) ToString() string {
-	result, err := json.Marshal(s)
+	bt, err := json.Marshal(s)
 	if err != nil {
 		return ""
 	}
 
-	return string(result)
+	result := string(bt)
+
+	return result
 }
 
-func (s Json) ToQuoted() string {
-	result, err := json.Marshal(s)
-	if err != nil {
-		return ""
-	}
+func (s Json) ToUnquote() string {
+	str := s.ToString()
+	result := strs.Format(`'%v'`, str)
 
-	return string(result)
+	return result
+}
+
+func (s Json) ToQuote() string {
+	for k, v := range s {
+		if str, ok := s["mensaje"].(string); ok {
+			ustr, err := strconv.Unquote(`"` + str + `"`)
+			if err != nil {
+				s[k] = v
+			} else {
+				s[k] = ustr
+			}
+		} else {
+			s[k] = v
+		}
+	}
+	str := s.ToString()
+	// result := quote(str)
+
+	logs.Debugf("str: %s", str)
+	// logs.Debugf("quote: %s", result)
+
+	return str
 }
 
 func (s Json) ToItem(src interface{}) Item {

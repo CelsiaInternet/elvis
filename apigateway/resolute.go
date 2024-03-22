@@ -31,7 +31,7 @@ func GetResolute(r *http.Request) *Resolute {
 		scheme = "https"
 	}
 	url := ""
-	resolve := GetResolve(r.Method, r.URL.Path)
+	resolve := conn.http.GetResolve(r.Method, r.URL.Path)
 	if resolve != nil {
 		url = strs.Append(resolve.Resolve, r.URL.RawQuery, "?")
 	}

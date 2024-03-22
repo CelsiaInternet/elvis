@@ -302,7 +302,7 @@ func (c *Column) As(linq *Linq) string {
 		Fkey := strs.Append(from.As(), c.Reference.Fkey, ".")
 		return strs.Format(`(SELECT %s FROM %s WHERE %s=%v LIMIT 1)`, fn, fm, key, Fkey)
 	case TpDetail:
-		return strs.Format(`%v`, et.Quoted(c.Default))
+		return strs.Format(`%v`, et.Unquote(c.Default))
 	case TpFunction:
 		def := FunctionDef(linq, c)
 		return strs.Append(def, c.Up(), " AS ")
@@ -331,7 +331,7 @@ func (c *Column) Def(linq *Linq) string {
 			return strs.Format(`'%s', %s`, c.Low(), def)
 		case TpAtrib:
 			def := c.As(linq)
-			def = strs.Format(`COALESCE(%s, %v)`, def, et.Quoted(c.Default))
+			def = strs.Format(`COALESCE(%s, %v)`, def, et.Unquote(c.Default))
 			return strs.Format(`'%s', %s`, c.Low(), def)
 		case TpClone:
 			return c.As(linq)
@@ -344,7 +344,7 @@ func (c *Column) Def(linq *Linq) string {
 			def := c.As(linq)
 			return strs.Format(`'%s', %s`, c.Title, def)
 		case TpDetail:
-			def := et.Quoted(c.Default)
+			def := et.Unquote(c.Default)
 			return strs.Format(`'%s', %s`, c.Low(), def)
 		case TpFunction:
 			def := FunctionDef(linq, c)
@@ -353,7 +353,7 @@ func (c *Column) Def(linq *Linq) string {
 			def := c.As(linq)
 			return strs.Format(`'%s', %s`, c.Low(), def)
 		default:
-			def := et.Quoted(c.Default)
+			def := et.Unquote(c.Default)
 			return strs.Format(`'%s', %s`, c.Low(), def)
 		}
 	}
@@ -364,7 +364,7 @@ func (c *Column) Def(linq *Linq) string {
 	case TpAtrib:
 		col := strs.Append(from.As(), c.Column.Up(), ".")
 		def := strs.Format(`%s#>>'{%s}'`, col, c.Low())
-		def = strs.Format(`COALESCE(%s, %v)`, def, et.Quoted(c.Default))
+		def = strs.Format(`COALESCE(%s, %v)`, def, et.Unquote(c.Default))
 		return strs.Format(`%s AS %s`, def, c.Up())
 	case TpClone:
 		return strs.Append(strs.Uppcase(c.from), c.Up(), ".")
@@ -375,7 +375,7 @@ func (c *Column) Def(linq *Linq) string {
 		def := c.As(linq)
 		return strs.Format(`%s AS %s`, def, strs.Uppcase(c.Title))
 	case TpDetail:
-		def := et.Quoted(c.Default)
+		def := et.Unquote(c.Default)
 		return strs.Format(`%v AS %s`, def, c.Up())
 	case TpFunction:
 		def := FunctionDef(linq, c)

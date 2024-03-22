@@ -44,7 +44,7 @@ func SQLParse(sql string, args ...any) string {
 
 	for i, arg := range args {
 		old := strs.Format(`{$%d}`, i+1)
-		new := strs.Format(`%v`, et.Quoted(arg))
+		new := strs.Format(`%v`, et.Unquote(arg))
 		sql = strings.ReplaceAll(sql, old, new)
 	}
 

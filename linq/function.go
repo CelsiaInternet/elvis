@@ -31,7 +31,7 @@ func FunctionDef(linq *Linq, col *Column) string {
 				def = strs.Append(def, v.Up(), ".")
 				def = strs.Append(def, v.cast, "::")
 			case string:
-				def = strs.Format(`%v`, et.Quoted(v))
+				def = strs.Format(`%v`, et.Unquote(v))
 			default:
 				console.ErrorF(`FunctionDef:%s; value:%v`, reflect.TypeOf(v), v)
 			}

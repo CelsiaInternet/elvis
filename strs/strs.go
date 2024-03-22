@@ -28,6 +28,10 @@ func FormatLowCase(format string, args ...any) string {
 	return Lowcase(result)
 }
 
+func Contains(str string, substr string) bool {
+	return strings.Contains(str, substr)
+}
+
 func Replace(str string, old string, new string) string {
 	return strings.ReplaceAll(str, old, new)
 }

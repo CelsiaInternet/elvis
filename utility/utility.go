@@ -289,7 +289,7 @@ func BannerTitle(name, version string, size int) string {
 	return strs.Format(`{{ .Title "%s V%s" "" %d }}`, name, version, size)
 }
 
-func ModuleName() (string, error) {
+func GoMod(atrib string) (string, error) {
 	var result string
 	rutaArchivoGoMod := "./go.mod"
 
@@ -300,7 +300,7 @@ func ModuleName() (string, error) {
 
 	lineas := strings.Split(string(contenido), "\n")
 	for _, linea := range lineas {
-		if strings.HasPrefix(linea, "module") {
+		if strings.HasPrefix(linea, atrib) {
 			partes := strings.Fields(linea)
 			if len(partes) > 1 {
 				result = partes[1]

@@ -8,7 +8,7 @@ import (
 func (c *Node) InsertValues(data et.Json) (fields, values string) {
 	for k, v := range data {
 		k = strs.Uppcase(k)
-		v = et.Quoted(v)
+		v = et.Unquote(v)
 
 		if len(fields) == 0 {
 			fields = k
@@ -25,7 +25,7 @@ func (c *Node) InsertValues(data et.Json) (fields, values string) {
 func (c *Node) UpsertValues(data et.Json) (fields, values, fieldValue string) {
 	for k, v := range data {
 		k = strs.Uppcase(k)
-		v = et.Quoted(v)
+		v = et.Unquote(v)
 
 		if len(fieldValue) == 0 {
 			fields = k

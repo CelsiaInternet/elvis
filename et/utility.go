@@ -3,6 +3,7 @@ package et
 import (
 	"encoding/json"
 	"reflect"
+	"strconv"
 	"time"
 
 	"github.com/cgalvisleon/elvis/logs"
@@ -12,10 +13,29 @@ import (
 /**
 *
 **/
-func Quoted(val interface{}) any {
+func unquote(str string) string {
+	result, err := strconv.Unquote(str)
+	if err != nil {
+		result = str
+	}
+
+	return result
+}
+
+func quote(str string) string {
+	result := strconv.Quote(str)
+	result = strs.Replace(result, `'`, ``)
+
+	logs.Debug("str", str)
+	logs.Debug("quote", result)
+
+	return result
+}
+
+func Unquote(val interface{}) any {
 	switch v := val.(type) {
 	case string:
-		return strs.Format(`'%s'`, v)
+		return strs.Format(`'%s'`, unquote(v))
 	case int:
 		return v
 	case float64:
@@ -34,46 +54,40 @@ func Quoted(val interface{}) any {
 		return strs.Format(`'%s'`, v.Format("2006-01-02 15:04:05"))
 	case Json:
 		j := Json(v)
-		return strs.Format(`'%s'`, j.ToString())
+		return strs.Format(`%s`, j.ToUnquote())
 	case []Json:
 		var r string
 		for i, _v := range v {
 			j := Json(_v)
 			if i == 0 {
-				r = strs.Format(`'%s'`, j.ToString())
+				r = strs.Format(`%s`, j.ToUnquote())
 			} else {
-				r = strs.Format(`%s, '%s'`, r, j.ToString())
+				r = strs.Format(`%s, %s`, r, j.ToUnquote())
 			}
 		}
 		return strs.Format(`'[%s]'`, r)
 	case []interface{}:
 		var r string
-		var j Json
 		for i, _v := range v {
-			bt, err := json.Marshal(_v)
-			if err != nil {
-				logs.Errorf("Not quoted type:%v value:%v", reflect.TypeOf(v), v)
-				return val
-			}
-			j.Scan(bt)
+			q := Unquote(_v)
 			if i == 0 {
-				r = strs.Format(`'%s'`, j.ToString())
+				r = strs.Format(`%v`, q)
 			} else {
-				r = strs.Format(`%s, '%s'`, r, j.ToString())
+				r = strs.Format(`%s, %v`, r, q)
 			}
 		}
 		return strs.Format(`'[%s]'`, r)
 	case map[string]interface{}:
 		j := Json(v)
-		return strs.Format(`'%s'`, j.ToString())
+		return strs.Format(`%s`, j.ToUnquote())
 	case []map[string]interface{}:
 		var r string
 		for i, _v := range v {
 			j := Json(_v)
 			if i == 0 {
-				r = strs.Format(`'%s'`, j.ToString())
+				r = strs.Format(`%s`, j.ToUnquote())
 			} else {
-				r = strs.Format(`%s, '%s'`, r, j.ToString())
+				r = strs.Format(`%s, %s`, r, j.ToUnquote())
 			}
 		}
 		return strs.Format(`'[%s]'`, r)
@@ -85,10 +99,10 @@ func Quoted(val interface{}) any {
 	}
 }
 
-func DoubleQuoted(val interface{}) any {
+func Quote(val interface{}) any {
 	switch v := val.(type) {
 	case string:
-		return strs.Format(`"%s"`, v)
+		return strs.Format(`%s`, quote(v))
 	case int:
 		return v
 	case float64:
@@ -107,46 +121,40 @@ func DoubleQuoted(val interface{}) any {
 		return strs.Format(`"%s"`, v.Format("2006-01-02 15:04:05"))
 	case Json:
 		j := Json(v)
-		return strs.Format(`%s`, j.ToQuoted())
+		return strs.Format(`%s`, j.ToQuote())
 	case []Json:
 		var r string
 		for i, _v := range v {
 			j := Json(_v)
 			if i == 0 {
-				r = strs.Format(`%s`, j.ToQuoted())
+				r = strs.Format(`%s`, j.ToQuote())
 			} else {
-				r = strs.Format(`%s, %s`, r, j.ToQuoted())
+				r = strs.Format(`%s, %s`, r, j.ToQuote())
 			}
 		}
 		return strs.Format(`[%s]`, r)
 	case []interface{}:
 		var r string
-		var j Json
 		for i, _v := range v {
-			bt, err := json.Marshal(_v)
-			if err != nil {
-				logs.Errorf("Not double quoted type:%v value:%v", reflect.TypeOf(v), v)
-				return val
-			}
-			j.Scan(bt)
+			q := Quote(_v)
 			if i == 0 {
-				r = strs.Format(`%s`, j.ToQuoted())
+				r = strs.Format(`%v`, q)
 			} else {
-				r = strs.Format(`%s, %s`, r, j.ToQuoted())
+				r = strs.Format(`%s, %v`, r, q)
 			}
 		}
 		return strs.Format(`[%s]`, r)
 	case map[string]interface{}:
 		j := Json(v)
-		return strs.Format(`%s`, j.ToQuoted())
+		return strs.Format(`%s`, j.ToQuote())
 	case []map[string]interface{}:
 		var r string
 		for i, _v := range v {
 			j := Json(_v)
 			if i == 0 {
-				r = strs.Format(`%s`, j.ToQuoted())
+				r = strs.Format(`%s`, j.ToQuote())
 			} else {
-				r = strs.Format(`%s, %s`, r, j.ToQuoted())
+				r = strs.Format(`%s, %s`, r, j.ToQuote())
 			}
 		}
 		return strs.Format(`[%s]`, r)

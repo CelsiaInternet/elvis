@@ -44,7 +44,11 @@ type HttpServer struct {
 	notFoundHandler http.HandlerFunc
 	handlerFn       http.HandlerFunc
 	handlerWS       http.HandlerFunc
-	// middlewares     []func(http.Handler) http.Handler
+	routes          *Nodes
+	pakages         *Pakages
+	handlers        Handlers
+	routesKey       string
+	pakagesKey      string
 }
 
 func NewHttpServer() *HttpServer {
@@ -53,9 +57,14 @@ func NewHttpServer() *HttpServer {
 
 	port := envar.EnvarInt(3300, "PORT")
 	result := &HttpServer{
-		addr:    strs.Format(":%d", port),
-		handler: cors.AllowAll().Handler(mux),
-		mux:     mux,
+		addr:       strs.Format(":%d", port),
+		handler:    cors.AllowAll().Handler(mux),
+		mux:        mux,
+		routes:     newRouters(),
+		pakages:    newPakages(),
+		handlers:   newHandlers(),
+		routesKey:  "apigateway/routes",
+		pakagesKey: "apigateway/packages",
 	}
 	result.notFoundHandler = notFounder
 	result.handlerFn = handlerFn

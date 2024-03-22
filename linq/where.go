@@ -66,7 +66,7 @@ func (c *Where) Def(val any) string {
 	case SQL:
 		return strs.Format(`%v`, v.val)
 	default:
-		return strs.Format(`%v`, et.Quoted(v))
+		return strs.Format(`%v`, et.Unquote(v))
 	}
 }
 

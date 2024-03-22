@@ -57,7 +57,7 @@ func handlerFn(w http.ResponseWriter, r *http.Request) {
 	kind := resolute.Resolve.Node.Resolve.ValStr("HTTP", "kind")
 	if kind == HANDLER {
 		metric.Downtime = time.Since(metric.TimeBegin)
-		handler := handlers[resolute.Resolve.Node._id]
+		handler := conn.http.handlers[resolute.Resolve.Node._id]
 		if handler == nil {
 			response.HTTPError(w, r, http.StatusNotFound, "404 Not Found.")
 			return
@@ -107,7 +107,7 @@ func upsert(w http.ResponseWriter, r *http.Request) {
 	stage := body.ValStr("default", "stage")
 	packageName := body.Str("package")
 
-	AddRoute(method, path, resolve, kind, stage, packageName)
+	conn.http.AddRoute(method, path, resolve, kind, stage, packageName)
 
 	response.JSON(w, r, http.StatusOK, et.Json{
 		"message": "Router added",
@@ -116,7 +116,7 @@ func upsert(w http.ResponseWriter, r *http.Request) {
 
 // Getall list of routes
 func getAll(w http.ResponseWriter, r *http.Request) {
-	_pakages, err := et.Marshal(pakages)
+	_pakages, err := et.Marshal(conn.http.pakages)
 	if err != nil {
 		response.HTTPError(w, r, http.StatusInternalServerError, err.Error())
 		return

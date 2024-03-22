@@ -23,7 +23,7 @@ func DDLColumn(col *Column) string {
 		if _default.Str() == "NOW()" {
 			result = strs.Append(`DEFAULT NOW()`, result, " ")
 		} else {
-			result = strs.Append(strs.Format(`DEFAULT %v`, et.Quoted(col.Default)), result, " ")
+			result = strs.Append(strs.Format(`DEFAULT %v`, et.Unquote(col.Default)), result, " ")
 		}
 
 		if col.Type == "SERIAL" {

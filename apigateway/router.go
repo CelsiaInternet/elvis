@@ -41,63 +41,23 @@ type Resolve struct {
 
 type Handlers map[string]http.HandlerFunc
 
-// List of routes
-var routes *Nodes
-var pakages *Pakages
-var handlers Handlers
-var routesKey = "apigateway/routes"
-var pakagesKey = "apigateway/packages"
-
-// Load routes from file
-func loadRouter() error {
-	_routes, err := cache.Get(routesKey, "{routes:[]}")
-	if err != nil {
-		return err
+// Create new router
+func newRouters() *Nodes {
+	return &Nodes{
+		Routes: []*Node{},
 	}
-
-	err = json.Unmarshal([]byte(_routes), &routes)
-	if err != nil {
-		return err
-	}
-
-	_pakages, err := cache.Get(pakagesKey, "{pakages:[]}")
-	if err != nil {
-		return err
-	}
-
-	err = json.Unmarshal([]byte(_pakages), &pakages)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
-// Save routes to file
-func save() error {
-	// Convertion struct to json
-	_routes, err := et.Marshal(routes)
-	if err != nil {
-		return err
+// Create new pakages
+func newPakages() *Pakages {
+	return &Pakages{
+		Pakages: []*Pakage{},
 	}
+}
 
-	// Save json to cache
-	err = cache.Set(routesKey, _routes.ToString(), 0)
-	if err != nil {
-		return err
-	}
-
-	_pakages, err := et.Marshal(pakages)
-	if err != nil {
-		return err
-	}
-
-	err = cache.Set(pakagesKey, _pakages.ToString(), 0)
-	if err != nil {
-		return err
-	}
-
-	return nil
+// Create new handlers
+func newHandlers() Handlers {
+	return make(Handlers)
 }
 
 // Create a new node from routes
@@ -155,8 +115,61 @@ func findResolve(tag string, nodes []*Node, route *Resolve) (*Node, *Resolve) {
 	return node, route
 }
 
-func findPakage(name string) *Pakage {
-	for _, pakage := range pakages.Pakages {
+// Load routes from file
+func (s *HttpServer) LoadRouter() error {
+	_routes, err := cache.Get(s.routesKey, "{routes:[]}")
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal([]byte(_routes), &s.routes)
+	if err != nil {
+		return err
+	}
+
+	_pakages, err := cache.Get(s.pakagesKey, "{pakages:[]}")
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal([]byte(_pakages), &s.pakages)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Save routes to file
+func (s *HttpServer) Save() error {
+	// Convertion struct to json
+	_routes, err := et.Marshal(s.routes)
+	if err != nil {
+		return err
+	}
+
+	// Save json to cache
+	err = cache.Set(s.routesKey, _routes.ToString(), 0)
+	if err != nil {
+		return err
+	}
+
+	_pakages, err := et.Marshal(s.pakages)
+	if err != nil {
+		return err
+	}
+
+	err = cache.Set(s.pakagesKey, _pakages.ToString(), 0)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Find a pakage by name
+func (s *HttpServer) findPakage(name string) *Pakage {
+	for _, pakage := range s.pakages.Pakages {
 		if pakage.Name == name {
 			return pakage
 		}
@@ -165,22 +178,23 @@ func findPakage(name string) *Pakage {
 	return nil
 }
 
-func newPakage(name string) *Pakage {
+// Create a new pakage
+func (s *HttpServer) newPakage(name string) *Pakage {
 	pakage := &Pakage{
 		Name:  name,
 		Nodes: []*Node{},
 	}
 
-	pakages.Pakages = append(pakages.Pakages, pakage)
+	s.pakages.Pakages = append(s.pakages.Pakages, pakage)
 
 	return pakage
 }
 
 // Add a route to the list
-func AddRoute(method, path, resolve, kind, stage, packageName string) {
-	node := findNode(method, routes.Routes)
+func (s *HttpServer) AddRoute(method, path, resolve, kind, stage, packageName string) {
+	node := findNode(method, s.routes.Routes)
 	if node == nil {
-		node, routes.Routes = newNode(method, routes.Routes)
+		node, s.routes.Routes = newNode(method, s.routes.Routes)
 	}
 
 	tags := strings.Split(path, "/")
@@ -203,21 +217,19 @@ func AddRoute(method, path, resolve, kind, stage, packageName string) {
 			"resolve": resolve,
 		}
 
-		pakage := findPakage(packageName)
+		pakage := s.findPakage(packageName)
 		if pakage == nil {
-			pakage = newPakage(packageName)
+			pakage = s.newPakage(packageName)
 		}
 		pakage.Nodes = append(pakage.Nodes, node)
 		pakage.Count = len(pakage.Nodes)
-
-		save()
 	}
 }
 
-func AddHandleMethod(method, path string, handlerFn http.HandlerFunc, packageName string) {
-	node := findNode(method, routes.Routes)
+func (s *HttpServer) AddHandleMethod(method, path string, handlerFn http.HandlerFunc, packageName string) {
+	node := findNode(method, s.routes.Routes)
 	if node == nil {
-		node, routes.Routes = newNode(method, routes.Routes)
+		node, s.routes.Routes = newNode(method, s.routes.Routes)
 	}
 
 	tags := strings.Split(path, "/")
@@ -237,11 +249,11 @@ func AddHandleMethod(method, path string, handlerFn http.HandlerFunc, packageNam
 			"method": method,
 			"kind":   "HANDLER",
 		}
-		handlers[node._id] = handlerFn
+		s.handlers[node._id] = handlerFn
 
-		pakage := findPakage(packageName)
+		pakage := s.findPakage(packageName)
 		if pakage == nil {
-			pakage = newPakage(packageName)
+			pakage = s.newPakage(packageName)
 		}
 		pakage.Nodes = append(pakage.Nodes, node)
 		pakage.Count = len(pakage.Nodes)
@@ -249,8 +261,8 @@ func AddHandleMethod(method, path string, handlerFn http.HandlerFunc, packageNam
 }
 
 // Get a route from the list
-func GetResolve(method, path string) *Resolve {
-	node := findNode(method, routes.Routes)
+func (s *HttpServer) GetResolve(method, path string) *Resolve {
+	node := findNode(method, s.routes.Routes)
 	if node == nil {
 		return nil
 	}
@@ -277,17 +289,4 @@ func GetResolve(method, path string) *Resolve {
 	}
 
 	return result
-}
-
-// Init routes
-func init() {
-	routes = &Nodes{
-		Routes: []*Node{},
-	}
-
-	pakages = &Pakages{
-		Pakages: []*Pakage{},
-	}
-
-	handlers = make(Handlers)
 }

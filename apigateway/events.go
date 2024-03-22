@@ -29,7 +29,7 @@ func eventAction(m event.CreatedEvenMessage) {
 	stage := data.ValStr("default", "stage")
 	packageName := data.Str("package")
 
-	AddRoute(method, path, resolve, kind, stage, packageName)
+	conn.http.AddRoute(method, path, resolve, kind, stage, packageName)
 
 	console.LogKF("Api gateway", `[%s] %s - %s`, method, path, packageName)
 }

@@ -31,6 +31,7 @@ type Hub struct {
 	run        bool
 }
 
+// Create a new hub
 func NewHub() *Hub {
 	return &Hub{
 		Id:         utility.NewId(),
@@ -43,6 +44,7 @@ func NewHub() *Hub {
 	}
 }
 
+// Run the hub
 func (hub *Hub) Run() {
 	if hub.run {
 		return
@@ -62,6 +64,7 @@ func (hub *Hub) Run() {
 	}
 }
 
+// Broadcast a message to all clients less the ignore client
 func (hub *Hub) broadcast(message interface{}, ignore *Client) {
 	data, _ := json.Marshal(message)
 	for _, client := range hub.clients {
@@ -71,6 +74,7 @@ func (hub *Hub) broadcast(message interface{}, ignore *Client) {
 	}
 }
 
+// Connect a client to the hub
 func (hub *Hub) onConnect(client *Client) {
 	hub.mutex.Lock()
 	defer hub.mutex.Unlock()
@@ -84,6 +88,7 @@ func (hub *Hub) onConnect(client *Client) {
 	logs.Logf("Websocket", MSG_CLIENT_CONNECT, client.Id, hub.Id)
 }
 
+// Disconnect a client from the hub
 func (hub *Hub) onDisconnect(client *Client) {
 	hub.mutex.Lock()
 	defer hub.mutex.Unlock()
@@ -101,10 +106,12 @@ func (hub *Hub) onDisconnect(client *Client) {
 	logs.Logf("Websocket", MSG_CLIENT_DISCONNECT, client.Id, hub.Id)
 }
 
+// Get the index of a client in the hub
 func (hub *Hub) indexClient(clientId string) int {
 	return slices.IndexFunc(hub.clients, func(c *Client) bool { return c.Id == clientId })
 }
 
+// Create a client and connect to the hub
 func (hub *Hub) connect(socket *websocket.Conn, id, name string) (*Client, error) {
 	client, isNew := NewClient(hub, socket, id, name)
 	if isNew {
@@ -117,6 +124,7 @@ func (hub *Hub) connect(socket *websocket.Conn, id, name string) (*Client, error
 	return client, nil
 }
 
+// Listen a client message
 func (hub *Hub) listen(client *Client, messageType int, message []byte) {
 	data, err := et.ToJson(message)
 	if err != nil {
@@ -129,6 +137,7 @@ func (hub *Hub) listen(client *Client, messageType int, message []byte) {
 	client.SendMessage([]byte(data.ToString()))
 }
 
+// Broadcast a message to all clients less the ignore client
 func (hub *Hub) Broadcast(message interface{}, ignoreId string) {
 	var client *Client = nil
 	idx := slices.IndexFunc(hub.clients, func(c *Client) bool { return c.Id == ignoreId })
@@ -139,6 +148,7 @@ func (hub *Hub) Broadcast(message interface{}, ignoreId string) {
 	hub.broadcast(message, client)
 }
 
+// Publish a message to a channel less the ignore client
 func (hub *Hub) Publish(channel string, message interface{}, ignoreId string) {
 	data, _ := json.Marshal(message)
 	idx := slices.IndexFunc(hub.channels, func(c *Channel) bool { return c.Name == channel })
@@ -153,6 +163,7 @@ func (hub *Hub) Publish(channel string, message interface{}, ignoreId string) {
 	}
 }
 
+// Send a message to a client in a channel
 func (hub *Hub) SendMessage(clientId, channel string, message interface{}) bool {
 	data, _ := json.Marshal(message)
 	idx := slices.IndexFunc(hub.clients, func(c *Client) bool { return c.Id == clientId })
@@ -167,44 +178,4 @@ func (hub *Hub) SendMessage(clientId, channel string, message interface{}) bool 
 	}
 
 	return false
-}
-
-func (hub *Hub) Subscribe(clientId string, channel string) bool {
-	idx := slices.IndexFunc(hub.clients, func(c *Client) bool { return c.Id == clientId })
-
-	if idx != -1 {
-		client := hub.clients[idx]
-		client.Subscribe(channel)
-
-		event.Action("ws/subscribe", et.Json{"hub": hub.Id, "client": client, "channel": channel})
-
-		return true
-	}
-
-	return false
-}
-
-func (hub *Hub) Unsubscribe(clientId string, channel string) bool {
-	idx := slices.IndexFunc(hub.clients, func(c *Client) bool { return c.Id == clientId })
-
-	if idx != -1 {
-		client := hub.clients[idx]
-		client.Unsubscribe(channel)
-
-		event.Action("ws/unsubscribe", et.Json{"hub": hub.Id, "client": client, "channel": channel})
-
-		return true
-	}
-
-	return false
-}
-
-func (hub *Hub) GetSubscribers(channel string) []*Client {
-	idx := slices.IndexFunc(hub.channels, func(c *Channel) bool { return c.Name == channel })
-	if idx != -1 {
-		_channel := hub.channels[idx]
-		return _channel.Subscribers
-	}
-
-	return []*Client{}
 }

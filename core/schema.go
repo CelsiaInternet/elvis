@@ -8,11 +8,11 @@ import (
 var makedCore bool
 
 func defineSchemaCore() error {
-	var err error
 	if makedCore {
 		return nil
 	}
 
+	var err error
 	makedCore, err = jdb.CreateSchema(0, "core")
 	if err != nil {
 		return err

@@ -16,7 +16,7 @@ func (s *HttpServer) MethodFunc(method, pattern string, handlerFn http.HandlerFu
 		console.PanicF(`'%s' http method is not supported.`, method)
 	}
 
-	AddHandleMethod(method, pattern, handlerFn, packageName)
+	s.AddHandleMethod(method, pattern, handlerFn, packageName)
 }
 
 // Connect adds the route `pattern` that matches `CONNECT` http method to

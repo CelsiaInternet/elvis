@@ -356,9 +356,9 @@ func (c *Linq) SqlKeys() string {
 	var wh string
 	for _, obj := range c.keys {
 		if len(result) == 0 {
-			wh = strs.Format(`%s=%v`, strs.Uppcase(obj.Col.name), et.Quoted(obj.Value))
+			wh = strs.Format(`%s=%v`, strs.Uppcase(obj.Col.name), et.Unquote(obj.Value))
 		} else {
-			wh = strs.Format(`AND %s=%v`, strs.Uppcase(obj.Col.name), et.Quoted(obj.Value))
+			wh = strs.Format(`AND %s=%v`, strs.Uppcase(obj.Col.name), et.Unquote(obj.Value))
 		}
 		result = strs.Append(result, wh, "\n")
 	}
@@ -384,7 +384,7 @@ func (c *Linq) SqlInsert() string {
 
 	for key, val := range *c.new {
 		field := strs.Uppcase(key)
-		value := et.Quoted(val)
+		value := et.Unquote(val)
 
 		fields = strs.Append(fields, field, ", ")
 		values = strs.Append(values, strs.Format(`%v`, value), ", ")
@@ -409,7 +409,7 @@ func (c *Linq) SqlUpdate() string {
 
 	for key, val := range *c.new {
 		field := strs.Uppcase(key)
-		value := et.Quoted(val)
+		value := et.Unquote(val)
 
 		if model.UseSource && field == strs.Uppcase(model.SourceField) {
 			vals := strs.Uppcase(model.SourceField)
@@ -417,7 +417,7 @@ func (c *Linq) SqlUpdate() string {
 
 			for ak, av := range atribs {
 				ak = strs.Lowcase(ak)
-				av = et.DoubleQuoted(av)
+				av = et.Quote(av)
 
 				vals = strs.Format(`jsonb_set(%s, '{%s}', '%v', true)`, vals, ak, av)
 			}
