@@ -138,10 +138,6 @@ func (s Json) ToQuote() string {
 		}
 	}
 	str := s.ToString()
-	// result := quote(str)
-
-	logs.Debugf("str: %s", str)
-	// logs.Debugf("quote: %s", result)
 
 	return str
 }
