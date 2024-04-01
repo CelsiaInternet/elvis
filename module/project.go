@@ -42,8 +42,8 @@ func DefineProjects() error {
 	})
 	Projects.Trigger(linq.AfterInsert, func(model *linq.Model, old, new *et.Json, data et.Json) error {
 		moduleId := data.Key("module_id")
-		if moduleId != "-1" {
-			id := new.Id()
+		id := new.Id()
+		if id != "-1" {
 			CheckProjectModule(id, moduleId, true)
 			CheckRole(id, moduleId, "PROFILE.ADMIN", "USER.ADMIN", true)
 		}

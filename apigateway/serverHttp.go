@@ -9,6 +9,7 @@ import (
 )
 
 const (
+	// Types
 	HANDLER   = "HANDLER"
 	HTTP      = "HTTP"
 	REST      = "REST"
@@ -51,7 +52,7 @@ type HttpServer struct {
 	pakagesKey      string
 }
 
-func NewHttpServer() *HttpServer {
+func newHttpServer() *HttpServer {
 	// Create a new server
 	mux := http.NewServeMux()
 
@@ -71,7 +72,7 @@ func NewHttpServer() *HttpServer {
 	result.Get("/version", version, "Api Gateway")
 	result.Get("/apigateway/all", getAll, "Api Gateway")
 	result.Post("/apigateway", upsert, "Api Gateway")
-	result.Get("/ws", handlerWS, "Api Gateway")
+	result.Get("/ws", wsConnect, "Api Gateway")
 
 	// Handler router
 	mux.HandleFunc("/", result.handlerFn)

@@ -21,6 +21,7 @@ import (
 type Server struct {
 	http *HttpServer
 	rpc  *net.Listener
+	ws   *ws.Conn
 }
 
 var PackageName = "apigateway"
@@ -46,22 +47,23 @@ func New() (*Server, error) {
 		panic(err)
 	}
 
-	// Create ws server
-	_, err = ws.Load()
+	// HTTP server
+	httpServer := newHttpServer()
+
+	// RPC server
+	rpcServer := newRpc()
+
+	// WS server
+	wsServer, err := ws.Load()
 	if err != nil {
 		panic(err)
 	}
-
-	// HTTP server
-	httpServer := NewHttpServer()
-
-	// RPC server
-	rpcServer := NewRpc()
 
 	// Create a new server
 	conn = &Server{
 		http: httpServer,
 		rpc:  &rpcServer,
+		ws:   wsServer,
 	}
 
 	return conn, nil

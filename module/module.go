@@ -43,13 +43,11 @@ func DefineModules() error {
 	})
 	Modules.Trigger(linq.AfterInsert, func(model *linq.Model, old, new *et.Json, data et.Json) error {
 		id := new.Id()
-		if id != "-1" {
-			InitProfile(id, "PROFILE.ADMIN", et.Json{})
-			InitProfile(id, "PROFILE.DEV", et.Json{})
-			InitProfile(id, "PROFILE.SUPORT", et.Json{})
-			CheckProjectModule("-1", id, true)
-			CheckRole("-1", id, "PROFILE.ADMIN", "USER.ADMIN", true)
-		}
+		InitProfile(id, "PROFILE.ADMIN", et.Json{})
+		InitProfile(id, "PROFILE.DEV", et.Json{})
+		InitProfile(id, "PROFILE.SUPORT", et.Json{})
+		CheckProjectModule("-1", id, true)
+		CheckRole("-1", id, "PROFILE.ADMIN", "USER.ADMIN", true)
 
 		return nil
 	})
@@ -107,6 +105,8 @@ func DefineModuleFolders() error {
 	ModelFolders.DefineColum("folder_id", "", "VARCHAR(80)", "-1")
 	ModelFolders.DefineColum("index", "", "INTEGER", 0)
 	ModelFolders.DefinePrimaryKey([]string{"module_id", "folder_id"})
+	ModelFolders.DefineForeignKey("module_id", Modules.Col("_id"))
+	ModelFolders.DefineForeignKey("folder_id", Folders.Col("_id"))
 	Modules.DefineIndex([]string{
 		"date_make",
 		"index",

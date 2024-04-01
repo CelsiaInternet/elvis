@@ -8,7 +8,6 @@ import (
 
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/response"
-	"github.com/cgalvisleon/elvis/ws"
 )
 
 // Version information this package
@@ -23,15 +22,6 @@ func notFounder(w http.ResponseWriter, r *http.Request) {
 		"message": "404 Not Found.",
 		"route":   r.RequestURI,
 	})
-}
-
-// Handler for websocket
-func handlerWS(w http.ResponseWriter, r *http.Request) {
-	_, err := ws.Connect(w, r)
-	if err != nil {
-		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
-		return
-	}
 }
 
 // Handler function

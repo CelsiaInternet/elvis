@@ -97,6 +97,7 @@ func DefineProfileFolders() error {
 		"index",
 	})
 	ProfileFolders.DefineForeignKey("module_id", Modules.Column("_id"))
+	ProfileFolders.DefineForeignKey("folder_id", Folders.Column("_id"))
 	ProfileFolders.OnListener = func(data et.Json) {
 		option := data.Str("option")
 		_idt := data.Str("_idt")

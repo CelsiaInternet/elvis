@@ -34,7 +34,7 @@ func (c *Service) Version(rq []byte, rp *et.Item) error {
 	return nil
 }
 
-func NewRpc() net.Listener {
+func newRpc() net.Listener {
 	initRpc()
 	rpc.HandleHTTP()
 	port := envar.EnvarInt(4200, "RPC")

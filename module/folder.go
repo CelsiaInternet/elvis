@@ -45,11 +45,13 @@ func DefineFolders() error {
 	})
 	Folders.Trigger(linq.AfterInsert, func(model *linq.Model, old, new *et.Json, data et.Json) error {
 		id := new.Id()
-		moduleId := new.Key("module_id")
-		CheckProfileFolder(moduleId, "PROFILE.ADMIN", id, true)
-		CheckProfileFolder(moduleId, "PROFILE.DEV", id, true)
-		CheckProfileFolder(moduleId, "PROFILE.SUPORT", id, true)
-		CheckModuleFolder(moduleId, id, true)
+		if id != "-1" {
+			moduleId := new.Key("module_id")
+			CheckProfileFolder(moduleId, "PROFILE.ADMIN", id, true)
+			CheckProfileFolder(moduleId, "PROFILE.DEV", id, true)
+			CheckProfileFolder(moduleId, "PROFILE.SUPORT", id, true)
+			CheckModuleFolder(moduleId, id, true)
+		}
 
 		return nil
 	})

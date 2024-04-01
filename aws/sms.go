@@ -40,7 +40,7 @@ func VerifyMobile(app string, device string, country string, phoneNumber string)
 	code := utility.GetCodeVerify(6)
 	cache.SetVerify(device, country+phoneNumber, code)
 
-	message := strs.Format(msg.T("MSG_MOBILE_VALIDATION"), app, code)
+	message := strs.Format(msg.MSG_MOBILE_VALIDATION, app, code)
 	_, _, err := SendSMS(country, phoneNumber, message)
 	if err != nil {
 		return err

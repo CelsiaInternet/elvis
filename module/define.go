@@ -59,7 +59,8 @@ func InitDefine() error {
 
 func initData() error {
 	if _, err := Projects.Upsert(et.Json{
-		"_id": "-1",
+		"_id":  "-1",
+		"name": "My project",
 	}).
 		Where(Projects.Column("_id").Eq("-1")).
 		CommandOne(); err != nil {
@@ -67,7 +68,8 @@ func initData() error {
 	}
 
 	if _, err := Modules.Upsert(et.Json{
-		"_id": "-1",
+		"_id":  "-1",
+		"name": "Admin",
 	}).
 		Where(Modules.Column("_id").Eq("-1")).
 		CommandOne(); err != nil {
@@ -104,6 +106,9 @@ func initData() error {
 		CommandOne(); err != nil {
 		return err
 	}
+
+	CheckProjectModule("-1", "-1", true)
+	CheckRole("-1", "-1", "PROFILE.ADMIN", "USER.ADMIN", true)
 
 	return nil
 }
