@@ -1,4 +1,4 @@
-package apigateway
+package gateway
 
 import (
 	"github.com/cgalvisleon/elvis/console"
@@ -9,7 +9,7 @@ import (
 func initEvents() {
 	console.LogK("Events", "Running svents stack")
 
-	err := event.Stack("apigateway/upsert", eventAction)
+	err := event.Stack("gateway/upsert", eventAction)
 	if err != nil {
 		console.Error(err)
 	}

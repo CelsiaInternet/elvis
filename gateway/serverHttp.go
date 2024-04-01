@@ -1,4 +1,4 @@
-package apigateway
+package gateway
 
 import (
 	"net/http"
@@ -64,14 +64,14 @@ func newHttpServer() *HttpServer {
 		routes:     newRouters(),
 		pakages:    newPakages(),
 		handlers:   newHandlers(),
-		routesKey:  "apigateway/routes",
-		pakagesKey: "apigateway/packages",
+		routesKey:  "gateway/routes",
+		pakagesKey: "gateway/packages",
 	}
 	result.notFoundHandler = notFounder
 	result.handlerFn = handlerFn
 	result.Get("/version", version, "Api Gateway")
-	result.Get("/apigateway/all", getAll, "Api Gateway")
-	result.Post("/apigateway", upsert, "Api Gateway")
+	result.Get("/gateway/all", getAll, "Api Gateway")
+	result.Post("/gateway", upsert, "Api Gateway")
 	result.Get("/ws", wsConnect, "Api Gateway")
 
 	// Handler router

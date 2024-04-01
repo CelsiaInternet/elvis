@@ -1,4 +1,4 @@
-package apigateway
+package gateway
 
 import (
 	"fmt"
@@ -24,9 +24,9 @@ type Server struct {
 	ws   *ws.Conn
 }
 
-var PackageName = "apigateway"
+var PackageName = "gateway"
 var PackageTitle = envar.EnvarStr("Apigateway", "PACKAGE_TITLE")
-var PackagePath = "/api/apigateway"
+var PackagePath = "/api/gateway"
 var PackageVersion = envar.EnvarStr("0.0.1", "VERSION")
 var Company = envar.EnvarStr("", "COMPANY")
 var Web = envar.EnvarStr("", "WEB")

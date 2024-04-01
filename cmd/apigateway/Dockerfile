@@ -18,10 +18,10 @@ RUN go mod download
 
 COPY . .
 
-RUN gofmt -w . && go build ./cmd/apigateway
+RUN gofmt -w . && go build ./cmd/gateway
 
 FROM scratch
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --from=builder /src/apigateway ./apigateway
+COPY --from=builder /src/gateway ./gateway
 
-ENTRYPOINT ["./apigateway"]
+ENTRYPOINT ["./gateway"]

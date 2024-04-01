@@ -4,9 +4,9 @@ import (
 	"os"
 	"os/signal"
 
-	serv "github.com/cgalvisleon/elvis/apigateway"
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/envar"
+	serv "github.com/cgalvisleon/elvis/gateway"
 )
 
 func main() {
