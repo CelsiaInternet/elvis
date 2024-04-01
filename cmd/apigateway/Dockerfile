@@ -22,6 +22,6 @@ RUN gofmt -w . && go build ./cmd/apigateway
 
 FROM scratch
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --from=builder /src/gateway ./apigateway
+COPY --from=builder /src/apigateway ./apigateway
 
 ENTRYPOINT ["./apigateway"]

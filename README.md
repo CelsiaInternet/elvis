@@ -6,7 +6,7 @@
 go mod tidy &&
 gofmt -w . &&
 git update &&
-git tag v0.0.143 &&
+git tag v0.0.144 &&
 git tags
 git push origin --tags
 
@@ -19,12 +19,18 @@ go run github.com/cgalvisleon/elvis/cmd/apigateway
 
 go build ./cmd/apigateway
 
-go get -u github.com/cgalvisleon/elvis@v0.0.143
-go get github.com/cgalvisleon/elvis@v0.0.143
+go get -u github.com/cgalvisleon/elvis@v0.0.144
+go get github.com/cgalvisleon/elvis@v0.0.144
 ```
 
 # Build
 
 ```
+docker system prune -a --volumes -f
+
 docker build --no-cache -t apigateway -f ./cmd/apigateway/Dockerfile .
+docker scout quickview local://apigateway:latest --org cgalvisleon
+
+docker-compose -p apigateway -f ./cmd/apigateway/docker-compose.yml up -d
+docker-compose -p apigateway -f ./cmd/apigateway/docker-compose.yml down
 ```
