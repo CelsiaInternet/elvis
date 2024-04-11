@@ -9,7 +9,6 @@ import (
 	"github.com/cgalvisleon/elvis/msg"
 	"github.com/cgalvisleon/elvis/strs"
 	"github.com/cgalvisleon/elvis/utility"
-	_ "github.com/joho/godotenv/autoload"
 	mail "github.com/xhit/go-simple-mail/v2"
 )
 

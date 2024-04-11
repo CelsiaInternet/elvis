@@ -317,28 +317,29 @@ func CheckProfileFolder(moduleId, profileTp, folderId string, chk bool) (et.Item
 }
 
 func getProfileFolders(userId, projectId, mainId string) []et.Json {
-	items, err := linq.From(Folders, "A").
-		Join(Folders.As("A"), ProfileFolders.As("B"), ProfileFolders.Column("folder_id").Eq(Folders.Column("_id"))).
-		Join(Folders.As("A"), ModelFolders.As("C"), ModelFolders.Column("folder_id").Eq(Folders.Column("_id"))).
-		Where(Folders.Column("main_id").Eq(mainId)).
-		And(ModelFolders.Column("module_id").In(
-			linq.From(ProjectModules, "C").
-				Where(ProjectModules.Column("project_id").Eq(projectId)).
-				Select(ProjectModules.Column("module_id")).SQL())).
-		And(ProfileFolders.Column("profile_tp").In(
-			linq.From(Roles, "D").
-				Where(Roles.Column("project_id").Eq(projectId)).
-				And(Roles.Column("user_id").Eq(userId)).
-				Select(Roles.Column("profile_tp")).SQL())).
-		OrderBy(Folders.Column("index"), true).
-		Data().
-		Find()
+	sql := `
+	SELECT DISTINCT A._DATA||jsonb_build_object('date_make', A.DATE_MAKE,
+	'date_update', A.DATE_UPDATE,
+	'module_id', A.MODULE_ID,
+	'_state', A._STATE,
+	'_id', A._ID,
+	'main_id', A.MAIN_ID,
+	'name', A.NAME,
+	'description', A.DESCRIPTION,
+	'index', A.INDEX) AS _DATA,
+	$2 AS PROJECT_ID,
+	A.INDEX
+	FROM module.FOLDERS AS A
+	INNER JOIN module.PROFILE_FOLDERS AS B ON B.FOLDER_ID = A._ID
+	INNER JOIN module.MODULE_FOLDERS AS C ON C.FOLDER_ID = A._ID
+	WHERE A.MAIN_ID = $1
+	AND C.MODULE_ID IN (SELECT C.MODULE_ID FROM module.PROJECT_MODULES AS C WHERE C.PROJECT_ID = $2)
+	AND B.PROFILE_TP IN (SELECT D.PROFILE_TP FROM module.ROLES AS D WHERE D.PROJECT_ID = $2 AND D.USER_ID = $3)
+	ORDER BY A.INDEX ASC;`
+
+	items, err := linq.QueryData(sql, mainId, projectId, userId)
 	if err != nil {
 		return []et.Json{}
-	}
-
-	for _, item := range items.Result {
-		item["project_id"] = projectId
 	}
 
 	return items.Result

@@ -9,7 +9,6 @@ import (
 	"github.com/cgalvisleon/elvis/linq"
 	"github.com/cgalvisleon/elvis/msg"
 	"github.com/cgalvisleon/elvis/utility"
-	_ "github.com/joho/godotenv/autoload"
 )
 
 var Modules *linq.Model

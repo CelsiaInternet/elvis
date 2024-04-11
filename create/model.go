@@ -38,7 +38,6 @@ import (
 	serv "$1/internal/service/$2"
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/envar"
-	_ "github.com/joho/godotenv/autoload"	
 )
 
 func main() {
@@ -78,7 +77,6 @@ import (
 	"github.com/cgalvisleon/elvis/response"
 	"github.com/cgalvisleon/elvis/strs"
 	"github.com/go-chi/chi/v5"
-	_ "github.com/joho/godotenv/autoload"
 	"github.com/rs/cors"
 )
 
@@ -123,7 +121,7 @@ func New() (*Server, error) {
 	/**
 	 * RPC
 	 **/
-	rpc := envar.EnvarInt(4200, "RPC")
+	rpc := envar.EnvarInt(0, "RPC")
 
 	if rpc != 0 {
 		serv := v1.NewRpc(rpc)

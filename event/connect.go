@@ -3,7 +3,6 @@ package event
 import (
 	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/logs"
-	_ "github.com/joho/godotenv/autoload"
 	"github.com/nats-io/nats.go"
 )
 

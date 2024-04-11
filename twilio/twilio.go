@@ -8,7 +8,6 @@ import (
 	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/strs"
-	_ "github.com/joho/godotenv/autoload"
 )
 
 func SendWhatsApp(country, phone, message string) (et.Json, error) {

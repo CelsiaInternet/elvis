@@ -8,7 +8,6 @@ import (
 	"github.com/cgalvisleon/elvis/msg"
 	"github.com/cgalvisleon/elvis/strs"
 	"github.com/cgalvisleon/elvis/utility"
-	_ "github.com/joho/godotenv/autoload"
 )
 
 func SendSMS(country string, mobile string, message string) (bool, interface{}, error) {

@@ -14,7 +14,6 @@ import (
 	"github.com/cgalvisleon/elvis/strs"
 	"github.com/cgalvisleon/elvis/utility"
 	"github.com/golang-jwt/jwt/v4"
-	_ "github.com/joho/godotenv/autoload"
 )
 
 type Claim struct {

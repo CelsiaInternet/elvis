@@ -1,10 +1,51 @@
 package linq
 
-import "github.com/cgalvisleon/elvis/strs"
+import (
+	"github.com/cgalvisleon/elvis/et"
+	"github.com/cgalvisleon/elvis/jdb"
+	"github.com/cgalvisleon/elvis/strs"
+)
 
 /**
 *
 **/
+
+func Query(sql string, args ...any) (et.Items, error) {
+	result, err := jdb.DBQuery(0, sql, args...)
+	if err != nil {
+		return et.Items{}, err
+	}
+
+	return result, nil
+}
+
+func QueryOne(sql string, args ...any) (et.Item, error) {
+	result, err := jdb.DBQueryOne(0, sql, args...)
+	if err != nil {
+		return et.Item{}, err
+	}
+
+	return result, nil
+}
+
+func QueryData(sql string, args ...any) (et.Items, error) {
+	result, err := jdb.DBQueryData(0, sql, args...)
+	if err != nil {
+		return et.Items{}, err
+	}
+
+	return result, nil
+}
+
+func QueryDataOne(sql string, args ...any) (et.Item, error) {
+	result, err := jdb.DBQueryDataOne(0, sql, args...)
+	if err != nil {
+		return et.Item{}, err
+	}
+
+	return result, nil
+}
+
 func From(model *Model, as ...string) *Linq {
 	result := NewLinq(ActSelect, model, as...)
 

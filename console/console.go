@@ -7,7 +7,6 @@ import (
 	"github.com/cgalvisleon/elvis/event"
 	"github.com/cgalvisleon/elvis/logs"
 	"github.com/cgalvisleon/elvis/strs"
-	_ "github.com/joho/godotenv/autoload"
 )
 
 func NewError(message string) error {

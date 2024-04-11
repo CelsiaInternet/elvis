@@ -9,7 +9,6 @@ import (
 	"io"
 
 	"github.com/cgalvisleon/elvis/envar"
-	_ "github.com/joho/godotenv/autoload"
 )
 
 func EncryptMessage(message string) (string, error) {

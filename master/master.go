@@ -6,7 +6,6 @@ import (
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/jdb"
 	"github.com/cgalvisleon/elvis/strs"
-	_ "github.com/joho/godotenv/autoload"
 )
 
 var (

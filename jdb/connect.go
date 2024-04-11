@@ -7,7 +7,6 @@ import (
 	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/msg"
 	"github.com/cgalvisleon/elvis/strs"
-	_ "github.com/joho/godotenv/autoload"
 )
 
 func connect() {

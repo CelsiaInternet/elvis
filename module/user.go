@@ -12,7 +12,6 @@ import (
 	"github.com/cgalvisleon/elvis/msg"
 	"github.com/cgalvisleon/elvis/strs"
 	"github.com/cgalvisleon/elvis/utility"
-	_ "github.com/joho/godotenv/autoload"
 )
 
 var Users *linq.Model
