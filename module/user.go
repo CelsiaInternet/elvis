@@ -1,7 +1,6 @@
 package module
 
 import (
-	"github.com/cgalvisleon/elvis/aws"
 	"github.com/cgalvisleon/elvis/cache"
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/core"
@@ -10,6 +9,7 @@ import (
 	"github.com/cgalvisleon/elvis/event"
 	"github.com/cgalvisleon/elvis/linq"
 	"github.com/cgalvisleon/elvis/msg"
+	"github.com/cgalvisleon/elvis/send"
 	"github.com/cgalvisleon/elvis/strs"
 	"github.com/cgalvisleon/elvis/utility"
 )
@@ -77,15 +77,13 @@ func DefineUsers() error {
 	})
 	Users.Trigger(linq.AfterInsert, func(model *linq.Model, old, new *et.Json, data et.Json) error {
 		id := new.Key("_id")
+		fullName := new.Str("full_name")
+		email := new.Str("email")
+		APP := envar.EnvarStr("", "APP")
 		if id == "USER.ADMIN" {
-			fullName := new.Str("full_name")
-			country := new.Str("country")
-			phone := new.Str("phone")
-			APP := envar.EnvarStr("", "APP")
 			message := strs.Format(msg.MSG_ADMIN_WELCOME, fullName, APP)
-			go aws.SendSMS(country, phone, message)
+			go send.Email(email, "Notificación de inicio de sesión", message)
 		}
-
 		return nil
 	})
 	Users.OnListener = func(data et.Json) {
@@ -140,6 +138,17 @@ func GetUserByIdT(_idt string) (et.Item, error) {
 func GetUserByName(name string) (et.Item, error) {
 	item, err := Users.Data().
 		Where(Users.Column("name").Eq(name)).
+		First()
+	if err != nil {
+		return et.Item{}, err
+	}
+
+	return item, nil
+}
+
+func GetUserByEmail(email string) (et.Item, error) {
+	item, err := Users.Data().
+		Where(Users.Column("email").Eq(email)).
 		First()
 	if err != nil {
 		return et.Item{}, err

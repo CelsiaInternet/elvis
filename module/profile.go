@@ -320,6 +320,7 @@ func getProfileFolders(userId, projectId, mainId string) []et.Json {
 	sql := `
 	SELECT DISTINCT A._DATA||jsonb_build_object('date_make', A.DATE_MAKE,
 	'date_update', A.DATE_UPDATE,
+	'project_id', $2,
 	'module_id', A.MODULE_ID,
 	'_state', A._STATE,
 	'_id', A._ID,
@@ -327,7 +328,6 @@ func getProfileFolders(userId, projectId, mainId string) []et.Json {
 	'name', A.NAME,
 	'description', A.DESCRIPTION,
 	'index', A.INDEX) AS _DATA,
-	$2 AS PROJECT_ID,
 	A.INDEX
 	FROM module.FOLDERS AS A
 	INNER JOIN module.PROFILE_FOLDERS AS B ON B.FOLDER_ID = A._ID

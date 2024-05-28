@@ -88,6 +88,81 @@ type Column struct {
 	cast        string
 }
 
+func NewColumn(model *Model, name, description, _type string, _default any) *Column {
+	result := model.Column(name)
+	if result != nil {
+		result.Description = description
+		result.Type = _type
+		result.Default = _default
+
+		return result
+	}
+
+	result = &Column{
+		Model:       model,
+		Tp:          TpColumn,
+		name:        strs.Uppcase(name),
+		Description: description,
+		Type:        _type,
+		Default:     _default,
+		Atribs:      []*Column{},
+		References:  []*Column{},
+		Indexed:     false,
+		Hidden:      false,
+	}
+
+	if !model.UseDateMake {
+		model.UseDateMake = strs.Uppcase(result.name) == strs.Uppcase(model.DateMakeField)
+	}
+
+	if !model.UseDateUpdate {
+		model.UseDateUpdate = strs.Uppcase(result.name) == strs.Uppcase(model.DateUpdateField)
+	}
+
+	if !model.UseState {
+		model.UseState = strs.Uppcase(result.name) == strs.Uppcase(model.StateField)
+	}
+
+	if !model.UseProject {
+		model.UseProject = strs.Uppcase(result.name) == strs.Uppcase(model.ProjectField)
+	}
+
+	if !model.UseSerie && model.schema.UseSerie {
+		model.UseSerie = strs.Uppcase(result.name) == strs.Uppcase(model.SerieField)
+	}
+
+	if !model.UseSource {
+		model.UseSource = strs.Uppcase(result.name) == strs.Uppcase(model.SourceField)
+	}
+
+	model.Definition = append(model.Definition, result)
+	return result
+}
+
+func NewVirtualAtrib(model *Model, name, description, _type string, _default any) *Column {
+	result := model.Column(name)
+	if result != nil {
+		result.Description = description
+		result.Type = _type
+		result.Default = _default
+
+		return result
+	}
+
+	result = &Column{
+		Model:       model,
+		Tp:          TpColumn,
+		name:        strs.Uppcase(name),
+		Description: description,
+		Type:        _type,
+		Default:     _default,
+		Atribs:      []*Column{},
+		Indexed:     false,
+	}
+
+	return result
+}
+
 func (c *Column) Driver() string {
 	return c.Model.Driver()
 }
@@ -153,63 +228,6 @@ func (c *Column) Valid(val any) error {
 	return nil
 }
 
-func NewColumn(model *Model, name, description, _type string, _default any) *Column {
-	result := &Column{
-		Model:       model,
-		Tp:          TpColumn,
-		name:        strs.Uppcase(name),
-		Description: description,
-		Type:        _type,
-		Default:     _default,
-		Atribs:      []*Column{},
-		References:  []*Column{},
-		Indexed:     false,
-		Hidden:      false,
-	}
-
-	if !model.UseDateMake {
-		model.UseDateMake = strs.Uppcase(result.name) == strs.Uppcase(model.DateMakeField)
-	}
-
-	if !model.UseDateUpdate {
-		model.UseDateUpdate = strs.Uppcase(result.name) == strs.Uppcase(model.DateUpdateField)
-	}
-
-	if !model.UseState {
-		model.UseState = strs.Uppcase(result.name) == strs.Uppcase(model.StateField)
-	}
-
-	if !model.UseProject {
-		model.UseProject = strs.Uppcase(result.name) == strs.Uppcase(model.ProjectField)
-	}
-
-	if !model.UseSerie && model.schema.UseSerie {
-		model.UseSerie = strs.Uppcase(result.name) == strs.Uppcase(model.SerieField)
-	}
-
-	if !model.UseSource {
-		model.UseSource = strs.Uppcase(result.name) == strs.Uppcase(model.SourceField)
-	}
-
-	model.Definition = append(model.Definition, result)
-	return result
-}
-
-func NewVirtualAtrib(model *Model, name, description, _type string, _default any) *Column {
-	result := &Column{
-		Model:       model,
-		Tp:          TpColumn,
-		name:        strs.Uppcase(name),
-		Description: description,
-		Type:        _type,
-		Default:     _default,
-		Atribs:      []*Column{},
-		Indexed:     false,
-	}
-
-	return result
-}
-
 /**
 * DDL
 **/
@@ -228,7 +246,6 @@ func (c *Column) DDLUniqueIndex() string {
 /**
 * References
 **/
-
 func (c *Column) ReferencesIdx(col *Column) int {
 	for i, _col := range c.References {
 		if _col.name == col.name {

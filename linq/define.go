@@ -15,7 +15,7 @@ func (c *Model) DefineColum(name, description, _type string, _default any) *Mode
 }
 
 func (c *Model) DefineAtrib(name, description, _type string, _default any) *Model {
-	source := c.Col(c.SourceField)
+	source := NewColumn(c, c.SourceField, "", "JSONB", "{}")
 	result := NewColumn(c, name, description, _type, _default)
 	result.Tp = TpAtrib
 	result.Column = source

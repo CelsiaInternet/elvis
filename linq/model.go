@@ -59,6 +59,38 @@ type Model struct {
 	Version            int
 }
 
+func NewModel(schema *Schema, table, description string, version int) *Model {
+	result := &Model{
+		Db:                 schema.Db,
+		Database:           schema.Database,
+		schema:             schema,
+		Schema:             schema.Name,
+		Name:               strs.Append(strs.Lowcase(schema.Name), strs.Uppcase(table), "."),
+		Description:        description,
+		Table:              strs.Uppcase(table),
+		Version:            version,
+		SourceField:        schema.SourceField,
+		DateMakeField:      schema.DateMakeField,
+		DateUpdateField:    schema.DateUpdateField,
+		SerieField:         schema.SerieField,
+		CodeField:          schema.CodeField,
+		ProjectField:       schema.ProjectField,
+		StateField:         schema.StateField,
+		integrityReference: true,
+	}
+
+	result.BeforeInsert = append(result.BeforeInsert, beforeInsert)
+	result.AfterInsert = append(result.AfterInsert, afterInsert)
+	result.BeforeUpdate = append(result.BeforeUpdate, beforeUpdate)
+	result.AfterUpdate = append(result.AfterUpdate, afterUpdate)
+	result.BeforeDelete = append(result.BeforeDelete, beforeDelete)
+	result.AfterDelete = append(result.AfterDelete, afterDelete)
+
+	schema.Models = append(schema.Models, result)
+
+	return result
+}
+
 func (c *Model) Driver() string {
 	return c.Database.Driver
 }
@@ -149,41 +181,6 @@ func (c *Model) UseSync() bool {
 
 func (c *Model) UseRecycle() bool {
 	return c.schema.UseSync
-}
-
-/**
-*
-**/
-func NewModel(schema *Schema, table, description string, version int) *Model {
-	result := &Model{
-		Db:                 schema.Db,
-		Database:           schema.Database,
-		schema:             schema,
-		Schema:             schema.Name,
-		Name:               strs.Append(strs.Lowcase(schema.Name), strs.Uppcase(table), "."),
-		Description:        description,
-		Table:              strs.Uppcase(table),
-		Version:            version,
-		SourceField:        schema.SourceField,
-		DateMakeField:      schema.DateMakeField,
-		DateUpdateField:    schema.DateUpdateField,
-		SerieField:         schema.SerieField,
-		CodeField:          schema.CodeField,
-		ProjectField:       schema.ProjectField,
-		StateField:         schema.StateField,
-		integrityReference: true,
-	}
-
-	result.BeforeInsert = append(result.BeforeInsert, beforeInsert)
-	result.AfterInsert = append(result.AfterInsert, afterInsert)
-	result.BeforeUpdate = append(result.BeforeUpdate, beforeUpdate)
-	result.AfterUpdate = append(result.AfterUpdate, afterUpdate)
-	result.BeforeDelete = append(result.BeforeDelete, beforeDelete)
-	result.AfterDelete = append(result.AfterDelete, afterDelete)
-
-	schema.Models = append(schema.Models, result)
-
-	return result
 }
 
 /**

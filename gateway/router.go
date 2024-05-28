@@ -246,8 +246,9 @@ func (s *HttpServer) AddHandleMethod(method, path string, handlerFn http.Handler
 
 	if node != nil {
 		node.Resolve = et.Json{
-			"method": method,
-			"kind":   "HANDLER",
+			"method":  method,
+			"kind":    "HANDLER",
+			"resolve": "/",
 		}
 		s.handlers[node._id] = handlerFn
 

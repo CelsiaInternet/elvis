@@ -12,6 +12,7 @@ const (
 	MSG_MOBILE_SIGNIN       = "%s: Bienvenido %s, acabas de iniciar sesion."
 	MSG_MOBILE_WELCOME      = "Bienvenido %s, acabas de ser registrado como usuario en %s, con el perfil de %s."
 	MSG_ADMIN_WELCOME       = "Bienvenido %s, acabas de ser registrado como administrador de la base de datos de %s."
+	MSG_SESION_BEGIN        = "Bienvanido %s, acabas de inciar sesión en %s"
 	MSG_MAIN_CONNECT        = "Connect to main db"
 	ERR_RECORS_STATE        = "Not edit for register state. (%s)"
 	ERR_ENV_REQUIRED        = "Variables de entorno requerida (%s)"
