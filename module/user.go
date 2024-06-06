@@ -6,7 +6,6 @@ import (
 	"github.com/cgalvisleon/elvis/core"
 	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/et"
-	"github.com/cgalvisleon/elvis/event"
 	"github.com/cgalvisleon/elvis/linq"
 	"github.com/cgalvisleon/elvis/msg"
 	"github.com/cgalvisleon/elvis/send"
@@ -87,35 +86,7 @@ func DefineUsers() error {
 		return nil
 	})
 	Users.OnListener = func(data et.Json) {
-		option := data.Str("option")
-		_idt := data.Str("_idt")
-		if option == "insert" {
-			item, err := GetUserByIdT(_idt)
-			if err != nil {
-				return
-			}
-
-			_id := item.Key("_id")
-			event.WsPublish(_id, item.Result, "")
-		} else if option == "update" {
-			item, err := GetUserByIdT(_idt)
-			if err != nil {
-				return
-			}
-
-			_id := item.Key("_id")
-			cache.Del(_idt)
-			cache.Del(_id)
-			event.WsPublish(_id, item.Result, "")
-		} else if option == "delete" {
-			_id, err := cache.Get(_idt, "-1")
-			if err != nil {
-				return
-			}
-
-			cache.Del(_idt)
-			cache.Del(_id)
-		}
+		console.Log(data)
 	}
 
 	if err := core.InitModel(Users); err != nil {

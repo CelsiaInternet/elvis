@@ -346,9 +346,8 @@ func (c *Model) ColIdx(name string) int {
 
 func (c *Model) Col(name string) *Column {
 	idx := c.ColIdx(name)
-	if idx == -1 && !c.integrityAtrib {
-		return NewVirtualAtrib(c, name, "", "text", "")
-	} else if idx == -1 {
+
+	if idx == -1 {
 		return nil
 	}
 

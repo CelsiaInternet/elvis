@@ -29,7 +29,7 @@ func DefineListener() error {
       NEW._IDT = uuid_generate_v4();
 		END IF;
 
-		CHANNEL = TG_TABLE_SCHEMA || '.' || TG_TABLE_NAME;
+		CHANNEL = LOWER(TG_TABLE_SCHEMA || '.' || TG_TABLE_NAME);
 		PERFORM pg_notify(
 		CHANNEL,
 		json_build_object(
@@ -52,7 +52,7 @@ func DefineListener() error {
 			NEW._IDT = uuid_generate_v4();    
     END IF;
     
-		CHANNEL = TG_TABLE_SCHEMA || '.' || TG_TABLE_NAME;
+		CHANNEL = LOWER(TG_TABLE_SCHEMA || '.' || TG_TABLE_NAME);
 		PERFORM pg_notify(
 		CHANNEL,
 		json_build_object(
@@ -71,7 +71,7 @@ func DefineListener() error {
   DECLARE
     CHANNEL VARCHAR(250);
   BEGIN
-		CHANNEL = TG_TABLE_SCHEMA || '.' || TG_TABLE_NAME;
+		CHANNEL = LOWER(TG_TABLE_SCHEMA || '.' || TG_TABLE_NAME);
 		PERFORM pg_notify(
 		CHANNEL,
 		json_build_object(

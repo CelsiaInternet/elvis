@@ -52,7 +52,7 @@ func defineSync() error {
       NEW._IDT = uuid_generate_v4();
 
       INSERT INTO core.SYNCS(TABLE_SCHEMA, TABLE_NAME, _IDT, ACTION, _ID)
-      VALUES (TG_TABLE_SCHEMA, TG_TABLE_NAME, NEW._IDT, TG_OP, uuid_generate_v4());
+      VALUES (LOWER(TG_TABLE_SCHEMA), LOWER(TG_TABLE_NAME), NEW._IDT, TG_OP, uuid_generate_v4());
 
       PERFORM pg_notify(
       'sync',
@@ -62,7 +62,7 @@ func defineSync() error {
       )::text
       );
 
-      CHANNEL = TG_TABLE_SCHEMA || '.' || TG_TABLE_NAME;
+      CHANNEL = LOWER(TG_TABLE_SCHEMA || '.' || TG_TABLE_NAME);
       PERFORM pg_notify(
       CHANNEL,
       json_build_object(
@@ -89,7 +89,7 @@ func defineSync() error {
        NEW._IDT = uuid_generate_v4();
      END IF;
      INSERT INTO core.SYNCS(TABLE_SCHEMA, TABLE_NAME, _IDT, ACTION, _ID)
-     VALUES (TG_TABLE_SCHEMA, TG_TABLE_NAME, NEW._IDT, TG_OP, uuid_generate_v4())
+     VALUES (LOWER(TG_TABLE_SCHEMA), LOWER(TG_TABLE_NAME), NEW._IDT, TG_OP, uuid_generate_v4())
 		 ON CONFLICT(TABLE_SCHEMA, TABLE_NAME, _IDT) DO UPDATE SET
      DATE_UPDATE = NOW(),
      ACTION = TG_OP,
@@ -104,7 +104,7 @@ func defineSync() error {
      )::text
      );
 
-     CHANNEL = TG_TABLE_SCHEMA || '.' || TG_TABLE_NAME;
+     CHANNEL = LOWER(TG_TABLE_SCHEMA || '.' || TG_TABLE_NAME);
      PERFORM pg_notify(
      CHANNEL,
      json_build_object(
@@ -127,8 +127,8 @@ func defineSync() error {
   BEGIN
     SELECT INDEX INTO VINDEX
     FROM core.SYNCS
-    WHERE TABLE_SCHEMA = TG_TABLE_SCHEMA
-    AND TABLE_NAME = TG_TABLE_NAME
+    WHERE LOWER(TABLE_SCHEMA) = LOWER(TG_TABLE_SCHEMA)
+    AND LOWER(TABLE_NAME) = LOWER(TG_TABLE_NAME)
     AND _IDT = OLD._IDT
     LIMIT 1;
     IF FOUND THEN
@@ -147,7 +147,7 @@ func defineSync() error {
       )::text
       );
 
-      CHANNEL = TG_TABLE_SCHEMA || '.' || TG_TABLE_NAME;
+      CHANNEL = LOWER(TG_TABLE_SCHEMA || '.' || TG_TABLE_NAME);
       PERFORM pg_notify(
       CHANNEL,
       json_build_object(

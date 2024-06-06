@@ -39,7 +39,7 @@ func defineRecycling() error {
   BEGIN
 		IF NEW._STATE != OLD._STATE AND NEW._STATE = '-2' THEN
     	INSERT INTO core.RECYCLING(TABLE_SCHEMA, TABLE_NAME, _IDT)
-    	VALUES (TG_TABLE_SCHEMA, TG_TABLE_NAME, NEW._IDT);
+    	VALUES (LOWER(TG_TABLE_SCHEMA), LOWER(TG_TABLE_NAME), NEW._IDT);
 
       PERFORM pg_notify(
       'recycling',
