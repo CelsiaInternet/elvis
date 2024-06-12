@@ -119,7 +119,7 @@ func VerifyEmail(app, device, email string) error {
 	return nil
 }
 
-func CheckEmail(app, device, email, code string) (bool, error) {
+func CheckEmail(device, email, code string) (bool, error) {
 	key := strs.Format("%s-%s", device, email)
 	val, err := cache.GetVerify(device, key)
 	if err != nil {
