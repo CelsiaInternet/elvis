@@ -2,6 +2,7 @@ package module
 
 import (
 	"github.com/cgalvisleon/elvis/console"
+	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/utility"
 )
@@ -20,9 +21,6 @@ func InitDefine() error {
 		return console.Panic(err)
 	}
 	if err := DefineTypes(); err != nil {
-		return console.Panic(err)
-	}
-	if err := DefineTokens(); err != nil {
 		return console.Panic(err)
 	}
 	if err := DefineModules(); err != nil {
@@ -44,6 +42,9 @@ func InitDefine() error {
 		return console.Panic(err)
 	}
 	if err := DefineProfileFolders(); err != nil {
+		return console.Panic(err)
+	}
+	if err := DefineTokens(); err != nil {
 		return console.Panic(err)
 	}
 	if err := initData(); err != nil {
@@ -98,6 +99,19 @@ func initData() error {
 	InitType("-1", "PROFILE.ADMIN", utility.OF_SYSTEM, "PROFILE", "Admin", "")
 	InitType("-1", "PROFILE.DEV", utility.OF_SYSTEM, "PROFILE", "Develop", "")
 	InitType("-1", "PROFILE.SUPORT", utility.OF_SYSTEM, "PROFILE", "Suport", "")
+
+	// User Admin
+	ADMIN_COUNTRY := envar.EnvarStr("", "ADMIN_COUNTRY")
+	ADMIN_PHONE := envar.EnvarStr("", "ADMIN_PHONE")
+	ADMIN_NAME := envar.EnvarStr("", "ADMIN_NAME")
+	ADMIN_EMAIL := envar.EnvarStr("", "ADMIN_EMAIL")
+	_, err := InitAdmin(ADMIN_NAME, ADMIN_COUNTRY, ADMIN_PHONE, ADMIN_EMAIL)
+	if err != nil {
+		return err
+	}
+
+	// Default token
+	defaultToken()
 
 	if _, err := Folders.Upsert(et.Json{
 		"_id": "-1",

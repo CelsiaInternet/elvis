@@ -1,11 +1,9 @@
 package module
 
 import (
-	"github.com/cgalvisleon/elvis/cache"
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/core"
 	"github.com/cgalvisleon/elvis/et"
-	"github.com/cgalvisleon/elvis/event"
 	"github.com/cgalvisleon/elvis/linq"
 	"github.com/cgalvisleon/elvis/msg"
 	"github.com/cgalvisleon/elvis/utility"
@@ -38,35 +36,7 @@ func DefineProfiles() error {
 	})
 	Profiles.DefineForeignKey("module_id", Modules.Column("_id"))
 	Profiles.OnListener = func(data et.Json) {
-		option := data.Str("option")
-		_idt := data.Str("_idt")
-		if option == "insert" {
-			item, err := GetProfileByIdT(_idt)
-			if err != nil {
-				return
-			}
-
-			_id := item.Key("module_id") + "/" + item.Key("profile_tp")
-			event.WsPublish(_id, item.Result, "")
-		} else if option == "update" {
-			item, err := GetProfileByIdT(_idt)
-			if err != nil {
-				return
-			}
-
-			_id := item.Key("module_id") + "/" + item.Key("profile_tp")
-			cache.Del(_idt)
-			cache.Del(_id)
-			event.WsPublish(_id, item.Result, "")
-		} else if option == "delete" {
-			_id, err := cache.Get(_idt, "-1")
-			if err != nil {
-				return
-			}
-
-			cache.Del(_idt)
-			cache.Del(_id)
-		}
+		console.Debug(data.ToString())
 	}
 
 	if err := core.InitModel(Profiles); err != nil {
@@ -99,35 +69,7 @@ func DefineProfileFolders() error {
 	ProfileFolders.DefineForeignKey("module_id", Modules.Column("_id"))
 	ProfileFolders.DefineForeignKey("folder_id", Folders.Column("_id"))
 	ProfileFolders.OnListener = func(data et.Json) {
-		option := data.Str("option")
-		_idt := data.Str("_idt")
-		if option == "insert" {
-			item, err := GetProfileFolderByIdT(_idt)
-			if err != nil {
-				return
-			}
-
-			_id := item.Key("module_id") + "/" + item.Key("profile_tp") + "/" + item.Key("folder_id")
-			event.WsPublish(_id, item.Result, "")
-		} else if option == "update" {
-			item, err := GetProfileFolderByIdT(_idt)
-			if err != nil {
-				return
-			}
-
-			_id := item.Key("module_id") + "/" + item.Key("profile_tp") + "/" + item.Key("folder_id")
-			cache.Del(_idt)
-			cache.Del(_id)
-			event.WsPublish(_id, item.Result, "")
-		} else if option == "delete" {
-			_id, err := cache.Get(_idt, "-1")
-			if err != nil {
-				return
-			}
-
-			cache.Del(_idt)
-			cache.Del(_id)
-		}
+		console.Debug(data.ToString())
 	}
 
 	if err := core.InitModel(ProfileFolders); err != nil {
@@ -141,12 +83,6 @@ func DefineProfileFolders() error {
 * Profile
 *	Handler for CRUD data
 **/
-func GetProfileByIdT(_idt string) (et.Item, error) {
-	return Profiles.Data().
-		Where(Profiles.Column("_idt").Eq(_idt)).
-		First()
-}
-
 func GetProfileById(moduleId, profileTp string) (et.Item, error) {
 	return Profiles.Data().
 		Where(Profiles.Column("module_id").Eq(moduleId)).
@@ -318,7 +254,8 @@ func CheckProfileFolder(moduleId, profileTp, folderId string, chk bool) (et.Item
 
 func getProfileFolders(userId, projectId, mainId string) []et.Json {
 	sql := `
-	SELECT DISTINCT A._DATA||jsonb_build_object('date_make', A.DATE_MAKE,
+	SELECT DISTINCT A._DATA||jsonb_build_object(
+	'date_make', A.DATE_MAKE,
 	'date_update', A.DATE_UPDATE,
 	'project_id', $2,
 	'module_id', A.MODULE_ID,
@@ -328,6 +265,7 @@ func getProfileFolders(userId, projectId, mainId string) []et.Json {
 	'name', A.NAME,
 	'description', A.DESCRIPTION,
 	'index', A.INDEX) AS _DATA,
+	A._DATA#>>'{order}' AS ORDEN,
 	A.INDEX
 	FROM module.FOLDERS AS A
 	INNER JOIN module.PROFILE_FOLDERS AS B ON B.FOLDER_ID = A._ID
@@ -335,7 +273,7 @@ func getProfileFolders(userId, projectId, mainId string) []et.Json {
 	WHERE A.MAIN_ID = $1
 	AND C.MODULE_ID IN (SELECT C.MODULE_ID FROM module.PROJECT_MODULES AS C WHERE C.PROJECT_ID = $2)
 	AND B.PROFILE_TP IN (SELECT D.PROFILE_TP FROM module.ROLES AS D WHERE D.PROJECT_ID = $2 AND D.USER_ID = $3)
-	ORDER BY A.INDEX ASC;`
+	ORDER BY A._DATA#>>'{order}' ASC;`
 
 	items, err := linq.QueryData(sql, mainId, projectId, userId)
 	if err != nil {

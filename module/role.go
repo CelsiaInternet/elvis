@@ -1,11 +1,9 @@
 package module
 
 import (
-	"github.com/cgalvisleon/elvis/cache"
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/core"
 	"github.com/cgalvisleon/elvis/et"
-	"github.com/cgalvisleon/elvis/event"
 	"github.com/cgalvisleon/elvis/jdb"
 	"github.com/cgalvisleon/elvis/linq"
 	"github.com/cgalvisleon/elvis/msg"
@@ -39,35 +37,7 @@ func DefineRoles() error {
 		"index",
 	})
 	Roles.OnListener = func(data et.Json) {
-		option := data.Str("option")
-		_idt := data.Str("_idt")
-		if option == "insert" {
-			item, err := GetRoleByIdT(_idt)
-			if err != nil {
-				return
-			}
-
-			_id := item.Key("project_id") + "/" + item.Key("module_id") + "/" + item.Key("user_id")
-			event.WsPublish(_id, item.Result, "")
-		} else if option == "update" {
-			item, err := GetRoleByIdT(_idt)
-			if err != nil {
-				return
-			}
-
-			_id := item.Key("project_id") + "/" + item.Key("module_id") + "/" + item.Key("user_id")
-			cache.Del(_idt)
-			cache.Del(_id)
-			event.WsPublish(_id, item.Result, "")
-		} else if option == "delete" {
-			_id, err := cache.Get(_idt, "-1")
-			if err != nil {
-				return
-			}
-
-			cache.Del(_idt)
-			cache.Del(_id)
-		}
+		console.Debug(data.ToString())
 	}
 
 	if err := core.InitModel(Roles); err != nil {
@@ -81,12 +51,6 @@ func DefineRoles() error {
 * Role
 *	Handler for CRUD data
 **/
-func GetRoleByIdT(_idt string) (et.Item, error) {
-	return Roles.Data().
-		Where(Roles.Column("_idt").Eq(_idt)).
-		First()
-}
-
 func GetRoleById(projectId, moduleId, userId, profileTp string) (et.Item, error) {
 	return Roles.Data().
 		Where(Roles.Column("project_id").Eq(projectId)).

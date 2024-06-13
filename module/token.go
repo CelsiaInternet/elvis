@@ -7,8 +7,8 @@ import (
 	"github.com/cgalvisleon/elvis/claim"
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/core"
+	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/et"
-	"github.com/cgalvisleon/elvis/event"
 	"github.com/cgalvisleon/elvis/jdb"
 	"github.com/cgalvisleon/elvis/linq"
 	"github.com/cgalvisleon/elvis/msg"
@@ -81,7 +81,7 @@ func DefineTokens() error {
 
 		data.Set(col.Low(), last_use)
 	})
-	Tokens.Details("token", "", "", func(col *linq.Column, data *et.Json) {
+	Tokens.Mutation("token", "", "", func(col *linq.Column, data *et.Json) {
 		token := data.Str("token")
 		newToken := token
 		if len(token) > 6 {
@@ -92,35 +92,7 @@ func DefineTokens() error {
 		data.Set("long_token", token)
 	})
 	Tokens.OnListener = func(data et.Json) {
-		option := data.Str("option")
-		_idt := data.Str("_idt")
-		if option == "insert" {
-			item, err := GetTokenByIdT(_idt)
-			if err != nil {
-				return
-			}
-
-			_id := item.Key("_id")
-			event.WsPublish(_id, item.Result, "")
-		} else if option == "update" {
-			item, err := GetTokenByIdT(_idt)
-			if err != nil {
-				return
-			}
-
-			_id := item.Key("_id")
-			cache.Del(_idt)
-			cache.Del(_id)
-			event.WsPublish(_id, item.Result, "")
-		} else if option == "delete" {
-			_id, err := cache.Get(_idt, "-1")
-			if err != nil {
-				return
-			}
-
-			cache.Del(_idt)
-			cache.Del(_id)
-		}
+		console.Debug(data.ToString())
 	}
 
 	if err := core.InitModel(Tokens); err != nil {
@@ -156,12 +128,6 @@ func unLoadTokenById(app, device, id string) error {
 * Token
 *	Handler for CRUD data
 **/
-func GetTokenByIdT(_idt string) (et.Item, error) {
-	return Tokens.Data().
-		Where(Tokens.Col("_idt").Eq(_idt)).
-		First()
-}
-
 func GetTokenById(id string) (et.Item, error) {
 	item, err := Tokens.Data().
 		Where(Tokens.Col("_id").Eq(id)).
@@ -180,7 +146,7 @@ func UpSetToken(projeectId, id, app, device, name, userId string) (et.Item, erro
 	}
 
 	if !user.Ok {
-		return et.Item{}, console.ErrorM(msg.USER_NOT_FONUND)
+		return et.Item{}, console.Alert(msg.USER_NOT_FONUND)
 	}
 
 	id = utility.GenId(id)
@@ -190,7 +156,6 @@ func UpSetToken(projeectId, id, app, device, name, userId string) (et.Item, erro
 	}
 
 	if current.Ok {
-		id := current.Id()
 		data := et.Json{
 			"name": name,
 		}
@@ -210,7 +175,6 @@ func UpSetToken(projeectId, id, app, device, name, userId string) (et.Item, erro
 			}),
 		}, nil
 	} else {
-		id := utility.NewId()
 		token, err := claim.GenToken(id, app, name, "token", app, device, 0)
 		if err != nil {
 			return et.Item{}, console.Error(err)
@@ -252,6 +216,19 @@ func UpSetToken(projeectId, id, app, device, name, userId string) (et.Item, erro
 				"_id":     id,
 			}),
 		}, nil
+	}
+}
+
+func defaultToken() {
+	production := envar.EnvarBool(false, "PRODUCTION")
+	if !production {
+		item, err := UpSetToken("-1", "DEFAULT_TOKEN", "", "requests", "Default token", "USER.ADMIN")
+		if err != nil {
+			return
+		}
+
+		token := item.Get("token")
+		console.Log("Default token: ", token)
 	}
 }
 

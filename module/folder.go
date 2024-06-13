@@ -1,7 +1,6 @@
 package module
 
 import (
-	"github.com/cgalvisleon/elvis/cache"
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/core"
 	"github.com/cgalvisleon/elvis/et"
@@ -71,35 +70,7 @@ func DefineFolders() error {
 		return nil
 	})
 	Folders.OnListener = func(data et.Json) {
-		option := data.Str("option")
-		_idt := data.Str("_idt")
-		if option == "insert" {
-			item, err := GetFolderByIdT(_idt)
-			if err != nil {
-				return
-			}
-
-			_id := item.Key("_id")
-			event.WsPublish(_id, item.Result, "")
-		} else if option == "update" {
-			item, err := GetFolderByIdT(_idt)
-			if err != nil {
-				return
-			}
-
-			_id := item.Key("_id")
-			cache.Del(_idt)
-			cache.Del(_id)
-			event.WsPublish(_id, item.Result, "")
-		} else if option == "delete" {
-			_id, err := cache.Get(_idt, "-1")
-			if err != nil {
-				return
-			}
-
-			cache.Del(_idt)
-			cache.Del(_id)
-		}
+		console.Debug(data.ToString())
 	}
 
 	if err := core.InitModel(Folders); err != nil {
@@ -113,11 +84,6 @@ func DefineFolders() error {
 *	Folder
 *	Handler for CRUD data
 **/
-func GetFolderByIdT(_idt string) (et.Item, error) {
-	return Folders.Data().
-		Where(Folders.Column("_idt").Eq(_idt)).
-		First()
-}
 
 func GetFolderByName(moduleId, mainId, name string) (et.Item, error) {
 	return Folders.Data().
@@ -297,4 +263,46 @@ func AllFolders(state, search string, page, rows int) (et.List, error) {
 			OrderBy(Folders.Column("name"), true).
 			List(page, rows)
 	}
+}
+
+/**
+* Default folders
+**/
+
+// Create or asignes Usuarios folder to module
+func DefaultFolderUsers(moduleId string) error {
+	_, err := InitFolder(moduleId, "-1", "FOLDER.USERS", "Usuarios", "", et.Json{
+		"icon":   "users",
+		"view":   "users",
+		"clase":  "user",
+		"help":   "help/module/users",
+		"title":  "Usuario",
+		"url":    "user/all?state=0&search={search}&page={page}&rows={rows}",
+		"state":  "",
+		"filter": []et.Json{},
+		"states": []et.Json{},
+		"detail": et.Json{
+			"title":    []string{"$1", "full_name"},
+			"subtitle": []string{"$1", "phone"},
+			"datetime": []string{"$1", "date_update"},
+			"code":     []string{"$1", "full_name"},
+			"new_code": "Nuevo",
+			"state_color": et.Json{
+				"field_name": "_state",
+				"warning":    "",
+				"alert":      "",
+				"info":       "",
+			},
+			"email":  []string{"$1", "email"},
+			"avatar": []string{"$1", "avatar"},
+		},
+		"showNew":   true,
+		"showPrint": false,
+		"order":     10,
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

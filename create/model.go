@@ -536,36 +536,7 @@ func Define$2() error {
 		return nil
 	})
 	$2.OnListener = func(data et.Json) {
-		option := data.Str("option")
-		_idt := data.Str("_idt")
-		if option == "insert" {
-			asset, err := Get$2ByIdT(_idt)
-			if err != nil {
-				return
-			}
-
-			_id := asset.Key("_id")
-			cache.SetW(_idt, _id)
-			event.WsPublish(_id, asset.Result, "")
-		} else if option == "update" {
-			asset, err := Get$2ByIdT(_idt)
-			if err != nil {
-				return
-			}
-
-			_id := asset.Key("_id")
-			cache.Del(_idt)
-			cache.Del(_id)
-			event.WsPublish(_id, asset.Result, "")
-		} else if option == "delete" {
-			_id, err := cache.Get(_idt, "-1")
-			if err != nil {
-				return
-			}
-
-			cache.Del(_idt)
-			cache.Del(_id)
-		}
+		console.debug(data.ToString())
 	}
 	
 	if err := core.InitModel($2); err != nil {
@@ -600,12 +571,6 @@ func Get$2ById(id string) (et.Item, error) {
 	}
 
 	return result, nil	
-}
-
-func Get$2ByIdT(idt string) (et.Item, error) {
-	return $2.Data().
-		Where($2.Column("_idt").Eq(idt)).
-		First()
 }
 
 func Value$2ById(_default any, id, atrib string) *generic.Any {

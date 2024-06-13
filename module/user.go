@@ -100,12 +100,6 @@ func DefineUsers() error {
 * User
 *	Handler for CRUD data
 **/
-func GetUserByIdT(_idt string) (et.Item, error) {
-	return Users.Data().
-		Where(Users.Column("_idt").Eq(_idt)).
-		First()
-}
-
 func GetUserByName(name string) (et.Item, error) {
 	item, err := Users.Data().
 		Where(Users.Column("name").Eq(name)).

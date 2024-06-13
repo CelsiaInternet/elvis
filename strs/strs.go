@@ -59,6 +59,10 @@ func NotSpace(str string) string {
 	return Replace(str, " ", "")
 }
 
+func DaskSpace(str string) string {
+	return Replace(str, " ", "-")
+}
+
 func Uppcase(s string) string {
 	return strings.ToUpper(s)
 }

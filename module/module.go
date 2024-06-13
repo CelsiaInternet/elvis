@@ -1,11 +1,9 @@
 package module
 
 import (
-	"github.com/cgalvisleon/elvis/cache"
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/core"
 	"github.com/cgalvisleon/elvis/et"
-	"github.com/cgalvisleon/elvis/event"
 	"github.com/cgalvisleon/elvis/linq"
 	"github.com/cgalvisleon/elvis/msg"
 	"github.com/cgalvisleon/elvis/utility"
@@ -51,35 +49,7 @@ func DefineModules() error {
 		return nil
 	})
 	Modules.OnListener = func(data et.Json) {
-		option := data.Str("option")
-		_idt := data.Str("_idt")
-		if option == "insert" {
-			item, err := GetModuleByIdT(_idt)
-			if err != nil {
-				return
-			}
-
-			_id := item.Key("_id")
-			event.WsPublish(_id, item.Result, "")
-		} else if option == "update" {
-			item, err := GetModuleByIdT(_idt)
-			if err != nil {
-				return
-			}
-
-			_id := item.Key("_id")
-			cache.Del(_idt)
-			cache.Del(_id)
-			event.WsPublish(_id, item.Result, "")
-		} else if option == "delete" {
-			_id, err := cache.Get(_idt, "-1")
-			if err != nil {
-				return
-			}
-
-			cache.Del(_idt)
-			cache.Del(_id)
-		}
+		console.Debug(data.ToString())
 	}
 
 	if err := core.InitModel(Modules); err != nil {
@@ -111,35 +81,7 @@ func DefineModuleFolders() error {
 		"index",
 	})
 	Modules.OnListener = func(data et.Json) {
-		option := data.Str("option")
-		_idt := data.Str("_idt")
-		if option == "insert" {
-			item, err := GetModuleFolderByIdT(_idt)
-			if err != nil {
-				return
-			}
-
-			_id := item.Key("module_id") + "/" + item.Key("folder_id")
-			event.WsPublish(_id, item.Result, "")
-		} else if option == "update" {
-			item, err := GetModuleFolderByIdT(_idt)
-			if err != nil {
-				return
-			}
-
-			_id := item.Key("module_id") + "/" + item.Key("folder_id")
-			cache.Del(_idt)
-			cache.Del(_id)
-			event.WsPublish(_id, item.Result, "")
-		} else if option == "delete" {
-			_id, err := cache.Get(_idt, "-1")
-			if err != nil {
-				return
-			}
-
-			cache.Del(_idt)
-			cache.Del(_id)
-		}
+		console.Debug(data.ToString())
 	}
 
 	if err := core.InitModel(ModelFolders); err != nil {
@@ -153,12 +95,6 @@ func DefineModuleFolders() error {
 * Module
 *	Handler for CRUD data
 **/
-func GetModuleByIdT(_idt string) (et.Item, error) {
-	return Modules.Data().
-		Where(Modules.Column("_idt").Eq(_idt)).
-		First()
-}
-
 func GetModuleByName(name string) (et.Item, error) {
 	return Modules.Data().
 		Where(Modules.Column("name").Eq(name)).

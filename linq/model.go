@@ -316,6 +316,13 @@ func (c *Model) Trigger(event int, trigger Trigger) {
 /**
 *
 **/
+func (c *Model) Mutation(name, description string, _default any, details Details) {
+	col := c.Column(name)
+	if col != nil {
+		col.Details = details
+	}
+}
+
 func (c *Model) Details(name, description string, _default any, details Details) {
 	col := NewColumn(c, name, "", "DETAIL", _default)
 	col.Tp = TpDetail
