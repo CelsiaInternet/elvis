@@ -1,6 +1,8 @@
 package linq
 
-import "github.com/cgalvisleon/elvis/et"
+import (
+	"github.com/cgalvisleon/elvis/et"
+)
 
 func (c *Linq) Debug() *Linq {
 	c.debug = 1
@@ -66,7 +68,7 @@ func (c *Linq) commandInsert() (et.Items, error) {
 		return et.Items{
 			Ok:     false,
 			Count:  currents.Count,
-			Result: []et.Json{},
+			Result: currents.Result,
 		}, nil
 	}
 
@@ -76,11 +78,7 @@ func (c *Linq) commandInsert() (et.Items, error) {
 	}
 
 	if !result.Ok {
-		return et.Items{
-			Ok:     false,
-			Count:  0,
-			Result: []et.Json{},
-		}, nil
+		return et.Items{}, nil
 	}
 
 	return et.Items{

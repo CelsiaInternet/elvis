@@ -51,12 +51,11 @@ func DefineRoles() error {
 * Role
 *	Handler for CRUD data
 **/
-func GetRoleById(projectId, moduleId, userId, profileTp string) (et.Item, error) {
+func GetRoleById(projectId, moduleId, userId string) (et.Item, error) {
 	return Roles.Data().
 		Where(Roles.Column("project_id").Eq(projectId)).
 		And(Roles.Column("module_id").Eq(moduleId)).
 		And(Roles.Column("user_id").Eq(userId)).
-		And(Roles.Column("profile_tp").Eq(profileTp)).
 		First()
 }
 
@@ -178,7 +177,7 @@ func CheckRole(projectId, moduleId, profileTp, userId string, chk bool) (et.Item
 	}
 
 	if chk {
-		current, err := GetRoleById(projectId, moduleId, userId, profileTp)
+		current, err := GetRoleById(projectId, moduleId, userId)
 		if err != nil {
 			return et.Item{}, err
 		}

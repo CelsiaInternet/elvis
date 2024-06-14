@@ -81,7 +81,7 @@ func DefineTokens() error {
 
 		data.Set(col.Low(), last_use)
 	})
-	Tokens.Mutation("token", "", "", func(col *linq.Column, data *et.Json) {
+	Tokens.Details("long_token", "", "", func(col *linq.Column, data *et.Json) {
 		token := data.Str("token")
 		newToken := token
 		if len(token) > 6 {
