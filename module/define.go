@@ -101,6 +101,10 @@ func initData() error {
 	InitType("-1", "PROFILE.DEV", utility.OF_SYSTEM, "PROFILE", "Develop", "")
 	InitType("-1", "PROFILE.SUPORT", utility.OF_SYSTEM, "PROFILE", "Suport", "")
 
+	InitProfile("-1", "PROFILE.ADMIN", et.Json{})
+	InitProfile("-1", "PROFILE.DEV", et.Json{})
+	InitProfile("-1", "PROFILE.SUPORT", et.Json{})
+
 	// User Admin
 	ADMIN_COUNTRY := envar.EnvarStr("", "ADMIN_COUNTRY")
 	ADMIN_PHONE := envar.EnvarStr("", "ADMIN_PHONE")
