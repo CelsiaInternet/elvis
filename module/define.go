@@ -47,18 +47,15 @@ func InitDefine() error {
 	if err := DefineTokens(); err != nil {
 		return console.Panic(err)
 	}
-	if err := initData(); err != nil {
-		return console.Panic(err)
-	}
 
-	console.LogK("Module", "Init module")
+	console.LogK("Module", "Define models")
 
 	initDefine = true
 
 	return nil
 }
 
-func initData() error {
+func InitModuleData() error {
 	if _, err := Projects.Upsert(et.Json{
 		"_id":  "-1",
 		"name": "My project",
@@ -128,6 +125,8 @@ func initData() error {
 
 	CheckProjectModule("-1", "-1", true)
 	CheckRole("-1", "-1", "PROFILE.ADMIN", "USER.ADMIN", true)
+
+	console.LogK("Module", "Init data module")
 
 	return nil
 }
