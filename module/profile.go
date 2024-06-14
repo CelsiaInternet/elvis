@@ -229,7 +229,7 @@ func CheckProfileFolder(moduleId, profileTp, folderId string, chk bool) (et.Item
 	}
 
 	if !profile.Ok {
-		return et.Item{}, console.AlertF(msg.PROFILE_NOT_FOUND, profileTp)
+		return et.Item{}, console.AlertF(msg.PROFILE_NOT_FOUND, profileTp, moduleId)
 	}
 
 	data := et.Json{}

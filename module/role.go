@@ -173,7 +173,7 @@ func CheckRole(projectId, moduleId, profileTp, userId string, chk bool) (et.Item
 	}
 
 	if !profile.Ok {
-		return et.Item{}, console.AlertF(msg.PROFILE_NOT_FOUND, profileTp)
+		return et.Item{}, console.AlertF(msg.PROFILE_NOT_FOUND, profileTp, moduleId)
 	}
 
 	if chk {

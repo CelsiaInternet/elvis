@@ -95,6 +95,7 @@ func initData() error {
 	InitType("-1", utility.PENDING_APPROVAL, utility.OF_SYSTEM, "STATE", "Pendiente de aprobación", "")
 	InitType("-1", utility.APPROVAL, utility.OF_SYSTEM, "STATE", "Aprobado", "")
 	InitType("-1", utility.REFUSED, utility.OF_SYSTEM, "STATE", "Rechazado", "")
+
 	// Initial profile types
 	InitType("-1", "PROFILE.ADMIN", utility.OF_SYSTEM, "PROFILE", "Admin", "")
 	InitType("-1", "PROFILE.DEV", utility.OF_SYSTEM, "PROFILE", "Develop", "")
