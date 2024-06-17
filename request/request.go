@@ -15,6 +15,20 @@ type Status struct {
 	Message string `json:"message"`
 }
 
+// ToJson returns a Json object
+func (s Status) ToJson() et.Json {
+	return et.Json{
+		"ok":      s.Ok,
+		"code":    s.Code,
+		"message": s.Message,
+	}
+}
+
+// ToString returns a string
+func (s Status) ToString() string {
+	return s.ToJson().ToString()
+}
+
 // ioReadeToJson reads the io.Reader and returns a Json object
 func ioReadeToJson(r io.Reader) (et.Json, error) {
 	var result et.Json
