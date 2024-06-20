@@ -67,6 +67,7 @@ func DefineTokens() error {
 	Tokens.DefineIndex([]string{
 		"date_make",
 		"date_update",
+		"project_id",
 		"name",
 		"app",
 		"device",
