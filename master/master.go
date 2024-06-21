@@ -3,6 +3,7 @@ package master
 import (
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/core"
+	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/jdb"
 	"github.com/cgalvisleon/elvis/strs"
@@ -23,7 +24,7 @@ func InitDefine() error {
 		return console.Panic(err)
 	}
 
-	go jdb.Listen(jdb.DB(0).Connection, "node", "node", listenNode)
+	// go jdb.Listen(jdb.DB(0).Connection, "node", "node", listenNode)
 
 	console.LogK("CORE", "Init Master")
 
@@ -65,8 +66,9 @@ func (c *Master) LoadNode(params et.Json) error {
 		dbname := node.Data.Str("dbname")
 		user := node.Data.Str("user")
 		password := node.Data.Str("password")
+		application_name := envar.EnvarStr("elvis", "DB_APPLICATION_NAME")
 
-		_, conectStr, err := jdb.Connected(driver, host, port, dbname, user, password)
+		_, conectStr, err := jdb.Connected(driver, host, port, dbname, user, password, application_name)
 		if err != nil {
 			console.Fatal(err)
 		}

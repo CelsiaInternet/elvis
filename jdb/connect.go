@@ -7,6 +7,7 @@ import (
 	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/msg"
 	"github.com/cgalvisleon/elvis/strs"
+	_ "github.com/lib/pq"
 )
 
 func connect() {
@@ -16,6 +17,7 @@ func connect() {
 	dbname := envar.EnvarStr("", "DB_NAME")
 	user := envar.EnvarStr("", "DB_USER")
 	password := envar.EnvarStr("", "DB_PASSWORD")
+	application_name := envar.EnvarStr("elvis", "DB_APPLICATION_NAME")
 
 	if driver == "" {
 		console.FatalF(msg.ERR_ENV_REQUIRED, "DB_DRIVE")
@@ -40,20 +42,14 @@ func connect() {
 	var connect *sql.DB
 	var connectStr string
 	var err error
-	connect, connectStr, err = Connected(driver, host, port, dbname, user, password)
+	connect, connectStr, err = Connected(driver, host, port, dbname, user, password, application_name)
 	if err != nil {
 		console.Fatal(err)
 	}
 
-	if conn == nil {
-		conn = &Conn{
-			Db: []*Db{},
-		}
-	}
-
 	err = connect.Ping()
 	if err != nil {
-		tmp, _, err := Connected(driver, host, port, "postgres", user, password)
+		tmp, _, err := Connected(driver, host, port, "postgres", user, password, application_name)
 		if err != nil {
 			console.Fatal(err)
 		}
@@ -64,9 +60,15 @@ func connect() {
 		}
 		defer tmp.Close()
 
-		connect, connectStr, err = Connected(driver, host, port, dbname, user, password)
+		connect, connectStr, err = Connected(driver, host, port, dbname, user, password, application_name)
 		if err != nil {
 			console.Fatal(err)
+		}
+	}
+
+	if conn == nil {
+		conn = &Conn{
+			Db: []*Db{},
 		}
 	}
 
@@ -85,11 +87,11 @@ func connect() {
 	conn.Db = append(conn.Db, db)
 }
 
-func Connected(driver, host string, port int, dbname, user, password string) (*sql.DB, string, error) {
+func Connected(driver, host string, port int, dbname, user, password, application_name string) (*sql.DB, string, error) {
 	var connStr string
 	switch driver {
 	case Postgres:
-		connStr = strs.Format(`%s://%s:%s@%s:%d/%s?sslmode=disable`, driver, user, password, host, port, dbname)
+		connStr = strs.Format(`%s://%s:%s@%s:%d/%s?sslmode=disable&application_name=%s`, driver, user, password, host, port, dbname, application_name)
 	case Mysql:
 		connStr = strs.Format(`%s:%s@tcp(%s:%d)/%s`, user, password, host, port, dbname)
 	case Sqlserver:

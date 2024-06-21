@@ -22,11 +22,6 @@ func beforeInsert(model *Model, old, new *et.Json, data et.Json) error {
 }
 
 func afterInsert(model *Model, old, new *et.Json, data et.Json) error {
-	event.Log("model/insert", et.Json{
-		"table": model.Name,
-		"old":   old,
-		"new":   new,
-	})
 
 	return nil
 }

@@ -1,14 +1,6 @@
 package jdb
 
-import (
-	"time"
-
-	"github.com/cgalvisleon/elvis/console"
-	"github.com/cgalvisleon/elvis/et"
-	"github.com/cgalvisleon/elvis/strs"
-	"github.com/lib/pq"
-)
-
+/*
 var closeListen string = ""
 
 func ListenClose(listen *pq.Listener) error {
@@ -24,7 +16,7 @@ func ListenClose(listen *pq.Listener) error {
 	return nil
 }
 
-func Listen(url, channel, tag string, listen func(res et.Json)) {
+func Listen(connection_str, channel, tag string, listen func(res et.Json)) {
 	reportProblem := func(ev pq.ListenerEventType, err error) {
 		if err != nil {
 			console.Error(err)
@@ -33,8 +25,8 @@ func Listen(url, channel, tag string, listen func(res et.Json)) {
 
 	minReconn := 10 * time.Second
 	maxReconn := time.Minute
-	listener := pq.NewListener(url, minReconn, maxReconn, reportProblem)
-	listenEvent(url, channel, tag, listener, listen)
+	listener := pq.NewListener(connection_str, minReconn, maxReconn, reportProblem)
+	listenEvent(connection_str, channel, tag, listener, listen)
 }
 
 func listenEvent(url, channel, tag string, listener *pq.Listener, listen func(res et.Json)) {
@@ -95,3 +87,4 @@ func notification(l *pq.Listener, channel, tag string, listen func(res et.Json))
 		go l.Ping()
 	}
 }
+*/
