@@ -176,21 +176,25 @@ func SetSyncTrigger(model *linq.Model) error {
 		return err
 	}
 
+	db := jdb.DB(0)
+	if db == nil {
+		return console.PanicM("Database not found")
+	}
+
 	schema := model.Schema
 	table := model.Table
-	created, err := jdb.CreateColumn(0, schema, table, "_IDT", "VARCHAR(80)", "-1")
+	err := jdb.CreateColumn(db.Db, schema, table, "_IDT", "VARCHAR(80)", "-1")
 	if err != nil {
 		return err
 	}
 
-	if created {
-		_, err := jdb.CreateIndex(0, schema, table, "_IDT")
-		if err != nil {
-			return err
-		}
+	err = jdb.CreateIndex(db.Db, schema, table, "_IDT")
+	if err != nil {
+		return err
+	}
 
-		tableName := strs.Append(strs.Lowcase(schema), strs.Uppcase(table), ".")
-		sql := jdb.SQLDDL(`
+	tableName := strs.Append(strs.Lowcase(schema), strs.Uppcase(table), ".")
+	sql := jdb.SQLDDL(`
     CREATE INDEX IF NOT EXISTS $2_IDT_IDX ON $1(_IDT);
 
     DROP TRIGGER IF EXISTS SYNC_INSERT ON $1 CASCADE;
@@ -211,14 +215,13 @@ func SetSyncTrigger(model *linq.Model) error {
     FOR EACH ROW
     EXECUTE PROCEDURE core.SYNC_DELETE();`, tableName, strs.Uppcase(table))
 
-		_, err = jdb.QDDL(sql)
-		if err != nil {
-			return err
-		}
+	_, err = jdb.QDDL(sql)
+	if err != nil {
+		return err
 	}
 
 	channel := strs.Append(strs.Lowcase(schema), strs.Uppcase(table), ".")
-	connStr := jdb.DB(model.Db).ConnStr
+	connStr := jdb.DB(model.Db).Connection
 	go jdb.Listen(connStr, channel, "sync", model.OnListener)
 
 	return nil

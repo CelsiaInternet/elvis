@@ -11,7 +11,7 @@ import (
 **/
 
 func Query(sql string, args ...any) (et.Items, error) {
-	result, err := jdb.DBQuery(0, sql, args...)
+	result, err := jdb.Query(sql, args...)
 	if err != nil {
 		return et.Items{}, err
 	}
@@ -20,7 +20,7 @@ func Query(sql string, args ...any) (et.Items, error) {
 }
 
 func QueryOne(sql string, args ...any) (et.Item, error) {
-	result, err := jdb.DBQueryOne(0, sql, args...)
+	result, err := jdb.QueryOne(sql, args...)
 	if err != nil {
 		return et.Item{}, err
 	}
@@ -29,7 +29,7 @@ func QueryOne(sql string, args ...any) (et.Item, error) {
 }
 
 func QueryData(sql string, args ...any) (et.Items, error) {
-	result, err := jdb.DBQueryData(0, sql, args...)
+	result, err := jdb.QueryData(sql, args...)
 	if err != nil {
 		return et.Items{}, err
 	}
@@ -38,7 +38,7 @@ func QueryData(sql string, args ...any) (et.Items, error) {
 }
 
 func QueryDataOne(sql string, args ...any) (et.Item, error) {
-	result, err := jdb.DBQueryDataOne(0, sql, args...)
+	result, err := jdb.QueryDataOne(sql, args...)
 	if err != nil {
 		return et.Item{}, err
 	}

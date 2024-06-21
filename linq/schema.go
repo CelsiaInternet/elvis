@@ -88,12 +88,11 @@ func (c *Schema) Describe() et.Json {
 }
 
 func (c *Schema) Init() error {
-	_, err := jdb.CreateSchema(c.Db, c.Name)
+	c.Define = strs.Format(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"; CREATE SCHEMA IF NOT EXISTS "%s";`, c.Name)
+	_, err := jdb.QDDL(c.Define)
 	if err != nil {
 		return err
 	}
-
-	c.Define = strs.Format(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"; CREATE SCHEMA IF NOT EXISTS "%s";`, c.Name)
 
 	return nil
 }

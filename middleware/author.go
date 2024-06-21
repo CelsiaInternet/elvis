@@ -72,7 +72,7 @@ func Authorization(next http.Handler) http.Handler {
 			"token":     tokenString,
 		}
 
-		go event.Action("telemetry.token.last_use", data)
+		go event.Log("telemetry.token.last_use", data)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

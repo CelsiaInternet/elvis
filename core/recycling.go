@@ -79,31 +79,35 @@ func SetRecycligTrigger(model *linq.Model) error {
 		return err
 	}
 
+	db := jdb.DB(0)
+	if db == nil {
+		return console.PanicM("Database not found")
+	}
+
 	schema := model.Schema
 	table := model.Table
-	_, err := jdb.CreateColumn(0, schema, table, "_IDT", "VARCHAR(80)", "-1")
+	err := jdb.CreateColumn(db.Db, schema, table, "_IDT", "VARCHAR(80)", "-1")
 	if err != nil {
 		return err
 	}
 
-	_, err = jdb.CreateIndex(0, schema, table, "_IDT")
+	err = jdb.CreateIndex(db.Db, schema, table, "_IDT")
 	if err != nil {
 		return err
 	}
 
-	created, err := jdb.CreateColumn(0, schema, table, "_STATE", "VARCHAR(80)", "0")
+	err = jdb.CreateColumn(db.Db, schema, table, "_STATE", "VARCHAR(80)", "0")
 	if err != nil {
 		return err
 	}
 
-	if created {
-		_, err = jdb.CreateIndex(0, schema, table, "_STATE")
-		if err != nil {
-			return err
-		}
+	err = jdb.CreateIndex(db.Db, schema, table, "_STATE")
+	if err != nil {
+		return err
+	}
 
-		tableName := strs.Append(strs.Lowcase(schema), strs.Uppcase(table), ".")
-		sql := jdb.SQLDDL(`
+	tableName := strs.Append(strs.Lowcase(schema), strs.Uppcase(table), ".")
+	sql := jdb.SQLDDL(`
     CREATE INDEX IF NOT EXISTS $2_IDT_IDX ON $1(_STATE);
 
     DROP TRIGGER IF EXISTS RECYCLING ON $1 CASCADE;
@@ -118,10 +122,9 @@ func SetRecycligTrigger(model *linq.Model) error {
     FOR EACH ROW
     EXECUTE PROCEDURE core.ERASE();`, tableName, strs.Uppcase(table))
 
-		_, err := jdb.QDDL(sql)
-		if err != nil {
-			return err
-		}
+	_, err = jdb.QDDL(sql)
+	if err != nil {
+		return err
 	}
 
 	return nil

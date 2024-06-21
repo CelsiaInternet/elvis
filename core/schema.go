@@ -12,8 +12,13 @@ func defineSchemaCore() error {
 		return nil
 	}
 
+	db := jdb.DB(0)
+	if db == nil {
+		return console.PanicM("Database not found")
+	}
+
 	var err error
-	makedCore, err = jdb.CreateSchema(0, "core")
+	err = jdb.CreateSchema(db.Db, "core")
 	if err != nil {
 		return err
 	}

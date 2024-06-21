@@ -37,13 +37,55 @@ func connect() {
 		console.FatalF(msg.ERR_ENV_REQUIRED, "DB_PASSWORD")
 	}
 
-	_, err := Connected(driver, host, port, dbname, user, password)
+	var connect *sql.DB
+	var connectStr string
+	var err error
+	connect, connectStr, err = Connected(driver, host, port, dbname, user, password)
 	if err != nil {
 		console.Fatal(err)
 	}
+
+	if conn == nil {
+		conn = &Conn{
+			Db: []*Db{},
+		}
+	}
+
+	err = connect.Ping()
+	if err != nil {
+		tmp, _, err := Connected(driver, host, port, "postgres", user, password)
+		if err != nil {
+			console.Fatal(err)
+		}
+
+		err = CreateDatabase(tmp, dbname)
+		if err != nil {
+			console.Fatal(err)
+		}
+		defer tmp.Close()
+
+		connect, connectStr, err = Connected(driver, host, port, dbname, user, password)
+		if err != nil {
+			console.Fatal(err)
+		}
+	}
+
+	idx := len(conn.Db)
+	db := &Db{
+		Index:      idx,
+		Driver:     driver,
+		Host:       host,
+		Port:       port,
+		Dbname:     dbname,
+		User:       user,
+		Connection: connectStr,
+		Db:         connect,
+	}
+
+	conn.Db = append(conn.Db, db)
 }
 
-func Connected(driver, host string, port int, dbname, user, password string) (int, error) {
+func Connected(driver, host string, port int, dbname, user, password string) (*sql.DB, string, error) {
 	var connStr string
 	switch driver {
 	case Postgres:
@@ -58,32 +100,12 @@ func Connected(driver, host string, port int, dbname, user, password string) (in
 		panic(msg.NOT_SELECT_DRIVE)
 	}
 
-	sqlDB, err := sql.Open(driver, connStr)
+	result, err := sql.Open(driver, connStr)
 	if err != nil {
-		return -1, console.Error(err)
+		return nil, "", console.Alert(err.Error())
 	}
 
 	console.LogKF(driver, "Connected host:%s:%d", host, port)
 
-	if conn == nil {
-		conn = &Conn{
-			Db: []*Db{},
-		}
-	}
-
-	idx := len(conn.Db)
-	db := &Db{
-		Index:   idx,
-		Driver:  driver,
-		Host:    host,
-		Port:    port,
-		Dbname:  dbname,
-		User:    user,
-		ConnStr: connStr,
-		Db:      sqlDB,
-	}
-
-	conn.Db = append(conn.Db, db)
-
-	return idx, nil
+	return result, connStr, nil
 }

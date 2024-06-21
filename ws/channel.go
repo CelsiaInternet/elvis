@@ -47,7 +47,7 @@ func (hub *Hub) Subscribe(clientId string, channel string) bool {
 		client := hub.clients[idx]
 		client.Subscribe(channel)
 
-		event.Action("ws/subscribe", et.Json{"hub": hub.Id, "client": client, "channel": channel})
+		event.Log("ws/subscribe", et.Json{"hub": hub.Id, "client": client, "channel": channel})
 
 		return true
 	}
@@ -62,7 +62,7 @@ func (hub *Hub) Unsubscribe(clientId string, channel string) bool {
 		client := hub.clients[idx]
 		client.Unsubscribe(channel)
 
-		event.Action("ws/unsubscribe", et.Json{"hub": hub.Id, "client": client, "channel": channel})
+		event.Log("ws/unsubscribe", et.Json{"hub": hub.Id, "client": client, "channel": channel})
 
 		return true
 	}

@@ -177,10 +177,10 @@ func (m *Metrics) done(res *http.Response) et.Json {
 		},
 	}
 
-	go event.Action("telemetry", result)
+	go event.Log("telemetry", result)
 
 	if m.RequestsHost.Seccond > m.RequestsHost.Limit {
-		go event.Action("requests/overflow", result)
+		go event.Log("requests/overflow", result)
 	}
 
 	return result
@@ -253,10 +253,10 @@ func (m *Metrics) notFounder(r *http.Request) et.Json {
 		},
 	}
 
-	go event.Action("telemetry", result)
+	go event.Log("telemetry", result)
 
 	if m.RequestsHost.Seccond > m.RequestsHost.Limit {
-		go event.Action("requests/overflow", result)
+		go event.Log("requests/overflow", result)
 	}
 
 	return result

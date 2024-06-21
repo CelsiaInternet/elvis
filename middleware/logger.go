@@ -126,10 +126,10 @@ func RequestLogger(f LogFormatter) func(next http.Handler) http.Handler {
 
 				entry.Write(ww.Status(), ww.BytesWritten(), ww.Header(), time.Since(t1), nil)
 
-				go event.Action("telemetry", telemetry)
+				go event.Log("telemetry", telemetry)
 
 				if requests_host.Seccond > requests_host.Limit {
-					go event.Action("requests/overflow", telemetry)
+					go event.Log("requests/overflow", telemetry)
 				}
 			}()
 

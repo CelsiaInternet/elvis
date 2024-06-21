@@ -45,7 +45,7 @@ func (c *Node) LatIndex() int {
 	SELECT INDEX FROM core.MODE
 	LIMIT 1;`
 
-	item, err := jdb.DBQueryOne(c.Db, sql)
+	item, err := jdb.IDXQueryOne(c.Db, sql)
 	if err != nil {
 		return -1
 	}
@@ -60,7 +60,7 @@ func (c *Node) GetSyncByIdT(idT string) (et.Item, error) {
   WHERE _IDT=$1
   LIMIT 1;`
 
-	item, err := jdb.DBQueryOne(c.Db, sql, idT)
+	item, err := jdb.IDXQueryOne(c.Db, sql, idT)
 	if err != nil {
 		return et.Item{}, err
 	}
@@ -73,7 +73,7 @@ func (c *Node) DelSyncByIndex(index int) error {
   DELETE FROM core.SYNC
   WHERE INDEX=$1;`
 
-	_, err := jdb.DBQueryOne(c.Db, sql, index)
+	_, err := jdb.IDXQueryOne(c.Db, sql, index)
 	if err != nil {
 		return err
 	}

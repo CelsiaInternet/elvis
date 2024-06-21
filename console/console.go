@@ -4,7 +4,6 @@ import (
 	"errors"
 	"os"
 
-	"github.com/cgalvisleon/elvis/event"
 	"github.com/cgalvisleon/elvis/logs"
 	"github.com/cgalvisleon/elvis/strs"
 )
@@ -23,11 +22,6 @@ func NewErrorF(format string, args ...any) error {
 }
 
 func LogK(kind string, args ...any) error {
-	event.Action("logs", map[string]interface{}{
-		"kind": kind,
-		"args": args,
-	})
-
 	logs.Log(kind, args...)
 
 	return nil
@@ -88,12 +82,7 @@ func AlertF(format string, args ...any) error {
 }
 
 func Error(err error) error {
-	traces, err := logs.Traces("Error", "Red", err)
-
-	event.Action("logs", map[string]interface{}{
-		"kind": "ERROR",
-		"args": traces,
-	})
+	_, err = logs.Traces("Error", "Red", err)
 
 	return err
 }
@@ -120,12 +109,7 @@ func FatalF(format string, args ...any) {
 }
 
 func Panic(err error) error {
-	traces, err := logs.Traces("Panic", "Red", err)
-
-	event.Action("logs", map[string]interface{}{
-		"kind": "ERROR",
-		"args": traces,
-	})
+	go logs.Traces("Panic", "Red", err)
 
 	os.Exit(1)
 

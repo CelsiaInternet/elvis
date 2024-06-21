@@ -9,14 +9,8 @@ import (
 )
 
 var (
-	_db         int = 0
 	makedSeries bool
-	series      map[string]bool = make(map[string]bool)
 )
-
-func SetmasterDB(idx int) {
-	_db = idx
-}
 
 func defineSeries() error {
 	if makedSeries {
@@ -98,41 +92,13 @@ func defineSeries() error {
 func NextSerie(tag string) int {
 	tag = strs.Replace(tag, ".", "_")
 	tag = strs.Replace(tag, " ", "_")
-	if makedSeries {
-		sql := `SELECT core.nextserie($1) AS SERIE;`
-
-		item, err := jdb.DBQueryOne(_db, sql, tag)
-		if err != nil {
-			console.Error(err)
-			return 0
-		}
-
-		result := item.Int("serie")
-
-		return result
+	if !makedSeries {
+		return 0
 	}
 
-	if _, ok := series[tag]; !ok {
-		exist, err := jdb.ExistSerie(_db, "public", tag)
-		if err != nil {
-			console.Error(err)
-			return 0
-		}
+	sql := `SELECT core.nextserie($1) AS SERIE;`
 
-		if !exist {
-			_, err := jdb.CreateSerie(_db, "public", tag)
-			if err != nil {
-				console.Error(err)
-				return 0
-			}
-		}
-
-		series[tag] = true
-	}
-
-	sql := `SELECT nextval($1) AS SERIE;`
-
-	item, err := jdb.DBQueryOne(_db, sql, tag)
+	item, err := jdb.QueryOne(sql, tag)
 	if err != nil {
 		console.Error(err)
 		return 0
@@ -158,7 +124,7 @@ func DefineSerie(model *linq.Model) error {
 	SELECT MAX(%s) AS INDEX
 	FROM %s;`, strs.Uppcase(fieldName), tableName)
 
-	item, err := jdb.DBQueryOne(_db, sql)
+	item, err := jdb.QueryOne(sql)
 	if err != nil {
 		return err
 	}
@@ -195,36 +161,13 @@ func NextCode(tag, prefix string) string {
 }
 
 func SetSerie(tag string, val int) (int, error) {
-	if makedSeries {
-		sql := `SELECT core.setserie($1, $2);`
-
-		_, err := jdb.DBQueryOne(_db, sql, tag, val)
-		if err != nil {
-			return 0, err
-		}
-
-		return val, nil
+	if !makedSeries {
+		return 0, nil
 	}
 
-	if _, ok := series[tag]; !ok {
-		exist, err := jdb.ExistSerie(_db, "public", tag)
-		if err != nil {
-			return 0, err
-		}
+	sql := `SELECT core.setserie($1, $2);`
 
-		if !exist {
-			_, err := jdb.CreateSerie(_db, "public", tag)
-			if err != nil {
-				return 0, err
-			}
-		}
-
-		series[tag] = true
-	}
-
-	sql := `SELECT setval($1, $2);`
-
-	_, err := jdb.DBQueryOne(_db, sql, tag, val)
+	_, err := jdb.QueryOne(sql, tag, val)
 	if err != nil {
 		return 0, err
 	}
@@ -233,38 +176,13 @@ func SetSerie(tag string, val int) (int, error) {
 }
 
 func LastSerie(tag string) int {
-	if makedSeries {
-		sql := `SELECT core.currserie($1) AS SERIE;`
-
-		item, err := jdb.DBQueryOne(_db, sql, tag)
-		if err != nil {
-			return 0
-		}
-
-		result := item.Int("serie")
-
-		return result
+	if !makedSeries {
+		return 0
 	}
 
-	if _, ok := series[tag]; !ok {
-		exist, err := jdb.ExistSerie(_db, "public", tag)
-		if err != nil {
-			return 0
-		}
+	sql := `SELECT core.currserie($1) AS SERIE;`
 
-		if !exist {
-			_, err := jdb.CreateSerie(_db, "public", tag)
-			if err != nil {
-				return 0
-			}
-		}
-
-		series[tag] = true
-	}
-
-	sql := `SELECT currval($1) AS SERIE;`
-
-	item, err := jdb.DBQueryOne(_db, sql, tag)
+	item, err := jdb.QueryOne(sql, tag)
 	if err != nil {
 		return 0
 	}
@@ -307,7 +225,7 @@ func SyncSerie(c chan int) error {
 		page++
 	}
 
-	c <- _db
+	c <- 0
 
 	return nil
 }

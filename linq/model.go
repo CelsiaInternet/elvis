@@ -189,7 +189,7 @@ func (c *Model) UseRecycle() bool {
 func (c *Model) Init() error {
 	sql := c.DDL()
 
-	_, err := jdb.DBQDDL(c.Db, sql)
+	_, err := jdb.IDXQuery(c.Db, sql)
 	if err != nil {
 		return err
 	}

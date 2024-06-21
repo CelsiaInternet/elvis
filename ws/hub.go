@@ -83,7 +83,7 @@ func (hub *Hub) onConnect(client *Client) {
 	client.Addr = client.socket.RemoteAddr().String()
 	client.isClose = false
 
-	event.Action("ws/connect", et.Json{"hub": hub.Id, "client": client})
+	event.Log("ws/connect", et.Json{"hub": hub.Id, "client": client})
 
 	logs.Logf("Websocket", MSG_CLIENT_CONNECT, client.Id, hub.Id)
 }
@@ -101,7 +101,7 @@ func (hub *Hub) onDisconnect(client *Client) {
 	hub.clients[len(hub.clients)-1] = nil
 	hub.clients = hub.clients[:len(hub.clients)-1]
 
-	event.Action("ws/disconnect", et.Json{"hub": hub.Id, "client_id": client.Id})
+	event.Log("ws/disconnect", et.Json{"hub": hub.Id, "client_id": client.Id})
 
 	logs.Logf("Websocket", MSG_CLIENT_DISCONNECT, client.Id, hub.Id)
 }

@@ -55,17 +55,17 @@ func DefineFolders() error {
 		return nil
 	})
 	Folders.Trigger(linq.AfterUpdate, func(model *linq.Model, old, new *et.Json, data et.Json) error {
-		event.Action("folder/update", *new)
+		event.Log("folder/update", *new)
 		oldState := old.Key("_state")
 		newState := old.Key("_state")
 		if oldState != newState {
-			event.Action("folder/state", *new)
+			event.Log("folder/state", *new)
 		}
 
 		return nil
 	})
 	Folders.Trigger(linq.AfterDelete, func(model *linq.Model, old, new *et.Json, data et.Json) error {
-		event.Action("folder/delete", *old)
+		event.Log("folder/delete", *old)
 
 		return nil
 	})

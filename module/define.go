@@ -55,7 +55,7 @@ func InitDefine() error {
 	return nil
 }
 
-func InitModuleData() error {
+func InitData() error {
 	if _, err := Projects.Upsert(et.Json{
 		"_id":  "-1",
 		"name": "My project",

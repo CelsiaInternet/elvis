@@ -117,7 +117,7 @@ func (c *Node) SyncNodeToMaster() error {
 		ORDER BY A.INDEX
 		LIMIT %d;`, rows)
 
-		items, err := jdb.DBQuery(c.Db, sql)
+		items, err := jdb.IDXQuery(c.Db, sql)
 		if err != nil {
 			c.Status = NodeStatusError
 			return err
@@ -152,7 +152,7 @@ func (c *Node) SyncQuery(query string, index int) error {
 
 	query = strs.Append(query, sql, "\n")
 
-	_, err := jdb.DBQuery(c.Db, query)
+	_, err := jdb.IDXQuery(c.Db, query)
 	if err != nil {
 		return err
 	}

@@ -96,7 +96,7 @@ func Worker(event string, data et.Json) {
 		"data":  data,
 	})
 
-	logs.Log("Service event", "event:", event, " - data:", data.ToString())
+	logs.Log("Service event", "event:", event)
 }
 
 // Publish event asigned to a worker
@@ -107,7 +107,7 @@ func Work(worker, work_id string, data et.Json) {
 		"data":    data,
 	})
 
-	logs.Log("Service event", "worker:", worker, " - data:", data.ToString())
+	logs.Log("Service event", "worker:", worker)
 }
 
 // Publish event begin work
@@ -140,8 +140,11 @@ func Rejected(work_id, event string) {
 	logs.Log("Service event", "event:", event, " - worker_id:", work_id)
 }
 
-func Action(action string, data map[string]interface{}) {
-	go Publish("service_action", action, data)
+func Log(event string, data et.Json) {
+	// Publish event
+	go Publish("service_log", event, data)
+
+	logs.Log("Service log", "event:", event)
 }
 
 // http

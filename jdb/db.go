@@ -20,7 +20,7 @@ type Db struct {
 	Port        int
 	Dbname      string
 	User        string
-	ConnStr     string
+	Connection  string
 	Db          *sql.DB
 }
 

@@ -22,7 +22,7 @@ func beforeInsert(model *Model, old, new *et.Json, data et.Json) error {
 }
 
 func afterInsert(model *Model, old, new *et.Json, data et.Json) error {
-	event.Action("model/insert", et.Json{
+	event.Log("model/insert", et.Json{
 		"table": model.Name,
 		"old":   old,
 		"new":   new,
@@ -42,7 +42,7 @@ func beforeUpdate(model *Model, old, new *et.Json, data et.Json) error {
 }
 
 func afterUpdate(model *Model, old, new *et.Json, data et.Json) error {
-	event.Action("model/update", et.Json{
+	event.Log("model/update", et.Json{
 		"table": model.Name,
 		"old":   old,
 		"new":   new,
@@ -56,7 +56,7 @@ func beforeDelete(model *Model, old, new *et.Json, data et.Json) error {
 }
 
 func afterDelete(model *Model, old, new *et.Json, data et.Json) error {
-	event.Action("model/delete", et.Json{
+	event.Log("model/delete", et.Json{
 		"table": model.Name,
 		"old":   old,
 		"new":   new,

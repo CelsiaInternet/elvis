@@ -388,7 +388,7 @@ func (c *Linq) Query() (et.Items, error) {
 	}
 
 	if c.Tp == TpData {
-		result, err := jdb.DBQueryData(c.db, c.sql)
+		result, err := jdb.IDXQueryData(c.db, c.sql)
 		if err != nil {
 			return et.Items{}, err
 		}
@@ -396,7 +396,7 @@ func (c *Linq) Query() (et.Items, error) {
 		return result, nil
 	}
 
-	result, err := jdb.DBQuery(c.db, c.sql)
+	result, err := jdb.IDXQuery(c.db, c.sql)
 	if err != nil {
 		return et.Items{}, err
 	}
@@ -410,7 +410,7 @@ func (c *Linq) QueryOne() (et.Item, error) {
 	}
 
 	if c.Tp == TpData {
-		result, err := jdb.DBQueryDataOne(c.db, c.sql)
+		result, err := jdb.IDXQueryDataOne(c.db, c.sql)
 		if err != nil {
 			return et.Item{}, err
 		}
@@ -418,7 +418,7 @@ func (c *Linq) QueryOne() (et.Item, error) {
 		return result, nil
 	}
 
-	result, err := jdb.DBQueryOne(c.db, c.sql)
+	result, err := jdb.IDXQueryOne(c.db, c.sql)
 	if err != nil {
 		return et.Item{}, err
 	}
@@ -431,7 +431,7 @@ func (c *Linq) QueryCount() int {
 		console.Log(c.sql)
 	}
 
-	result := jdb.DBQueryCount(c.db, c.sql)
+	result := jdb.IDXQueryCount(c.db, c.sql)
 
 	return result
 }
