@@ -47,25 +47,6 @@ func connect() {
 		console.Fatal(err)
 	}
 
-	err = connect.Ping()
-	if err != nil {
-		tmp, _, err := Connected(driver, host, port, "postgres", user, password, application_name)
-		if err != nil {
-			console.Fatal(err)
-		}
-
-		err = CreateDatabase(tmp, dbname)
-		if err != nil {
-			console.Fatal(err)
-		}
-		defer tmp.Close()
-
-		connect, connectStr, err = Connected(driver, host, port, dbname, user, password, application_name)
-		if err != nil {
-			console.Fatal(err)
-		}
-	}
-
 	if conn == nil {
 		conn = &Conn{
 			Db: []*Db{},
