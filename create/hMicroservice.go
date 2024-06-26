@@ -69,7 +69,8 @@ func MkMicroservice(packageName, name, schema string) error {
 	}
 
 	ProgressNext(10)
-	err = MakePkg(name, schema)
+	schemaVar := strs.Append("schema", strs.Titlecase(schema), "")
+	err = MakePkg(name, schema, schemaVar)
 	if err != nil {
 		return err
 	}
@@ -93,16 +94,10 @@ func MkMicroservice(packageName, name, schema string) error {
 
 func MkMolue(name, modelo, schema string) error {
 	ProgressNext(10)
-	if len(schema) > 0 {
-		err := MakeDbHandler(name, modelo, schema)
-		if err != nil {
-			return err
-		}
-	} else {
-		err := MakeHandler(name, modelo)
-		if err != nil {
-			return err
-		}
+	schemaVar := strs.Append("schema", strs.Titlecase(schema), "")
+	err := MakeModel(name, modelo, schemaVar)
+	if err != nil {
+		return err
 	}
 
 	ProgressNext(90)

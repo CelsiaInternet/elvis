@@ -5,13 +5,12 @@ import (
 
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/envar"
-	"github.com/cgalvisleon/elvis/logs"
 	"github.com/cgalvisleon/elvis/msg"
 	"github.com/cgalvisleon/elvis/strs"
 	_ "github.com/lib/pq"
 )
 
-func connect() (*Db, error) {
+func connect() {
 	driver := envar.EnvarStr("", "DB_DRIVE")
 	host := envar.EnvarStr("", "DB_HOST")
 	port := envar.EnvarInt(5432, "DB_PORT")
@@ -21,23 +20,23 @@ func connect() (*Db, error) {
 	application_name := envar.EnvarStr("elvis", "DB_APPLICATION_NAME")
 
 	if driver == "" {
-		return nil, console.AlertF(msg.ERR_ENV_REQUIRED, "DB_DRIVE")
+		console.FatalF(msg.ERR_ENV_REQUIRED, "DB_DRIVE")
 	}
 
 	if host == "" {
-		return nil, console.AlertF(msg.ERR_ENV_REQUIRED, "DB_HOST")
+		console.FatalF(msg.ERR_ENV_REQUIRED, "DB_HOST")
 	}
 
 	if dbname == "" {
-		return nil, console.AlertF(msg.ERR_ENV_REQUIRED, "DB_NAME")
+		console.FatalF(msg.ERR_ENV_REQUIRED, "DB_NAME")
 	}
 
 	if user == "" {
-		return nil, console.AlertF(msg.ERR_ENV_REQUIRED, "DB_USER")
+		console.FatalF(msg.ERR_ENV_REQUIRED, "DB_USER")
 	}
 
 	if password == "" {
-		return nil, console.AlertF(msg.ERR_ENV_REQUIRED, "DB_PASSWORD")
+		console.FatalF(msg.ERR_ENV_REQUIRED, "DB_PASSWORD")
 	}
 
 	var connect *sql.DB
@@ -45,11 +44,18 @@ func connect() (*Db, error) {
 	var err error
 	connect, connectStr, err = Connected(driver, host, port, dbname, user, password, application_name)
 	if err != nil {
-		logs.Fatal(err)
+		console.Fatal(err)
 	}
 
-	return &Db{
-		Index:      0,
+	if conn == nil {
+		conn = &Conn{
+			Db: []*Db{},
+		}
+	}
+
+	idx := len(conn.Db)
+	db := &Db{
+		Index:      idx,
 		Driver:     driver,
 		Host:       host,
 		Port:       port,
@@ -57,7 +63,9 @@ func connect() (*Db, error) {
 		User:       user,
 		Connection: connectStr,
 		Db:         connect,
-	}, nil
+	}
+
+	conn.Db = append(conn.Db, db)
 }
 
 func Connected(driver, host string, port int, dbname, user, password, application_name string) (*sql.DB, string, error) {
