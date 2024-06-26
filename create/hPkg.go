@@ -5,7 +5,7 @@ import (
 	"github.com/cgalvisleon/elvis/strs"
 )
 
-func MakePkg(name, schema, schemaVar string) error {
+func MakePkg(name, schema string) error {
 	path, err := file.MakeFolder("pkg", name)
 	if err != nil {
 		return err
@@ -32,23 +32,62 @@ func MakePkg(name, schema, schemaVar string) error {
 		return err
 	}
 
-	title := strs.Titlecase(name)
-	_, err = file.MakeFile(path, "router.go", modelRouter, name, title)
-	if err != nil {
-		return err
-	}
-
 	if len(schema) > 0 {
-		_, err = file.MakeFile(path, "schema.go", modelSchema, name, schemaVar, schema)
+		err = MakeDbHandler(name, name, schema)
+		if err != nil {
+			return err
+		}
+
+		title := strs.Titlecase(name)
+		_, err = file.MakeFile("router.go", modelDbRouter, name, title)
+		if err != nil {
+			return err
+		}
+	} else {
+		err = MakeHandler(name, name)
+		if err != nil {
+			return err
+		}
+
+		title := strs.Titlecase(name)
+		_, err = file.MakeFile("router.go", modelRouter, name, title)
 		if err != nil {
 			return err
 		}
 	}
 
-	return MakeModel(name, name, schemaVar)
+	return nil
 }
 
-func MakeModel(name, modelo, schemaVar string) error {
+func MakeDbHandler(name, modelo, schema string) error {
+	path, err := file.MakeFolder("pkg", name)
+	if err != nil {
+		return err
+	}
+
+	schemaVar := strs.Append("schema", strs.Titlecase(schema), "")
+
+	_, err = file.MakeFile(path, "schema.go", modelSchema, name, schemaVar, schema)
+	if err != nil {
+		return err
+	}
+
+	path, err = file.MakeFolder("pkg", name)
+	if err != nil {
+		return err
+	}
+
+	modelo = strs.Titlecase(modelo)
+	fileName := strs.Format(`h%s.go`, modelo)
+	_, err = file.MakeFile(path, fileName, modelDbHandler, name, modelo, schemaVar, strs.Uppcase(modelo), strs.Lowcase(modelo))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func MakeHandler(name, modelo string) error {
 	path, err := file.MakeFolder("pkg", name)
 	if err != nil {
 		return err
@@ -56,7 +95,7 @@ func MakeModel(name, modelo, schemaVar string) error {
 
 	modelo = strs.Titlecase(modelo)
 	fileName := strs.Format(`h%s.go`, modelo)
-	_, err = file.MakeFile(path, fileName, modelHandler, name, modelo, schemaVar, strs.Uppcase(modelo), strs.Lowcase(modelo))
+	_, err = file.MakeFile(path, fileName, modelHandler, name, modelo, strs.Lowcase(modelo))
 	if err != nil {
 		return err
 	}

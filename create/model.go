@@ -389,7 +389,7 @@ type Repository interface {
 }
 `
 
-const modelRouter = `package $1
+const modelDbRouter = `package $1
 
 import (
 	"context"
@@ -406,7 +406,7 @@ import (
 
 var PackageName = "$1"
 var PackageTitle = "$1"
-var PackagePath = "/api/$1"
+var PackagePath = envar.EnvarStr("/api/$1", "PATH_URL")
 var PackageVersion = envar.EnvarStr("0.0.1", "VERSION")
 var HostName, _ = os.Hostname()
 
@@ -446,6 +446,58 @@ func (rt *Router) version(w http.ResponseWriter, r *http.Request) {
 }
 `
 
+const modelRouter = `package $1
+
+import (
+	"context"
+	"net/http"
+	"os"
+
+	"github.com/cgalvisleon/elvis/console"
+	"github.com/cgalvisleon/elvis/envar"
+	"github.com/cgalvisleon/elvis/response"
+	er "github.com/cgalvisleon/elvis/router"
+	"github.com/cgalvisleon/elvis/strs"
+	"github.com/go-chi/chi/v5"
+)
+
+var PackageName = "$1"
+var PackageTitle = "$1"
+var PackagePath = envar.EnvarStr("/api/$1", "PATH_URL")
+var PackageVersion = envar.EnvarStr("0.0.1", "VERSION")
+var HostName, _ = os.Hostname()
+
+type Router struct {
+	Repository Repository
+}
+
+func (rt *Router) Routes() http.Handler {
+	var host = strs.Format("%s:%d", envar.EnvarStr("http://localhost", "HOST"), envar.EnvarInt(3300, "PORT"))
+
+	r := chi.NewRouter()
+
+	er.PublicRoute(r, er.Get, "/version", rt.version, PackageName, PackagePath, host)
+	// $2
+	
+	ctx := context.Background()
+	rt.Repository.Init(ctx)
+
+	console.LogKF(PackageName, "Router version:%s", PackageVersion)
+	return r
+}
+
+func (rt *Router) version(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	result, err := rt.Repository.Version(ctx)
+	if err != nil {
+		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	response.JSON(w, r, http.StatusOK, result)
+}
+`
+
 const restHttp = `@host=localhost:3300
 @token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IlVTRVIuQURNSU4iLCJhcHAiOiJEZXZvcHMtSW50ZXJuZXQiLCJuYW1lIjoiQ2VzYXIgR2FsdmlzIExlw7NuIiwia2luZCI6ImF1dGgiLCJ1c2VybmFtZSI6Iis1NzMxNjA0Nzk3MjQiLCJkZXZpY2UiOiJkZXZlbG9wIiwiZHVyYXRpb24iOjI1OTIwMDB9.dexIOute7r9o_P8U3t6l9RihN8BOnLl4xpoh9QbQI4k
 
@@ -465,7 +517,7 @@ Content-Length: 227
 }
 `
 
-const modelHandler = `package $1
+const modelDbHandler = `package $1
 
 import (
 	"net/http"
@@ -759,6 +811,53 @@ func (rt *Router) all$2(w http.ResponseWriter, r *http.Request) {
 	if err := Define$2(); err != nil {
 		return console.Panic(err)
 	}
+**/
+`
+
+const modelHandler = `package $1
+
+import (
+	"net/http"
+
+	"github.com/cgalvisleon/elvis/cache"
+	"github.com/cgalvisleon/elvis/console"
+	"github.com/cgalvisleon/elvis/event"
+	"github.com/cgalvisleon/elvis/core"
+	"github.com/cgalvisleon/elvis/generic"
+	"github.com/cgalvisleon/elvis/et"
+	"github.com/cgalvisleon/elvis/linq"
+	"github.com/cgalvisleon/elvis/msg"
+	"github.com/cgalvisleon/elvis/response"
+	"github.com/cgalvisleon/elvis/utility"
+	"github.com/go-chi/chi/v5"
+)
+
+func $2(params et.Json) (et.Item, error) {
+
+	return nil
+}
+
+/**
+* Router
+**/
+
+func (rt *Router) $3(w http.ResponseWriter, r *http.Request) {
+	body, _ := response.GetBody(r)
+	
+	result, err := $2(body)
+	if err != nil {
+		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	response.ITEM(w, r, http.StatusOK, result)
+}
+
+/** Copy this code to router.go
+	// $2
+	er.ProtectRoute(r, er.Post, "/$3", rt.$2, PackageName, PackagePath, Host)	
+**/
+
 **/
 `
 
