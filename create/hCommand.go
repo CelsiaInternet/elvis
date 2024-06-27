@@ -9,7 +9,7 @@ import (
 )
 
 var CmdProject = &cobra.Command{
-	Use:   "micro [name author schema, schema_var]",
+	Use:   "micro [name author schema]",
 	Short: "Create project base type microservice.",
 	Long:  "Template project to microservice include folder cmd, deployments, pkg, rest, test and web, with files .go required for making a microservice.",
 	Run: func(cmd *cobra.Command, args []string) {
@@ -46,7 +46,7 @@ var CmdProject = &cobra.Command{
 }
 
 var CmdMicro = &cobra.Command{
-	Use:   "micro [name schema, schema_var]",
+	Use:   "micro [name schema]",
 	Short: "Create project base type microservice.",
 	Long:  "Template project to microservice include folder cmd, deployments, pkg, rest, test and web, with files .go required for making a microservice.",
 	Run: func(cmd *cobra.Command, args []string) {
@@ -81,7 +81,7 @@ var CmdModelo = &cobra.Command{
 	Short: "Create model to microservice.",
 	Long:  "Template model to microservice include function handler model.",
 	Run: func(cmd *cobra.Command, args []string) {
-		name, err := PrompStr("Package", true)
+		packageName, err := PrompStr("Package", true)
 		if err != nil {
 			fmt.Printf("Prompt failed %v\n", err)
 			return
@@ -99,13 +99,13 @@ var CmdModelo = &cobra.Command{
 			return
 		}
 
-		err = MkMolue(name, modelo, schema)
+		err = MkMolue(packageName, modelo, schema)
 		if err != nil {
 			fmt.Printf("Command failed %v\n", err)
 			return
 		}
 
-		title := strs.Titlecase(name)
+		title := strs.Titlecase(packageName)
 		message := strs.Format(`Remember, including the router, that it is on the bottom of the h%s.go, in routers section of the router.go file`, title)
 		fmt.Println(message)
 	},
