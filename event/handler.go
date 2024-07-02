@@ -147,8 +147,12 @@ func Log(event string, data et.Json) {
 	logs.Log("Service log", "event:", event)
 }
 
-// http
-func Connect(w http.ResponseWriter, r *http.Request) {
+/**
+* Test event, testing message broker
+* @param w http.ResponseWriter
+* @param r *http.Request
+**/
+func Test(w http.ResponseWriter, r *http.Request) {
 	body, _ := response.GetBody(r)
 	event := body.Str("event")
 	data := body.Json("data")

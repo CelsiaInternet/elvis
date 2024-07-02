@@ -88,6 +88,11 @@ func Connected(driver, host string, port int, dbname, user, password, applicatio
 		return nil, "", console.Alert(err.Error())
 	}
 
+	err = result.Ping()
+	if err != nil {
+		return nil, "", console.Alert(err.Error())
+	}
+
 	console.LogKF(driver, "Connected host:%s:%d", host, port)
 
 	return result, connStr, nil
