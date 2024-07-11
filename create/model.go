@@ -297,11 +297,16 @@ import (
 
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/et"
+	"github.com/cgalvisleon/elvis/msg"
 )
 
 var initRpc bool
 
 type Service et.Item
+
+type RPC struct{}
+
+var Rpc *RPC
 
 func InitRpc() error {
 	service := new(Service)
@@ -318,7 +323,7 @@ func InitRpc() error {
 
 func (c *Service) Version(require []byte, response *[]byte) error {
 	if !initRpc {
-		return nil
+		return console.Alert(msg.RPC_NOT_FOUND)
 	}
 
 	rq := et.ByteToJson(require)
@@ -337,6 +342,7 @@ func (c *Service) Version(require []byte, response *[]byte) error {
 
 	return nil
 }
+	
 `
 
 const modelMsg = `package $1

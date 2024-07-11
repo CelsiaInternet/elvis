@@ -70,9 +70,9 @@ func ValidUUID(val string) bool {
 	return pattern.MatchString(val)
 }
 
-func ValidCode(val string) bool {
+func ValidCode(val string, length int) bool {
 	regex := `^-?\d+$`
 	pattern := regexp.MustCompile(regex)
-	ok := len(val) >= 6 && pattern.MatchString(val)
+	ok := len(val) >= length && pattern.MatchString(val)
 	return ok
 }

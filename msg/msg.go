@@ -60,6 +60,7 @@ const (
 	SYSTEM_USER_NOT_FOUNT   = "User not found"
 	MARTER_NOT_FOUNT        = "Master DB not found:%s"
 	TABLE_NOT_FOUND         = "Table not found:%s.%s"
+	RPC_NOT_FOUND           = "RPC not found"
 )
 
 func init() {
