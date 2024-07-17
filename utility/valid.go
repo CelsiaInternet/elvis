@@ -76,3 +76,7 @@ func ValidCode(val string, length int) bool {
 	ok := len(val) >= length && pattern.MatchString(val)
 	return ok
 }
+
+func ValidNil(val string) bool {
+	return val == ""
+}
