@@ -57,7 +57,7 @@ func IdMigration(old_id string, tag string) (et.Item, error) {
 	}
 
 	return Migration.Select().
-		Where(Migration.Col("old__id").Eq(old_id)).
+		Where(Migration.Col("old_id").Eq(old_id)).
 		And(Migration.Col("tag").Eq(tag)).
 		First()
 }
@@ -78,8 +78,14 @@ func SetMigration(old_id string, id string, tag string) (et.Item, error) {
 			console.AlertF("Id invalido: %s", id)
 	}
 
+	now := utility.Now()
 	updateData := et.Json{
-		"id": id,
+		"data_make":   now,
+		"date_update": now,
+		"_state":      utility.ACTIVE,
+		"old_id":      old_id,
+		"id":          id,
+		"tag":         tag,
 	}
 
 	item, err := Migration.Upsert(updateData).
