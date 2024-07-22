@@ -57,7 +57,7 @@ func IdMigration(old_id string, tag string) (et.Item, error) {
 	}
 
 	return Migration.Select().
-		Where(Migration.Col("old__id").Eq(old_id)).
+		Where(Migration.Col("old_id").Eq(old_id)).
 		And(Migration.Col("tag").Eq(tag)).
 		First()
 }
