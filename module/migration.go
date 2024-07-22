@@ -91,12 +91,12 @@ func SetMigration(old_id string, id string, tag string) (et.Item, error) {
 
 	now := utility.Now()
 	updateData := et.Json{
-		"id":          id,
+		"date_make":   now,
 		"date_update": now,
 		"_state":      utility.ACTIVE,
-		"tag":         tag,
 		"old_id":      old_id,
-		"date_make":   now,
+		"id":          id,
+		"tag":         tag,
 	}
 
 	item, err := Migration.Upsert(updateData).
