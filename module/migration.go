@@ -45,21 +45,31 @@ func DefineMigration() error {
 	return nil
 }
 
-func IdMigration(old_id string, tag string) (et.Item, error) {
+func IdMigration(old_id string, tag string) (string, error) {
 	if !utility.ValidId(old_id) {
-		return et.Item{},
+		return old_id,
 			console.AlertF("Id invalido: %s", old_id)
 	}
 
 	if !utility.ValidNil(tag) {
-		return et.Item{},
+		return old_id,
 			console.AlertF("Tag invalido: %s", tag)
 	}
 
-	return Migration.Select().
+	item, err := Migration.Select().
 		Where(Migration.Col("old_id").Eq(old_id)).
 		And(Migration.Col("tag").Eq(tag)).
 		First()
+	if err != nil {
+		return old_id, err
+	}
+
+	if item.Ok {
+		result := item.Key("id")
+		return result, nil
+	}
+
+	return old_id, nil
 }
 
 func SetMigration(old_id string, id string, tag string) (et.Item, error) {
