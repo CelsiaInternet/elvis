@@ -47,6 +47,9 @@ func InitDefine() error {
 	if err := DefineTokens(); err != nil {
 		return console.Panic(err)
 	}
+	if err := DefineMigration(); err != nil {
+		return console.Panic(err)
+	}
 
 	console.LogK("Module", "Define models")
 

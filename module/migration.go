@@ -70,6 +70,20 @@ func IdMigration(old_id string, tag string) (string, error) {
 		return result, nil
 	}
 
+	now := utility.Now()
+	_, err = Migration.Insert(et.Json{
+		"date_make":   now,
+		"date_update": now,
+		"_state":      utility.ACTIVE,
+		"old_id":      old_id,
+		"id":          old_id,
+		"tag":         tag,
+	}).
+		CommandOne()
+	if err != nil {
+		return old_id, err
+	}
+
 	return old_id, nil
 }
 
