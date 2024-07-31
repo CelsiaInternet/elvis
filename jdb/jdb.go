@@ -1,9 +1,5 @@
 package jdb
 
-import (
-	"sync"
-)
-
 /**
 * Ths jdb package makes it easy to create an array of database connections
 * initially to posrtgresql databases.
@@ -15,7 +11,6 @@ import (
 
 var (
 	conn *Conn
-	once sync.Once
 )
 
 type Conn struct {
@@ -23,7 +18,14 @@ type Conn struct {
 }
 
 func Load() (*Conn, error) {
-	once.Do(connect)
+	if conn != nil {
+		return conn, nil
+	}
+
+	err := connect()
+	if err != nil {
+		return nil, err
+	}
 
 	return conn, nil
 }

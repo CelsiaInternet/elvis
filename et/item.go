@@ -16,55 +16,10 @@ type Item struct {
 	Result Json `json:"result"`
 }
 
-func (it *Item) Scan(rows *sql.Rows) error {
-	cols, err := rows.Columns()
-	if err != nil {
-		return err
-	}
-
-	values := make([]interface{}, len(cols))
-	pointers := make([]interface{}, len(cols))
-	for i := range values {
-		pointers[i] = &values[i]
-	}
-
-	if err := rows.Scan(pointers...); err != nil {
-		return err
-	}
-
+func (it *Item) ScanRows(rows *sql.Rows) error {
 	it.Ok = true
 	it.Result = make(Json)
-	for i, colName := range cols {
-		if values[i] == nil {
-			it.Result[colName] = nil
-		} else if reflect.TypeOf(values[i]).String() == "[]uint8" {
-			it.Result[colName] = ToUnit8Json(values[i])
-		} else {
-			it.Result[colName] = values[i]
-		}
-	}
-
-	return nil
-}
-
-func (it *Item) ToScan(src interface{}) error {
-	v := reflect.ValueOf(src).Elem()
-	for k, val := range it.Result {
-		field := v.FieldByName(k)
-		if !field.IsValid() {
-			logs.Errorf("No such field:%s in struct", k)
-			continue
-		}
-		if !field.CanSet() {
-			logs.Errorf("Cannot set field:%s in struct", k)
-			continue
-		}
-		valType := reflect.ValueOf(val)
-		if field.Type() != valType.Type() {
-			return logs.Errorf(`Provided value type didn't match obj field:%s type`, k)
-		}
-		field.Set(valType)
-	}
+	it.Result.ScanRows(rows)
 
 	return nil
 }
@@ -210,10 +165,6 @@ func (it *Item) Json(atribs ...string) Json {
 
 func (it *Item) Array(atrib string) []Json {
 	return it.Result.Array(atrib)
-}
-
-func (it *Item) ArrayStr(atrib string) []string {
-	return it.Result.ArrayStr(atrib)
 }
 
 func (it *Item) ToString() string {

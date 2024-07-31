@@ -2,15 +2,11 @@ package cache
 
 import (
 	"context"
-	"sync"
 
 	"github.com/redis/go-redis/v9"
 )
 
-var (
-	conn *Conn
-	once sync.Once
-)
+var conn *Conn
 
 type Conn struct {
 	ctx    context.Context
@@ -20,7 +16,15 @@ type Conn struct {
 }
 
 func Load() (*Conn, error) {
-	once.Do(connect)
+	if conn != nil {
+		return conn, nil
+	}
+
+	var err error
+	conn, err = connect()
+	if err != nil {
+		return nil, err
+	}
 
 	return conn, nil
 }

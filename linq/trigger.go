@@ -2,8 +2,7 @@ package linq
 
 import (
 	"github.com/cgalvisleon/elvis/et"
-	"github.com/cgalvisleon/elvis/event"
-
+	"github.com/cgalvisleon/elvis/jdb"
 	"github.com/cgalvisleon/elvis/utility"
 )
 
@@ -16,6 +15,11 @@ func beforeInsert(model *Model, old, new *et.Json, data et.Json) error {
 
 	if model.UseDateUpdate {
 		new.Set(model.DateUpdateField, now)
+	}
+
+	if model.UseSerie {
+		index := jdb.NextSerie(model.Table)
+		new.Set(model.SerieField, index)
 	}
 
 	return nil
@@ -37,11 +41,6 @@ func beforeUpdate(model *Model, old, new *et.Json, data et.Json) error {
 }
 
 func afterUpdate(model *Model, old, new *et.Json, data et.Json) error {
-	event.Log("model/update", et.Json{
-		"table": model.Name,
-		"old":   old,
-		"new":   new,
-	})
 
 	return nil
 }
@@ -51,11 +50,6 @@ func beforeDelete(model *Model, old, new *et.Json, data et.Json) error {
 }
 
 func afterDelete(model *Model, old, new *et.Json, data et.Json) error {
-	event.Log("model/delete", et.Json{
-		"table": model.Name,
-		"old":   old,
-		"new":   new,
-	})
 
 	return nil
 }

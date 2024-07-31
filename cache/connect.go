@@ -9,19 +9,17 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-func connect() {
+func connect() (*Conn, error) {
 	host := envar.EnvarStr("", "REDIS_HOST")
 	password := envar.EnvarStr("", "REDIS_PASSWORD")
 	dbname := envar.EnvarInt(0, "REDIS_DB")
 
 	if host == "" {
-		logs.Errorf(msg.ERR_ENV_REQUIRED, "REDIS_HOST")
-		return
+		return nil, logs.Alertf(msg.ERR_ENV_REQUIRED, "REDIS_HOST")
 	}
 
 	if password == "" {
-		logs.Errorf(msg.ERR_ENV_REQUIRED, "REDIS_PASSWORD")
-		return
+		return nil, logs.Alertf(msg.ERR_ENV_REQUIRED, "REDIS_PASSWORD")
 	}
 
 	client := redis.NewClient(&redis.Options{
@@ -32,10 +30,10 @@ func connect() {
 
 	logs.Logf("Redis", "Connected host:%s", host)
 
-	conn = &Conn{
+	return &Conn{
 		ctx:    context.Background(),
 		host:   host,
 		dbname: dbname,
 		db:     client,
-	}
+	}, nil
 }

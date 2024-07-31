@@ -190,7 +190,7 @@ func GetFromToken(ctx context.Context, tokenString string) (*Claim, error) {
 	return result, nil
 }
 
-func GenTokenCtx(ctx context.Context, id, app, name, kind, username, device string, duration time.Duration) (string, error) {
+func genTokenCtx(ctx context.Context, id, app, name, kind, username, device string, duration time.Duration) (string, error) {
 	token, key, err := genToken(id, app, name, kind, username, device, duration)
 	if err != nil {
 		return "", err
@@ -211,7 +211,7 @@ func GenTokenCtx(ctx context.Context, id, app, name, kind, username, device stri
 
 func GenToken(id, app, name, kind, username, device string, duration time.Duration) (string, error) {
 	ctx := context.Background()
-	return GenTokenCtx(ctx, id, app, name, kind, username, device, duration)
+	return genTokenCtx(ctx, id, app, name, kind, username, device, duration)
 }
 
 func GetClient(r *http.Request) et.Json {

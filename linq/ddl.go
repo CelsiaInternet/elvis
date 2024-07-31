@@ -1,19 +1,15 @@
 package linq
 
 import (
+	"strings"
+
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/generic"
 	"github.com/cgalvisleon/elvis/jdb"
 	"github.com/cgalvisleon/elvis/strs"
 )
 
-/**
-* The DDLCoulmn function generates a Data Definition Language (DDL) statement for a given column in a database.
-* It takes into account various column properties such as foreign key constraints, default values, and the column's type and name.
-* The generated DDL statement can be used to create or alter the column in a database.
-**/
-
-func DDLColumn(col *Column) string {
+func ddlColumn(col *Column) string {
 	var result string
 
 	switch col.Driver() {
@@ -39,24 +35,168 @@ func DDLColumn(col *Column) string {
 	return result
 }
 
-func DDLIndex(col *Column) string {
+func ddlIndex(col *Column) string {
 	var result string
 
 	switch col.Driver() {
 	default:
-		result = jdb.SQLDDL(`CREATE INDEX IF NOT EXISTS $2_$3_IDX ON $1($3);`, strs.Lowcase(col.Model.Name), strs.Uppcase(col.Model.Table), strs.Uppcase(col.name))
+		result = jdb.SQLDDL(`CREATE INDEX IF NOT EXISTS $2_$3_$4_IDX ON $1($4);`, col.Model.Table, strs.Uppcase(col.Model.Schema.Name), col.Model.Name, strs.Uppcase(col.name))
 	}
 
 	return result
 }
 
-func DDLUniqueIndex(col *Column) string {
+func ddlUniqueIndex(col *Column) string {
 	var result string
 
 	switch col.Driver() {
 	default:
-		result = jdb.SQLDDL(`CREATE UNIQUE INDEX IF NOT EXISTS $2_$3_IDX ON $1($3);`, strs.Lowcase(col.Model.Name), strs.Uppcase(col.Model.Table), strs.Uppcase(col.name))
+		result = jdb.SQLDDL(`CREATE UNIQUE INDEX IF NOT EXISTS $2_$3_$4_IDX ON $1($4);`, col.Model.Table, strs.Uppcase(col.Model.Schema.Name), col.Model.Name, strs.Uppcase(col.name))
 	}
+
+	return result
+}
+
+func ddlPrimaryKey(model *Model) string {
+	primaryKeys := func() []string {
+		var result []string
+		for _, v := range model.PrimaryKeys {
+			result = append(result, strs.Uppcase(v))
+		}
+
+		return result
+	}
+
+	return strs.Format(`PRIMARY KEY (%s)`, strings.Join(primaryKeys(), ", "))
+}
+
+func ddlForeignKeys(model *Model) string {
+	var result string
+	for _, ref := range model.ForeignKey {
+		key := strs.Replace(model.Table, ".", "_") + "_" + ref.Fkey
+		key = strs.Replace(key, "-", "_") + "_FKEY"
+		key = strs.Lowcase(key)
+		return strs.Format(`ALTER TABLE IF EXISTS %s ADD CONSTRAINT %s FOREIGN KEY (%s) %s;`, model.Table, strs.Uppcase(key), strs.Uppcase(ref.Fkey), ref.DDL())
+	}
+
+	return result
+}
+
+func ddlSetSync(model *Model) string {
+	result := jdb.SQLDDL(`
+	DROP TRIGGER IF EXISTS SYNC_INSERT ON $1 CASCADE;
+	CREATE TRIGGER SYNC_INSERT
+	BEFORE INSERT ON $1
+	FOR EACH ROW
+	EXECUTE PROCEDURE core.SYNC_INSERT();
+
+	DROP TRIGGER IF EXISTS SYNC_UPDATE ON $1 CASCADE;
+	CREATE TRIGGER SYNC_UPDATE
+	BEFORE UPDATE ON $1
+	FOR EACH ROW
+	EXECUTE PROCEDURE core.SYNC_UPDATE();
+
+	DROP TRIGGER IF EXISTS SYNC_DELETE ON $1 CASCADE;
+	CREATE TRIGGER SYNC_DELETE
+	BEFORE DELETE ON $1
+	FOR EACH ROW
+	EXECUTE PROCEDURE core.SYNC_DELETE();`, model.Table)
+
+	result = strs.Replace(result, "\t", "")
+
+	return result
+}
+
+func ddlSetRecyclig(model *Model) string {
+	result := jdb.SQLDDL(`
+  DROP TRIGGER IF EXISTS RECYCLING ON $1 CASCADE;
+	CREATE TRIGGER RECYCLING
+	AFTER UPDATE ON $1
+	FOR EACH ROW WHEN (OLD._STATE!=NEW._STATE)
+	EXECUTE PROCEDURE core.RECYCLING_UPDATE();`, model.Table)
+
+	result = strs.Replace(result, "\t", "")
+
+	return result
+}
+
+func ddlTable(model *Model) string {
+	var result string
+	var columns string
+	var indexs string
+	var uniqueKeys string
+
+	appedColumns := func(def string) {
+		columns = strs.Append(columns, def, ",\n")
+	}
+
+	appendIndex := func(def string) {
+		indexs = strs.Append(indexs, def, "\n")
+	}
+
+	appendUniqueKey := func(def string) {
+		uniqueKeys = strs.Append(uniqueKeys, def, ", ")
+	}
+
+	if model.Db.UseCore {
+		NewColumn(model, model.Schema.IdTFiled, "UUId", "VARCHAR(80)", "-1")
+	}
+
+	for _, column := range model.Definition {
+		if column.Tp == TpColumn {
+			def := ddlColumn(column)
+			appedColumns(def)
+			if column.Indexed {
+				if column.Unique {
+					def := column.DDLUniqueIndex()
+					appendUniqueKey(def)
+				} else {
+					def := column.DDLIndex()
+					appendIndex(def)
+				}
+			}
+		}
+	}
+	columns = strs.Append(columns, ",", "")
+	columns = strs.Append(columns, ddlPrimaryKey(model), "\n")
+	table := strs.Format("\nCREATE TABLE IF NOT EXISTS %s (\n%s);", model.Table, columns)
+	result = strs.Append(result, table, "\n")
+	result = strs.Append(result, uniqueKeys, "\n")
+	result = strs.Append(result, indexs, "\n\n")
+	foreign := ddlForeignKeys(model)
+	result = strs.Append(result, foreign, "\n\n")
+	if model.UseSync() {
+		sync := ddlSetSync(model)
+		result = strs.Append(result, sync, "\n\n")
+	}
+	if model.UseRecycle() && model.UseState {
+		recicle := ddlSetRecyclig(model)
+		result = strs.Append(result, recicle, "\n\n")
+	}
+
+	model.Ddl = result
+
+	return model.Ddl
+}
+
+func dllMigration(model *Model) string {
+	var fields []string
+
+	table := model.Table
+	model.Table = strs.Append(model.Schema.Name, "NEW_TABLE", ",")
+	ddl := model.DDL()
+
+	for _, column := range model.Definition {
+		fields = append(fields, column.name)
+	}
+
+	insert := strs.Format(`INSERT INTO %s(%s) SELECT %s FROM %s;`, model.Name, strings.Join(fields, ", "), strings.Join(fields, ", "), table)
+
+	drop := strs.Format(`DROP TABLE %s CASCADE;`, model.Name)
+
+	alter := strs.Format(`ALTER TABLE %s RENAME TO %s;`, model.Name, table)
+
+	result := strs.Format(`%s %s %s %s`, ddl, insert, drop, alter)
 
 	return result
 }

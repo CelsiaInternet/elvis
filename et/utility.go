@@ -231,23 +231,12 @@ func ByteToJson(scr interface{}) Json {
 }
 
 func ArrayToString(vals []Json) string {
-	var result string
-
-	for k, val := range vals {
-		v, err := ToJson(val)
-		if err != nil {
-			return "[]"
-		}
-
-		s := v.ToString()
-		if k == 0 {
-			result = s
-		} else {
-			result = strs.Format(`%s,%s`, result, s)
-		}
+	jsonData, err := json.Marshal(vals)
+	if err != nil {
+		return "[]"
 	}
 
-	return strs.Format(`[%s]`, result)
+	return string(jsonData)
 }
 
 /**

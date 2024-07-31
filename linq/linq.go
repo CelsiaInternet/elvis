@@ -38,7 +38,7 @@ func (c *FRom) As() string {
 }
 
 func (c *FRom) NameAs() string {
-	return strs.Append(c.model.Name, c.as, " AS ")
+	return strs.Append(c.model.Table, c.as, " AS ")
 }
 
 func (c *FRom) Col(name string, cast ...string) *Col {
@@ -123,7 +123,7 @@ func NewLinq(act int, model *Model, as ...string) *Linq {
 	return &Linq{
 		Tp:        TpRow,
 		Act:       act,
-		db:        model.Db,
+		db:        model.Db.Index,
 		from:      []*FRom{from},
 		fromAs:    []*FRom{from},
 		where:     []*Where{},
