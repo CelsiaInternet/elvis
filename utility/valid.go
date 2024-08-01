@@ -10,7 +10,7 @@ import (
 func ValidStr(val string, min int, notIn []string) bool {
 	v := strs.Replace(val, " ", "")
 	ok := len(v) > min
-	if ok {
+	if !ok {
 		return ok
 	}
 
@@ -20,7 +20,12 @@ func ValidStr(val string, min int, notIn []string) bool {
 
 func ValidIn(val string, min int, in []string) bool {
 	v := strs.Replace(val, " ", "")
-	ok := len(v) > min && Contains(in, val)
+	ok := len(v) > min
+	if !ok {
+		return ok
+	}
+
+	ok = Contains(in, val)
 	return ok
 }
 

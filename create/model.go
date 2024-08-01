@@ -645,18 +645,11 @@ func Define$2() error {
 }
 
 /**
-*	Handler for CRUD data
- */
+*	Get$2ById
+* @param id string
+* @return et.Item, error
+**/
 func Get$2ById(id string) (et.Item, error) {
-	result, err := cache.GetItem(id)
-	if err != nil {
-		return et.Item{}, err
-	}
-
-	if result.Ok {
-		return result, nil
-	}
-
 	result, err = $2.Data().
 		Where($2.Column("_id").Eq(id)).
 		First()
@@ -664,41 +657,137 @@ func Get$2ById(id string) (et.Item, error) {
 		return et.Item{}, err
 	}
 
-	if result.Ok {
-		cache.SetItemW(id, result)
-	}
-
 	return result, nil	
 }
 
-func Value$2ById(_default any, id, atrib string) *generic.Any {
-	item, err := $2.Data(atrib).
-		Where($2.Column("_id").Eq(id)).
+/**
+* Valida$2
+* @params id, name string
+* @return et.Item, error
+**/
+func Valida$2(id, name string) (et.Item, error) {
+	item, err := $2.Data("_state", "_id").
+		Where($2.Column("_id").Neg(id)).
+		And($2.Column("name").Eq(name)).
 		First()
 	if err != nil {
-		return &generic.Any{}
+		return et.Item{}, err
 	}
 
-	return item.Any(_default, atrib)
+	if item.Ok {
+		return item, console.NewErrorF(msg.RECORD_DUPLICATE)
+	}
+
+	return et.Item{
+		Ok: true,
+	}, nil
 }
 
-func UpSert$2(project_id, id string, data et.Json) (et.Item, error) {
+/**
+* Insert$2
+* @params project_id, id, name, description string
+* @params data et.Json
+* @return et.Item, error
+**/
+func Insert$2(project_id, id, name, description string, data et.Json) (et.Item, error) {
 	if !utility.ValidId(project_id) {
 		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "project_id")
+	}
+
+	if !utility.ValidStr(name, 0, []string{""}) {
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "service_id")
 	}
 
 	if !utility.ValidId(id) {
 		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "_id")
 	}
 
+	item, err := $2.Data("_state", "_id").
+		Where($2.Column("_id").Eq(id)).
+		First()
+	if err != nil {
+		return et.Item{}, err
+	}
+
+	if item.Ok {
+		return et.Item{
+			Ok:     false,
+			Result: item.Result,
+		}, nil
+	}
+
+	_, err = Valida$2(id, name)
+	if err != nil {
+		return et.Item{}, err
+	}
+
 	id = utility.GenId(id)
+	now := utility.Now()
+	data["date_make"] = now
+	data["date_update"] = now
 	data["project_id"] = project_id
 	data["_id"] = id
-	return $2.Upsert(data).
-		Where($2.Column("_id").Eq(id)).
+	data["name"] = name
+	data["description"] = description
+	item, err = $2.Insert(data).
 		CommandOne()
+	if err != nil {
+		return et.Item{}, err
+	}
+
+	return item, nil
 }
 
+/**
+* UpSert$2
+* @param project_id string
+* @param id string
+* @param data et.Json
+* @return et.Item, error
+**/
+func UpSert$2(project_id, id, name, description string, data et.Json) (et.Item, error) {
+	current, err := Insert$2(project_id, id, name, description, data)
+	if err != nil {
+		return et.Item{}, err
+	}
+
+	id = current.Key("_id")
+	if !current.Ok {
+		return Get$2ById(id)
+	}
+
+	current_state := current.Key("_state")
+	if current_state != utility.ACTIVE {
+		return et.Item{}, console.Alert(msg.RECORD_NOT_UPDATE)
+	}
+
+	_, err = Valida$2(id, service_id)
+	if err != nil {
+		return et.Item{}, err
+	}
+
+	id = utility.GenId(id)
+	now := utility.Now()
+	data["date_update"] = now
+	data["project_id"] = project_id
+	data["_id"] = id
+	data["name"] = name
+	data["description"] = description
+	_, err = $2.Update(data).
+		Where($2.Column("_id").Eq(id)).
+		CommandOne()
+	if err != nil {
+		return et.Item{}, err
+	}
+
+	return Get$2ById(id)
+}
+
+/**
+* State$2
+* @param id, state string
+* @return et.Item, error
+**/
 func State$2(id, state string) (et.Item, error) {
 	if !utility.ValidId(state) {
 		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "state")
@@ -731,10 +820,22 @@ func State$2(id, state string) (et.Item, error) {
 		CommandOne()	
 }
 
+/**
+* Delete$2
+* @param id string
+* @return et.Item, error
+**/
 func Delete$2(id string) (et.Item, error) {
 	return State$2(id, utility.FOR_DELETE)
 }
 
+/**
+* All$2
+* @param project_id, state, search string
+* @param page, rows int
+* @param _select string
+* @return et.List, error
+**/
 func All$2(project_id, state, search string, page, rows int, _select string) (et.List, error) {	
 	if state == "" {
 		state = utility.ACTIVE
@@ -772,7 +873,9 @@ func All$2(project_id, state, search string, page, rows int, _select string) (et
 }
 
 /**
-* Router
+* upSert$2
+* @param w http.ResponseWriter
+* @param r *http.Request
 **/
 func (rt *Router) upSert$2(w http.ResponseWriter, r *http.Request) {
 	body, _ := response.GetBody(r)
@@ -788,6 +891,11 @@ func (rt *Router) upSert$2(w http.ResponseWriter, r *http.Request) {
 	response.ITEM(w, r, http.StatusOK, result)
 }
 
+/**
+* get$2ById
+* @param w http.ResponseWriter
+* @param r *http.Request
+**/
 func (rt *Router) get$2ById(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
@@ -800,6 +908,11 @@ func (rt *Router) get$2ById(w http.ResponseWriter, r *http.Request) {
 	response.ITEM(w, r, http.StatusOK, result)
 }
 
+/**
+* state$2
+* @param w http.ResponseWriter
+* @param r *http.Request
+**/
 func (rt *Router) state$2(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	body, _ := response.GetBody(r)
@@ -814,6 +927,11 @@ func (rt *Router) state$2(w http.ResponseWriter, r *http.Request) {
 	response.ITEM(w, r, http.StatusOK, result)
 }
 
+/**
+* delete$2
+* @param w http.ResponseWriter
+* @param r *http.Request
+**/
 func (rt *Router) delete$2(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
@@ -826,6 +944,11 @@ func (rt *Router) delete$2(w http.ResponseWriter, r *http.Request) {
 	response.ITEM(w, r, http.StatusOK, result)
 }
 
+/**
+* all$2
+* @param w http.ResponseWriter
+* @param r *http.Request
+**/
 func (rt *Router) all$2(w http.ResponseWriter, r *http.Request) {
 	query := response.GetQuery(r)
 	project_id := query.Str("project_id")
@@ -846,11 +969,11 @@ func (rt *Router) all$2(w http.ResponseWriter, r *http.Request) {
 
 /** Copy this code to router.go
 	// $2
-	er.ProtectRoute(r, er.Get, "/$5/{id}", rt.get$2ById, PackageName, PackagePath, Host)
-	er.ProtectRoute(r, er.Post, "/$5", rt.upSert$2, PackageName, PackagePath, Host)
-	er.ProtectRoute(r, er.Put, "/$5/state/{id}", rt.state$2, PackageName, PackagePath, Host)
-	er.ProtectRoute(r, er.Delete, "/$5/{id}", rt.delete$2, PackageName, PackagePath, Host)
-	er.ProtectRoute(r, er.Get, "/$5/all", rt.all$2, PackageName, PackagePath, Host)
+	er.ProtectRoute(r, er.Get, "/$5/{id}", rt.get$2ById, PackageName, PackagePath, host)
+	er.ProtectRoute(r, er.Post, "/$5", rt.upSert$2, PackageName, PackagePath, host)
+	er.ProtectRoute(r, er.Put, "/$5/state/{id}", rt.state$2, PackageName, PackagePath, host)
+	er.ProtectRoute(r, er.Delete, "/$5/{id}", rt.delete$2, PackageName, PackagePath, host)
+	er.ProtectRoute(r, er.Get, "/$5/all", rt.all$2, PackageName, PackagePath, host)
 **/
 
 /** Copy this code to func initModel in model.go

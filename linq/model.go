@@ -1,8 +1,6 @@
 package linq
 
 import (
-	"strings"
-
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/jdb"
 	"github.com/cgalvisleon/elvis/strs"
@@ -21,13 +19,11 @@ type Trigger func(model *Model, old, new *et.Json, data et.Json) error
 type Listener func(data et.Json)
 
 type Model struct {
-	Db                 int
-	Database           *jdb.Db
+	Db                 *jdb.Db
 	Name               string
 	Description        string
 	Define             string
-	schema             *Schema
-	Schema             string
+	Schema             *Schema
 	Table              string
 	Definition         []*Column
 	PrimaryKeys        []string
@@ -40,6 +36,7 @@ type Model struct {
 	CodeField          string
 	ProjectField       string
 	StateField         string
+	IdTFiled           *Column
 	Ddl                string
 	integrityAtrib     bool
 	integrityReference bool
@@ -59,15 +56,15 @@ type Model struct {
 	Version            int
 }
 
-func NewModel(schema *Schema, table, description string, version int) *Model {
+func NewModel(schema *Schema, name, description string, version int) *Model {
+	name = strs.Uppcase(name)
+	table := strs.Append(schema.Name, name, ".")
 	result := &Model{
 		Db:                 schema.Db,
-		Database:           schema.Database,
-		schema:             schema,
-		Schema:             schema.Name,
-		Name:               strs.Append(strs.Lowcase(schema.Name), strs.Uppcase(table), "."),
+		Schema:             schema,
+		Name:               name,
 		Description:        description,
-		Table:              strs.Uppcase(table),
+		Table:              table,
 		Version:            version,
 		SourceField:        schema.SourceField,
 		DateMakeField:      schema.DateMakeField,
@@ -92,7 +89,7 @@ func NewModel(schema *Schema, table, description string, version int) *Model {
 }
 
 func (c *Model) Driver() string {
-	return c.Database.Driver
+	return c.Db.Driver
 }
 
 func (c *Model) Describe() et.Json {
@@ -176,139 +173,61 @@ func (c *Model) Model() et.Json {
 }
 
 func (c *Model) UseSync() bool {
-	return c.schema.UseSync
+	return c.Schema.UseSync
 }
 
 func (c *Model) UseRecycle() bool {
-	return c.schema.UseSync
+	return c.Schema.UseSync
 }
 
 /**
 * DDL
 **/
 func (c *Model) Init() error {
-	sql := c.DDL()
+	c.Define = c.DDL()
 
-	_, err := jdb.IDXQuery(c.Db, sql)
+	exists, err := jdb.ExistTable(c.Db.Db, c.Schema.Name, c.Name)
 	if err != nil {
 		return err
 	}
 
-	c.Define = sql
+	if exists {
+		return nil
+	}
+
+	_, err = jdb.IDXQuery(c.Db.Index, c.Define)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
 
 func (c *Model) DDL() string {
-	var result string
-	var fields []string
-	var index []string
-
-	for _, column := range c.Definition {
-		if column.Tp == TpColumn {
-			fields = append(fields, column.DDL())
-			if column.Indexed {
-				if column.Unique {
-					index = append(index, column.DDLUniqueIndex())
-				} else {
-					index = append(index, column.DDLIndex())
-				}
-			}
-		}
-	}
-
-	// Definition create table with fields
-	_fields := ""
-	for i, def := range fields {
-		if i == 0 {
-			def = strs.Format("\n%s", def)
-		}
-		_fields = strs.Append(_fields, def, ",\n")
-	}
-
-	def := strs.Format(`CREATE TABLE IF NOT EXISTS %s(%s);`, c.Name, _fields) + "\n"
-	result = strs.Append(result, def, "\n")
-
-	// Definition create index
-	for _, def := range index {
-		result = strs.Append(result, def, "\n")
-	}
-
-	if len(c.Index) > 0 {
-		result = result + "\n"
-	}
-
-	// Definition create primary key
-	if len(c.PrimaryKeys) > 0 {
-		pkey := strs.Replace(c.Table, ".", "_")
-		pkey = strs.Replace(pkey, "-", "_") + "_pkey"
-		pkey = strs.Lowcase(pkey)
-		def = strs.Format(`ALTER TABLE IF EXISTS %s ADD CONSTRAINT %s PRIMARY KEY (%s);`, c.Name, pkey, strings.Join(c.PrimaryKeys, ", "))
-		def = strs.Format(`SELECT core.create_constraint_if_not_exists('%s', '%s', '%s', '%s');`, c.Schema, c.Table, pkey, def)
-		result = strs.Append(result, def, "\n")
-	}
-
-	// Definition create foreign key
-	for _, ref := range c.ForeignKey {
-		fkey := strs.Replace(c.Table, ".", "_")
-		fkey = strs.Replace(fkey, "-", "_") + "_" + ref.Fkey + "_fkey"
-		fkey = strs.Lowcase(fkey)
-		def = strs.Format(`ALTER TABLE IF EXISTS %s ADD CONSTRAINT %s FOREIGN KEY (%s) %s;`, c.Name, fkey, ref.Fkey, ref.DDL())
-		def = strs.Format(`SELECT core.create_constraint_if_not_exists('%s', '%s', '%s', '%s');`, c.Schema, c.Table, fkey, def)
-		result = strs.Append(result, def, "\n")
-	}
-
-	if len(c.ForeignKey) > 0 {
-		result = result + "\n"
-	}
-
-	c.Ddl = result
-
-	return result
+	return ddlTable(c)
 }
 
 func (c *Model) DDLMigration() string {
-	var fields []string
-
-	table := c.Name
-	c.Table = "NEW_TABLE"
-	c.Name = strs.Append(c.Schema, c.Table, ",")
-	ddl := c.DDL()
-
-	for _, column := range c.Definition {
-		fields = append(fields, column.name)
-	}
-
-	insert := strs.Format(`INSERT INTO %s(%s) SELECT %s FROM %s;`, c.Name, strings.Join(fields, ", "), strings.Join(fields, ", "), table)
-
-	drop := strs.Format(`DROP TABLE %s CASCADE;`, c.Name)
-
-	alter := strs.Format(`ALTER TABLE %s RENAME TO %s;`, c.Name, table)
-
-	result := strs.Format(`%s %s %s %s`, ddl, insert, drop, alter)
-
-	return result
+	return dllMigration(c)
 }
 
 func (c *Model) DropDDL() string {
-	return strs.Format(`DROP TABLE IF EXISTS %s CASCADE;`, c.Name)
+	return strs.Format(`DROP TABLE IF EXISTS %s CASCADE;`, c.Table)
 }
 
-/**
-*
-**/
 func (c *Model) Trigger(event int, trigger Trigger) {
-	if event == BeforeInsert {
+	switch event {
+	case BeforeInsert:
 		c.BeforeInsert = append(c.BeforeInsert, trigger)
-	} else if event == AfterInsert {
+	case AfterInsert:
 		c.AfterInsert = append(c.AfterInsert, trigger)
-	} else if event == BeforeUpdate {
+	case BeforeUpdate:
 		c.BeforeUpdate = append(c.BeforeUpdate, trigger)
-	} else if event == AfterUpdate {
+	case AfterUpdate:
 		c.AfterUpdate = append(c.AfterUpdate, trigger)
-	} else if event == BeforeDelete {
+	case BeforeDelete:
 		c.BeforeDelete = append(c.BeforeDelete, trigger)
-	} else if event == AfterDelete {
+	case AfterDelete:
 		c.AfterDelete = append(c.BeforeDelete, trigger)
 	}
 }
@@ -324,11 +243,11 @@ func (c *Model) Details(name, description string, _default any, details Details)
 *
 **/
 func (c *Model) Up() string {
-	return strs.Uppcase(c.Name)
+	return strs.Uppcase(c.Table)
 }
 
 func (c *Model) Low() string {
-	return strs.Lowcase(c.Name)
+	return strs.Lowcase(c.Table)
 }
 
 func (c *Model) ColIdx(name string) int {

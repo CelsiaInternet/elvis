@@ -1,10 +1,7 @@
-package core
+package jdb
 
 import (
 	"github.com/cgalvisleon/elvis/console"
-	"github.com/cgalvisleon/elvis/et"
-	"github.com/cgalvisleon/elvis/jdb"
-	"github.com/cgalvisleon/elvis/linq"
 	"github.com/cgalvisleon/elvis/strs"
 )
 
@@ -17,16 +14,8 @@ func defineSeries() error {
 		return nil
 	}
 
-	if err := defineSchemaCore(); err != nil {
-		return console.Panic(err)
-	}
-
-	sql := `  
-  -- DROP TABLE IF EXISTS core.SERIES CASCADE;
-
+	sql := `
   CREATE TABLE IF NOT EXISTS core.SERIES(
-		DATE_MAKE TIMESTAMP DEFAULT NOW(),
-		DATE_UPDATE TIMESTAMP DEFAULT NOW(),
 		SERIE VARCHAR(250) DEFAULT '',
 		VALUE BIGINT DEFAULT 0,
 		PRIMARY KEY(SERIE)
@@ -76,7 +65,7 @@ func defineSeries() error {
 	END;
 	$$ LANGUAGE plpgsql;`
 
-	_, err := jdb.QDDL(sql)
+	_, err := QDDL(sql)
 	if err != nil {
 		return console.Panic(err)
 	}
@@ -86,19 +75,14 @@ func defineSeries() error {
 	return nil
 }
 
-/**
-*
-**/
 func NextSerie(tag string) int {
-	tag = strs.Replace(tag, ".", "_")
-	tag = strs.Replace(tag, " ", "_")
 	if !makedSeries {
 		return 0
 	}
 
 	sql := `SELECT core.nextserie($1) AS SERIE;`
 
-	item, err := jdb.QueryOne(sql, tag)
+	item, err := QueryOne(sql, tag)
 	if err != nil {
 		console.Error(err)
 		return 0
@@ -107,47 +91,6 @@ func NextSerie(tag string) int {
 	result := item.Int("serie")
 
 	return result
-}
-
-/**
-* Serie
-**/
-func DefineSerie(model *linq.Model) error {
-	if err := defineSeries(); err != nil {
-		return err
-	}
-
-	tableName := model.Name
-	fieldName := model.SerieField
-
-	sql := strs.Format(`
-	SELECT MAX(%s) AS INDEX
-	FROM %s;`, strs.Uppcase(fieldName), tableName)
-
-	item, err := jdb.QueryOne(sql)
-	if err != nil {
-		return err
-	}
-
-	max := item.Int("index")
-	tag := strs.Replace(tableName, ".", "_")
-	tag = strs.Replace(tag, " ", "_")
-
-	_, err = SetSerie(tag, max)
-	if err != nil {
-		return err
-	}
-
-	model.Trigger(linq.BeforeInsert, func(model *linq.Model, old, new *et.Json, data et.Json) error {
-		if model.UseSerie {
-			index := NextSerie(model.Name)
-			new.Set(model.SerieField, index)
-		}
-
-		return nil
-	})
-
-	return nil
 }
 
 func NextCode(tag, prefix string) string {
@@ -167,7 +110,7 @@ func SetSerie(tag string, val int) (int, error) {
 
 	sql := `SELECT core.setserie($1, $2);`
 
-	_, err := jdb.QueryOne(sql, tag, val)
+	_, err := QueryOne(sql, tag, val)
 	if err != nil {
 		return 0, err
 	}
@@ -182,7 +125,7 @@ func LastSerie(tag string) int {
 
 	sql := `SELECT core.currserie($1) AS SERIE;`
 
-	item, err := jdb.QueryOne(sql, tag)
+	item, err := QueryOne(sql, tag)
 	if err != nil {
 		return 0
 	}
@@ -190,42 +133,4 @@ func LastSerie(tag string) int {
 	result := item.Int("serie")
 
 	return result
-}
-
-func SyncSerie(c chan int) error {
-	var ok bool = true
-	var rows int = 30
-	var page int = 1
-	for ok {
-		ok = false
-
-		offset := (page - 1) * rows
-		sql := strs.Format(`
-		SELECT A.*
-		FROM core.SERIES A
-		ORDER BY A.SERIE
-		LIMIT %d OFFSET %d;`, rows, offset)
-
-		items, err := jdb.Query(sql)
-		if err != nil {
-			return err
-		}
-
-		for _, item := range items.Result {
-			tag := item.Str("serie")
-			val := item.Int("value")
-			_, err = SetSerie(tag, val)
-			if err != nil {
-				return console.Error(err)
-			}
-
-			ok = true
-		}
-
-		page++
-	}
-
-	c <- 0
-
-	return nil
 }

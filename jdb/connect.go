@@ -10,7 +10,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func connect() {
+func connect() error {
 	driver := envar.EnvarStr("", "DB_DRIVE")
 	host := envar.EnvarStr("", "DB_HOST")
 	port := envar.EnvarInt(5432, "DB_PORT")
@@ -20,55 +20,48 @@ func connect() {
 	application_name := envar.EnvarStr("elvis", "DB_APPLICATION_NAME")
 
 	if driver == "" {
-		console.FatalF(msg.ERR_ENV_REQUIRED, "DB_DRIVE")
+		return console.PanicF(msg.ERR_ENV_REQUIRED, "DB_DRIVE")
 	}
 
 	if host == "" {
-		console.FatalF(msg.ERR_ENV_REQUIRED, "DB_HOST")
+		return console.PanicF(msg.ERR_ENV_REQUIRED, "DB_HOST")
 	}
 
 	if dbname == "" {
-		console.FatalF(msg.ERR_ENV_REQUIRED, "DB_NAME")
+		return console.PanicF(msg.ERR_ENV_REQUIRED, "DB_NAME")
 	}
 
 	if user == "" {
-		console.FatalF(msg.ERR_ENV_REQUIRED, "DB_USER")
+		return console.PanicF(msg.ERR_ENV_REQUIRED, "DB_USER")
 	}
 
 	if password == "" {
-		console.FatalF(msg.ERR_ENV_REQUIRED, "DB_PASSWORD")
+		return console.PanicF(msg.ERR_ENV_REQUIRED, "DB_PASSWORD")
 	}
 
-	var connect *sql.DB
-	var connectStr string
-	var err error
-	connect, connectStr, err = Connected(driver, host, port, dbname, user, password, application_name)
+	db, err := ConnectTo(driver, host, port, dbname, user, password, application_name)
 	if err != nil {
-		console.Fatal(err)
+		return err
 	}
 
-	if conn == nil {
-		conn = &Conn{
-			Db: []*Db{},
-		}
+	conn = &Conn{
+		Db: []*Db{},
 	}
 
 	idx := len(conn.Db)
-	db := &Db{
-		Index:      idx,
-		Driver:     driver,
-		Host:       host,
-		Port:       port,
-		Dbname:     dbname,
-		User:       user,
-		Connection: connectStr,
-		Db:         connect,
+	db.Index = idx
+	db.UseCore = true
+	conn.Db = append(conn.Db, db)
+
+	err = InitCore()
+	if err != nil {
+		return err
 	}
 
-	conn.Db = append(conn.Db, db)
+	return nil
 }
 
-func Connected(driver, host string, port int, dbname, user, password, application_name string) (*sql.DB, string, error) {
+func ConnectTo(driver, host string, port int, dbname, user, password, application_name string) (*Db, error) {
 	var connStr string
 	switch driver {
 	case Postgres:
@@ -83,17 +76,20 @@ func Connected(driver, host string, port int, dbname, user, password, applicatio
 		panic(msg.NOT_SELECT_DRIVE)
 	}
 
-	result, err := sql.Open(driver, connStr)
+	db, err := sql.Open(driver, connStr)
 	if err != nil {
-		return nil, "", console.Alert(err.Error())
-	}
-
-	err = result.Ping()
-	if err != nil {
-		return nil, "", console.Alert(err.Error())
+		return nil, console.Alert(err.Error())
 	}
 
 	console.LogKF(driver, "Connected host:%s:%d", host, port)
 
-	return result, connStr, nil
+	return &Db{
+		Driver:     driver,
+		Host:       host,
+		Port:       port,
+		Dbname:     dbname,
+		User:       user,
+		Connection: connStr,
+		Db:         db,
+	}, nil
 }

@@ -22,8 +22,7 @@ func (c *Reference) Describe() et.Json {
 }
 
 func (c *Reference) DDL() string {
-	table := c.Reference.Model.Name
-	return strs.Format(`REFERENCES %s(%s) ON DELETE CASCADE`, table, c.Reference.Up())
+	return strs.Format(`REFERENCES %s(%s) ON DELETE CASCADE`, c.Reference.Model.Table, c.Reference.Up())
 }
 
 func NewForeignKey(fKey string, reference *Column) *Reference {

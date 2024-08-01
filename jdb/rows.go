@@ -6,33 +6,29 @@ import (
 	"github.com/cgalvisleon/elvis/et"
 )
 
-/**
-* Data Definition Language
-**/
-
 func rowsItems(rows *sql.Rows) et.Items {
-	var result et.Items = et.Items{Result: []et.Json{}}
-
+	var result et.Items = et.Items{}
 	for rows.Next() {
-		var item et.Item
-		item.Scan(rows)
-		result.Result = append(result.Result, item.Result)
+		var item et.Json
+		item.ScanRows(rows)
+
 		result.Ok = true
 		result.Count++
+		result.Result = append(result.Result, item)
 	}
 
 	return result
 }
 
-func atribItems(rows *sql.Rows, atrib string) et.Items {
-	var result et.Items = et.Items{Result: []et.Json{}}
-
+func atribItems(rows *sql.Rows, source string) et.Items {
+	var result et.Items = et.Items{}
 	for rows.Next() {
-		var item et.Item
-		item.Scan(rows)
-		result.Result = append(result.Result, item.Result.Json(atrib))
+		var item et.Json
+		item.ScanRows(rows)
+
 		result.Ok = true
 		result.Count++
+		result.Result = append(result.Result, item.Json(source))
 	}
 
 	return result

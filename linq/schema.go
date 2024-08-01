@@ -9,8 +9,7 @@ import (
 var schemas []*Schema = []*Schema{}
 
 type Schema struct {
-	Db              int
-	Database        *jdb.Db
+	Db              *jdb.Db
 	Name            string
 	Description     string
 	Define          string
@@ -24,14 +23,14 @@ type Schema struct {
 	CodeField       string
 	ProjectField    string
 	StateField      string
+	IdTFiled        string
 	Models          []*Model
 }
 
 func NewSchema(db int, name string, sync, recycle, serie bool) *Schema {
 	result := &Schema{
-		Db:              db,
+		Db:              jdb.DB(db),
 		Name:            strs.Lowcase(name),
-		Database:        jdb.DB(db),
 		UseSync:         sync,
 		UseRecycle:      recycle,
 		UseSerie:        serie,
@@ -42,6 +41,7 @@ func NewSchema(db int, name string, sync, recycle, serie bool) *Schema {
 		CodeField:       "CODE",
 		ProjectField:    "PROJECT_ID",
 		StateField:      "_STATE",
+		IdTFiled:        "_IDT",
 		Models:          []*Model{},
 	}
 
@@ -73,7 +73,7 @@ func (c *Schema) Describe() et.Json {
 	return et.Json{
 		"name":            c.Name,
 		"description":     c.Description,
-		"database":        c.Database.Dbname,
+		"database":        c.Db.Dbname,
 		"useSync":         c.UseSync,
 		"useRecycle":      c.UseRecycle,
 		"useSerie":        c.UseSerie,

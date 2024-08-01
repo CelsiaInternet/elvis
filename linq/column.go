@@ -127,7 +127,7 @@ func NewColumn(model *Model, name, description, _type string, _default any) *Col
 		model.UseProject = strs.Uppcase(result.name) == strs.Uppcase(model.ProjectField)
 	}
 
-	if !model.UseSerie && model.schema.UseSerie {
+	if !model.UseSerie && model.Schema.UseSerie {
 		model.UseSerie = strs.Uppcase(result.name) == strs.Uppcase(model.SerieField)
 	}
 
@@ -232,15 +232,15 @@ func (c *Column) Valid(val any) error {
 * DDL
 **/
 func (c *Column) DDL() string {
-	return DDLColumn(c)
+	return ddlColumn(c)
 }
 
 func (c *Column) DDLIndex() string {
-	return DDLIndex(c)
+	return ddlIndex(c)
 }
 
 func (c *Column) DDLUniqueIndex() string {
-	return DDLUniqueIndex(c)
+	return ddlUniqueIndex(c)
 }
 
 /**
@@ -281,8 +281,7 @@ func (c *Column) Low() string {
 
 func (c *Column) ColName() string {
 	result := strs.Uppcase(c.name)
-	result = strs.Append(c.Model.Name, result, ".")
-	result = strs.Append(c.Model.Schema, result, ".")
+	result = strs.Append(c.Model.Table, result, ".")
 	return result
 }
 
@@ -305,7 +304,7 @@ func (c *Column) As(linq *Linq) string {
 		as := linq.GetAs()
 		as = strs.Format(`A%s`, as)
 		fn := strs.Format(`%s.%s`, as, c.Reference.Reference.Up())
-		fm := strs.Format(`%s AS %s`, c.Reference.Reference.Model.Name, as)
+		fm := strs.Format(`%s AS %s`, c.Reference.Reference.Model.Table, as)
 		key := strs.Format(`%s.%s`, as, c.Reference.Key)
 		Fkey := strs.Append(from.As(), c.Reference.Fkey, ".")
 		return strs.Format(`(SELECT %s FROM %s WHERE %s=%v LIMIT 1)`, fn, fm, key, Fkey)
@@ -314,7 +313,7 @@ func (c *Column) As(linq *Linq) string {
 		as := linq.GetAs()
 		as = strs.Format(`A%s`, as)
 		fn := strs.Format(`%s.%s`, as, c.Reference.Reference.Up())
-		fm := strs.Format(`%s AS %s`, c.Reference.Reference.Model.Name, as)
+		fm := strs.Format(`%s AS %s`, c.Reference.Reference.Model.Table, as)
 		key := strs.Format(`%s.%s`, as, c.Reference.Key)
 		Fkey := strs.Append(from.As(), c.Reference.Fkey, ".")
 		return strs.Format(`(SELECT %s FROM %s WHERE %s=%v LIMIT 1)`, fn, fm, key, Fkey)

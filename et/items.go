@@ -172,14 +172,16 @@ func (it *Items) Json(idx int, atribs ...string) Json {
 	}
 }
 
-func (it *Items) ToString() string {
-	var result string
-	for _, item := range it.Result {
-		str := item.ToString()
-		result = strs.Append(result, str, ",")
-	}
+func (it *Items) ToByte() []byte {
+	return Json{
+		"Ok":     it.Ok,
+		"Count":  it.Count,
+		"Result": it.Result,
+	}.ToByte()
+}
 
-	return strs.Format(`[%s]`, result)
+func (it *Items) ToString() string {
+	return ArrayToString(it.Result)
 }
 
 func (it *Items) ToJson() Json {

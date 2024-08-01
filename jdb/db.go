@@ -22,6 +22,7 @@ type Db struct {
 	User        string
 	Connection  string
 	Db          *sql.DB
+	UseCore     bool
 }
 
 func (c *Db) Close() error {

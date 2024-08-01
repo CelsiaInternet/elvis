@@ -21,7 +21,7 @@ const (
 	HandlerFunc = "HandlerFunc"
 )
 
-func eventApiGateway(method, path, packageName, packagePath, host string) {
+func EventApiGateway(method, path, packageName, packagePath, host string) {
 	kind := "HTTP"
 	develop := envar.EnvarStr("development", "ENV")
 	if develop == "production" {
@@ -60,7 +60,7 @@ func PublicRoute(r *chi.Mux, method, path string, h http.HandlerFunc, packageNam
 		r.HandleFunc(path, h)
 	}
 
-	eventApiGateway(method, path, packageName, packagePath, host)
+	EventApiGateway(method, path, packageName, packagePath, host)
 
 	return r
 }
@@ -85,7 +85,7 @@ func ProtectRoute(r *chi.Mux, method, path string, h http.HandlerFunc, packageNa
 		r.With(middleware.Authorization).HandleFunc(path, h)
 	}
 
-	eventApiGateway(method, path, packageName, packagePath, host)
+	EventApiGateway(method, path, packageName, packagePath, host)
 
 	return r
 }

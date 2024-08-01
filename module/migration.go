@@ -65,6 +65,20 @@ func IdMigration(old_id string, tag string) (string, error) {
 	}
 
 	if item.Ok {
+		now := utility.Now()
+		_, err := Migration.Insert(et.Json{
+			"data_make":   now,
+			"date_update": now,
+			"_state":      utility.ACTIVE,
+			"old_id":      old_id,
+			"id":          old_id,
+			"tag":         tag,
+		}).
+			CommandOne()
+		if err != nil {
+			return old_id, err
+		}
+
 		result := item.Key("id")
 		return result, nil
 	}
@@ -98,7 +112,7 @@ func SetMigration(old_id string, id string, tag string) (et.Item, error) {
 		"tag":         tag,
 	}
 
-	item, err := Migration.Upsert(updateData).
+	item, err := Migration.Update(updateData).
 		Where(Migration.Col("old_id").Eq(old_id)).
 		And(Migration.Col("tag").Eq(tag)).
 		CommandOne()

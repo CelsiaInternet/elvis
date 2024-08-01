@@ -2,7 +2,6 @@ package master
 
 import (
 	"github.com/cgalvisleon/elvis/console"
-	"github.com/cgalvisleon/elvis/core"
 	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/jdb"
@@ -68,12 +67,11 @@ func (c *Master) LoadNode(params et.Json) error {
 		password := node.Data.Str("password")
 		application_name := envar.EnvarStr("elvis", "DB_APPLICATION_NAME")
 
-		_, conectStr, err := jdb.Connected(driver, host, port, dbname, user, password, application_name)
+		_, err = jdb.ConnectTo(driver, host, port, dbname, user, password, application_name)
 		if err != nil {
 			console.Fatal(err)
 		}
 
-		node.ConnStr = conectStr
 		node.Index = len(c.Nodes)
 		c.Nodes = append(c.Nodes, *node)
 
@@ -155,7 +153,7 @@ func (c *Master) GetSyncById(idT string) (et.Item, error) {
 }
 
 func (c *Master) SetSync(schema, table, action, node, idT string, data et.Json, query string) (int, error) {
-	index := core.NextSerie("main.SYNC")
+	index := jdb.NextSerie("main.SYNC")
 
 	sql := `
 	INSERT INTO core.SYNC(TABLE_SCHEMA, TABLE_NAME, ACTION, _IDT, _DATA, QUERY, NODE, INDEX)

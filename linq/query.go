@@ -227,7 +227,7 @@ func (c *Linq) SqlJoin() string {
 	var result string
 	for _, join := range c._join {
 		where := join.where.Define(c).where
-		def := strs.Append(join.join.model.Name, join.join.as, " AS ")
+		def := strs.Append(join.join.model.Table, join.join.as, " AS ")
 		def = strs.Format(`%s %s ON %s`, join.kind, def, where)
 		result = strs.Append(result, def, "\n")
 	}
@@ -389,7 +389,7 @@ func (c *Linq) SqlInsert() string {
 		values = strs.Append(values, strs.Format(`%v`, value), ", ")
 	}
 
-	c.sql = strs.Format("INSERT INTO %s(%s)\nVALUES (%s)", model.Name, fields, values)
+	c.sql = strs.Format("INSERT INTO %s(%s)\nVALUES (%s)", model.Table, fields, values)
 
 	c.SqlReturn()
 
@@ -423,7 +423,7 @@ func (c *Linq) SqlUpdate() string {
 		fieldValues = strs.Append(fieldValues, fieldValue, ",\n")
 	}
 
-	c.sql = strs.Format(`UPDATE %s AS A SET %s`, model.Name, fieldValues)
+	c.sql = strs.Format(`UPDATE %s AS A SET %s`, model.Table, fieldValues)
 
 	c.SqlWhere()
 
@@ -439,7 +439,7 @@ func (c *Linq) SqlUpdate() string {
 func (c *Linq) SqlDelete() string {
 	model := c.from[0].model
 
-	c.sql = strs.Format(`DELETE FROM %s`, model.Name)
+	c.sql = strs.Format(`DELETE FROM %s`, model.Table)
 
 	c.SqlWhere()
 
