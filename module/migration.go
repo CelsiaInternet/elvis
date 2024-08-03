@@ -1,8 +1,9 @@
 package module
 
 import (
+	"database/sql"
+
 	"github.com/cgalvisleon/elvis/console"
-	"github.com/cgalvisleon/elvis/core"
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/linq"
 	"github.com/cgalvisleon/elvis/utility"
@@ -13,8 +14,8 @@ import (
 var Migration *linq.Model
 var MigrationFolders *linq.Model
 
-func DefineMigration() error {
-	if err := DefineSchemaModule(); err != nil {
+func DefineMigration(db *sql.DB) error {
+	if err := DefineSchemaModule(db); err != nil {
 		return console.Panic(err)
 	}
 
@@ -38,7 +39,7 @@ func DefineMigration() error {
 		console.Debug(data.ToString())
 	}
 
-	if err := core.InitModel(Migration); err != nil {
+	if err := Migration.Init(); err != nil {
 		return console.Panic(err)
 	}
 

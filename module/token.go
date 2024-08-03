@@ -1,12 +1,12 @@
 package module
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/cgalvisleon/elvis/cache"
 	"github.com/cgalvisleon/elvis/claim"
 	"github.com/cgalvisleon/elvis/console"
-	"github.com/cgalvisleon/elvis/core"
 	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/jdb"
@@ -42,8 +42,8 @@ func (n *Token) Scan(js *et.Json) error {
 
 var Tokens *linq.Model
 
-func DefineTokens() error {
-	if err := DefineSchemaModule(); err != nil {
+func DefineTokens(db *sql.DB) error {
+	if err := DefineSchemaModule(db); err != nil {
 		return console.Panic(err)
 	}
 
@@ -96,7 +96,7 @@ func DefineTokens() error {
 		console.Debug(data.ToString())
 	}
 
-	if err := core.InitModel(Tokens); err != nil {
+	if err := Tokens.Init(); err != nil {
 		return console.Panic(err)
 	}
 
@@ -247,7 +247,7 @@ func LoadTokens() error {
 		ORDER BY INDEX
 		LIMIT %d OFFSET %d;`, rows, offset)
 
-		items, err := jdb.Query(sql)
+		items, err := jdb.Query(Tokens.Db, sql)
 		if err != nil {
 			return console.Error(err)
 		}
@@ -287,7 +287,7 @@ func UnLoadTokens() error {
 		ORDER BY INDEX
 		LIMIT %d OFFSET %d;`, rows, offset)
 
-		items, err := jdb.Query(sql)
+		items, err := jdb.Query(Tokens.Db, sql)
 		if err != nil {
 			return console.Error(err)
 		}
@@ -317,7 +317,12 @@ func GetTokensByUserId(userId, search string, page, rows int) (et.List, error) {
   WHERE A.USER_ID=$1
 	AND CONCAT('NAME:', A.NAME, ':APP:', A.APP, ':DEVICE:', A.DEVICE, ':') ILIKE CONCAT('%', $2, '%');`
 
-	all := jdb.QueryCount(sql, userId, search)
+	result, err := jdb.QueryOne(Tokens.Db, sql, userId, search)
+	if err != nil {
+		return et.List{}, err
+	}
+
+	all := result.Int("count")
 
 	offset := (page - 1) * rows
 	sql = `
@@ -328,7 +333,7 @@ func GetTokensByUserId(userId, search string, page, rows int) (et.List, error) {
 	ORDER BY A.APP, A.DEVICE, A.NAME
   LIMIT $3 OFFSET $4;`
 
-	items, err := jdb.Query(sql, userId, search, rows, offset)
+	items, err := jdb.Query(Tokens.Db, sql, userId, search, rows, offset)
 	if err != nil {
 		return et.List{}, err
 	}
@@ -367,7 +372,7 @@ func DeleteToken(id string) (et.Item, error) {
   WHERE _ID=$1
   RETURNING *;`
 
-	item, err := jdb.QueryOne(sql, id)
+	item, err := jdb.QueryOne(Tokens.Db, sql, id)
 	if err != nil {
 		return et.Item{}, err
 	}

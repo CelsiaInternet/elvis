@@ -1,8 +1,6 @@
 package linq
 
 import (
-	"github.com/cgalvisleon/elvis/et"
-	"github.com/cgalvisleon/elvis/jdb"
 	"github.com/cgalvisleon/elvis/strs"
 )
 
@@ -10,41 +8,41 @@ import (
 *
 **/
 
-func Query(sql string, args ...any) (et.Items, error) {
-	result, err := jdb.Query(sql, args...)
-	if err != nil {
-		return et.Items{}, err
-	}
+// func Query(sql string, args ...any) (et.Items, error) {
+// 	result, err := jdb.Query(sql, args...)
+// 	if err != nil {
+// 		return et.Items{}, err
+// 	}
 
-	return result, nil
-}
+// 	return result, nil
+// }
 
-func QueryOne(sql string, args ...any) (et.Item, error) {
-	result, err := jdb.QueryOne(sql, args...)
-	if err != nil {
-		return et.Item{}, err
-	}
+// func QueryOne(sql string, args ...any) (et.Item, error) {
+// 	result, err := jdb.QueryOne(sql, args...)
+// 	if err != nil {
+// 		return et.Item{}, err
+// 	}
 
-	return result, nil
-}
+// 	return result, nil
+// }
 
-func QueryData(sql string, args ...any) (et.Items, error) {
-	result, err := jdb.QueryData(sql, args...)
-	if err != nil {
-		return et.Items{}, err
-	}
+// func QueryData(sql string, args ...any) (et.Items, error) {
+// 	result, err := jdb.QueryData(sql, args...)
+// 	if err != nil {
+// 		return et.Items{}, err
+// 	}
 
-	return result, nil
-}
+// 	return result, nil
+// }
 
-func QueryDataOne(sql string, args ...any) (et.Item, error) {
-	result, err := jdb.QueryDataOne(sql, args...)
-	if err != nil {
-		return et.Item{}, err
-	}
+// func QueryDataOne(sql string, args ...any) (et.Item, error) {
+// 	result, err := jdb.QueryDataOne(sql, args...)
+// 	if err != nil {
+// 		return et.Item{}, err
+// 	}
 
-	return result, nil
-}
+// 	return result, nil
+// }
 
 func From(model *Model, as ...string) *Linq {
 	result := NewLinq(ActSelect, model, as...)

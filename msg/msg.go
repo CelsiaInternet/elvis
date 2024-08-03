@@ -63,11 +63,3 @@ const (
 	TABLE_NOT_FOUND         = "Table not found:%s.%s"
 	RPC_NOT_FOUND           = "RPC not found"
 )
-
-func init() {
-}
-
-func T(msg string, lang ...string) string {
-
-	return ""
-}

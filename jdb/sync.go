@@ -1,12 +1,14 @@
 package jdb
 
 import (
+	"database/sql"
+
 	"github.com/cgalvisleon/elvis/console"
 )
 
 var makedSyncs bool
 
-func defineSync() error {
+func defineSync(db *sql.DB) error {
 	if makedSyncs {
 		return nil
 	}
@@ -126,7 +128,7 @@ func defineSync() error {
   END;
   $$ LANGUAGE plpgsql;`
 
-	_, err := QDDL(sql)
+	_, err := Query(db, sql)
 	if err != nil {
 		return console.Panic(err)
 	}

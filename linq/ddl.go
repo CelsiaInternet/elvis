@@ -12,24 +12,21 @@ import (
 func ddlColumn(col *Column) string {
 	var result string
 
-	switch col.Driver() {
-	default:
-		_default := generic.New(col.Default)
+	_default := generic.New(col.Default)
 
-		if _default.Str() == "NOW()" {
-			result = strs.Append(`DEFAULT NOW()`, result, " ")
-		} else {
-			result = strs.Append(strs.Format(`DEFAULT %v`, et.Unquote(col.Default)), result, " ")
-		}
+	if _default.Str() == "NOW()" {
+		result = strs.Append(`DEFAULT NOW()`, result, " ")
+	} else {
+		result = strs.Append(strs.Format(`DEFAULT %v`, et.Unquote(col.Default)), result, " ")
+	}
 
-		if col.Type == "SERIAL" {
-			result = strs.Uppcase(col.Type)
-		} else if len(col.Type) > 0 {
-			result = strs.Append(strs.Uppcase(col.Type), result, " ")
-		}
-		if len(col.name) > 0 {
-			result = strs.Append(strs.Uppcase(col.name), result, " ")
-		}
+	if col.Type == "SERIAL" {
+		result = strs.Uppcase(col.Type)
+	} else if len(col.Type) > 0 {
+		result = strs.Append(strs.Uppcase(col.Type), result, " ")
+	}
+	if len(col.name) > 0 {
+		result = strs.Append(strs.Uppcase(col.name), result, " ")
 	}
 
 	return result
@@ -38,10 +35,7 @@ func ddlColumn(col *Column) string {
 func ddlIndex(col *Column) string {
 	var result string
 
-	switch col.Driver() {
-	default:
-		result = jdb.SQLDDL(`CREATE INDEX IF NOT EXISTS $2_$3_$4_IDX ON $1($4);`, col.Model.Table, strs.Uppcase(col.Model.Schema.Name), col.Model.Name, strs.Uppcase(col.name))
-	}
+	result = jdb.SQLDDL(`CREATE INDEX IF NOT EXISTS $2_$3_$4_IDX ON $1($4);`, col.Model.Table, strs.Uppcase(col.Model.Schema.Name), col.Model.Name, strs.Uppcase(col.name))
 
 	return result
 }
@@ -49,10 +43,7 @@ func ddlIndex(col *Column) string {
 func ddlUniqueIndex(col *Column) string {
 	var result string
 
-	switch col.Driver() {
-	default:
-		result = jdb.SQLDDL(`CREATE UNIQUE INDEX IF NOT EXISTS $2_$3_$4_IDX ON $1($4);`, col.Model.Table, strs.Uppcase(col.Model.Schema.Name), col.Model.Name, strs.Uppcase(col.name))
-	}
+	result = jdb.SQLDDL(`CREATE UNIQUE INDEX IF NOT EXISTS $2_$3_$4_IDX ON $1($4);`, col.Model.Table, strs.Uppcase(col.Model.Schema.Name), col.Model.Name, strs.Uppcase(col.name))
 
 	return result
 }
@@ -121,6 +112,8 @@ func ddlSetRecyclig(model *Model) string {
 }
 
 func ddlTable(model *Model) string {
+	NewColumn(model, IdTFiled, "UUId", "VARCHAR(80)", "-1")
+
 	var result string
 	var columns string
 	var indexs string
@@ -136,10 +129,6 @@ func ddlTable(model *Model) string {
 
 	appendUniqueKey := func(def string) {
 		uniqueKeys = strs.Append(uniqueKeys, def, ", ")
-	}
-
-	if model.Db.UseCore {
-		NewColumn(model, model.Schema.IdTFiled, "UUId", "VARCHAR(80)", "-1")
 	}
 
 	for _, column := range model.Definition {
@@ -165,11 +154,9 @@ func ddlTable(model *Model) string {
 	result = strs.Append(result, indexs, "\n\n")
 	foreign := ddlForeignKeys(model)
 	result = strs.Append(result, foreign, "\n\n")
-	if model.UseSync() {
-		sync := ddlSetSync(model)
-		result = strs.Append(result, sync, "\n\n")
-	}
-	if model.UseRecycle() && model.UseState {
+	sync := ddlSetSync(model)
+	result = strs.Append(result, sync, "\n\n")
+	if model.UseState {
 		recicle := ddlSetRecyclig(model)
 		result = strs.Append(result, recicle, "\n\n")
 	}

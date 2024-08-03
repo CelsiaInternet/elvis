@@ -6,16 +6,17 @@ import (
 )
 
 func (c *Linq) Sql() string {
-	if c.Act == ActInsert {
+	switch c.Act {
+	case ActInsert:
 		c.PrepareInsert()
 		return c.SqlInsert()
-	} else if c.Act == ActUpdate {
+	case ActUpdate:
 		c.PrepareUpdate()
 		return c.SqlUpdate()
-	} else if c.Act == ActDelete {
+	case ActDelete:
 		c.PrepareDelete()
 		return c.SqlDelete()
-	} else {
+	default:
 		return c.SqlSelect()
 	}
 }

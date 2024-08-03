@@ -1,9 +1,11 @@
 package module
 
 import (
+	"database/sql"
+
 	"github.com/cgalvisleon/elvis/console"
-	"github.com/cgalvisleon/elvis/core"
 	"github.com/cgalvisleon/elvis/et"
+	"github.com/cgalvisleon/elvis/jdb"
 	"github.com/cgalvisleon/elvis/linq"
 	"github.com/cgalvisleon/elvis/msg"
 	"github.com/cgalvisleon/elvis/utility"
@@ -12,8 +14,8 @@ import (
 var Profiles *linq.Model
 var ProfileFolders *linq.Model
 
-func DefineProfiles() error {
-	if err := DefineSchemaModule(); err != nil {
+func DefineProfiles(db *sql.DB) error {
+	if err := DefineSchemaModule(db); err != nil {
 		return console.Panic(err)
 	}
 
@@ -39,15 +41,15 @@ func DefineProfiles() error {
 		console.Debug(data.ToString())
 	}
 
-	if err := core.InitModel(Profiles); err != nil {
+	if err := Profiles.Init(); err != nil {
 		return console.Panic(err)
 	}
 
 	return nil
 }
 
-func DefineProfileFolders() error {
-	if err := DefineSchemaModule(); err != nil {
+func DefineProfileFolders(db *sql.DB) error {
+	if err := DefineSchemaModule(db); err != nil {
 		return console.Panic(err)
 	}
 
@@ -72,7 +74,7 @@ func DefineProfileFolders() error {
 		console.Debug(data.ToString())
 	}
 
-	if err := core.InitModel(ProfileFolders); err != nil {
+	if err := ProfileFolders.Init(); err != nil {
 		return console.Panic(err)
 	}
 
@@ -275,7 +277,7 @@ func getProfileFolders(userId, projectId, mainId string) []et.Json {
 	AND B.PROFILE_TP IN (SELECT D.PROFILE_TP FROM module.ROLES AS D WHERE D.PROJECT_ID = $2 AND D.USER_ID = $3)
 	ORDER BY A._DATA#>>'{order}' ASC;`
 
-	items, err := linq.QueryData(sql, mainId, projectId, userId)
+	items, err := jdb.Source(Profiles.Db, "_DATA", sql, mainId, projectId, userId)
 	if err != nil {
 		return []et.Json{}
 	}

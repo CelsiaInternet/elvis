@@ -13,16 +13,18 @@ var (
 	conn *Conn
 )
 
-type Conn struct {
-	Db []*Db
-}
-
 func Load() (*Conn, error) {
 	if conn != nil {
 		return conn, nil
 	}
 
-	err := connect()
+	var err error
+	conn, err = connect()
+	if err != nil {
+		return nil, err
+	}
+
+	err = InitCore(conn.Db)
 	if err != nil {
 		return nil, err
 	}
@@ -31,20 +33,10 @@ func Load() (*Conn, error) {
 }
 
 func Close() error {
-	for _, db := range conn.Db {
-		err := db.Close()
-		if err != nil {
-			return err
-		}
+	err := conn.Db.Close()
+	if err != nil {
+		return err
 	}
 
 	return nil
-}
-
-func DB(idx int) *Db {
-	return conn.Db[idx]
-}
-
-func DBClose(idx int) error {
-	return conn.Db[idx].Close()
 }

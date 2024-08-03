@@ -1,9 +1,10 @@
 package module
 
 import (
+	"database/sql"
+
 	"github.com/cgalvisleon/elvis/cache"
 	"github.com/cgalvisleon/elvis/console"
-	"github.com/cgalvisleon/elvis/core"
 	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/linq"
@@ -15,8 +16,8 @@ import (
 
 var Users *linq.Model
 
-func DefineUsers() error {
-	if err := DefineSchemaModule(); err != nil {
+func DefineUsers(db *sql.DB) error {
+	if err := DefineSchemaModule(db); err != nil {
 		return console.Panic(err)
 	}
 
@@ -89,7 +90,7 @@ func DefineUsers() error {
 		console.Log(data)
 	}
 
-	if err := core.InitModel(Users); err != nil {
+	if err := Users.Init(); err != nil {
 		return console.Panic(err)
 	}
 

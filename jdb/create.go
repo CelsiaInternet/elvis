@@ -22,7 +22,7 @@ func CreateDatabase(db *sql.DB, name string) error {
 	if !exists {
 		sql := strs.Format(`CREATE DATABASE %s;`, name)
 
-		_, err := DBQuery(db, sql)
+		_, err := Query(db, sql)
 		if err != nil {
 			return err
 		}
@@ -35,7 +35,7 @@ func CreateDatabase(db *sql.DB, name string) error {
 func CreateSchema(db *sql.DB, name string) error {
 	sql := strs.Format(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"; CREATE SCHEMA IF NOT EXISTS "%s";`, name)
 
-	_, err := DBQuery(db, sql)
+	_, err := Query(db, sql)
 	if err != nil {
 		return err
 	}
@@ -57,7 +57,7 @@ func CreateColumn(db *sql.DB, schema, table, name, kind, defaultValue string) er
 	END;
 	$$;`, tableName, strs.Uppcase(name), strs.Uppcase(kind), defaultValue)
 
-	_, err := QDDL(sql)
+	_, err := Query(db, sql)
 	if err != nil {
 		return err
 	}
@@ -71,7 +71,7 @@ func CreateIndex(db *sql.DB, schema, table, field string) error {
 	CREATE INDEX IF NOT EXISTS $2_$3_IDX ON $1.$2($3);`,
 		strs.Uppcase(schema), strs.Uppcase(table), strs.Uppcase(field))
 
-	_, err := QDDL(sql)
+	_, err := Query(db, sql)
 	if err != nil {
 		return err
 	}
@@ -89,7 +89,7 @@ func CreateTrigger(db *sql.DB, schema, table, name, when, event, function string
 	EXECUTE PROCEDURE $6;`,
 		strs.Uppcase(schema), strs.Uppcase(table), strs.Uppcase(name), when, event, function)
 
-	_, err := QDDL(sql)
+	_, err := Query(db, sql)
 	if err != nil {
 		return err
 	}
@@ -101,7 +101,7 @@ func CreateTrigger(db *sql.DB, schema, table, name, when, event, function string
 func CreateSequence(db *sql.DB, schema, tag string) error {
 	sql := strs.Format(`CREATE SEQUENCE IF NOT EXISTS %s START 1;`, tag)
 
-	_, err := Query(sql)
+	_, err := Query(db, sql)
 	if err != nil {
 		return err
 	}
@@ -118,7 +118,7 @@ func CreateUser(db *sql.DB, name, password string) error {
 
 	sql := strs.Format(`CREATE USER %s WITH PASSWORD '%s';`, name, passwordHash)
 
-	_, err = DBQuery(db, sql)
+	_, err = Query(db, sql)
 	if err != nil {
 		return err
 	}
@@ -135,7 +135,7 @@ func ChangePassword(db *sql.DB, name, password string) error {
 
 	sql := strs.Format(`ALTER USER %s WITH PASSWORD '%s';`, name, passwordHash)
 
-	_, err = Query(sql)
+	_, err = Query(db, sql)
 	if err != nil {
 		return err
 	}

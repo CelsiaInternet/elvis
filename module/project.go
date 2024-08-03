@@ -1,8 +1,9 @@
 package module
 
 import (
+	"database/sql"
+
 	"github.com/cgalvisleon/elvis/console"
-	"github.com/cgalvisleon/elvis/core"
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/linq"
 	"github.com/cgalvisleon/elvis/msg"
@@ -12,8 +13,8 @@ import (
 var Projects *linq.Model
 var ProjectModules *linq.Model
 
-func DefineProjects() error {
-	if err := DefineSchemaModule(); err != nil {
+func DefineProjects(db *sql.DB) error {
+	if err := DefineSchemaModule(db); err != nil {
 		return console.Panic(err)
 	}
 
@@ -52,15 +53,15 @@ func DefineProjects() error {
 		console.Debug(data.ToString())
 	}
 
-	if err := core.InitModel(Projects); err != nil {
+	if err := Projects.Init(); err != nil {
 		return console.Panic(err)
 	}
 
 	return nil
 }
 
-func DefineProjectModules() error {
-	if err := DefineSchemaModule(); err != nil {
+func DefineProjectModules(db *sql.DB) error {
+	if err := DefineSchemaModule(db); err != nil {
 		return console.Panic(err)
 	}
 
@@ -84,7 +85,7 @@ func DefineProjectModules() error {
 		console.Debug(data.ToString())
 	}
 
-	if err := core.InitModel(ProjectModules); err != nil {
+	if err := ProjectModules.Init(); err != nil {
 		return console.Panic(err)
 	}
 

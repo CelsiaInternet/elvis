@@ -1,6 +1,8 @@
 package linq
 
 import (
+	"database/sql"
+
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/jdb"
 	"github.com/cgalvisleon/elvis/strs"
@@ -19,7 +21,7 @@ type Trigger func(model *Model, old, new *et.Json, data et.Json) error
 type Listener func(data et.Json)
 
 type Model struct {
-	Db                 *jdb.Db
+	Db                 *sql.DB
 	Name               string
 	Description        string
 	Define             string
@@ -66,13 +68,13 @@ func NewModel(schema *Schema, name, description string, version int) *Model {
 		Description:        description,
 		Table:              table,
 		Version:            version,
-		SourceField:        schema.SourceField,
-		DateMakeField:      schema.DateMakeField,
-		DateUpdateField:    schema.DateUpdateField,
-		SerieField:         schema.SerieField,
-		CodeField:          schema.CodeField,
-		ProjectField:       schema.ProjectField,
-		StateField:         schema.StateField,
+		SourceField:        SourceField,
+		DateMakeField:      DateMakeField,
+		DateUpdateField:    DateUpdateField,
+		SerieField:         SerieField,
+		CodeField:          CodeField,
+		ProjectField:       ProjectField,
+		StateField:         StateField,
 		integrityReference: true,
 	}
 
@@ -86,10 +88,6 @@ func NewModel(schema *Schema, name, description string, version int) *Model {
 	schema.Models = append(schema.Models, result)
 
 	return result
-}
-
-func (c *Model) Driver() string {
-	return c.Db.Driver
 }
 
 func (c *Model) Describe() et.Json {
@@ -127,10 +125,7 @@ func (c *Model) Describe() et.Json {
 		"useDateUpdate":      c.UseDateUpdate,
 		"useState":           c.UseState,
 		"useProject":         c.UseProject,
-		"useReciclig":        c.UseRecycle(),
 		"useSerie":           c.UseSerie,
-		"useSync":            c.UseSync(),
-		"useListener":        !c.UseSync(),
 		"model":              c.Model(),
 	}
 }
@@ -172,21 +167,13 @@ func (c *Model) Model() et.Json {
 	return result
 }
 
-func (c *Model) UseSync() bool {
-	return c.Schema.UseSync
-}
-
-func (c *Model) UseRecycle() bool {
-	return c.Schema.UseSync
-}
-
 /**
 * DDL
 **/
 func (c *Model) Init() error {
 	c.Define = c.DDL()
 
-	exists, err := jdb.ExistTable(c.Db.Db, c.Schema.Name, c.Name)
+	exists, err := jdb.ExistTable(c.Db, c.Schema.Name, c.Name)
 	if err != nil {
 		return err
 	}
@@ -195,7 +182,7 @@ func (c *Model) Init() error {
 		return nil
 	}
 
-	_, err = jdb.IDXQuery(c.Db.Index, c.Define)
+	_, err = jdb.Query(c.Db, c.Define)
 	if err != nil {
 		return err
 	}

@@ -1,6 +1,7 @@
 package linq
 
 import (
+	"database/sql"
 	"strings"
 
 	"github.com/cgalvisleon/elvis/console"
@@ -90,7 +91,7 @@ type Validate struct {
 type Linq struct {
 	Tp        int
 	Act       int
-	db        int
+	db        *sql.DB
 	_select   []*Column
 	from      []*FRom
 	where     []*Where
@@ -123,7 +124,7 @@ func NewLinq(act int, model *Model, as ...string) *Linq {
 	return &Linq{
 		Tp:        TpRow,
 		Act:       act,
-		db:        model.Db.Index,
+		db:        model.Db,
 		from:      []*FRom{from},
 		fromAs:    []*FRom{from},
 		where:     []*Where{},
@@ -388,7 +389,7 @@ func (c *Linq) Query() (et.Items, error) {
 	}
 
 	if c.Tp == TpData {
-		result, err := jdb.IDXQueryData(c.db, c.sql)
+		result, err := jdb.Source(c.db, SourceField, c.sql)
 		if err != nil {
 			return et.Items{}, err
 		}
@@ -396,7 +397,7 @@ func (c *Linq) Query() (et.Items, error) {
 		return result, nil
 	}
 
-	result, err := jdb.IDXQuery(c.db, c.sql)
+	result, err := jdb.Query(c.db, c.sql)
 	if err != nil {
 		return et.Items{}, err
 	}
@@ -410,7 +411,7 @@ func (c *Linq) QueryOne() (et.Item, error) {
 	}
 
 	if c.Tp == TpData {
-		result, err := jdb.IDXQueryDataOne(c.db, c.sql)
+		result, err := jdb.SourceOne(c.db, SourceField, c.sql)
 		if err != nil {
 			return et.Item{}, err
 		}
@@ -418,7 +419,7 @@ func (c *Linq) QueryOne() (et.Item, error) {
 		return result, nil
 	}
 
-	result, err := jdb.IDXQueryOne(c.db, c.sql)
+	result, err := jdb.QueryOne(c.db, c.sql)
 	if err != nil {
 		return et.Item{}, err
 	}
@@ -431,7 +432,10 @@ func (c *Linq) QueryCount() int {
 		console.Log(c.sql)
 	}
 
-	result := jdb.IDXQueryCount(c.db, c.sql)
+	result, err := jdb.QueryOne(c.db, c.sql)
+	if err != nil {
+		return 0
+	}
 
-	return result
+	return result.Int("count")
 }

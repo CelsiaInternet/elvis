@@ -1,48 +1,50 @@
 package module
 
 import (
+	"database/sql"
+
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/et"
 )
 
 var initDefine bool
 
-func InitDefine() error {
+func InitDefine(db *sql.DB) error {
 	if initDefine {
 		return nil
 	}
 
-	if err := DefineUsers(); err != nil {
+	if err := DefineUsers(db); err != nil {
 		return console.Panic(err)
 	}
-	if err := DefineProjects(); err != nil {
+	if err := DefineProjects(db); err != nil {
 		return console.Panic(err)
 	}
-	if err := DefineTypes(); err != nil {
+	if err := DefineTypes(db); err != nil {
 		return console.Panic(err)
 	}
-	if err := DefineModules(); err != nil {
+	if err := DefineModules(db); err != nil {
 		return console.Panic(err)
 	}
-	if err := DefineFolders(); err != nil {
+	if err := DefineFolders(db); err != nil {
 		return console.Panic(err)
 	}
-	if err := DefineProfiles(); err != nil {
+	if err := DefineProfiles(db); err != nil {
 		return console.Panic(err)
 	}
-	if err := DefineRoles(); err != nil {
+	if err := DefineRoles(db); err != nil {
 		return console.Panic(err)
 	}
-	if err := DefineModuleFolders(); err != nil {
+	if err := DefineModuleFolders(db); err != nil {
 		return console.Panic(err)
 	}
-	if err := DefineProjectModules(); err != nil {
+	if err := DefineProjectModules(db); err != nil {
 		return console.Panic(err)
 	}
-	if err := DefineProfileFolders(); err != nil {
+	if err := DefineProfileFolders(db); err != nil {
 		return console.Panic(err)
 	}
-	if err := DefineTokens(); err != nil {
+	if err := DefineTokens(db); err != nil {
 		return console.Panic(err)
 	}
 

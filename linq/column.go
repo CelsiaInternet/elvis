@@ -127,7 +127,7 @@ func NewColumn(model *Model, name, description, _type string, _default any) *Col
 		model.UseProject = strs.Uppcase(result.name) == strs.Uppcase(model.ProjectField)
 	}
 
-	if !model.UseSerie && model.Schema.UseSerie {
+	if !model.UseSerie {
 		model.UseSerie = strs.Uppcase(result.name) == strs.Uppcase(model.SerieField)
 	}
 
@@ -161,10 +161,6 @@ func NewVirtualAtrib(model *Model, name, description, _type string, _default any
 	}
 
 	return result
-}
-
-func (c *Column) Driver() string {
-	return c.Model.Driver()
 }
 
 func (c *Column) describe() et.Json {

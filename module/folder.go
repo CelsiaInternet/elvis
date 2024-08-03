@@ -1,8 +1,9 @@
 package module
 
 import (
+	"database/sql"
+
 	"github.com/cgalvisleon/elvis/console"
-	"github.com/cgalvisleon/elvis/core"
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/event"
 	"github.com/cgalvisleon/elvis/linq"
@@ -12,8 +13,8 @@ import (
 
 var Folders *linq.Model
 
-func DefineFolders() error {
-	if err := DefineSchemaModule(); err != nil {
+func DefineFolders(db *sql.DB) error {
+	if err := DefineSchemaModule(db); err != nil {
 		return console.Panic(err)
 	}
 
@@ -73,7 +74,7 @@ func DefineFolders() error {
 		console.Debug(data.ToString())
 	}
 
-	if err := core.InitModel(Folders); err != nil {
+	if err := Folders.Init(); err != nil {
 		return console.Panic(err)
 	}
 

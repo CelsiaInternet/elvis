@@ -147,6 +147,39 @@ func Get(key, def string) (string, error) {
 }
 
 /**
+* Count
+* @params key string
+* @params expiration time.Duration
+* @return int64
+**/
+func Count(key string, expiration time.Duration) int64 {
+	if conn == nil {
+		return 0
+	}
+
+	def := "-1"
+	val, err := Get(key, def)
+	if err != nil {
+		return 0
+	}
+
+	if val == def {
+		Set(key, "0", expiration)
+		return 0
+	}
+
+	num, err := strconv.ParseInt(val, 10, 64)
+	if logs.Alert(err) != nil {
+		return 0
+	}
+
+	num++
+	Set(key, val, expiration)
+
+	return num
+}
+
+/**
 * Del
 * @params key string
 * @return int64, error

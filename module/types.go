@@ -1,8 +1,9 @@
 package module
 
 import (
+	"database/sql"
+
 	"github.com/cgalvisleon/elvis/console"
-	"github.com/cgalvisleon/elvis/core"
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/linq"
 	"github.com/cgalvisleon/elvis/msg"
@@ -11,8 +12,8 @@ import (
 
 var Types *linq.Model
 
-func DefineTypes() error {
-	if err := DefineSchemaModule(); err != nil {
+func DefineTypes(db *sql.DB) error {
+	if err := DefineSchemaModule(db); err != nil {
 		return console.Panic(err)
 	}
 
@@ -46,7 +47,7 @@ func DefineTypes() error {
 		console.Debug(data.ToString())
 	}
 
-	if err := core.InitModel(Types); err != nil {
+	if err := Types.Init(); err != nil {
 		return console.Panic(err)
 	}
 

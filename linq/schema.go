@@ -1,48 +1,38 @@
 package linq
 
 import (
+	"database/sql"
+
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/jdb"
 	"github.com/cgalvisleon/elvis/strs"
 )
 
-var schemas []*Schema = []*Schema{}
+var (
+	SourceField     string    = "_DATA"
+	DateMakeField   string    = "DATE_MAKE"
+	DateUpdateField string    = "DATE_UPDATE"
+	SerieField      string    = "INDEX"
+	CodeField       string    = "CODE"
+	ProjectField    string    = "PROJECT_ID"
+	StateField      string    = "_STATE"
+	IdTFiled        string    = "_IDT"
+	schemas         []*Schema = []*Schema{}
+)
 
 type Schema struct {
-	Db              *jdb.Db
-	Name            string
-	Description     string
-	Define          string
-	UseSync         bool
-	UseRecycle      bool
-	UseSerie        bool
-	SourceField     string
-	DateMakeField   string
-	DateUpdateField string
-	SerieField      string
-	CodeField       string
-	ProjectField    string
-	StateField      string
-	IdTFiled        string
-	Models          []*Model
+	Db          *sql.DB
+	Name        string
+	Description string
+	Define      string
+	Models      []*Model
 }
 
-func NewSchema(db int, name string, sync, recycle, serie bool) *Schema {
+func NewSchema(db *sql.DB, name string) *Schema {
 	result := &Schema{
-		Db:              jdb.DB(db),
-		Name:            strs.Lowcase(name),
-		UseSync:         sync,
-		UseRecycle:      recycle,
-		UseSerie:        serie,
-		SourceField:     "_DATA",
-		DateMakeField:   "DATE_MAKE",
-		DateUpdateField: "DATE_UPDATE",
-		SerieField:      "INDEX",
-		CodeField:       "CODE",
-		ProjectField:    "PROJECT_ID",
-		StateField:      "_STATE",
-		IdTFiled:        "_IDT",
-		Models:          []*Model{},
+		Db:     db,
+		Name:   strs.Lowcase(name),
+		Models: []*Model{},
 	}
 
 	result.Init()
@@ -71,25 +61,15 @@ func (c *Schema) Describe() et.Json {
 	}
 
 	return et.Json{
-		"name":            c.Name,
-		"description":     c.Description,
-		"database":        c.Db.Dbname,
-		"useSync":         c.UseSync,
-		"useRecycle":      c.UseRecycle,
-		"useSerie":        c.UseSerie,
-		"source_field":    c.SourceField,
-		"dateMakeField":   c.DateMakeField,
-		"dateUpdateField": c.DateUpdateField,
-		"serieField":      c.SerieField,
-		"codeField":       c.CodeField,
-		"projectField":    c.ProjectField,
-		"models":          models,
+		"name":        c.Name,
+		"description": c.Description,
+		"models":      models,
 	}
 }
 
 func (c *Schema) Init() error {
 	c.Define = strs.Format(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"; CREATE SCHEMA IF NOT EXISTS "%s";`, c.Name)
-	_, err := jdb.QDDL(c.Define)
+	_, err := jdb.Query(c.Db, c.Define)
 	if err != nil {
 		return err
 	}

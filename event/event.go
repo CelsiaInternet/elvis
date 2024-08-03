@@ -1,16 +1,11 @@
 package event
 
 import (
-	"sync"
-
 	"github.com/cgalvisleon/elvis/cache"
 	"github.com/nats-io/nats.go"
 )
 
-var (
-	conn *Conn
-	once sync.Once
-)
+var conn *Conn
 
 type Conn struct {
 	conn             *nats.Conn
@@ -28,7 +23,15 @@ func (c *Conn) Lock(key string) bool {
 }
 
 func Load() (*Conn, error) {
-	once.Do(connect)
+	if conn != nil {
+		return conn, nil
+	}
+
+	var err error
+	conn, err = connect()
+	if err != nil {
+		return nil, err
+	}
 
 	return conn, nil
 }

@@ -1,12 +1,14 @@
 package jdb
 
 import (
+	"database/sql"
+
 	"github.com/cgalvisleon/elvis/console"
 )
 
 var makedRecycling bool
 
-func defineRecycling() error {
+func defineRecycling(db *sql.DB) error {
 	if makedRecycling {
 		return nil
 	}
@@ -54,7 +56,7 @@ func defineRecycling() error {
   END;
   $$ LANGUAGE plpgsql;`
 
-	_, err := QDDL(sql)
+	_, err := Query(db, sql)
 	if err != nil {
 		return console.Panic(err)
 	}

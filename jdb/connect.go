@@ -5,12 +5,46 @@ import (
 
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/envar"
+	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/msg"
 	"github.com/cgalvisleon/elvis/strs"
 	_ "github.com/lib/pq"
 )
 
-func connect() error {
+const Postgres = "postgres"
+
+type Conn struct {
+	Description string
+	Driver      string
+	Host        string
+	Port        int
+	Dbname      string
+	User        string
+	Connection  string
+	Db          *sql.DB
+	UseCore     bool
+}
+
+func (c *Conn) Close() error {
+	err := c.Db.Close()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *Conn) Describe() et.Json {
+	host := strs.Format(`%s:%d`, c.Host, c.Port)
+	return et.Json{
+		"name":        c.Dbname,
+		"description": c.Description,
+		"driver":      c.Driver,
+		"host":        host,
+	}
+}
+
+func connect() (*Conn, error) {
 	driver := envar.EnvarStr("", "DB_DRIVE")
 	host := envar.EnvarStr("", "DB_HOST")
 	port := envar.EnvarInt(5432, "DB_PORT")
@@ -20,58 +54,40 @@ func connect() error {
 	application_name := envar.EnvarStr("elvis", "DB_APPLICATION_NAME")
 
 	if driver == "" {
-		return console.PanicF(msg.ERR_ENV_REQUIRED, "DB_DRIVE")
+		return nil, console.PanicF(msg.ERR_ENV_REQUIRED, "DB_DRIVE")
 	}
 
 	if host == "" {
-		return console.PanicF(msg.ERR_ENV_REQUIRED, "DB_HOST")
+		return nil, console.PanicF(msg.ERR_ENV_REQUIRED, "DB_HOST")
 	}
 
 	if dbname == "" {
-		return console.PanicF(msg.ERR_ENV_REQUIRED, "DB_NAME")
+		return nil, console.PanicF(msg.ERR_ENV_REQUIRED, "DB_NAME")
 	}
 
 	if user == "" {
-		return console.PanicF(msg.ERR_ENV_REQUIRED, "DB_USER")
+		return nil, console.PanicF(msg.ERR_ENV_REQUIRED, "DB_USER")
 	}
 
 	if password == "" {
-		return console.PanicF(msg.ERR_ENV_REQUIRED, "DB_PASSWORD")
+		return nil, console.PanicF(msg.ERR_ENV_REQUIRED, "DB_PASSWORD")
 	}
 
 	db, err := ConnectTo(driver, host, port, dbname, user, password, application_name)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	conn = &Conn{
-		Db: []*Db{},
-	}
-
-	idx := len(conn.Db)
-	db.Index = idx
 	db.UseCore = true
-	conn.Db = append(conn.Db, db)
 
-	err = InitCore()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return db, nil
 }
 
-func ConnectTo(driver, host string, port int, dbname, user, password, application_name string) (*Db, error) {
+func ConnectTo(driver, host string, port int, dbname, user, password, application_name string) (*Conn, error) {
 	var connStr string
 	switch driver {
 	case Postgres:
 		connStr = strs.Format(`%s://%s:%s@%s:%d/%s?sslmode=disable&application_name=%s`, driver, user, password, host, port, dbname, application_name)
-	case Mysql:
-		connStr = strs.Format(`%s:%s@tcp(%s:%d)/%s`, user, password, host, port, dbname)
-	case Sqlserver:
-		connStr = strs.Format(`server=%s;user id=%s;password=%s;port=%d;database=%s;`, host, user, password, port, dbname)
-	case Firebird:
-		connStr = strs.Format(`%s/%s@%s;`, user, password, host)
 	default:
 		panic(msg.NOT_SELECT_DRIVE)
 	}
@@ -83,7 +99,7 @@ func ConnectTo(driver, host string, port int, dbname, user, password, applicatio
 
 	console.LogKF(driver, "Connected host:%s:%d", host, port)
 
-	return &Db{
+	return &Conn{
 		Driver:     driver,
 		Host:       host,
 		Port:       port,

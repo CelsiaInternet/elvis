@@ -19,7 +19,7 @@ func ExistDatabase(db *sql.DB, name string) (bool, error) {
 		FROM pg_database
 		WHERE UPPER(datname) = UPPER($1));`
 
-	item, err := DBQueryOne(db, sql, name)
+	item, err := QueryOne(db, sql, name)
 	if err != nil {
 		return false, err
 	}
@@ -36,7 +36,7 @@ func ExistSchema(db *sql.DB, name string) (bool, error) {
 		FROM pg_namespace
 		WHERE UPPER(nspname) = UPPER($1));`
 
-	item, err := DBQueryOne(db, sql, name)
+	item, err := QueryOne(db, sql, name)
 	if err != nil {
 		return false, err
 	}
@@ -53,7 +53,7 @@ func ExistTable(db *sql.DB, schema, name string) (bool, error) {
 		WHERE UPPER(table_schema) = UPPER($1)
 		AND UPPER(table_name) = UPPER($2));`
 
-	item, err := DBQueryOne(db, sql, schema, name)
+	item, err := QueryOne(db, sql, schema, name)
 	if err != nil {
 		return false, err
 	}
@@ -71,7 +71,7 @@ func ExistColum(db *sql.DB, schema, table, name string) (bool, error) {
 		AND UPPER(table_name) = UPPER($2)
 		AND UPPER(column_name) = UPPER($3));`
 
-	item, err := DBQueryOne(db, sql, schema, table, name)
+	item, err := QueryOne(db, sql, schema, table, name)
 	if err != nil {
 		return false, err
 	}
@@ -90,7 +90,7 @@ func ExistIndex(db *sql.DB, schema, table, field string) (bool, error) {
 		AND UPPER(tablename) = UPPER($2)
 		AND UPPER(indexname) = UPPER($3));`
 
-	item, err := QueryOne(sql, schema, table, indexName)
+	item, err := QueryOne(db, sql, schema, table, indexName)
 	if err != nil {
 		return false, err
 	}
@@ -108,7 +108,7 @@ func ExistTrigger(db *sql.DB, schema, table, name string) (bool, error) {
 		AND UPPER(event_object_table) = UPPER($2)
 		AND UPPER(trigger_name) = UPPER($3));`
 
-	item, err := DBQueryOne(db, sql, schema, table, name)
+	item, err := QueryOne(db, sql, schema, table, name)
 	if err != nil {
 		return false, err
 	}
@@ -125,7 +125,7 @@ func ExistSerie(db *sql.DB, schema, name string) (bool, error) {
 		WHERE UPPER(schemaname) = UPPER($1)
 		AND UPPER(sequencename) = UPPER($2));`
 
-	item, err := DBQueryOne(db, sql, schema, name)
+	item, err := QueryOne(db, sql, schema, name)
 	if err != nil {
 		return false, err
 	}
@@ -142,7 +142,7 @@ func ExistUser(db *sql.DB, name string) (bool, error) {
 		FROM pg_roles
 		WHERE UPPER(rolname) = UPPER($1));`
 
-	item, err := DBQueryOne(db, sql, name)
+	item, err := QueryOne(db, sql, name)
 	if err != nil {
 		return false, err
 	}
