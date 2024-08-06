@@ -12,6 +12,18 @@ import (
 	"github.com/cgalvisleon/elvis/utility"
 )
 
+type contextKey string
+
+const (
+	serviceIDKey contextKey = "serviceId"
+	clientIDKey  contextKey = "clientId"
+	appKey       contextKey = "app"
+	nameKey      contextKey = "name"
+	kindKey      contextKey = "kind"
+	usernameKey  contextKey = "username"
+	tokenKey     contextKey = "token"
+)
+
 func Authorization(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -28,13 +40,13 @@ func Authorization(next http.Handler) http.Handler {
 		}
 
 		serviceId := utility.UUID()
-		ctx = context.WithValue(ctx, "serviceId", serviceId)
-		ctx = context.WithValue(ctx, "clientId", c.ID)
-		ctx = context.WithValue(ctx, "app", c.App)
-		ctx = context.WithValue(ctx, "name", c.Name)
-		ctx = context.WithValue(ctx, "kind", c.Kind)
-		ctx = context.WithValue(ctx, "username", c.Username)
-		ctx = context.WithValue(ctx, "token", tokenString)
+		ctx = context.WithValue(ctx, serviceIDKey, serviceId)
+		ctx = context.WithValue(ctx, clientIDKey, c.ID)
+		ctx = context.WithValue(ctx, appKey, c.App)
+		ctx = context.WithValue(ctx, nameKey, c.Name)
+		ctx = context.WithValue(ctx, kindKey, c.Kind)
+		ctx = context.WithValue(ctx, usernameKey, c.Username)
+		ctx = context.WithValue(ctx, tokenKey, tokenString)
 
 		now := utility.Now()
 		hostName, _ := os.Hostname()
