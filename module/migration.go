@@ -35,9 +35,6 @@ func DefineMigration(db *sql.DB) error {
 		"date_update",
 		"_state",
 	})
-	Migration.OnListener = func(data et.Json) {
-		console.Debug(data.ToString())
-	}
 
 	if err := Migration.Init(); err != nil {
 		return console.Panic(err)

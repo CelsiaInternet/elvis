@@ -109,7 +109,9 @@ func Traces(kind, color string, err error) ([]string, error) {
 }
 
 func Alert(err error) error {
-	log("Alert", "Yellow", err.Error())
+	if err != nil {
+		log("Alert", "Yellow", err.Error())
+	}
 
 	return err
 }

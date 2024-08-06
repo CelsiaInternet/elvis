@@ -1,293 +1,212 @@
 package gateway
 
 import (
-	"encoding/json"
 	"net/http"
 	"regexp"
-	"strings"
 
-	"github.com/cgalvisleon/elvis/cache"
 	"github.com/cgalvisleon/elvis/et"
-	"github.com/cgalvisleon/elvis/strs"
 	"github.com/cgalvisleon/elvis/utility"
 )
 
-type Node struct {
-	_id     string
-	Tag     string
-	Resolve et.Json
-	Nodes   []*Node
-}
-
-type Nodes struct {
-	Routes []*Node
+type Route struct {
+	_id         string
+	middlewares []func(http.Handler) http.Handler
+	Server      *HttpServer
+	Tag         string
+	Resolve     et.Json
+	Routes      []*Route
 }
 
 type Pakage struct {
-	Name  string
-	Nodes []*Node
-	Count int
-}
-
-type Pakages struct {
-	Pakages []*Pakage
+	Name   string
+	Routes []*Route
+	Count  int
 }
 
 type Resolve struct {
-	Node    *Node
+	Route   *Route
 	Params  []et.Json
 	Resolve string
 }
 
-type Handlers map[string]http.HandlerFunc
-
-// Create new router
-func newRouters() *Nodes {
-	return &Nodes{
-		Routes: []*Node{},
-	}
-}
-
-// Create new pakages
-func newPakages() *Pakages {
-	return &Pakages{
-		Pakages: []*Pakage{},
-	}
-}
-
-// Create new handlers
-func newHandlers() Handlers {
-	return make(Handlers)
-}
-
-// Create a new node from routes
-func newNode(tag string, nodes []*Node) (*Node, []*Node) {
-	result := &Node{
-		_id:     utility.UUID(),
-		Tag:     tag,
-		Resolve: et.Json{},
-		Nodes:   []*Node{},
+/**
+* newRoute
+* @param tag string
+* @param routes []*Route
+* @return *Route, []*Route
+**/
+func newRoute(tag string, server *HttpServer, routes []*Route) (*Route, []*Route) {
+	result := &Route{
+		_id:         utility.UUID(),
+		middlewares: make([]func(http.Handler) http.Handler, 0),
+		Server:      server,
+		Tag:         tag,
+		Resolve:     et.Json{},
+		Routes:      []*Route{},
 	}
 
-	nodes = append(nodes, result)
+	routes = append(routes, result)
 
-	return result, nodes
+	return result, routes
 }
 
-// Find a node from routes
-func findNode(tag string, nodes []*Node) *Node {
-	for _, node := range nodes {
-		if node.Tag == tag {
-			return node
+/**
+* findRoute
+* @param tag string
+* @param routes *Routes
+**/
+func findRoute(tag string, routes []*Route) *Route {
+	for _, route := range routes {
+		if route.Tag == tag {
+			return route
 		}
 	}
 
 	return nil
 }
 
-func findResolve(tag string, nodes []*Node, route *Resolve) (*Node, *Resolve) {
-	node := findNode(tag, nodes)
+/**
+* findResolve
+* @param tag string
+* @param routes *Routes
+* @param route *Resolve
+**/
+func findResolve(tag string, routes []*Route, route *Resolve) (*Route, *Resolve) {
+	node := findRoute(tag, routes)
 	if node == nil {
 		// Define regular expression
 		regex := regexp.MustCompile(`^\{.*\}$`)
 		// Find node by regular expression
-		for _, n := range nodes {
+		for _, n := range routes {
 			if regex.MatchString(n.Tag) {
 				if route == nil {
 					route = &Resolve{
 						Params: []et.Json{},
 					}
 				}
-				route.Node = n
+				route.Route = n
 				route.Params = append(route.Params, et.Json{n.Tag: tag})
 				return n, route
 			}
 		}
 	} else if route == nil {
 		route = &Resolve{
-			Node:   node,
+			Route:  node,
 			Params: []et.Json{},
 		}
 	} else {
-		route.Node = node
+		route.Route = node
 	}
 
 	return node, route
 }
 
-// Load routes from file
-func (s *HttpServer) LoadRouter() error {
-	_routes, err := cache.Get(s.routesKey, "{routes:[]}")
-	if err != nil {
-		return err
-	}
-
-	err = json.Unmarshal([]byte(_routes), &s.routes)
-	if err != nil {
-		return err
-	}
-
-	_pakages, err := cache.Get(s.pakagesKey, "{pakages:[]}")
-	if err != nil {
-		return err
-	}
-
-	err = json.Unmarshal([]byte(_pakages), &s.pakages)
-	if err != nil {
-		return err
-	}
-
-	return nil
+/**
+* basicRouter
+* @param server *HttpServer
+**/
+func basicRouter(server *HttpServer) {
+	server.Get("/version", version, "Api Gateway")
+	server.Get("/gateway/all", getAll, "Api Gateway")
+	server.Post("/gateway", upsert, "Api Gateway")
+	server.Get("/ws", server.handlerWS, "Api Gateway")
 }
 
-// Save routes to file
-func (s *HttpServer) Save() error {
-	// Convertion struct to json
-	_routes, err := et.Marshal(s.routes)
-	if err != nil {
-		return err
-	}
-
-	// Save json to cache
-	err = cache.Set(s.routesKey, _routes.ToString(), 0)
-	if err != nil {
-		return err
-	}
-
-	_pakages, err := et.Marshal(s.pakages)
-	if err != nil {
-		return err
-	}
-
-	err = cache.Set(s.pakagesKey, _pakages.ToString(), 0)
-	if err != nil {
-		return err
-	}
-
-	return nil
+/**
+* Connect
+* @param path string
+* @param handlerFn http.HandlerFunc
+* @param packageName string
+**/
+func (r *Route) Connect(path string, handlerFn http.HandlerFunc, packageName string) {
+	result := r.Server.MethodFunc(CONNECT, path, handlerFn, packageName)
+	result.middlewares = append(result.middlewares, r.middlewares...)
 }
 
-// Find a pakage by name
-func (s *HttpServer) findPakage(name string) *Pakage {
-	for _, pakage := range s.pakages.Pakages {
-		if pakage.Name == name {
-			return pakage
-		}
-	}
-
-	return nil
+/**
+* Delete
+* @param path string
+* @param handlerFn http.HandlerFunc
+* @param packageName string
+**/
+func (r *Route) Delete(path string, handlerFn http.HandlerFunc, packageName string) {
+	result := r.Server.MethodFunc(DELETE, path, handlerFn, packageName)
+	result.middlewares = append(result.middlewares, r.middlewares...)
 }
 
-// Create a new pakage
-func (s *HttpServer) newPakage(name string) *Pakage {
-	pakage := &Pakage{
-		Name:  name,
-		Nodes: []*Node{},
-	}
-
-	s.pakages.Pakages = append(s.pakages.Pakages, pakage)
-
-	return pakage
+/**
+* Get
+* @param path string
+* @param handlerFn http.HandlerFunc
+* @param packageName string
+**/
+func (r *Route) Get(path string, handlerFn http.HandlerFunc, packageName string) {
+	result := r.Server.MethodFunc(GET, path, handlerFn, packageName)
+	result.middlewares = append(result.middlewares, r.middlewares...)
 }
 
-// Add a route to the list
-func (s *HttpServer) AddRoute(method, path, resolve, kind, stage, packageName string) {
-	node := findNode(method, s.routes.Routes)
-	if node == nil {
-		node, s.routes.Routes = newNode(method, s.routes.Routes)
-	}
-
-	tags := strings.Split(path, "/")
-	for _, tag := range tags {
-		if len(tag) > 0 {
-			find := findNode(tag, node.Nodes)
-			if find == nil {
-				node, node.Nodes = newNode(tag, node.Nodes)
-			} else {
-				node = find
-			}
-		}
-	}
-
-	if node != nil {
-		node.Resolve = et.Json{
-			"method":  method,
-			"kind":    kind,
-			"stage":   stage,
-			"resolve": resolve,
-		}
-
-		pakage := s.findPakage(packageName)
-		if pakage == nil {
-			pakage = s.newPakage(packageName)
-		}
-		pakage.Nodes = append(pakage.Nodes, node)
-		pakage.Count = len(pakage.Nodes)
-	}
+/**
+* Head
+* @param path string
+* @param handlerFn http.HandlerFunc
+* @param packageName string
+**/
+func (r *Route) Head(path string, handlerFn http.HandlerFunc, packageName string) {
+	result := r.Server.MethodFunc(HEAD, path, handlerFn, packageName)
+	result.middlewares = append(result.middlewares, r.middlewares...)
 }
 
-func (s *HttpServer) AddHandleMethod(method, path string, handlerFn http.HandlerFunc, packageName string) {
-	node := findNode(method, s.routes.Routes)
-	if node == nil {
-		node, s.routes.Routes = newNode(method, s.routes.Routes)
-	}
-
-	tags := strings.Split(path, "/")
-	for _, tag := range tags {
-		if len(tag) > 0 {
-			find := findNode(tag, node.Nodes)
-			if find == nil {
-				node, node.Nodes = newNode(tag, node.Nodes)
-			} else {
-				node = find
-			}
-		}
-	}
-
-	if node != nil {
-		node.Resolve = et.Json{
-			"method":  method,
-			"kind":    "HANDLER",
-			"resolve": "/",
-		}
-		s.handlers[node._id] = handlerFn
-
-		pakage := s.findPakage(packageName)
-		if pakage == nil {
-			pakage = s.newPakage(packageName)
-		}
-		pakage.Nodes = append(pakage.Nodes, node)
-		pakage.Count = len(pakage.Nodes)
-	}
+/**
+* Options
+* @param path string
+* @param handlerFn http.HandlerFunc
+* @param packageName string
+**/
+func (r *Route) Options(path string, handlerFn http.HandlerFunc, packageName string) {
+	result := r.Server.MethodFunc(OPTIONS, path, handlerFn, packageName)
+	result.middlewares = append(result.middlewares, r.middlewares...)
 }
 
-// Get a route from the list
-func (s *HttpServer) GetResolve(method, path string) *Resolve {
-	node := findNode(method, s.routes.Routes)
-	if node == nil {
-		return nil
-	}
+/**
+* Patch
+* @param path string
+* @param handlerFn http.HandlerFunc
+* @param packageName string
+**/
+func (r *Route) Patch(path string, handlerFn http.HandlerFunc, packageName string) {
+	result := r.Server.MethodFunc(PATCH, path, handlerFn, packageName)
+	result.middlewares = append(result.middlewares, r.middlewares...)
+}
 
-	var result *Resolve
-	tags := strings.Split(path, "/")
-	for _, tag := range tags {
-		if len(tag) > 0 {
-			node, result = findResolve(tag, node.Nodes, result)
-			if node == nil {
-				return nil
-			}
-		}
-	}
+/**
+* Post
+* @param path string
+* @param handlerFn http.HandlerFunc
+* @param packageName string
+**/
+func (r *Route) Post(path string, handlerFn http.HandlerFunc, packageName string) {
+	result := r.Server.MethodFunc(POST, path, handlerFn, packageName)
+	result.middlewares = append(result.middlewares, r.middlewares...)
+}
 
-	if result != nil {
-		result.Resolve = node.Resolve.Str("resolve")
-		for _, param := range result.Params {
-			for key, value := range param {
-				result.Resolve = strings.Replace(result.Resolve, key, "%v", -1)
-				result.Resolve = strs.Format(result.Resolve, value)
-			}
-		}
-	}
+/**
+* Put
+* @param path string
+* @param handlerFn http.HandlerFunc
+* @param packageName string
+**/
+func (r *Route) Put(path string, handlerFn http.HandlerFunc, packageName string) {
+	result := r.Server.MethodFunc(PUT, path, handlerFn, packageName)
+	result.middlewares = append(result.middlewares, r.middlewares...)
+}
 
-	return result
+/**
+* Trace
+* @param path string
+* @param handlerFn http.HandlerFunc
+* @param packageName string
+**/
+func (r *Route) Trace(path string, handlerFn http.HandlerFunc, packageName string) {
+	result := r.Server.MethodFunc(TRACE, path, handlerFn, packageName)
+	result.middlewares = append(result.middlewares, r.middlewares...)
 }

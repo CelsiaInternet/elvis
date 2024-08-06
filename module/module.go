@@ -49,9 +49,6 @@ func DefineModules(db *sql.DB) error {
 
 		return nil
 	})
-	Modules.OnListener = func(data et.Json) {
-		console.Debug(data.ToString())
-	}
 
 	if err := Modules.Init(); err != nil {
 		return console.Panic(err)
@@ -81,9 +78,6 @@ func DefineModuleFolders(db *sql.DB) error {
 		"date_make",
 		"index",
 	})
-	Modules.OnListener = func(data et.Json) {
-		console.Debug(data.ToString())
-	}
 
 	if err := ModelFolders.Init(); err != nil {
 		return console.Panic(err)

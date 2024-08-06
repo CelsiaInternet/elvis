@@ -6,7 +6,6 @@ import (
 
 	"github.com/cgalvisleon/elvis/cache"
 	"github.com/cgalvisleon/elvis/et"
-	"github.com/cgalvisleon/elvis/logs"
 	"github.com/cgalvisleon/elvis/response"
 	"github.com/google/uuid"
 	"github.com/nats-io/nats.go"
@@ -82,69 +81,76 @@ func Stack(channel string, f func(CreatedEvenMessage)) (err error) {
 }
 
 /**
-* Event Worker
+* Worker
+* @param event string
+* @param data et.Json
 **/
-
-// Publish event
 func Worker(event string, data et.Json) {
-	// Publish event
 	go Publish("service_event", event, data)
 
-	// Publish log a eente
 	go Publish("service_event", "event/publish", et.Json{
 		"event": event,
 		"data":  data,
 	})
-
-	logs.Log("Service event", "event:", event)
 }
 
-// Publish event asigned to a worker
+/**
+* Work
+* @param worker string
+* @param work_id string
+* @param data et.Json
+**/
 func Work(worker, work_id string, data et.Json) {
 	go Publish("service_event", "event/work", et.Json{
 		"work":    worker,
 		"work_id": work_id,
 		"data":    data,
 	})
-
-	logs.Log("Service event", "worker:", worker)
 }
 
-// Publish event begin work
+/**
+* Working
+* @param worker string
+* @param work_id string
+**/
 func Working(worker, work_id string) {
 	go Publish("service_event", "event/work/begin", et.Json{
 		"worker":  worker,
 		"work_id": work_id,
 	})
-
-	logs.Log("Service event", "worker:", worker, " - worker_id:", work_id)
 }
 
-// Done work
+/**
+* Done
+* @param work_id string
+* @param event string
+**/
 func Done(work_id, event string) {
 	go Publish("service_event", "event/work/done", et.Json{
 		"work_id": work_id,
 		"event":   event,
 	})
-
-	logs.Log("Service event", "event:", event, " - worker_id:", work_id)
 }
 
-// Rejected work
+/**
+* Rejected
+* @param work_id string
+* @param event string
+**/
 func Rejected(work_id, event string) {
 	go Publish("service_event", "event/work/rejected", et.Json{
 		"work_id": work_id,
 		"event":   event,
 	})
-
-	logs.Log("Service event", "event:", event, " - worker_id:", work_id)
 }
 
+/**
+* Log
+* @param event string
+* @param data et.Json
+**/
 func Log(event string, data et.Json) {
-	// Publish event
 	go Publish("service_log", event, data)
-
-	logs.Log("Service log", "event:", event)
 }
 
 /**
@@ -164,5 +170,4 @@ func Test(w http.ResponseWriter, r *http.Request) {
 		"event":   event,
 		"message": "Event published",
 	})
-
 }

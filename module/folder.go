@@ -70,9 +70,6 @@ func DefineFolders(db *sql.DB) error {
 
 		return nil
 	})
-	Folders.OnListener = func(data et.Json) {
-		console.Debug(data.ToString())
-	}
 
 	if err := Folders.Init(); err != nil {
 		return console.Panic(err)

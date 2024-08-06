@@ -277,13 +277,17 @@ func initModels() error {
 
 const modelSchema = `package $1
 
-import "github.com/cgalvisleon/elvis/linq"
+import (
+	"database/sql"
+
+	"github.com/cgalvisleon/elvis/linq"
+)
 
 var $2 *linq.Schema
 
-func defineSchema() error {
+func defineSchema(db *sql.DB) error {
 	if $2 == nil {
-		$2 = linq.NewSchema(0, "$3", true, false, true)
+		$2 = linq.NewSchema(db, "$3")
 	}
 
 	return nil
@@ -385,7 +389,7 @@ func (c *Controller) Version(ctx context.Context) (et.Json, error) {
 }
 
 func (c *Controller) Init(ctx context.Context) {
-	initModels()
+	initModels(c.Db.Db)
 	initEvents()
 }
 
@@ -567,12 +571,13 @@ Content-Length: 227
 const modelDbHandler = `package $1
 
 import (
+	"database/sql"
+	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/cgalvisleon/elvis/cache"
 	"github.com/cgalvisleon/elvis/console"
-	"github.com/cgalvisleon/elvis/core"
-	"github.com/cgalvisleon/elvis/generic"
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/linq"
 	"github.com/cgalvisleon/elvis/msg"
@@ -583,8 +588,8 @@ import (
 
 var $2 *linq.Model
 
-func Define$2() error {
-	if err := defineSchema(); err != nil {
+func Define$2(db *sql.DB) error {
+	if err := defineSchema(db); err != nil {
 		return console.Panic(err)
 	}
 
@@ -637,7 +642,7 @@ func Define$2() error {
 		console.Debug(data.ToString())
 	}
 	
-	if err := core.InitModel($2); err != nil {
+	if err := $2.Init(); err != nil {
 		return console.Panic(err)
 	}
 

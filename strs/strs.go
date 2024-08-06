@@ -6,8 +6,6 @@ import (
 	"regexp"
 	"strings"
 	"time"
-
-	"github.com/cgalvisleon/elvis/generic"
 )
 
 func Format(format string, args ...any) string {
@@ -110,18 +108,18 @@ func Append(str1, str2, sp string) string {
 	return Format(`%s%s%s`, str1, sp, str2)
 }
 
-func AppendAny(val1, val2 any, sp string) string {
-	any1 := generic.New(val1)
-	any2 := generic.New(val2)
+func AppendAny(val1, val2 interface{}, sp string) interface{} {
+	str1 := fmt.Sprintf(`%v`, val1)
+	str2 := fmt.Sprintf(`%v`, val2)
 
-	if len(any1.Str()) == 0 {
-		return any2.Str()
+	if len(str1) == 0 {
+		return val2
 	}
-	if len(any2.Str()) == 0 {
-		return any1.Str()
+	if len(str2) == 0 {
+		return val1
 	}
 
-	return Format(`%v%s%v`, any1, sp, any2)
+	return Format(`%v%s%v`, val1, sp, val2)
 }
 
 func Split(str, sep string) []string {

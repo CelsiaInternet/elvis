@@ -10,6 +10,7 @@ import (
 )
 
 type Resolute struct {
+	Server     *HttpServer
 	Method     string
 	Proto      string
 	Path       string
@@ -37,6 +38,7 @@ func GetResolute(r *http.Request) *Resolute {
 	}
 
 	return &Resolute{
+		Server:     conn.http,
 		Method:     r.Method,
 		Proto:      r.Proto,
 		Path:       r.URL.Path,
@@ -53,21 +55,21 @@ func GetResolute(r *http.Request) *Resolute {
 	}
 }
 
-func (r *Resolute) ToString() string {
+func (rs *Resolute) ToString() string {
 	j := et.Json{
-		"Method":     r.Method,
-		"Proto":      r.Proto,
-		"Path":       r.Path,
-		"RawQuery":   r.RawQuery,
-		"Query":      r.Query,
-		"RequestURI": r.RequestURI,
-		"RemoteAddr": r.RemoteAddr,
-		"Header":     r.Header,
-		"Body":       r.Body,
-		"Host":       r.Host,
-		"Scheme":     r.Scheme,
-		"Resolve":    r.Resolve,
-		"URL":        r.URL,
+		"Method":     rs.Method,
+		"Proto":      rs.Proto,
+		"Path":       rs.Path,
+		"RawQuery":   rs.RawQuery,
+		"Query":      rs.Query,
+		"RequestURI": rs.RequestURI,
+		"RemoteAddr": rs.RemoteAddr,
+		"Header":     rs.Header,
+		"Body":       rs.Body,
+		"Host":       rs.Host,
+		"Scheme":     rs.Scheme,
+		"Resolve":    rs.Resolve,
+		"URL":        rs.URL,
 	}
 
 	return j.ToString()

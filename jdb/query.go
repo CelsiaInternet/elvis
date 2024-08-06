@@ -165,3 +165,65 @@ func SourceOne(db *sql.DB, sourceField string, sql string, args ...any) (et.Item
 
 	return item, nil
 }
+
+/**
+* DBQuery
+* @param sql string
+* @param args ...any
+* @return et.Items
+* @return error
+**/
+func DBQuery(sql string, args ...any) (et.Items, error) {
+	if conn == nil {
+		return et.Items{}, console.AlertF(msg.ERR_COMM)
+	}
+
+	return Query(conn.Db, sql, args...)
+}
+
+/**
+* DBQueryOne
+* @param sql string
+* @param args ...any
+* @return et.Item
+* @return error
+**/
+func DBQueryOne(sql string, args ...any) (et.Item, error) {
+	if conn == nil {
+		return et.Item{}, console.AlertF(msg.ERR_COMM)
+	}
+
+	return QueryOne(conn.Db, sql, args...)
+}
+
+/**
+* DBSource
+* @param sourceField string
+* @param sql string
+* @param args ...any
+* @return et.Items
+* @return error
+**/
+func DBSource(sourceField string, sql string, args ...any) (et.Items, error) {
+	if conn == nil {
+		return et.Items{}, console.AlertF(msg.ERR_COMM)
+	}
+
+	return Source(conn.Db, sourceField, sql, args...)
+}
+
+/**
+* DBSourceOne
+* @param sourceField string
+* @param sql string
+* @param args ...any
+* @return et.Item
+* @return error
+**/
+func DBSourceOne(sourceField string, sql string, args ...any) (et.Item, error) {
+	if conn == nil {
+		return et.Item{}, console.AlertF(msg.ERR_COMM)
+	}
+
+	return SourceOne(conn.Db, sourceField, sql, args...)
+}

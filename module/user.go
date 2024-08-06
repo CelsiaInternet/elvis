@@ -86,9 +86,6 @@ func DefineUsers(db *sql.DB) error {
 		}
 		return nil
 	})
-	Users.OnListener = func(data et.Json) {
-		console.Log(data)
-	}
 
 	if err := Users.Init(); err != nil {
 		return console.Panic(err)

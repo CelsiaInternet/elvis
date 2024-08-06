@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cgalvisleon/elvis/generic"
 	"github.com/cgalvisleon/elvis/logs"
 	"github.com/cgalvisleon/elvis/strs"
 )
@@ -292,9 +291,9 @@ func (s Json) ValJson(_default Json, atribs ...string) Json {
 		return _default
 	}
 }
-func (s Json) Any(_default any, atribs ...string) *generic.Any {
+func (s Json) Any(_default any, atribs ...string) *Any {
 	result := Val(s, _default, atribs...)
-	return generic.New(result)
+	return NewAny(result)
 }
 
 func (s Json) Id() string {

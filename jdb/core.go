@@ -34,6 +34,10 @@ func InitCore(db *sql.DB) error {
 		return err
 	}
 
+	if err := defineVars(db); err != nil {
+		return err
+	}
+
 	makedCore = true
 
 	console.LogK("CORE", "Init core")

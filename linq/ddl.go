@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"github.com/cgalvisleon/elvis/et"
-	"github.com/cgalvisleon/elvis/generic"
 	"github.com/cgalvisleon/elvis/jdb"
 	"github.com/cgalvisleon/elvis/strs"
 )
@@ -12,7 +11,7 @@ import (
 func ddlColumn(col *Column) string {
 	var result string
 
-	_default := generic.New(col.Default)
+	_default := et.NewAny(col.Default)
 
 	if _default.Str() == "NOW()" {
 		result = strs.Append(`DEFAULT NOW()`, result, " ")
@@ -33,17 +32,13 @@ func ddlColumn(col *Column) string {
 }
 
 func ddlIndex(col *Column) string {
-	var result string
-
-	result = jdb.SQLDDL(`CREATE INDEX IF NOT EXISTS $2_$3_$4_IDX ON $1($4);`, col.Model.Table, strs.Uppcase(col.Model.Schema.Name), col.Model.Name, strs.Uppcase(col.name))
+	result := jdb.SQLDDL(`CREATE INDEX IF NOT EXISTS $2_$3_$4_IDX ON $1($4);`, col.Model.Table, strs.Uppcase(col.Model.Schema.Name), col.Model.Name, strs.Uppcase(col.name))
 
 	return result
 }
 
 func ddlUniqueIndex(col *Column) string {
-	var result string
-
-	result = jdb.SQLDDL(`CREATE UNIQUE INDEX IF NOT EXISTS $2_$3_$4_IDX ON $1($4);`, col.Model.Table, strs.Uppcase(col.Model.Schema.Name), col.Model.Name, strs.Uppcase(col.name))
+	result := jdb.SQLDDL(`CREATE UNIQUE INDEX IF NOT EXISTS $2_$3_$4_IDX ON $1($4);`, col.Model.Table, strs.Uppcase(col.Model.Schema.Name), col.Model.Name, strs.Uppcase(col.name))
 
 	return result
 }

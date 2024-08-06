@@ -49,9 +49,6 @@ func DefineProjects(db *sql.DB) error {
 
 		return nil
 	})
-	Projects.OnListener = func(data et.Json) {
-		console.Debug(data.ToString())
-	}
 
 	if err := Projects.Init(); err != nil {
 		return console.Panic(err)
@@ -81,9 +78,6 @@ func DefineProjectModules(db *sql.DB) error {
 		"date_make",
 		"index",
 	})
-	ProjectModules.OnListener = func(data et.Json) {
-		console.Debug(data.ToString())
-	}
 
 	if err := ProjectModules.Init(); err != nil {
 		return console.Panic(err)

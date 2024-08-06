@@ -17,8 +17,6 @@ import (
 	"github.com/shirou/gopsutil/v3/mem"
 )
 
-var DefaultTelemetry func(next http.Handler) http.Handler
-
 type Metrics struct {
 	ReqID            string
 	TimeBegin        time.Time
@@ -28,6 +26,11 @@ type Metrics struct {
 	ResponseTime     time.Duration
 	Downtime         time.Duration
 	Latency          time.Duration
+	StatusCode       int
+	Status           string
+	ContentLength    int64
+	Header           http.Header
+	Host             string
 	NotFount         bool
 	EndPoint         string
 	Method           string
@@ -52,7 +55,7 @@ type Request struct {
 	Limit   int
 }
 
-func CallRequests(tag string) Request {
+func callRequests(tag string) Request {
 	return Request{
 		Tag:     tag,
 		Day:     cache.More(strs.Format(`%s-%d`, tag, time.Now().Unix()/86400), 86400),
@@ -70,7 +73,15 @@ func NewMetric(r *http.Request) *Metrics {
 	result.EndPoint = r.URL.Path
 	result.Method = r.Method
 	result.Proto = r.Proto
-	result.RemoteAddr = r.RemoteAddr
+	result.RemoteAddr = r.Header.Get("X-Forwarded-For")
+	if result.RemoteAddr == "" {
+		result.RemoteAddr = r.Header.Get("X-Real-IP")
+	}
+	if result.RemoteAddr == "" {
+		result.RemoteAddr = r.RemoteAddr
+	} else {
+		result.RemoteAddr = strs.Split(result.RemoteAddr, ",")[0]
+	}
 	result.HostName, _ = os.Hostname()
 	memory, err := mem.VirtualMemory()
 	if err != nil {
@@ -84,8 +95,8 @@ func NewMetric(r *http.Request) *Metrics {
 		result.MFree = memory.Total - memory.Used
 		result.PFree = float64(result.MFree) / float64(result.MTotal) * 100
 	}
-	result.RequestsHost = CallRequests(result.HostName)
-	result.RequestsEndpoint = CallRequests(result.EndPoint)
+	result.RequestsHost = callRequests(result.HostName)
+	result.RequestsEndpoint = callRequests(result.EndPoint)
 	result.Scheme = "http"
 	if r.TLS != nil {
 		result.Scheme = "https"
@@ -94,37 +105,36 @@ func NewMetric(r *http.Request) *Metrics {
 	return result
 }
 
-func (m *Metrics) done(res *http.Response) et.Json {
-	m.TimeEnd = time.Now()
-	m.ResponseTime = time.Since(m.TimeExec)
-	m.Latency = time.Since(m.TimeBegin)
-
+func (m *Metrics) println() et.Json {
 	w := logs.Color(logs.NMagenta, fmt.Sprintf(" [%s]: ", m.Method))
 	logs.CW(w, logs.NCyan, fmt.Sprintf("%s %s", m.EndPoint, m.Proto))
 	logs.CW(w, logs.NWhite, fmt.Sprintf(" from %s", m.RemoteAddr))
-	if res.StatusCode >= 500 {
-		logs.CW(w, logs.NRed, fmt.Sprintf(" - %s", res.Status))
-	} else if res.StatusCode >= 400 {
-		logs.CW(w, logs.NYellow, fmt.Sprintf(" - %s", res.Status))
-	} else if res.StatusCode >= 300 {
-		logs.CW(w, logs.NCyan, fmt.Sprintf(" - %s", res.Status))
+	if m.StatusCode >= 500 {
+		logs.CW(w, logs.NRed, fmt.Sprintf(" - %s", m.Status))
+	} else if m.StatusCode >= 400 {
+		logs.CW(w, logs.NYellow, fmt.Sprintf(" - %s", m.Status))
+	} else if m.StatusCode >= 300 {
+		logs.CW(w, logs.NCyan, fmt.Sprintf(" - %s", m.Status))
 	} else {
-		logs.CW(w, logs.NGreen, fmt.Sprintf(" - %s", res.Status))
+		logs.CW(w, logs.NGreen, fmt.Sprintf(" - %s", m.Status))
 	}
 	if m.NotFount {
-		logs.CW(w, logs.NWhite, " Not Found ")
+		logs.CW(w, logs.NWhite, " Not Found")
 	} else {
-		logs.CW(w, logs.NWhite, " Found ")
+		logs.CW(w, logs.NWhite, " Found")
 	}
-	logs.CW(w, logs.NCyan, fmt.Sprintf(" %v%s", res.ContentLength, "KB"))
+	if m.ContentLength > 0 {
+		logs.CW(w, logs.NCyan, fmt.Sprintf(" %v%s", m.ContentLength, "KB"))
+	}
 	logs.CW(w, logs.NWhite, " in ")
 	if m.Latency < 500*time.Millisecond {
-		logs.CW(w, logs.NGreen, "%s", m.Latency)
+		logs.CW(w, logs.NGreen, "Latency:%s", m.Latency)
 	} else if m.Latency < 5*time.Second {
-		logs.CW(w, logs.NYellow, "%s", m.Latency)
+		logs.CW(w, logs.NYellow, "Latency:%s", m.Latency)
 	} else {
-		logs.CW(w, logs.NRed, "%s", m.Latency)
+		logs.CW(w, logs.NRed, "Latency:%s", m.Latency)
 	}
+	logs.CW(w, logs.NWhite, " Response:%s", m.ResponseTime)
 	logs.CW(w, logs.NRed, " Downtime:%s", m.Downtime)
 	if m.RequestsHost.Seccond > m.RequestsHost.Limit {
 		logs.CW(w, logs.NRed, " - Request S:%vM:%vH:%vL:%v", m.RequestsHost.Seccond, m.RequestsHost.Minute, m.RequestsHost.Hour, m.RequestsHost.Limit)
@@ -146,11 +156,11 @@ func (m *Metrics) done(res *http.Response) et.Json {
 		"request": et.Json{
 			"end_point": m.EndPoint,
 			"method":    m.Method,
-			"status":    res.Status,
-			"bytes":     res.ContentLength,
-			"header":    res.Header,
+			"status":    m.Status,
+			"bytes":     m.ContentLength,
+			"header":    m.Header,
 			"scheme":    m.Scheme,
-			"host":      res.Request.Host,
+			"host":      m.Host,
 		},
 		"memory": et.Json{
 			"unity":        "MB",
@@ -186,78 +196,29 @@ func (m *Metrics) done(res *http.Response) et.Json {
 	return result
 }
 
-func (m *Metrics) notFounder(r *http.Request) et.Json {
-	m.NotFount = true
+func (m *Metrics) done(res *http.Response) et.Json {
 	m.TimeEnd = time.Now()
 	m.ResponseTime = time.Since(m.TimeExec)
 	m.Latency = time.Since(m.TimeBegin)
+	m.Downtime = m.SearchTime - m.ResponseTime
+	m.StatusCode = res.StatusCode
+	m.Status = res.Status
+	m.ContentLength = res.ContentLength
+	m.Header = res.Header
+	m.Host = res.Request.Host
 
-	w := logs.Color(logs.NMagenta, fmt.Sprintf(" [%s]: ", m.Method))
-	logs.CW(w, logs.NCyan, m.Proto)
-	logs.CW(w, logs.NWhite, fmt.Sprintf(" %s from %s", r.RequestURI, m.RemoteAddr))
-	logs.CW(w, logs.NYellow, " - 404")
-	if m.NotFount {
-		logs.CW(w, logs.NWhite, " Not Found")
-	} else {
-		logs.CW(w, logs.NWhite, " Found")
-	}
-	logs.CW(w, logs.NWhite, " in ")
-	if m.Latency < 500*time.Millisecond {
-		logs.CW(w, logs.NGreen, "%s", m.Latency)
-	} else if m.Latency < 5*time.Second {
-		logs.CW(w, logs.NYellow, "%s", m.Latency)
-	} else {
-		logs.CW(w, logs.NRed, "%s", m.Latency)
-	}
-	logs.CW(w, logs.NRed, " Downtime:%s", m.Downtime)
-	logs.Println(w)
+	return m.println()
+}
 
-	result := et.Json{
-		"reqID":         m.ReqID,
-		"time_begin":    m.TimeBegin,
-		"time_end":      m.TimeEnd,
-		"time_exec":     m.TimeExec,
-		"latency":       m.Latency,
-		"search_time":   m.SearchTime,
-		"response_time": m.ResponseTime,
-		"host_name":     m.HostName,
-		"remote_addr":   m.RemoteAddr,
-		"request": et.Json{
-			"end_point": m.EndPoint,
-			"method":    m.Method,
-			"status":    http.StatusNotFound,
-			"scheme":    m.Scheme,
-		},
-		"memory": et.Json{
-			"unity":        "MB",
-			"total":        m.MTotal / 1024 / 1024,
-			"used":         m.MUsed / 1024 / 1024,
-			"free":         m.MFree / 1024 / 1024,
-			"percent_free": math.Floor(m.PFree*100) / 100,
-		},
-		"request_host": et.Json{
-			"host":   m.RequestsHost.Tag,
-			"day":    m.RequestsHost.Day,
-			"hour":   m.RequestsHost.Hour,
-			"minute": m.RequestsHost.Minute,
-			"second": m.RequestsHost.Seccond,
-			"limit":  m.RequestsHost.Limit,
-		},
-		"requests_endpoint": et.Json{
-			"endpoint": m.RequestsEndpoint.Tag,
-			"day":      m.RequestsEndpoint.Day,
-			"hour":     m.RequestsEndpoint.Hour,
-			"minute":   m.RequestsEndpoint.Minute,
-			"second":   m.RequestsEndpoint.Seccond,
-			"limit":    m.RequestsEndpoint.Limit,
-		},
-	}
+func (m *Metrics) summary(res *http.Request) et.Json {
+	m.TimeEnd = time.Now()
+	m.ResponseTime = time.Since(m.TimeExec)
+	m.Latency = time.Since(m.TimeBegin)
+	m.Downtime = m.SearchTime - m.ResponseTime
+	m.StatusCode = http.StatusOK
+	m.Status = http.StatusText(http.StatusOK)
+	m.Header = res.Header
+	m.Host = res.Host
 
-	go event.Log("telemetry", result)
-
-	if m.RequestsHost.Seccond > m.RequestsHost.Limit {
-		go event.Log("requests/overflow", result)
-	}
-
-	return result
+	return m.println()
 }

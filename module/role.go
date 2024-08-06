@@ -37,9 +37,6 @@ func DefineRoles(db *sql.DB) error {
 		"profile_tp",
 		"index",
 	})
-	Roles.OnListener = func(data et.Json) {
-		console.Debug(data.ToString())
-	}
 
 	if err := Roles.Init(); err != nil {
 		return console.Panic(err)

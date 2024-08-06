@@ -43,9 +43,6 @@ func DefineTypes(db *sql.DB) error {
 		"name",
 		"index",
 	})
-	Types.OnListener = func(data et.Json) {
-		console.Debug(data.ToString())
-	}
 
 	if err := Types.Init(); err != nil {
 		return console.Panic(err)

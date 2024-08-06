@@ -37,9 +37,6 @@ func DefineProfiles(db *sql.DB) error {
 		"index",
 	})
 	Profiles.DefineForeignKey("module_id", Modules.Column("_id"))
-	Profiles.OnListener = func(data et.Json) {
-		console.Debug(data.ToString())
-	}
 
 	if err := Profiles.Init(); err != nil {
 		return console.Panic(err)
@@ -70,9 +67,6 @@ func DefineProfileFolders(db *sql.DB) error {
 	})
 	ProfileFolders.DefineForeignKey("module_id", Modules.Column("_id"))
 	ProfileFolders.DefineForeignKey("folder_id", Folders.Column("_id"))
-	ProfileFolders.OnListener = func(data et.Json) {
-		console.Debug(data.ToString())
-	}
 
 	if err := ProfileFolders.Init(); err != nil {
 		return console.Panic(err)

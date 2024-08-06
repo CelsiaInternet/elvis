@@ -1,17 +1,11 @@
 package middleware
 
 import (
+	"context"
 	"net/http"
-)
 
-// New will create a new middleware handler from a http.Handler.
-func New(h http.Handler) func(next http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			h.ServeHTTP(w, r)
-		})
-	}
-}
+	"github.com/cgalvisleon/elvis/logs"
+)
 
 // contextKey is a value for use with context.WithValue. It's used as
 // a pointer so it fits in an interface{} without allocation. This technique
@@ -22,4 +16,14 @@ type contextKey struct {
 
 func (k *contextKey) String() string {
 	return "elvis/middleware context value " + k.name
+}
+
+func Test(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		ctx = context.WithValue(ctx, "app", "elvis")
+		logs.Debug("middleware.Middleware next.ServeHTTP")
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }

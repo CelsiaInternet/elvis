@@ -140,13 +140,15 @@ func LastSerie(tag string) int {
 	return result
 }
 
-func UUIndex(db *sql.DB, tag string) (int64, error) {
+func UUIndex(db *sql.DB, tag string) int64 {
 	now := time.Now()
 	result := now.UnixMilli() * 10000
-	replica, err := getVarInt(db, "REPLICA", 1)
+	val, err := GetVar(db, "REPLICA", 1)
 	if err != nil {
-		return 0, err
+		return 0
 	}
+
+	replica := int64(val.Int())
 
 	if replica < 10 {
 		replica = replica * 1000
@@ -161,5 +163,5 @@ func UUIndex(db *sql.DB, tag string) (int64, error) {
 	count := cache.Count(key, 1)
 
 	result = result + count
-	return result, nil
+	return result
 }

@@ -92,9 +92,6 @@ func DefineTokens(db *sql.DB) error {
 		data.Set(col.Low(), newToken)
 		data.Set("long_token", token)
 	})
-	Tokens.OnListener = func(data et.Json) {
-		console.Debug(data.ToString())
-	}
 
 	if err := Tokens.Init(); err != nil {
 		return console.Panic(err)
@@ -106,8 +103,7 @@ func DefineTokens(db *sql.DB) error {
 }
 
 func loadToken(token *Token) error {
-	key := claim.TokenKey(token.App, token.Device, token.Id)
-	err := cache.Set(key, token.Token, 0)
+	err := claim.SetToken(token.App, token.Device, token.Id, token.Token)
 	if err != nil {
 		return err
 	}

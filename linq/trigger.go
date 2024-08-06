@@ -18,7 +18,7 @@ func beforeInsert(model *Model, old, new *et.Json, data et.Json) error {
 	}
 
 	if model.UseSerie {
-		index := jdb.UUIndex(model.Table)
+		index := jdb.UUIndex(model.Db, model.Table)
 		new.Set(model.SerieField, index)
 	}
 

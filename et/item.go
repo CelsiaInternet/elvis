@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cgalvisleon/elvis/generic"
 	"github.com/cgalvisleon/elvis/logs"
 	"github.com/cgalvisleon/elvis/strs"
 )
@@ -105,7 +104,7 @@ func (it *Item) IsChange(new Json) bool {
 	return IsChange(it.Result, new)
 }
 
-func (it *Item) Any(_default any, atribs ...string) *generic.Any {
+func (it *Item) Any(_default any, atribs ...string) *Any {
 	return it.Result.Any(_default, atribs...)
 }
 

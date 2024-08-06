@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/cgalvisleon/elvis/et"
-	"github.com/cgalvisleon/elvis/generic"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -58,9 +57,9 @@ func GetQuery(r *http.Request) et.Json {
 	return result
 }
 
-func GetParam(r *http.Request, key string) *generic.Any {
+func GetParam(r *http.Request, key string) *et.Any {
 	val := chi.URLParam(r, key)
-	result := generic.New(val)
+	result := et.NewAny(val)
 
 	return result
 }

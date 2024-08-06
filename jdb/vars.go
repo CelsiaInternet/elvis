@@ -2,7 +2,8 @@ package jdb
 
 import (
 	"database/sql"
-	"strconv"
+
+	"github.com/cgalvisleon/elvis/et"
 )
 
 /**
@@ -72,7 +73,7 @@ func initVar(db *sql.DB, name string, value string) error {
 * @param value string
 * @return error
 **/
-func setVar(db *sql.DB, name string, value string) error {
+func SetVar(db *sql.DB, name string, value string) error {
 	sql := `
 	INSERT INTO core.VARS (VAR, VALUE)
 	VALUES ($1, $2)
@@ -95,7 +96,9 @@ func setVar(db *sql.DB, name string, value string) error {
 * @return string
 * @return error
 **/
-func getVar(db *sql.DB, name, def string) (string, error) {
+func GetVar(db *sql.DB, name, def any) (*et.Any, error) {
+	result := et.NewAny(def)
+
 	sql := `
 	SELECT VALUE
 	FROM core.VARS
@@ -103,36 +106,15 @@ func getVar(db *sql.DB, name, def string) (string, error) {
 
 	item, err := QueryOne(db, sql, name)
 	if err != nil {
-		return def, err
+		return result, err
 	}
 
 	if !item.Ok {
-		return def, nil
+		return result, nil
 	}
 
-	result := item.ValStr(def, "value")
-
-	return result, nil
-}
-
-/**
-* getVarInt set a var
-* @param db *sql.DB
-* @param name int64
-* @param def int64
-* @return int64
-* @return error
-**/
-func getVarInt(db *sql.DB, name string, def int64) (int64, error) {
-	value, err := getVar(db, name, "0")
-	if err != nil {
-		return def, err
-	}
-
-	result, err := strconv.ParseInt(value, 10, 64)
-	if err != nil {
-		return def, err
-	}
+	val := item.ValStr(result.Str(), "value")
+	result.Set(val)
 
 	return result, nil
 }
@@ -143,7 +125,7 @@ func getVarInt(db *sql.DB, name string, def int64) (int64, error) {
 * @param name string
 * @return error
 **/
-func delVar(db *sql.DB, name string) error {
+func DelVar(db *sql.DB, name string) error {
 	sql := `
 	DELETE FROM core.VARS
 	WHERE VAR = $1;`

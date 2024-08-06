@@ -2,12 +2,14 @@ package cache
 
 import (
 	"context"
+	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/logs"
 	"github.com/cgalvisleon/elvis/msg"
+	"github.com/cgalvisleon/elvis/response"
 	"github.com/cgalvisleon/elvis/strs"
 	"github.com/redis/go-redis/v9"
 )
@@ -550,4 +552,60 @@ func GetItems(key string) (et.Items, error) {
 	}
 
 	return result, nil
+}
+
+/**
+* HandlerAll
+* @params w http.ResponseWriter
+* @params r *http.Request
+**/
+func HandlerAll(w http.ResponseWriter, r *http.Request) {
+	query := response.GetQuery(r)
+	search := query.Str("search")
+	page := query.ValInt(1, "page")
+	rows := query.ValInt(30, "rows")
+
+	result, err := AllCache(search, page, rows)
+	if logs.Alert(err) != nil {
+		response.HTTPError(w, r, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	response.JSON(w, r, http.StatusOK, result)
+}
+
+/**
+* HandlerGet
+* @params w http.ResponseWriter
+* @params r *http.Request
+**/
+func HandlerGet(w http.ResponseWriter, r *http.Request) {
+	query := response.GetQuery(r)
+	key := query.Str("key")
+
+	result, err := Get(key, "")
+	if logs.Alert(err) != nil {
+		response.HTTPError(w, r, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	response.JSON(w, r, http.StatusOK, result)
+}
+
+/**
+* HandlerDel
+* @params w http.ResponseWriter
+* @params r *http.Request
+**/
+func HandlerDel(w http.ResponseWriter, r *http.Request) {
+	query := response.GetQuery(r)
+	key := query.Str("key")
+
+	result, err := Del(key)
+	if logs.Alert(err) != nil {
+		response.HTTPError(w, r, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	response.JSON(w, r, http.StatusOK, result)
 }
