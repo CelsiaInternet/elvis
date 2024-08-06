@@ -11,31 +11,6 @@ import (
 	"github.com/cgalvisleon/elvis/response"
 )
 
-type ResponseWriterWrapper struct {
-	http.ResponseWriter
-	statusCode int
-	size       int
-}
-
-/**
-* WriteHeader
-* @params statusCode int
-**/
-func (rw *ResponseWriterWrapper) WriteHeader(statusCode int) {
-	rw.statusCode = statusCode
-	rw.ResponseWriter.WriteHeader(statusCode)
-}
-
-/**
-* Write
-* @params b []byte
-**/
-func (rw *ResponseWriterWrapper) Write(b []byte) (int, error) {
-	size, err := rw.ResponseWriter.Write(b)
-	rw.size += size
-	return size, err
-}
-
 /**
 * version
 * @params w http.ResponseWriter
@@ -107,7 +82,7 @@ func handlerFn(w http.ResponseWriter, r *http.Request) {
 
 func handlerExec(w http.ResponseWriter, r *http.Request) {
 	// Begin telemetry
-	metric := NewMetric(r)
+	metric := middleware.NewMetric(r)
 
 	// Get resolute
 	resolute := GetResolute(r)
@@ -116,19 +91,10 @@ func handlerExec(w http.ResponseWriter, r *http.Request) {
 	metric.SearchTime = time.Since(metric.TimeBegin)
 	metric.TimeExec = time.Now()
 
-	handlerExec := func(handler http.HandlerFunc, w http.ResponseWriter, r *http.Request) {
-		rw := &ResponseWriterWrapper{ResponseWriter: w}
-		handler(rw, r)
-		metric.ContentLength = int64(rw.size)
-		metric.summary(r)
-	}
-
 	// If not found
 	if resolute.Resolve == nil || resolute.URL == "" {
-		metric.Downtime = time.Since(metric.TimeBegin)
-		metric.NotFount = true
 		r.RequestURI = fmt.Sprintf(`%s://%s%s`, resolute.Scheme, resolute.Host, resolute.Path)
-		handlerExec(conn.http.notFoundHandler, w, r)
+		metric.NotFound(conn.http.notFoundHandler, w, r)
 		return
 	}
 
@@ -138,12 +104,12 @@ func handlerExec(w http.ResponseWriter, r *http.Request) {
 		metric.Downtime = time.Since(metric.TimeBegin)
 		handler := conn.http.handlers[resolute.Resolve.Route._id]
 		if handler == nil {
-			metric.NotFount = true
-			handlerExec(conn.http.notFoundHandler, w, r)
+			r.RequestURI = fmt.Sprintf(`%s://%s%s`, resolute.Scheme, resolute.Host, resolute.Path)
+			metric.NotFound(conn.http.notFoundHandler, w, r)
 			return
 		}
 
-		handlerExec(handler, w, r)
+		metric.Handler(handler, w, r)
 		return
 	}
 
@@ -164,7 +130,7 @@ func handlerExec(w http.ResponseWriter, r *http.Request) {
 	}
 
 	defer func() {
-		go metric.done(res)
+		go metric.Done(res)
 		res.Body.Close()
 	}()
 

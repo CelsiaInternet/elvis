@@ -3,7 +3,6 @@ package claim
 import (
 	"context"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/cgalvisleon/elvis/cache"
@@ -203,46 +202,6 @@ func ParceToken(tokenString string) (*Claim, error) {
 		Device:   device,
 		Duration: duration,
 	}, nil
-}
-
-/**
-* tokenFromAuthorization
-* @param authorization string
-* @return string
-* @return error
-**/
-func tokenFromAuthorization(authorization string) (string, error) {
-	if authorization == "" {
-		return "", console.Alert("Autorization is required")
-	}
-
-	if !strings.HasPrefix(authorization, "Bearer") {
-		return "", console.Alert("Invalid autorization format")
-	}
-
-	l := strings.Split(authorization, " ")
-	if len(l) != 2 {
-		return "", console.Alert("Invalid autorization format")
-	}
-
-	return l[1], nil
-}
-
-/**
-* GetAuthorization
-* @param w http.ResponseWriter
-* @param r *http.Request
-* @return string
-* @return error
-**/
-func GetAuthorization(w http.ResponseWriter, r *http.Request) (string, error) {
-	authorization := r.Header.Get("Authorization")
-	result, err := tokenFromAuthorization(authorization)
-	if err != nil {
-		return "", err
-	}
-
-	return result, nil
 }
 
 /**

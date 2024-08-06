@@ -1,4 +1,4 @@
-package gateway
+package middleware
 
 import (
 	"fmt"
@@ -7,15 +7,39 @@ import (
 	"os"
 	"time"
 
-	"github.com/cgalvisleon/elvis/cache"
-	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/event"
 	"github.com/cgalvisleon/elvis/logs"
+	"github.com/cgalvisleon/elvis/response"
 	"github.com/cgalvisleon/elvis/strs"
 	"github.com/cgalvisleon/elvis/utility"
 	"github.com/shirou/gopsutil/v3/mem"
 )
+
+type ResponseWriterWrapper struct {
+	http.ResponseWriter
+	StatusCode int
+	Size       int
+}
+
+/**
+* WriteHeader
+* @params statusCode int
+**/
+func (rw *ResponseWriterWrapper) WriteHeader(statusCode int) {
+	rw.StatusCode = statusCode
+	rw.ResponseWriter.WriteHeader(statusCode)
+}
+
+/**
+* Write
+* @params b []byte
+**/
+func (rw *ResponseWriterWrapper) Write(b []byte) (int, error) {
+	size, err := rw.ResponseWriter.Write(b)
+	rw.Size += size
+	return size, err
+}
 
 type Metrics struct {
 	ReqID            string
@@ -31,7 +55,6 @@ type Metrics struct {
 	ContentLength    int64
 	Header           http.Header
 	Host             string
-	NotFount         bool
 	EndPoint         string
 	Method           string
 	RemoteAddr       string
@@ -44,26 +67,6 @@ type Metrics struct {
 	RequestsHost     Request
 	RequestsEndpoint Request
 	Scheme           string
-}
-
-type Request struct {
-	Tag     string
-	Day     int
-	Hour    int
-	Minute  int
-	Seccond int
-	Limit   int
-}
-
-func callRequests(tag string) Request {
-	return Request{
-		Tag:     tag,
-		Day:     cache.More(strs.Format(`%s-%d`, tag, time.Now().Unix()/86400), 86400),
-		Hour:    cache.More(strs.Format(`%s-%d`, tag, time.Now().Unix()/3600), 3600),
-		Minute:  cache.More(strs.Format(`%s-%d`, tag, time.Now().Unix()/60), 60),
-		Seccond: cache.More(strs.Format(`%s-%d`, tag, time.Now().Unix()/1), 1),
-		Limit:   envar.EnvarInt(400, "REQUESTS_LIMIT"),
-	}
 }
 
 func NewMetric(r *http.Request) *Metrics {
@@ -117,11 +120,6 @@ func (m *Metrics) println() et.Json {
 		logs.CW(w, logs.NCyan, fmt.Sprintf(" - %s", m.Status))
 	} else {
 		logs.CW(w, logs.NGreen, fmt.Sprintf(" - %s", m.Status))
-	}
-	if m.NotFount {
-		logs.CW(w, logs.NWhite, " Not Found")
-	} else {
-		logs.CW(w, logs.NWhite, " Found")
 	}
 	if m.ContentLength > 0 {
 		logs.CW(w, logs.NCyan, fmt.Sprintf(" %v%s", m.ContentLength, "KB"))
@@ -196,7 +194,7 @@ func (m *Metrics) println() et.Json {
 	return result
 }
 
-func (m *Metrics) done(res *http.Response) et.Json {
+func (m *Metrics) Done(res *http.Response) et.Json {
 	m.TimeEnd = time.Now()
 	m.ResponseTime = time.Since(m.TimeExec)
 	m.Latency = time.Since(m.TimeBegin)
@@ -210,15 +208,52 @@ func (m *Metrics) done(res *http.Response) et.Json {
 	return m.println()
 }
 
-func (m *Metrics) summary(res *http.Request) et.Json {
+func (m *Metrics) Summary(res *http.Request) et.Json {
 	m.TimeEnd = time.Now()
 	m.ResponseTime = time.Since(m.TimeExec)
 	m.Latency = time.Since(m.TimeBegin)
 	m.Downtime = m.SearchTime - m.ResponseTime
-	m.StatusCode = http.StatusOK
-	m.Status = http.StatusText(http.StatusOK)
+	m.StatusCode = res.Response.StatusCode
+	m.Status = http.StatusText(res.Response.StatusCode)
 	m.Header = res.Header
 	m.Host = res.Host
 
 	return m.println()
+}
+
+func (m *Metrics) Unauthorized(w http.ResponseWriter, r *http.Request) {
+	rw := &ResponseWriterWrapper{ResponseWriter: w, StatusCode: http.StatusUnauthorized}
+	r.Response = &http.Response{
+		StatusCode: rw.StatusCode,
+		Header:     rw.Header(),
+	}
+	m.SearchTime = time.Since(m.TimeBegin)
+	m.TimeExec = time.Now()
+	m.ContentLength = int64(rw.Size)
+	response.HTTPError(w, r, http.StatusUnauthorized, "401 Unauthorized")
+	go m.Summary(r)
+}
+
+func (m *Metrics) NotFound(handler http.HandlerFunc, w http.ResponseWriter, r *http.Request) {
+	m.Downtime = time.Since(m.TimeBegin)
+	rw := &ResponseWriterWrapper{ResponseWriter: w, StatusCode: http.StatusNotFound}
+	r.Response = &http.Response{
+		StatusCode: rw.StatusCode,
+		Header:     rw.Header(),
+	}
+	handler(rw, r)
+	m.ContentLength = int64(rw.Size)
+	go m.Summary(r)
+}
+
+func (m *Metrics) Handler(handler http.HandlerFunc, w http.ResponseWriter, r *http.Request) {
+	m.Downtime = time.Since(m.TimeBegin)
+	rw := &ResponseWriterWrapper{ResponseWriter: w, StatusCode: http.StatusOK}
+	r.Response = &http.Response{
+		StatusCode: rw.StatusCode,
+		Header:     rw.Header(),
+	}
+	handler(rw, r)
+	m.ContentLength = int64(rw.Size)
+	go m.Summary(r)
 }

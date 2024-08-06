@@ -74,8 +74,8 @@ func RequestLogger(f LogFormatter) func(next http.Handler) http.Handler {
 			mUsed = memory.Used
 			mFree = memory.Total - memory.Used
 			pFree := float64(mFree) / float64(mTotal) * 100
-			requests_host := CallRequests(hostName)
-			requests_endpoint := CallRequests(endPoint)
+			requests_host := localRequests(hostName)
+			requests_endpoint := localRequests(endPoint)
 			scheme := "http"
 			if r.TLS != nil {
 				scheme = "https"

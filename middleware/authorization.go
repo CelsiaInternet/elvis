@@ -4,11 +4,12 @@ import (
 	"context"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/cgalvisleon/elvis/claim"
+	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/event"
-	"github.com/cgalvisleon/elvis/response"
 	"github.com/cgalvisleon/elvis/utility"
 )
 
@@ -24,18 +25,63 @@ const (
 	tokenKey     contextKey = "token"
 )
 
+/**
+* tokenFromAuthorization
+* @param authorization string
+* @return string
+* @return error
+**/
+func tokenFromAuthorization(authorization string) (string, error) {
+	if authorization == "" {
+		return "", console.NewError("Autorization is required")
+	}
+
+	if !strings.HasPrefix(authorization, "Bearer") {
+		return "", console.NewError("Invalid autorization format")
+	}
+
+	l := strings.Split(authorization, " ")
+	if len(l) != 2 {
+		return "", console.NewError("Invalid autorization format")
+	}
+
+	return l[1], nil
+}
+
+/**
+* GetAuthorization
+* @param w http.ResponseWriter
+* @param r *http.Request
+* @return string
+* @return error
+**/
+func GetAuthorization(w http.ResponseWriter, r *http.Request) (string, error) {
+	authorization := r.Header.Get("Authorization")
+	result, err := tokenFromAuthorization(authorization)
+	if err != nil {
+		return "", err
+	}
+
+	return result, nil
+}
+
+/**
+* Authorization
+* @param next http.Handler
+**/
 func Authorization(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		metric := NewMetric(r)
 		ctx := r.Context()
-		tokenString, err := claim.GetAuthorization(w, r)
+		tokenString, err := GetAuthorization(w, r)
 		if err != nil {
-			response.HTTPError(w, r, http.StatusUnauthorized, "401 Unauthorized")
+			metric.Unauthorized(w, r)
 			return
 		}
 
 		c, err := claim.GetFromToken(ctx, tokenString)
 		if err != nil {
-			response.HTTPError(w, r, http.StatusUnauthorized, "401 Unauthorized")
+			metric.Unauthorized(w, r)
 			return
 		}
 

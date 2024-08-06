@@ -3,6 +3,7 @@ package middleware
 import (
 	"time"
 
+	"github.com/cgalvisleon/elvis/cache"
 	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/strs"
 )
@@ -16,9 +17,20 @@ type Request struct {
 	Limit   int
 }
 
+func callRequests(tag string) Request {
+	return Request{
+		Tag:     tag,
+		Day:     cache.More(strs.Format(`%s-%d`, tag, time.Now().Unix()/86400), 86400),
+		Hour:    cache.More(strs.Format(`%s-%d`, tag, time.Now().Unix()/3600), 3600),
+		Minute:  cache.More(strs.Format(`%s-%d`, tag, time.Now().Unix()/60), 60),
+		Seccond: cache.More(strs.Format(`%s-%d`, tag, time.Now().Unix()/1), 1),
+		Limit:   envar.EnvarInt(400, "REQUESTS_LIMIT"),
+	}
+}
+
 var items map[string]int = make(map[string]int)
 
-func CallRequests(tag string) Request {
+func localRequests(tag string) Request {
 	return Request{
 		Tag:     tag,
 		Day:     more(strs.Format(`%s-%d`, tag, time.Now().Unix()/86400), 86400),
