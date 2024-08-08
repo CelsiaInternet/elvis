@@ -10,6 +10,7 @@ import (
 )
 
 func connect() (*Conn, error) {
+	ctx := context.TODO()
 	host := envar.EnvarStr("", "MONGO_HOST")
 	password := envar.EnvarStr("", "MONGO_PASSWORD")
 	dbname := envar.EnvarInt(0, "MONGO_DB")
@@ -23,17 +24,17 @@ func connect() (*Conn, error) {
 	}
 
 	client := options.Client().ApplyURI(host).SetAuth(options.Credential{Password: password}).SetDirect(true)
-	clients, err := mongo.Connect(context.Background(), client)
+	clients, err := mongo.Connect(ctx, client)
 	if err != nil {
-		Errorf("Mongo", "Error connecting to MongoDB: %v", err)
+		Errorf("Error connecting to MongoDB: %v", err)
 	}
-	err = clients.Ping(context.TODO(), nil)
+	err = clients.Ping(ctx, nil)
 	if err != nil {
-		Errorf("Mongo", "Error connecting to MongoDB: %v", err)
+		Errorf("Error connecting to MongoDB: %v", err)
 	}
 
 	return &Conn{
-		ctx:    context.Background(),
+		ctx:    ctx,
 		host:   host,
 		dbname: dbname,
 		db:     clients,
