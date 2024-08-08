@@ -88,8 +88,7 @@ func handlerExec(w http.ResponseWriter, r *http.Request) {
 	resolute := GetResolute(r)
 
 	// Call search time since begin
-	metric.SearchTime = time.Since(metric.TimeBegin)
-	metric.TimeExec = time.Now()
+	metric.CallExecute()
 
 	// If not found
 	if resolute.Resolve == nil || resolute.URL == "" {
@@ -101,7 +100,6 @@ func handlerExec(w http.ResponseWriter, r *http.Request) {
 	// If HandlerFunc is handler
 	kind := resolute.Resolve.Route.Resolve.ValStr("HTTP", "kind")
 	if kind == HANDLER {
-		metric.Downtime = time.Since(metric.TimeBegin)
 		handler := conn.http.handlers[resolute.Resolve.Route._id]
 		if handler == nil {
 			r.RequestURI = fmt.Sprintf(`%s://%s%s`, resolute.Scheme, resolute.Host, resolute.Path)
@@ -111,7 +109,7 @@ func handlerExec(w http.ResponseWriter, r *http.Request) {
 
 		if resolute.Resolve.Route.IsWs {
 			handler(w, r)
-			go metric.Summary(r)
+			go metric.DoneFn(http.StatusOK, w, r)
 			return
 		}
 
