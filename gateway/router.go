@@ -11,6 +11,7 @@ import (
 type Route struct {
 	_id         string
 	middlewares []func(http.Handler) http.Handler
+	IsWs        bool
 	Server      *HttpServer
 	Tag         string
 	Resolve     et.Json
@@ -25,6 +26,7 @@ type Pakage struct {
 
 type Resolve struct {
 	Route   *Route
+	IsWs    bool
 	Params  []et.Json
 	Resolve string
 }
@@ -109,7 +111,7 @@ func basicRouter(server *HttpServer) {
 	server.Get("/version", version, "Api Gateway")
 	server.Get("/gateway/all", getAll, "Api Gateway")
 	server.Post("/gateway", upsert, "Api Gateway")
-	server.Get("/ws", server.handlerWS, "Api Gateway")
+	server.Ws("/ws", server.handlerWS, "Api Gateway")
 }
 
 /**

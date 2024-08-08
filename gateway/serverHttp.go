@@ -29,6 +29,7 @@ const (
 	POST    = "POST"
 	PUT     = "PUT"
 	TRACE   = "TRACE"
+	WS      = "WS"
 )
 
 var methodMap = map[string]bool{
@@ -68,7 +69,7 @@ func newHttpServer() *HttpServer {
 		handler:         cors.AllowAll().Handler(mux),
 		mux:             mux,
 		notFoundHandler: notFounder,
-		handlerFn:       handlerFn,
+		handlerFn:       handlerExec,
 		handlerWS:       wsConnect,
 		routes:          []*Route{},
 		pakages:         []*Pakage{},
@@ -242,6 +243,8 @@ func (s *HttpServer) GetResolve(method, path string) *Resolve {
 * @param packageName string
  */
 func (s *HttpServer) AddRoute(method, path, resolve, kind, stage, packageName string) {
+	isWs := method == WS
+	method = GET
 	method = strings.ToUpper(method)
 	ok := methodMap[method]
 	if !ok {
@@ -266,6 +269,7 @@ func (s *HttpServer) AddRoute(method, path, resolve, kind, stage, packageName st
 	}
 
 	if route != nil {
+		route.IsWs = isWs
 		route.Resolve = et.Json{
 			"method":  method,
 			"kind":    kind,

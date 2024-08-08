@@ -109,6 +109,12 @@ func handlerExec(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		if resolute.Resolve.Route.IsWs {
+			handler(w, r)
+			go metric.Summary(r)
+			return
+		}
+
 		metric.Handler(handler, w, r)
 		return
 	}
