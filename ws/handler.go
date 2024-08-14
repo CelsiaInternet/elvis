@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/cgalvisleon/elvis/logs"
+	"github.com/cgalvisleon/elvis/middleware"
 	"github.com/cgalvisleon/elvis/utility"
 )
 
@@ -12,34 +13,16 @@ func Connect(w http.ResponseWriter, r *http.Request) (*Client, error) {
 		return nil, logs.Log(ERR_NOT_WS_SERVICE)
 	}
 
-	var clientId string
-	var userName string
-	ctx := r.Context()
-	val := ctx.Value("clientId")
-	if val == nil {
-		clientId = utility.UUID()
-	} else {
-		clientId = val.(string)
-	}
-
-	val = ctx.Value("username")
-	if val == nil {
-		userName = "Anonimo"
-	} else {
-		userName = val.(string)
-	}
-
-	idxC := conn.hub.indexClient(clientId)
-	if idxC != -1 {
-		return conn.hub.clients[idxC], nil
-	}
-
 	socket, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	return conn.hub.connect(socket, clientId, userName)
+	ctx := r.Context()
+	clientId := middleware.ClientIDKey.String(ctx, utility.UUID())
+	name := middleware.NameKey.String(ctx, "Anonimo")
+
+	return conn.hub.connect(socket, clientId, name)
 }
 
 func Broadcast(message interface{}, ignoreId string) error {

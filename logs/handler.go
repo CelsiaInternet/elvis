@@ -70,6 +70,15 @@ func log(kind string, color string, args ...any) string {
 	return result
 }
 
+func Nerror(message string) error {
+	return errors.New(message)
+}
+
+func Nerrorf(format string, args ...any) error {
+	message := fmt.Sprintf(format, args...)
+	return Nerror(message)
+}
+
 func Log(kind string, args ...any) error {
 	log(kind, "", args...)
 	return nil
@@ -117,7 +126,8 @@ func Alert(err error) error {
 }
 
 func Alertm(message string) error {
-	return Alert(errors.New(message))
+	err := Nerror(message)
+	return Alert(err)
 }
 
 func Alertf(format string, args ...any) error {
@@ -133,13 +143,13 @@ func Error(err error) error {
 }
 
 func Errorm(message string) error {
-	err := errors.New(message)
+	err := Nerror(message)
 	return Error(err)
 }
 
 func Errorf(format string, args ...any) error {
 	message := fmt.Sprintf(format, args...)
-	err := errors.New(message)
+	err := Nerror(message)
 	return Error(err)
 }
 

@@ -70,7 +70,7 @@ func newHttpServer() *HttpServer {
 		mux:             mux,
 		notFoundHandler: notFounder,
 		handlerFn:       handlerExec,
-		handlerWS:       wsConnect,
+		handlerWS:       handlerWS,
 		routes:          []*Route{},
 		pakages:         []*Pakage{},
 		handlers:        make(map[string]http.HandlerFunc),
@@ -243,8 +243,6 @@ func (s *HttpServer) GetResolve(method, path string) *Resolve {
 * @param packageName string
  */
 func (s *HttpServer) AddRoute(method, path, resolve, kind, stage, packageName string) {
-	isWs := method == WS
-	method = GET
 	method = strings.ToUpper(method)
 	ok := methodMap[method]
 	if !ok {
@@ -269,7 +267,6 @@ func (s *HttpServer) AddRoute(method, path, resolve, kind, stage, packageName st
 	}
 
 	if route != nil {
-		route.IsWs = isWs
 		route.Resolve = et.Json{
 			"method":  method,
 			"kind":    kind,

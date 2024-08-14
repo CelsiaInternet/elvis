@@ -15,14 +15,24 @@ import (
 
 type contextKey string
 
+func (c contextKey) String(ctx context.Context, def string) string {
+	val := ctx.Value(c)
+	result, ok := val.(string)
+	if !ok {
+		return def
+	}
+
+	return result
+}
+
 const (
-	serviceIDKey contextKey = "serviceId"
-	clientIDKey  contextKey = "clientId"
-	appKey       contextKey = "app"
-	nameKey      contextKey = "name"
-	kindKey      contextKey = "kind"
-	usernameKey  contextKey = "username"
-	tokenKey     contextKey = "token"
+	ServiceIDKey contextKey = "serviceId"
+	ClientIDKey  contextKey = "clientId"
+	AppKey       contextKey = "app"
+	NameKey      contextKey = "name"
+	KindKey      contextKey = "kind"
+	UsernameKey  contextKey = "username"
+	TokenKey     contextKey = "token"
 )
 
 /**
@@ -86,13 +96,13 @@ func Authorization(next http.Handler) http.Handler {
 		}
 
 		serviceId := utility.UUID()
-		ctx = context.WithValue(ctx, serviceIDKey, serviceId)
-		ctx = context.WithValue(ctx, clientIDKey, c.ID)
-		ctx = context.WithValue(ctx, appKey, c.App)
-		ctx = context.WithValue(ctx, nameKey, c.Name)
-		ctx = context.WithValue(ctx, kindKey, c.Kind)
-		ctx = context.WithValue(ctx, usernameKey, c.Username)
-		ctx = context.WithValue(ctx, tokenKey, tokenString)
+		ctx = context.WithValue(ctx, ServiceIDKey, serviceId)
+		ctx = context.WithValue(ctx, ClientIDKey, c.ID)
+		ctx = context.WithValue(ctx, AppKey, c.App)
+		ctx = context.WithValue(ctx, NameKey, c.Name)
+		ctx = context.WithValue(ctx, KindKey, c.Kind)
+		ctx = context.WithValue(ctx, UsernameKey, c.Username)
+		ctx = context.WithValue(ctx, TokenKey, tokenString)
 
 		now := utility.Now()
 		hostName, _ := os.Hostname()

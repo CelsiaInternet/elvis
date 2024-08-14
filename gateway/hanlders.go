@@ -9,6 +9,7 @@ import (
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/middleware"
 	"github.com/cgalvisleon/elvis/response"
+	"github.com/cgalvisleon/elvis/ws"
 )
 
 /**
@@ -71,6 +72,19 @@ func getAll(w http.ResponseWriter, r *http.Request) {
 }
 
 /**
+* handlerWS
+* @params w http.ResponseWriter
+* @params r *http.Request
+**/
+func handlerWS(w http.ResponseWriter, r *http.Request) {
+	_, err := ws.Connect(w, r)
+	if err != nil {
+		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+}
+
+/**
 * handlerFn
 * @params w http.ResponseWriter
 * @params r *http.Request
@@ -104,12 +118,6 @@ func handlerExec(w http.ResponseWriter, r *http.Request) {
 		if handler == nil {
 			r.RequestURI = fmt.Sprintf(`%s://%s%s`, resolute.Scheme, resolute.Host, resolute.Path)
 			metric.NotFound(conn.http.notFoundHandler, w, r)
-			return
-		}
-
-		if resolute.Resolve.Route.IsWs {
-			handler(w, r)
-			go metric.DoneFn(http.StatusOK, w, r)
 			return
 		}
 

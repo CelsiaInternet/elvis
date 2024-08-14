@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/cgalvisleon/elvis/cache"
-	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/event"
+	"github.com/cgalvisleon/elvis/logs"
 	"github.com/cgalvisleon/elvis/strs"
 	"github.com/cgalvisleon/elvis/utility"
 	"github.com/golang-jwt/jwt/v4"
@@ -148,47 +148,47 @@ func ParceToken(tokenString string) (*Claim, error) {
 	}
 
 	if !token.Valid {
-		return nil, console.Alert(MSG_TOKEN_INVALID)
+		return nil, logs.Nerror(MSG_TOKEN_INVALID)
 	}
 
 	claim, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
-		return nil, console.Alert(MSG_REQUIRED_INVALID)
+		return nil, logs.Nerror(MSG_REQUIRED_INVALID)
 	}
 
 	app, ok := claim["app"].(string)
 	if !ok {
-		return nil, console.AlertF(MSG_TOKEN_INVALID_ATRIB, "app")
+		return nil, logs.Nerror(ERR_INVALID_CLAIM)
 	}
 
 	id, ok := claim["id"].(string)
 	if !ok {
-		return nil, console.AlertF(MSG_TOKEN_INVALID_ATRIB, "id")
+		return nil, logs.Nerror(ERR_INVALID_CLAIM)
 	}
 
 	name, ok := claim["name"].(string)
 	if !ok {
-		return nil, console.AlertF(MSG_TOKEN_INVALID_ATRIB, "name")
+		return nil, logs.Nerror(ERR_INVALID_CLAIM)
 	}
 
 	kind, ok := claim["kind"].(string)
 	if !ok {
-		return nil, console.AlertF(MSG_TOKEN_INVALID_ATRIB, "kind")
+		return nil, logs.Nerror(ERR_INVALID_CLAIM)
 	}
 
 	username, ok := claim["username"].(string)
 	if !ok {
-		return nil, console.AlertF(MSG_TOKEN_INVALID_ATRIB, "username")
+		return nil, logs.Nerror(ERR_INVALID_CLAIM)
 	}
 
 	device, ok := claim["device"].(string)
 	if !ok {
-		return nil, console.AlertF(MSG_TOKEN_INVALID_ATRIB, "device")
+		return nil, logs.Nerrorf(MSG_TOKEN_INVALID_ATRIB, "device")
 	}
 
 	second, ok := claim["duration"].(float64)
 	if !ok {
-		return nil, console.AlertF(MSG_TOKEN_INVALID_ATRIB, "duration")
+		return nil, logs.Nerrorf(MSG_TOKEN_INVALID_ATRIB, "duration")
 	}
 
 	duration := time.Duration(second)
@@ -220,16 +220,16 @@ func GetFromToken(ctx context.Context, tokenString string) (*Claim, error) {
 	key := TokenKey(result.App, result.Device, result.ID)
 	c, err := cache.GetCtx(ctx, key, "")
 	if err != nil {
-		return nil, console.Alert(MSG_TOKEN_INVALID)
+		return nil, logs.Nerror(MSG_TOKEN_INVALID)
 	}
 
 	if c != tokenString {
-		return nil, console.Alert(MSG_TOKEN_INVALID)
+		return nil, logs.Nerror(MSG_TOKEN_INVALID)
 	}
 
 	err = cache.SetCtx(ctx, key, c, result.Duration)
 	if err != nil {
-		return nil, console.Alert(MSG_TOKEN_INVALID)
+		return nil, logs.Nerror(MSG_TOKEN_INVALID)
 	}
 
 	return result, nil

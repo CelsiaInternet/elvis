@@ -231,16 +231,15 @@ func (m *Metrics) Done(res *http.Response) et.Json {
 
 /**
 * DoneFn
-* @params statusCode int
-* @params w http.ResponseWriter
+* @params rw *ResponseWriterWrapper
 * @params r *http.Request
+* @return js.Json
 **/
-func (m *Metrics) DoneFn(statusCode int, w http.ResponseWriter, r *http.Request) et.Json {
-	rw := &ResponseWriterWrapper{ResponseWriter: w, StatusCode: statusCode, Host: r.Host}
+func (m *Metrics) DoneFn(rw *ResponseWriterWrapper, r *http.Request) et.Json {
 	m.TimeEnd = time.Now()
 	m.ResponseTime = time.Since(m.TimeExec)
 	m.Latency = time.Since(m.TimeBegin)
-	m.Downtime = m.SearchTime - m.ResponseTime
+	m.Downtime = m.Latency - m.ResponseTime
 	m.StatusCode = rw.StatusCode
 	m.Status = http.StatusText(rw.StatusCode)
 	m.ContentLength = int64(rw.Size)
@@ -256,28 +255,42 @@ func (m *Metrics) DoneFn(statusCode int, w http.ResponseWriter, r *http.Request)
 * @params r *http.Request
 **/
 func (m *Metrics) Unauthorized(w http.ResponseWriter, r *http.Request) {
+	rw := &ResponseWriterWrapper{ResponseWriter: w, StatusCode: http.StatusUnauthorized, Host: r.Host}
 	m.CallExecute()
-	response.HTTPError(w, r, http.StatusUnauthorized, "401 Unauthorized")
-	go m.DoneFn(http.StatusUnauthorized, w, r)
+	response.HTTPError(rw, r, http.StatusUnauthorized, "401 Unauthorized")
+	go m.DoneFn(rw, r)
 }
 
 /**
 * NotFound
+* @params handler http.HandlerFunc
 * @params w http.ResponseWriter
 * @params r *http.Request
 **/
 func (m *Metrics) NotFound(handler http.HandlerFunc, w http.ResponseWriter, r *http.Request) {
+	rw := &ResponseWriterWrapper{ResponseWriter: w, StatusCode: http.StatusNotFound, Host: r.Host}
 	m.CallExecute()
-	handler(w, r)
-	go m.DoneFn(http.StatusNotFound, w, r)
+	handler(rw, r)
+	go m.DoneFn(rw, r)
 }
 
 /**
 * Handler
+* @params handler http.HandlerFunc
 * @params w http.ResponseWriter
 * @params r *http.Request
 **/
 func (m *Metrics) Handler(handler http.HandlerFunc, w http.ResponseWriter, r *http.Request) {
-	handler(w, r)
-	go m.DoneFn(http.StatusOK, w, r)
+	rw := &ResponseWriterWrapper{ResponseWriter: w, StatusCode: http.StatusOK, Host: r.Host}
+	isWebSocket := r.Method == http.MethodGet &&
+		r.Header.Get("Upgrade") == "websocket" &&
+		r.Header.Get("Connection") == "Upgrade" &&
+		r.Header.Get("Sec-WebSocket-Key") != ""
+	if isWebSocket {
+		handler(w, r)
+	} else {
+		handler(rw, r)
+	}
+
+	go m.DoneFn(rw, r)
 }

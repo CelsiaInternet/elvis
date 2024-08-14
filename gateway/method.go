@@ -16,8 +16,6 @@ import (
 * @param packageName string
 **/
 func (s *HttpServer) MethodFunc(method, path string, handlerFn http.HandlerFunc, packageName string) *Route {
-	isWS := method == WS
-	method = GET
 	method = strings.ToUpper(method)
 	ok := methodMap[method]
 	if !ok {
@@ -42,7 +40,6 @@ func (s *HttpServer) MethodFunc(method, path string, handlerFn http.HandlerFunc,
 	}
 
 	if route != nil {
-		route.IsWs = isWS
 		route.Resolve = et.Json{
 			"method":  method,
 			"kind":    "HANDLER",
@@ -172,14 +169,4 @@ func (s *HttpServer) Put(path string, handlerFn http.HandlerFunc, packageName st
 **/
 func (s *HttpServer) Trace(path string, handlerFn http.HandlerFunc, packageName string) {
 	s.MethodFunc(TRACE, path, handlerFn, packageName)
-}
-
-/**
-* Ws
-* @param path string
-* @param handlerFn http.HandlerFunc
-* @param packageName string
-**/
-func (s *HttpServer) Ws(path string, handlerFn http.HandlerFunc, packageName string) {
-	s.MethodFunc(WS, path, handlerFn, packageName)
 }
