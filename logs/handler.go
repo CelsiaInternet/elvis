@@ -24,7 +24,6 @@ type MongoDocument struct {
 	Key        string            `bson:"key"`
 	Value      string            `bson:"value"`
 	Attributes map[string]string `bson:"attributes,omitempty"`
-	Expiration time.Time         `bson:"expiration,omitempty"`
 }
 
 var Reset = "\033[0m"
@@ -196,19 +195,15 @@ func Debugf(format string, args ...any) {
 	log("Debug", "Cyan", message)
 }
 
-func SetCtx(ctx context.Context, collection *mongo.Collection, key, val string, second time.Duration) error {
+func SetCtx(ctx context.Context, collection *mongo.Collection, key, val string) error {
 	if collection == nil {
 		return Log(msg.ERR_NOT_COLLETION_MONGO)
 	}
 
-	duration := second * time.Second
-	expiration := time.Now().Add(duration)
-
 	filter := bson.M{"key": key}
 	update := bson.M{
 		"$set": bson.M{
-			"value":      val,
-			"expiration": expiration,
+			"value": val,
 		},
 	}
 	opts := options.Update().SetUpsert(true)
@@ -234,10 +229,6 @@ func GetCtx(ctx context.Context, collection *mongo.Collection, key, def string) 
 		return def, IsNil
 	} else if err != nil {
 		return def, err
-	}
-
-	if time.Now().After(result.Expiration) {
-		return def, IsNil
 	}
 
 	return result.Value, nil
@@ -324,22 +315,22 @@ func Get(key, def string) (string, error) {
 	return GetCtx(conn.ctx, conn.collection, key, def)
 }
 
-func Set(key string, val interface{}, second time.Duration) error {
+func Set(key string, val interface{}) error {
 	if conn == nil {
 		return Log(msg.ERR_NOT_COLLETION_MONGO)
 	}
 
 	switch v := val.(type) {
 	case et.Json:
-		return SetCtx(conn.ctx, conn.collection, key, v.ToString(), second)
+		return SetCtx(conn.ctx, conn.collection, key, v.ToString())
 	case et.Items:
-		return SetCtx(conn.ctx, conn.collection, key, v.ToString(), second)
+		return SetCtx(conn.ctx, conn.collection, key, v.ToString())
 	case et.Item:
-		return SetCtx(conn.ctx, conn.collection, key, v.ToString(), second)
+		return SetCtx(conn.ctx, conn.collection, key, v.ToString())
 	default:
 		valStr, ok := val.(string)
 		if ok {
-			return SetCtx(conn.ctx, conn.collection, key, valStr, second)
+			return SetCtx(conn.ctx, conn.collection, key, valStr)
 		}
 	}
 
