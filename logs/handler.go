@@ -1,6 +1,7 @@
 package logs
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -8,7 +9,23 @@ import (
 	"slices"
 	"strings"
 	"time"
+
+	"github.com/cgalvisleon/elvis/et"
+	"github.com/cgalvisleon/elvis/msg"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
+
+var IsNil = mongo.ErrNoDocuments
+
+// Estructura que representa el documento almacenado en MongoDB
+type MongoDocument struct {
+	Key        string            `bson:"key"`
+	Value      string            `bson:"value"`
+	Attributes map[string]string `bson:"attributes,omitempty"`
+	Expiration time.Time         `bson:"expiration,omitempty"`
+}
 
 var Reset = "\033[0m"
 var Red = "\033[31m"
@@ -177,4 +194,216 @@ func Debug(v ...any) {
 func Debugf(format string, args ...any) {
 	message := fmt.Sprintf(format, args...)
 	log("Debug", "Cyan", message)
+}
+
+func SetCtx(ctx context.Context, collection *mongo.Collection, key, val string, second time.Duration) error {
+	if collection == nil {
+		return Log(msg.ERR_NOT_COLLETION_MONGO)
+	}
+
+	duration := second * time.Second
+	expiration := time.Now().Add(duration)
+
+	filter := bson.M{"key": key}
+	update := bson.M{
+		"$set": bson.M{
+			"value":      val,
+			"expiration": expiration,
+		},
+	}
+	opts := options.Update().SetUpsert(true)
+
+	_, err := collection.UpdateOne(ctx, filter, update, opts)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func GetCtx(ctx context.Context, collection *mongo.Collection, key, def string) (string, error) {
+	if collection == nil {
+		return def, Log(msg.ERR_NOT_COLLETION_MONGO)
+	}
+
+	filter := bson.M{"key": key}
+	var result MongoDocument
+
+	err := collection.FindOne(ctx, filter).Decode(&result)
+	if err == mongo.ErrNoDocuments {
+		return def, IsNil
+	} else if err != nil {
+		return def, err
+	}
+
+	if time.Now().After(result.Expiration) {
+		return def, IsNil
+	}
+
+	return result.Value, nil
+}
+
+func DelCtx(ctx context.Context, collection *mongo.Collection, key string) (int64, error) {
+	if collection == nil {
+		return 0, Log(msg.ERR_NOT_COLLETION_MONGO)
+	}
+
+	filter := bson.M{"key": key}
+	deleteResult, err := collection.DeleteOne(ctx, filter)
+	if err != nil {
+		return 0, err
+	}
+
+	return deleteResult.DeletedCount, nil
+}
+
+func HSetCtx(ctx context.Context, collection *mongo.Collection, key string, val map[string]string) error {
+	if collection == nil {
+		return Log(msg.ERR_NOT_COLLETION_MONGO)
+	}
+
+	filter := bson.M{"key": key}
+	update := bson.M{
+		"$set": bson.M{
+			"attributes": val,
+		},
+	}
+	opts := options.Update().SetUpsert(true)
+
+	_, err := collection.UpdateOne(ctx, filter, update, opts)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func HGetCtx(ctx context.Context, collection *mongo.Collection, key string) (map[string]string, error) {
+	if collection == nil {
+		return map[string]string{}, Log(msg.ERR_NOT_COLLETION_MONGO)
+	}
+
+	filter := bson.M{"key": key}
+	var result MongoDocument
+
+	err := collection.FindOne(ctx, filter).Decode(&result)
+	if err == mongo.ErrNoDocuments {
+		return map[string]string{}, IsNil
+	} else if err != nil {
+		return map[string]string{}, err
+	}
+
+	return result.Attributes, nil
+}
+
+func HDelCtx(ctx context.Context, collection *mongo.Collection, key, atr string) error {
+	if collection == nil {
+		return Log(msg.ERR_NOT_COLLETION_MONGO)
+	}
+
+	filter := bson.M{"key": key}
+	update := bson.M{
+		"$unset": bson.M{
+			"attributes." + atr: "",
+		},
+	}
+
+	_, err := collection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func Get(key, def string) (string, error) {
+	if conn == nil {
+		return def, Log(msg.ERR_NOT_COLLETION_MONGO)
+	}
+
+	return GetCtx(conn.ctx, conn.collection, key, def)
+}
+
+func Set(key string, val interface{}, second time.Duration) error {
+	if conn == nil {
+		return Log(msg.ERR_NOT_COLLETION_MONGO)
+	}
+
+	switch v := val.(type) {
+	case et.Json:
+		return SetCtx(conn.ctx, conn.collection, key, v.ToString(), second)
+	case et.Items:
+		return SetCtx(conn.ctx, conn.collection, key, v.ToString(), second)
+	case et.Item:
+		return SetCtx(conn.ctx, conn.collection, key, v.ToString(), second)
+	default:
+		valStr, ok := val.(string)
+		if ok {
+			return SetCtx(conn.ctx, conn.collection, key, valStr, second)
+		}
+	}
+
+	return nil
+}
+
+func Del(key string) (int64, error) {
+	if conn == nil {
+		return 0, Log(msg.ERR_NOT_COLLETION_MONGO)
+	}
+
+	return DelCtx(conn.ctx, conn.collection, key)
+}
+
+func HSet(key string, val map[string]string) error {
+	if conn == nil {
+		return Log(msg.ERR_NOT_COLLETION_MONGO)
+	}
+
+	return HSetCtx(conn.ctx, conn.collection, key, val)
+}
+
+func HGet(key string) (map[string]string, error) {
+	if conn == nil {
+		return map[string]string{}, Log(msg.ERR_NOT_COLLETION_MONGO)
+	}
+
+	return HGetCtx(conn.ctx, conn.collection, key)
+}
+
+func HSetAtrib(key, atr, val string) error {
+	if conn == nil {
+		return Log(msg.ERR_NOT_COLLETION_MONGO)
+	}
+
+	return HSetCtx(conn.ctx, conn.collection, key, map[string]string{atr: val})
+}
+
+func HGetAtrib(key, atr string) (string, error) {
+	if conn == nil {
+		return "", Log(msg.ERR_NOT_COLLETION_MONGO)
+	}
+
+	atribs, err := HGetCtx(conn.ctx, conn.collection, key)
+	if err != nil {
+		return "", err
+	}
+
+	return atribs[atr], nil
+}
+
+func HDel(key, atr string) error {
+	if conn == nil {
+		return Log(msg.ERR_NOT_COLLETION_MONGO)
+	}
+
+	return HDelCtx(conn.ctx, conn.collection, key, atr)
+}
+
+func Empty() error {
+	if conn == nil {
+		return Log(msg.ERR_NOT_COLLETION_MONGO)
+	}
+
+	_, err := conn.collection.DeleteMany(context.Background(), bson.M{})
+	return err
 }

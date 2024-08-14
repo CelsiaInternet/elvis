@@ -9,10 +9,11 @@ import (
 var conn *Conn
 
 type Conn struct {
-	ctx    context.Context
-	host   string
-	dbname int
-	db     *mongo.Client
+	ctx        context.Context
+	host       string
+	dbname     int
+	db         *mongo.Client
+	collection *mongo.Collection
 }
 
 func Load() (*Conn, error) {
