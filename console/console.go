@@ -2,11 +2,74 @@ package console
 
 import (
 	"errors"
+	"fmt"
 	"os"
+	"runtime"
+	"strings"
+	"time"
 
-	"github.com/cgalvisleon/elvis/logs"
 	"github.com/cgalvisleon/elvis/strs"
 )
+
+var Reset = "\033[0m"
+var Red = "\033[31m"
+var Green = "\033[32m"
+var Yellow = "\033[33m"
+var Blue = "\033[34m"
+var Purple = "\033[35m"
+var Cyan = "\033[36m"
+var Gray = "\033[37m"
+var White = "\033[97m"
+var useColor = true
+
+func init() {
+	if runtime.GOOS == "windows" {
+		Reset = ""
+		Red = ""
+		Green = ""
+		Yellow = ""
+		Blue = ""
+		Purple = ""
+		Cyan = ""
+		Gray = ""
+		White = ""
+		useColor = false
+	}
+}
+
+func Printl(kind string, color string, args ...any) string {
+	kind = strings.ToUpper(kind)
+	message := fmt.Sprint(args...)
+	now := time.Now().Format("2006/01/02 15:04:05")
+	var result string
+
+	switch color {
+	case "Reset":
+		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + message + Reset
+	case "Red":
+		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Red + message + Reset
+	case "Green":
+		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Green + message + Reset
+	case "Yellow":
+		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Yellow + message + Reset
+	case "Blue":
+		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Blue + message + Reset
+	case "Purple":
+		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Purple + message + Reset
+	case "Cyan":
+		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Cyan + message + Reset
+	case "Gray":
+		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Gray + message + Reset
+	case "White":
+		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + White + message + Reset
+	default:
+		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Green + message + Reset
+	}
+
+	println(result)
+
+	return result
+}
 
 func NewError(message string) error {
 	err := errors.New(message)
@@ -22,7 +85,7 @@ func NewErrorF(format string, args ...any) error {
 }
 
 func LogK(kind string, args ...any) error {
-	logs.Log(kind, args...)
+	Printl(kind, "", args...)
 
 	return nil
 }
@@ -42,7 +105,7 @@ func LogF(format string, args ...any) error {
 }
 
 func Debug(args ...any) error {
-	logs.Debug(args...)
+	Printl("Debug", "Cyan", args...)
 	return nil
 }
 
@@ -64,7 +127,7 @@ func Print(args ...any) error {
 }
 
 func Info(args ...any) error {
-	logs.Info(args...)
+	Printl("Info", "Blue", args...)
 	return nil
 }
 
@@ -74,15 +137,21 @@ func InfoF(format string, args ...any) error {
 }
 
 func Alert(message string) error {
-	return logs.Alertm(message)
+	err := NewError(message)
+	if err != nil {
+		Printl("Alert", "Yellow", err.Error())
+	}
+
+	return err
 }
 
 func AlertF(format string, args ...any) error {
-	return logs.Alertf(format, args...)
+	message := strs.Format(format, args...)
+	return Alert(message)
 }
 
 func Error(err error) error {
-	_, err = logs.Traces("Error", "Red", err)
+	Printl("Error", "Red", err.Error())
 
 	return err
 }
@@ -99,7 +168,7 @@ func ErrorF(format string, args ...any) error {
 }
 
 func Fatal(v ...any) {
-	logs.Fatal(v...)
+	Printl("Fatal", "Red", v...)
 	os.Exit(1)
 }
 
@@ -109,7 +178,7 @@ func FatalF(format string, args ...any) {
 }
 
 func Panic(err error) error {
-	go logs.Traces("Panic", "Red", err)
+	Printl("Panic", "Red", err.Error())
 
 	os.Exit(1)
 

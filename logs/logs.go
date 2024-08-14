@@ -13,7 +13,7 @@ type Conn struct {
 	host       string
 	dbname     int
 	db         *mongo.Client
-	collection *mongo.Collection
+	collection map[string]*mongo.Collection
 }
 
 func Load() (*Conn, error) {

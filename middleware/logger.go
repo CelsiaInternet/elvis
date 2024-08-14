@@ -10,9 +10,9 @@ import (
 	"runtime"
 	"time"
 
+	lg "github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/event"
-	lg "github.com/cgalvisleon/elvis/logs"
 	"github.com/cgalvisleon/elvis/utility"
 	"github.com/shirou/gopsutil/v3/mem"
 )

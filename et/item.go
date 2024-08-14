@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cgalvisleon/elvis/logs"
+	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/strs"
 )
 
@@ -157,7 +157,7 @@ func (it *Item) Json(atribs ...string) Json {
 	case map[string]interface{}:
 		return Json(v)
 	default:
-		logs.Errorf("Not Item.Json type (%v) value:%v", reflect.TypeOf(v), v)
+		console.ErrorF("Not Item.Json type (%v) value:%v", reflect.TypeOf(v), v)
 		return Json{}
 	}
 }
