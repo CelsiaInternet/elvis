@@ -12,7 +12,7 @@ import (
 	"runtime/debug"
 	"strings"
 
-	lg "github.com/cgalvisleon/elvis/logs"
+	lg "github.com/cgalvisleon/elvis/console"
 )
 
 // Recoverer is a middleware that recovers from panics, logs the panic (and a

@@ -1,4 +1,4 @@
-package logs
+package console
 
 // Ported from Goji's middleware, source:
 // https://github.com/zenazn/goji/tree/master/web/middleware
