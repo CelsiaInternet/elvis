@@ -8,7 +8,6 @@ import (
 	"runtime"
 	"slices"
 	"strings"
-	"time"
 
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/et"
@@ -148,8 +147,7 @@ func SetCtx(ctx context.Context, collection *mongo.Collection, key, val string) 
 	filter := bson.M{"key": key}
 	update := bson.M{
 		"$set": bson.M{
-			"created_at": time.Now(),
-			"value":      val,
+			"value": val,
 		},
 	}
 	opts := options.Update().SetUpsert(true)
@@ -253,74 +251,46 @@ func HDelCtx(ctx context.Context, collection *mongo.Collection, key, atr string)
 	return nil
 }
 
-func Get(key, def string) (string, error) {
-	if conn == nil {
-		return def, Log(msg.ERR_NOT_COLLETION_MONGO)
-	}
-
-	return GetCtx(conn.ctx, conn.collection, key, def)
+func Get(collection *mongo.Collection, ctx context.Context, key, def string) (string, error) {
+	return GetCtx(ctx, collection, key, def)
 }
 
-func Set(key string, val interface{}) error {
-	if conn == nil {
-		return Log(msg.ERR_NOT_COLLETION_MONGO)
-	}
-
+func Set(collection *mongo.Collection, ctx context.Context, key string, val interface{}) error {
 	switch v := val.(type) {
 	case et.Json:
-		return SetCtx(conn.ctx, conn.collection, key, v.ToString())
+		return SetCtx(ctx, collection, key, v.ToString())
 	case et.Items:
-		return SetCtx(conn.ctx, conn.collection, key, v.ToString())
+		return SetCtx(ctx, collection, key, v.ToString())
 	case et.Item:
-		return SetCtx(conn.ctx, conn.collection, key, v.ToString())
+		return SetCtx(ctx, collection, key, v.ToString())
 	default:
 		valStr, ok := val.(string)
 		if ok {
-			return SetCtx(conn.ctx, conn.collection, key, valStr)
+			return SetCtx(ctx, collection, key, valStr)
 		}
 	}
 
 	return nil
 }
 
-func Del(key string) (int64, error) {
-	if conn == nil {
-		return 0, Log(msg.ERR_NOT_COLLETION_MONGO)
-	}
-
-	return DelCtx(conn.ctx, conn.collection, key)
+func Del(collection *mongo.Collection, ctx context.Context, key string) (int64, error) {
+	return DelCtx(ctx, collection, key)
 }
 
-func HSet(key string, val map[string]string) error {
-	if conn == nil {
-		return Log(msg.ERR_NOT_COLLETION_MONGO)
-	}
-
-	return HSetCtx(conn.ctx, conn.collection, key, val)
+func HSet(collection *mongo.Collection, ctx context.Context, key string, val map[string]string) error {
+	return HSetCtx(ctx, collection, key, val)
 }
 
-func HGet(key string) (map[string]string, error) {
-	if conn == nil {
-		return map[string]string{}, Log(msg.ERR_NOT_COLLETION_MONGO)
-	}
-
-	return HGetCtx(conn.ctx, conn.collection, key)
+func HGet(collection *mongo.Collection, ctx context.Context, key string) (map[string]string, error) {
+	return HGetCtx(ctx, collection, key)
 }
 
-func HSetAtrib(key, atr, val string) error {
-	if conn == nil {
-		return Log(msg.ERR_NOT_COLLETION_MONGO)
-	}
-
-	return HSetCtx(conn.ctx, conn.collection, key, map[string]string{atr: val})
+func HSetAtrib(collection *mongo.Collection, ctx context.Context, key, atr, val string) error {
+	return HSetCtx(ctx, collection, key, map[string]string{atr: val})
 }
 
-func HGetAtrib(key, atr string) (string, error) {
-	if conn == nil {
-		return "", Log(msg.ERR_NOT_COLLETION_MONGO)
-	}
-
-	atribs, err := HGetCtx(conn.ctx, conn.collection, key)
+func HGetAtrib(collection *mongo.Collection, ctx context.Context, key, atr string) (string, error) {
+	atribs, err := HGetCtx(ctx, collection, key)
 	if err != nil {
 		return "", err
 	}
@@ -328,19 +298,11 @@ func HGetAtrib(key, atr string) (string, error) {
 	return atribs[atr], nil
 }
 
-func HDel(key, atr string) error {
-	if conn == nil {
-		return Log(msg.ERR_NOT_COLLETION_MONGO)
-	}
-
-	return HDelCtx(conn.ctx, conn.collection, key, atr)
+func HDel(collection *mongo.Collection, ctx context.Context, key, atr string) error {
+	return HDelCtx(ctx, collection, key, atr)
 }
 
-func Empty() error {
-	if conn == nil {
-		return Log(msg.ERR_NOT_COLLETION_MONGO)
-	}
-
-	_, err := conn.collection.DeleteMany(context.Background(), bson.M{})
+func Empty(collection *mongo.Collection, ctx context.Context) error {
+	_, err := collection.DeleteMany(ctx, bson.M{})
 	return err
 }
