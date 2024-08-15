@@ -11,8 +11,8 @@ var conn *Conn
 type Conn struct {
 	ctx        context.Context
 	host       string
-	dbname     int
-	db         *mongo.Client
+	dbname     string
+	db         *mongo.Database
 	collection *mongo.Collection
 }
 
@@ -35,5 +35,5 @@ func Close() error {
 		return nil
 	}
 
-	return conn.db.Disconnect(conn.ctx)
+	return conn.db.Client().Disconnect(conn.ctx)
 }

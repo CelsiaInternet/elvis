@@ -139,20 +139,22 @@ func Debugf(format string, args ...any) {
 * MongoDB database conexion and registering logs
 **/
 
-func SetCtx(ctx context.Context, collection *mongo.Collection, key, val string) error {
-	if collection == nil {
+func set(collection string, key string, val et.Json) error {
+	if conn == nil {
 		return Log(msg.ERR_NOT_COLLETION_MONGO)
 	}
 
-	filter := bson.M{"key": key}
-	update := bson.M{
-		"$set": bson.M{
+	coll := conn.db.Collection(collection)
+
+	filter := et.Json{"key": key}
+	update := et.Json{
+		"$set": et.Json{
 			"value": val,
 		},
 	}
 	opts := options.Update().SetUpsert(true)
 
-	_, err := collection.UpdateOne(ctx, filter, update, opts)
+	_, err := coll.UpdateOne(conn.ctx, filter, update, opts)
 	if err != nil {
 		return err
 	}
@@ -190,65 +192,6 @@ func DelCtx(ctx context.Context, collection *mongo.Collection, key string) (int6
 	}
 
 	return deleteResult.DeletedCount, nil
-}
-
-func HSetCtx(ctx context.Context, collection *mongo.Collection, key string, val map[string]string) error {
-	if collection == nil {
-		return Log(msg.ERR_NOT_COLLETION_MONGO)
-	}
-
-	filter := bson.M{"key": key}
-	update := bson.M{
-		"$set": bson.M{
-			"attributes": val,
-		},
-	}
-	opts := options.Update().SetUpsert(true)
-
-	_, err := collection.UpdateOne(ctx, filter, update, opts)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func HGetCtx(ctx context.Context, collection *mongo.Collection, key string) (map[string]string, error) {
-	if collection == nil {
-		return map[string]string{}, Log(msg.ERR_NOT_COLLETION_MONGO)
-	}
-
-	filter := bson.M{"key": key}
-	var result MongoDocument
-
-	err := collection.FindOne(ctx, filter).Decode(&result)
-	if err == mongo.ErrNoDocuments {
-		return map[string]string{}, IsNil
-	} else if err != nil {
-		return map[string]string{}, err
-	}
-
-	return result.Attributes, nil
-}
-
-func HDelCtx(ctx context.Context, collection *mongo.Collection, key, atr string) error {
-	if collection == nil {
-		return Log(msg.ERR_NOT_COLLETION_MONGO)
-	}
-
-	filter := bson.M{"key": key}
-	update := bson.M{
-		"$unset": bson.M{
-			"attributes." + atr: "",
-		},
-	}
-
-	_, err := collection.UpdateOne(ctx, filter, update)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func Get(collection *mongo.Collection, ctx context.Context, key, def string) (string, error) {
