@@ -7,67 +7,21 @@ import (
 	"runtime"
 	"slices"
 	"strings"
-	"time"
+
+	"github.com/cgalvisleon/elvis/console"
+	"github.com/cgalvisleon/elvis/et"
+	"github.com/cgalvisleon/elvis/msg"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var Reset = "\033[0m"
-var Red = "\033[31m"
-var Green = "\033[32m"
-var Yellow = "\033[33m"
-var Blue = "\033[34m"
-var Purple = "\033[35m"
-var Cyan = "\033[36m"
-var Gray = "\033[37m"
-var White = "\033[97m"
-var useColor = true
+var IsNil = mongo.ErrNoDocuments
 
-func init() {
-	if runtime.GOOS == "windows" {
-		Reset = ""
-		Red = ""
-		Green = ""
-		Yellow = ""
-		Blue = ""
-		Purple = ""
-		Cyan = ""
-		Gray = ""
-		White = ""
-		useColor = false
-	}
-}
-
-func log(kind string, color string, args ...any) string {
-	kind = strings.ToUpper(kind)
-	message := fmt.Sprint(args...)
-	now := time.Now().Format("2006/01/02 15:04:05")
-	var result string
-
-	switch color {
-	case "Reset":
-		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + message + Reset
-	case "Red":
-		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Red + message + Reset
-	case "Green":
-		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Green + message + Reset
-	case "Yellow":
-		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Yellow + message + Reset
-	case "Blue":
-		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Blue + message + Reset
-	case "Purple":
-		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Purple + message + Reset
-	case "Cyan":
-		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Cyan + message + Reset
-	case "Gray":
-		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Gray + message + Reset
-	case "White":
-		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + White + message + Reset
-	default:
-		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Green + message + Reset
-	}
-
-	println(result)
-
-	return result
+// Estructura que representa el documento almacenado en MongoDB
+type MongoDocument struct {
+	Key        string            `bson:"key"`
+	Value      string            `bson:"value"`
+	Attributes map[string]string `bson:"attributes,omitempty"`
 }
 
 func Nerror(message string) error {
@@ -80,20 +34,20 @@ func Nerrorf(format string, args ...any) error {
 }
 
 func Log(kind string, args ...any) error {
-	log(kind, "", args...)
+	console.Printl(kind, "", args...)
 	return nil
 }
 
 func Logf(kind string, format string, args ...any) {
 	message := fmt.Sprintf(format, args...)
-	log(kind, "", message)
+	console.Printl(kind, "", message)
 }
 
 func Traces(kind, color string, err error) ([]string, error) {
 	var n int = 1
 	var traces []string = []string{err.Error()}
 
-	log(kind, color, err.Error())
+	console.Printl(kind, color, err.Error())
 
 	for {
 		pc, file, line, more := runtime.Caller(n)
@@ -110,7 +64,7 @@ func Traces(kind, color string, err error) ([]string, error) {
 		if !slices.Contains([]string{"ErrorM", "ErrorF"}, name) {
 			trace := fmt.Sprintf("%s:%d func:%s", file, line, name)
 			traces = append(traces, trace)
-			log("TRACE", color, trace)
+			console.Printl("TRACE", color, trace)
 		}
 	}
 
@@ -119,7 +73,7 @@ func Traces(kind, color string, err error) ([]string, error) {
 
 func Alert(err error) error {
 	if err != nil {
-		log("Alert", "Yellow", err.Error())
+		console.Printl("Alert", "Yellow", err.Error())
 	}
 
 	return err
@@ -154,37 +108,215 @@ func Errorf(format string, args ...any) error {
 }
 
 func Info(v ...any) {
-	log("Info", "Blue", v...)
+	console.Printl("Info", "Blue", v...)
 }
 
 func Infof(format string, args ...any) {
 	message := fmt.Sprintf(format, args...)
-	log("Info", "Blue", message)
+	console.Printl("Info", "Blue", message)
 }
 
 func Fatal(v ...any) {
-	log("Fatal", "Red", v...)
+	console.Printl("Fatal", "Red", v...)
 	os.Exit(1)
 }
 
 func Panic(v ...any) {
-	log("Panic", "Red", v...)
+	console.Printl("Panic", "Red", v...)
 	os.Exit(1)
 }
 
 func Ping() {
-	log("PING", "")
+	console.Printl("PING", "")
 }
 
 func Pong() {
-	log("PONG", "")
+	console.Printl("PONG", "")
 }
 
 func Debug(v ...any) {
-	log("Debug", "Cyan", v...)
+	console.Printl("Debug", "Cyan", v...)
 }
 
 func Debugf(format string, args ...any) {
 	message := fmt.Sprintf(format, args...)
-	log("Debug", "Cyan", message)
+	console.Printl("Debug", "Cyan", message)
+}
+
+/**
+* MongoDB database conexion and registering logs
+**/
+
+func set(collection string, key string, val et.Json) error {
+	if conn == nil {
+		return Log(msg.ERR_NOT_COLLETION_MONGO)
+	}
+
+	coll := conn.db.Collection(collection)
+
+	filter := et.Json{"key": key}
+	update := et.Json{
+		"$set": et.Json{
+			"value": val,
+		},
+	}
+	opts := options.Update().SetUpsert(true)
+
+	_, err := coll.UpdateOne(conn.ctx, filter, update, opts)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func Get(collection string, key, def string) (string, error) {
+	if conn == nil {
+		return def, Log(msg.ERR_NOT_COLLETION_MONGO)
+	}
+
+	coll := conn.db.Collection(collection)
+	filter := et.Json{"key": key}
+	var result MongoDocument
+
+	err := coll.FindOne(conn.ctx, filter).Decode(&result)
+	if err == mongo.ErrNoDocuments {
+		return def, IsNil
+	} else if err != nil {
+		return def, err
+	}
+
+	return result.Value, nil
+}
+
+func Del(collection string, key string) (int64, error) {
+	if conn == nil {
+		return 0, Log(msg.ERR_NOT_COLLETION_MONGO)
+	}
+
+	coll := conn.db.Collection(collection)
+	filter := et.Json{"key": key}
+	deleteResult, err := coll.DeleteOne(conn.ctx, filter)
+	if err != nil {
+		return 0, err
+	}
+
+	return deleteResult.DeletedCount, nil
+}
+
+func Set(collection string, key string, val interface{}) error {
+	if conn == nil {
+		return Log(msg.ERR_NOT_COLLETION_MONGO)
+	}
+
+	coll := conn.db.Collection(collection)
+	var valStr string
+
+	switch v := val.(type) {
+	case et.Json:
+		valStr = v.ToString()
+	case et.Items:
+		valStr = v.ToString()
+	case et.Item:
+		valStr = v.ToString()
+	default:
+		var ok bool
+		valStr, ok = val.(string)
+		if !ok {
+			return Log(msg.ERR_INVALID_TYPE)
+		}
+	}
+
+	filter := et.Json{"key": key}
+	update := et.Json{"$set": et.Json{"value": valStr}}
+	opts := options.Update().SetUpsert(true)
+
+	_, err := coll.UpdateOne(conn.ctx, filter, update, opts)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func HSet(collection string, key string, val map[string]string) error {
+	if conn == nil {
+		return Log(msg.ERR_NOT_COLLETION_MONGO)
+	}
+
+	coll := conn.db.Collection(collection)
+	filter := et.Json{"key": key}
+	update := et.Json{"$set": et.Json{"value": val}}
+	opts := options.Update().SetUpsert(true)
+
+	_, err := coll.UpdateOne(conn.ctx, filter, update, opts)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func HGet(collection string, key string) (map[string]string, error) {
+	if conn == nil {
+		return nil, Log(msg.ERR_NOT_COLLETION_MONGO)
+	}
+
+	coll := conn.db.Collection(collection)
+	filter := et.Json{"key": key}
+	var result et.Json
+
+	err := coll.FindOne(conn.ctx, filter).Decode(&result)
+	if err == mongo.ErrNoDocuments {
+		return nil, IsNil
+	} else if err != nil {
+		return nil, err
+	}
+
+	value, ok := result["value"].(map[string]string)
+	if !ok {
+		return nil, fmt.Errorf("invalid type for value")
+	}
+
+	return value, nil
+}
+
+func HSetAtrib(collection string, key, atr, val string) error {
+	return HSet(collection, key, map[string]string{atr: val})
+}
+
+func HGetAtrib(collection string, key, atr string) (string, error) {
+	atribs, err := HGet(collection, key)
+	if err != nil {
+		return "", err
+	}
+
+	return atribs[atr], nil
+}
+
+func HDel(collection string, key, atr string) error {
+	if conn == nil {
+		return Log(msg.ERR_NOT_COLLETION_MONGO)
+	}
+
+	coll := conn.db.Collection(collection)
+	filter := et.Json{"key": key}
+	update := et.Json{"$unset": et.Json{"value." + atr: ""}}
+
+	_, err := coll.UpdateOne(conn.ctx, filter, update)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func Empty(collection string) error {
+	if conn == nil {
+		return Log(msg.ERR_NOT_COLLETION_MONGO)
+	}
+
+	coll := conn.db.Collection(collection)
+	_, err := coll.DeleteMany(conn.ctx, et.Json{})
+	return err
 }

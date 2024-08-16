@@ -7,9 +7,9 @@ import (
 	"os"
 	"time"
 
+	lg "github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/event"
-	"github.com/cgalvisleon/elvis/logs"
 	"github.com/cgalvisleon/elvis/response"
 	"github.com/cgalvisleon/elvis/strs"
 	"github.com/cgalvisleon/elvis/utility"
@@ -118,37 +118,37 @@ func NewMetric(r *http.Request) *Metrics {
 * @return et.Json
 **/
 func (m *Metrics) println() et.Json {
-	w := logs.Color(logs.NMagenta, fmt.Sprintf(" [%s]: ", m.Method))
-	logs.CW(w, logs.NCyan, fmt.Sprintf("%s %s", m.EndPoint, m.Proto))
-	logs.CW(w, logs.NWhite, fmt.Sprintf(" from %s", m.RemoteAddr))
+	w := lg.Color(lg.NMagenta, fmt.Sprintf(" [%s]: ", m.Method))
+	lg.CW(w, lg.NCyan, fmt.Sprintf("%s %s", m.EndPoint, m.Proto))
+	lg.CW(w, lg.NWhite, fmt.Sprintf(" from %s", m.RemoteAddr))
 	if m.StatusCode >= 500 {
-		logs.CW(w, logs.NRed, fmt.Sprintf(" - %s", m.Status))
+		lg.CW(w, lg.NRed, fmt.Sprintf(" - %s", m.Status))
 	} else if m.StatusCode >= 400 {
-		logs.CW(w, logs.NYellow, fmt.Sprintf(" - %s", m.Status))
+		lg.CW(w, lg.NYellow, fmt.Sprintf(" - %s", m.Status))
 	} else if m.StatusCode >= 300 {
-		logs.CW(w, logs.NCyan, fmt.Sprintf(" - %s", m.Status))
+		lg.CW(w, lg.NCyan, fmt.Sprintf(" - %s", m.Status))
 	} else {
-		logs.CW(w, logs.NGreen, fmt.Sprintf(" - %s", m.Status))
+		lg.CW(w, lg.NGreen, fmt.Sprintf(" - %s", m.Status))
 	}
 	if m.ContentLength > 0 {
-		logs.CW(w, logs.NCyan, fmt.Sprintf(" %v%s", m.ContentLength, "KB"))
+		lg.CW(w, lg.NCyan, fmt.Sprintf(" %v%s", m.ContentLength, "KB"))
 	}
-	logs.CW(w, logs.NWhite, " in ")
+	lg.CW(w, lg.NWhite, " in ")
 	if m.Latency < 500*time.Millisecond {
-		logs.CW(w, logs.NGreen, "Latency:%s", m.Latency)
+		lg.CW(w, lg.NGreen, "Latency:%s", m.Latency)
 	} else if m.Latency < 5*time.Second {
-		logs.CW(w, logs.NYellow, "Latency:%s", m.Latency)
+		lg.CW(w, lg.NYellow, "Latency:%s", m.Latency)
 	} else {
-		logs.CW(w, logs.NRed, "Latency:%s", m.Latency)
+		lg.CW(w, lg.NRed, "Latency:%s", m.Latency)
 	}
-	logs.CW(w, logs.NWhite, " Response:%s", m.ResponseTime)
-	logs.CW(w, logs.NRed, " Downtime:%s", m.Downtime)
+	lg.CW(w, lg.NWhite, " Response:%s", m.ResponseTime)
+	lg.CW(w, lg.NRed, " Downtime:%s", m.Downtime)
 	if m.RequestsHost.Seccond > m.RequestsHost.Limit {
-		logs.CW(w, logs.NRed, " - Request S:%vM:%vH:%vL:%v", m.RequestsHost.Seccond, m.RequestsHost.Minute, m.RequestsHost.Hour, m.RequestsHost.Limit)
+		lg.CW(w, lg.NRed, " - Request S:%vM:%vH:%vL:%v", m.RequestsHost.Seccond, m.RequestsHost.Minute, m.RequestsHost.Hour, m.RequestsHost.Limit)
 	} else {
-		logs.CW(w, logs.NYellow, " - Request S:%vM:%vH:%vL:%v", m.RequestsHost.Seccond, m.RequestsHost.Minute, m.RequestsHost.Hour, m.RequestsHost.Limit)
+		lg.CW(w, lg.NYellow, " - Request S:%vM:%vH:%vL:%v", m.RequestsHost.Seccond, m.RequestsHost.Minute, m.RequestsHost.Hour, m.RequestsHost.Limit)
 	}
-	logs.Println(w)
+	lg.Println(w)
 
 	result := et.Json{
 		"reqID":         m.ReqID,
