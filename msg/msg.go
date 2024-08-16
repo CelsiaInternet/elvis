@@ -64,4 +64,5 @@ const (
 	RPC_NOT_FOUND           = "RPC not found"
 	ERR_NOT_FONUND          = "Document not found"
 	ERR_NOT_COLLETION_MONGO = "Collection not found"
+	ERR_INVALID_TYPE        = "Invalid type"
 )

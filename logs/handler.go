@@ -1,7 +1,6 @@
 package logs
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -12,7 +11,6 @@ import (
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/msg"
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -162,15 +160,16 @@ func set(collection string, key string, val et.Json) error {
 	return nil
 }
 
-func GetCtx(ctx context.Context, collection *mongo.Collection, key, def string) (string, error) {
-	if collection == nil {
+func Get(collection string, key, def string) (string, error) {
+	if conn == nil {
 		return def, Log(msg.ERR_NOT_COLLETION_MONGO)
 	}
 
-	filter := bson.M{"key": key}
+	coll := conn.db.Collection(collection)
+	filter := et.Json{"key": key}
 	var result MongoDocument
 
-	err := collection.FindOne(ctx, filter).Decode(&result)
+	err := coll.FindOne(conn.ctx, filter).Decode(&result)
 	if err == mongo.ErrNoDocuments {
 		return def, IsNil
 	} else if err != nil {
@@ -180,13 +179,14 @@ func GetCtx(ctx context.Context, collection *mongo.Collection, key, def string) 
 	return result.Value, nil
 }
 
-func DelCtx(ctx context.Context, collection *mongo.Collection, key string) (int64, error) {
-	if collection == nil {
+func Del(collection string, key string) (int64, error) {
+	if conn == nil {
 		return 0, Log(msg.ERR_NOT_COLLETION_MONGO)
 	}
 
-	filter := bson.M{"key": key}
-	deleteResult, err := collection.DeleteOne(ctx, filter)
+	coll := conn.db.Collection(collection)
+	filter := et.Json{"key": key}
+	deleteResult, err := coll.DeleteOne(conn.ctx, filter)
 	if err != nil {
 		return 0, err
 	}
@@ -194,46 +194,89 @@ func DelCtx(ctx context.Context, collection *mongo.Collection, key string) (int6
 	return deleteResult.DeletedCount, nil
 }
 
-func Get(collection *mongo.Collection, ctx context.Context, key, def string) (string, error) {
-	return GetCtx(ctx, collection, key, def)
-}
+func Set(collection string, key string, val interface{}) error {
+	if conn == nil {
+		return Log(msg.ERR_NOT_COLLETION_MONGO)
+	}
 
-func Set(collection *mongo.Collection, ctx context.Context, key string, val interface{}) error {
+	coll := conn.db.Collection(collection)
+	var valStr string
+
 	switch v := val.(type) {
 	case et.Json:
-		return SetCtx(ctx, collection, key, v.ToString())
+		valStr = v.ToString()
 	case et.Items:
-		return SetCtx(ctx, collection, key, v.ToString())
+		valStr = v.ToString()
 	case et.Item:
-		return SetCtx(ctx, collection, key, v.ToString())
+		valStr = v.ToString()
 	default:
-		valStr, ok := val.(string)
-		if ok {
-			return SetCtx(ctx, collection, key, valStr)
+		var ok bool
+		valStr, ok = val.(string)
+		if !ok {
+			return Log(msg.ERR_INVALID_TYPE)
 		}
+	}
+
+	filter := et.Json{"key": key}
+	update := et.Json{"$set": et.Json{"value": valStr}}
+	opts := options.Update().SetUpsert(true)
+
+	_, err := coll.UpdateOne(conn.ctx, filter, update, opts)
+	if err != nil {
+		return err
 	}
 
 	return nil
 }
 
-func Del(collection *mongo.Collection, ctx context.Context, key string) (int64, error) {
-	return DelCtx(ctx, collection, key)
+func HSet(collection string, key string, val map[string]string) error {
+	if conn == nil {
+		return Log(msg.ERR_NOT_COLLETION_MONGO)
+	}
+
+	coll := conn.db.Collection(collection)
+	filter := et.Json{"key": key}
+	update := et.Json{"$set": et.Json{"value": val}}
+	opts := options.Update().SetUpsert(true)
+
+	_, err := coll.UpdateOne(conn.ctx, filter, update, opts)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func HSet(collection *mongo.Collection, ctx context.Context, key string, val map[string]string) error {
-	return HSetCtx(ctx, collection, key, val)
+func HGet(collection string, key string) (map[string]string, error) {
+	if conn == nil {
+		return nil, Log(msg.ERR_NOT_COLLETION_MONGO)
+	}
+
+	coll := conn.db.Collection(collection)
+	filter := et.Json{"key": key}
+	var result et.Json
+
+	err := coll.FindOne(conn.ctx, filter).Decode(&result)
+	if err == mongo.ErrNoDocuments {
+		return nil, IsNil
+	} else if err != nil {
+		return nil, err
+	}
+
+	value, ok := result["value"].(map[string]string)
+	if !ok {
+		return nil, fmt.Errorf("invalid type for value")
+	}
+
+	return value, nil
 }
 
-func HGet(collection *mongo.Collection, ctx context.Context, key string) (map[string]string, error) {
-	return HGetCtx(ctx, collection, key)
+func HSetAtrib(collection string, key, atr, val string) error {
+	return HSet(collection, key, map[string]string{atr: val})
 }
 
-func HSetAtrib(collection *mongo.Collection, ctx context.Context, key, atr, val string) error {
-	return HSetCtx(ctx, collection, key, map[string]string{atr: val})
-}
-
-func HGetAtrib(collection *mongo.Collection, ctx context.Context, key, atr string) (string, error) {
-	atribs, err := HGetCtx(ctx, collection, key)
+func HGetAtrib(collection string, key, atr string) (string, error) {
+	atribs, err := HGet(collection, key)
 	if err != nil {
 		return "", err
 	}
@@ -241,11 +284,29 @@ func HGetAtrib(collection *mongo.Collection, ctx context.Context, key, atr strin
 	return atribs[atr], nil
 }
 
-func HDel(collection *mongo.Collection, ctx context.Context, key, atr string) error {
-	return HDelCtx(ctx, collection, key, atr)
+func HDel(collection string, key, atr string) error {
+	if conn == nil {
+		return Log(msg.ERR_NOT_COLLETION_MONGO)
+	}
+
+	coll := conn.db.Collection(collection)
+	filter := et.Json{"key": key}
+	update := et.Json{"$unset": et.Json{"value." + atr: ""}}
+
+	_, err := coll.UpdateOne(conn.ctx, filter, update)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func Empty(collection *mongo.Collection, ctx context.Context) error {
-	_, err := collection.DeleteMany(ctx, bson.M{})
+func Empty(collection string) error {
+	if conn == nil {
+		return Log(msg.ERR_NOT_COLLETION_MONGO)
+	}
+
+	coll := conn.db.Collection(collection)
+	_, err := coll.DeleteMany(conn.ctx, et.Json{})
 	return err
 }
