@@ -1,10 +1,9 @@
 package module
 
 import (
-	"database/sql"
-
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/et"
+	"github.com/cgalvisleon/elvis/jdb"
 	"github.com/cgalvisleon/elvis/linq"
 	"github.com/cgalvisleon/elvis/utility"
 )
@@ -14,7 +13,7 @@ import (
 var Migration *linq.Model
 var MigrationFolders *linq.Model
 
-func DefineMigration(db *sql.DB) error {
+func DefineMigration(db *jdb.DB) error {
 	if err := DefineSchemaModule(db); err != nil {
 		return console.Panic(err)
 	}

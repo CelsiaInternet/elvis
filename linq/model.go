@@ -1,8 +1,6 @@
 package linq
 
 import (
-	"database/sql"
-
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/jdb"
 	"github.com/cgalvisleon/elvis/strs"
@@ -21,7 +19,7 @@ type Trigger func(model *Model, old, new *et.Json, data et.Json) error
 type Listener func(data et.Json)
 
 type Model struct {
-	Db                 *sql.DB
+	db                 *jdb.DB
 	Name               string
 	Description        string
 	Define             string
@@ -62,7 +60,7 @@ func NewModel(schema *Schema, name, description string, version int) *Model {
 	name = strs.Uppcase(name)
 	table := strs.Append(schema.Name, name, ".")
 	result := &Model{
-		Db:                 schema.Db,
+		db:                 schema.db,
 		Schema:             schema,
 		Name:               name,
 		Description:        description,
@@ -173,7 +171,7 @@ func (c *Model) Model() et.Json {
 func (c *Model) Init() error {
 	c.Define = c.DDL()
 
-	exists, err := jdb.ExistTable(c.Db, c.Schema.Name, c.Name)
+	exists, err := jdb.ExistTable(c.db, c.Schema.Name, c.Name)
 	if err != nil {
 		return err
 	}
@@ -182,7 +180,7 @@ func (c *Model) Init() error {
 		return nil
 	}
 
-	_, err = jdb.Query(c.Db, c.Define)
+	_, err = c.db.Command(c.Define)
 	if err != nil {
 		return err
 	}
@@ -459,4 +457,20 @@ func (c *Model) UpsertRow(data et.Json) *Linq {
 	result.data = data
 
 	return result
+}
+
+func (c *Model) Query(sql string, args ...any) (et.Items, error) {
+	return c.db.Query(sql, args...)
+}
+
+func (c *Model) QueryOne(sql string, args ...any) (et.Item, error) {
+	return c.db.QueryOne(sql, args...)
+}
+
+func (c *Model) Source(sourceField, sql string, args ...any) (et.Items, error) {
+	return c.db.Source(sourceField, sql, args...)
+}
+
+func (c *Model) Command(sql string, args ...any) (et.Item, error) {
+	return c.db.Command(sql, args...)
 }

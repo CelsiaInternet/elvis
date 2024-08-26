@@ -1,8 +1,6 @@
 package module
 
 import (
-	"database/sql"
-
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/jdb"
@@ -13,7 +11,7 @@ import (
 
 var Roles *linq.Model
 
-func DefineRoles(db *sql.DB) error {
+func DefineRoles(db *jdb.DB) error {
 	if err := DefineSchemaModule(db); err != nil {
 		return console.Panic(err)
 	}
@@ -75,7 +73,7 @@ func GetUserRoleByIndex(idx int) (et.Item, error) {
 	WHERE A.INDEX=$1
 	LIMIT 1;`
 
-	item, err := jdb.QueryOne(Roles.Db, sql, idx)
+	item, err := Roles.QueryOne(sql, idx)
 	if err != nil {
 		return et.Item{}, err
 	}
@@ -95,7 +93,7 @@ func GetUserProjects(userId string) ([]et.Json, error) {
 	GROUP BY B._ID, B.NAME
 	ORDER BY B.NAME;`
 
-	modules, err := jdb.Query(Roles.Db, sql, userId)
+	modules, err := Roles.Query(sql, userId)
 	if err != nil {
 		return []et.Json{}, err
 	}
@@ -122,7 +120,7 @@ func GetUserModules(userId string) ([]et.Json, error) {
 	GROUP BY D._ID, D.NAME, B._ID, B.NAME, A.PROFILE_TP, C.NAME, USER_ID, A.INDEX
 	ORDER BY D.NAME, B.NAME, C.NAME;`
 
-	modules, err := jdb.Query(Roles.Db, sql, userId)
+	modules, err := Roles.Query(sql, userId)
 	if err != nil {
 		return []et.Json{}, err
 	}
@@ -189,7 +187,7 @@ func CheckRole(projectId, moduleId, profileTp, userId string, chk bool) (et.Item
 			PROFILE_TP=$2
 			WHERE INDEX=$1;`
 
-			item, err := jdb.QueryOne(Roles.Db, sql, index, profileTp, now)
+			item, err := Roles.Command(sql, index, profileTp, now)
 			if err != nil {
 				return et.Item{}, err
 			}
@@ -215,7 +213,7 @@ func CheckRole(projectId, moduleId, profileTp, userId string, chk bool) (et.Item
 		VALUES($1, $1, $2, $3, $4, $5, $6)
 		RETURNING INDEX;`
 
-		item, err := jdb.QueryOne(Roles.Db, sql, now, projectId, moduleId, userId, profileTp, index)
+		item, err := Roles.Command(sql, now, projectId, moduleId, userId, profileTp, index)
 		if err != nil {
 			return et.Item{}, err
 		}
@@ -241,7 +239,7 @@ func CheckRole(projectId, moduleId, profileTp, userId string, chk bool) (et.Item
 		AND USER_ID=$4
 		RETURNING INDEX;`
 
-		item, err := jdb.QueryOne(Roles.Db, sql, projectId, moduleId, profileTp, userId)
+		item, err := Roles.Command(sql, projectId, moduleId, profileTp, userId)
 		if err != nil {
 			return et.Item{}, err
 		}

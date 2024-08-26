@@ -1,8 +1,6 @@
 package linq
 
 import (
-	"database/sql"
-
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/jdb"
 	"github.com/cgalvisleon/elvis/strs"
@@ -21,16 +19,16 @@ var (
 )
 
 type Schema struct {
-	Db          *sql.DB
+	db          *jdb.DB
 	Name        string
 	Description string
 	Define      string
 	Models      []*Model
 }
 
-func NewSchema(db *sql.DB, name string) *Schema {
+func NewSchema(db *jdb.DB, name string) *Schema {
 	result := &Schema{
-		Db:     db,
+		db:     db,
 		Name:   strs.Lowcase(name),
 		Models: []*Model{},
 	}
@@ -69,7 +67,7 @@ func (c *Schema) Describe() et.Json {
 
 func (c *Schema) Init() error {
 	c.Define = strs.Format(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"; CREATE SCHEMA IF NOT EXISTS "%s";`, c.Name)
-	_, err := jdb.Query(c.Db, c.Define)
+	_, err := c.db.Command(c.Define)
 	if err != nil {
 		return err
 	}

@@ -185,7 +185,7 @@ func (c *Linq) commandUpsert() (et.Items, error) {
 **/
 func (c *Linq) Current() (et.Items, error) {
 	c.sql = c.SqlCurrent()
-	result, err := c.Query()
+	result, err := c.query()
 	if err != nil {
 		return et.Items{}, err
 	}
@@ -208,7 +208,7 @@ func (c *Linq) insert() (et.Item, error) {
 
 	c.SqlInsert()
 
-	item, err := c.QueryOne()
+	item, err := c.command()
 	if err != nil {
 		return et.Item{}, err
 	}
@@ -243,7 +243,7 @@ func (c *Linq) update(current et.Json) (et.Item, error) {
 
 	c.SqlUpdate()
 
-	item, err := c.QueryOne()
+	item, err := c.command()
 	if err != nil {
 		return et.Item{}, err
 	}
@@ -278,7 +278,7 @@ func (c *Linq) delete(current et.Json) (et.Item, error) {
 
 	c.SqlDelete()
 
-	item, err := c.QueryOne()
+	item, err := c.command()
 	if err != nil {
 		return et.Item{}, err
 	}

@@ -1,8 +1,6 @@
 package module
 
 import (
-	"database/sql"
-
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/jdb"
@@ -14,7 +12,7 @@ import (
 var Profiles *linq.Model
 var ProfileFolders *linq.Model
 
-func DefineProfiles(db *sql.DB) error {
+func DefineProfiles(db *jdb.DB) error {
 	if err := DefineSchemaModule(db); err != nil {
 		return console.Panic(err)
 	}
@@ -45,7 +43,7 @@ func DefineProfiles(db *sql.DB) error {
 	return nil
 }
 
-func DefineProfileFolders(db *sql.DB) error {
+func DefineProfileFolders(db *jdb.DB) error {
 	if err := DefineSchemaModule(db); err != nil {
 		return console.Panic(err)
 	}
@@ -271,7 +269,7 @@ func getProfileFolders(userId, projectId, mainId string) []et.Json {
 	AND B.PROFILE_TP IN (SELECT D.PROFILE_TP FROM module.ROLES AS D WHERE D.PROJECT_ID = $2 AND D.USER_ID = $3)
 	ORDER BY A._DATA#>>'{order}' ASC;`
 
-	items, err := jdb.Source(Profiles.Db, "_DATA", sql, mainId, projectId, userId)
+	items, err := Profiles.Source(linq.StateField, sql, mainId, projectId, userId)
 	if err != nil {
 		return []et.Json{}
 	}

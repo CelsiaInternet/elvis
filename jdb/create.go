@@ -1,8 +1,6 @@
 package jdb
 
 import (
-	"database/sql"
-
 	"github.com/cgalvisleon/elvis/strs"
 	"github.com/cgalvisleon/elvis/utility"
 )
@@ -12,7 +10,7 @@ import (
 **/
 
 // Crate database
-func CreateDatabase(db *sql.DB, name string) error {
+func CreateDatabase(db *DB, name string) error {
 	name = strs.Lowcase(name)
 	exists, err := ExistDatabase(db, name)
 	if err != nil {
@@ -22,7 +20,7 @@ func CreateDatabase(db *sql.DB, name string) error {
 	if !exists {
 		sql := strs.Format(`CREATE DATABASE %s;`, name)
 
-		_, err := Query(db, sql)
+		_, err := db.Command(sql)
 		if err != nil {
 			return err
 		}
@@ -32,10 +30,10 @@ func CreateDatabase(db *sql.DB, name string) error {
 }
 
 // Create schema
-func CreateSchema(db *sql.DB, name string) error {
+func CreateSchema(db *DB, name string) error {
 	sql := strs.Format(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"; CREATE SCHEMA IF NOT EXISTS "%s";`, name)
 
-	_, err := Query(db, sql)
+	_, err := db.Command(sql)
 	if err != nil {
 		return err
 	}
@@ -44,7 +42,7 @@ func CreateSchema(db *sql.DB, name string) error {
 }
 
 // Create column
-func CreateColumn(db *sql.DB, schema, table, name, kind, defaultValue string) error {
+func CreateColumn(db *DB, schema, table, name, kind, defaultValue string) error {
 	tableName := strs.Format(`%s.%s`, schema, strs.Uppcase(table))
 	sql := SQLDDL(`
 	DO $$
@@ -57,7 +55,7 @@ func CreateColumn(db *sql.DB, schema, table, name, kind, defaultValue string) er
 	END;
 	$$;`, tableName, strs.Uppcase(name), strs.Uppcase(kind), defaultValue)
 
-	_, err := Query(db, sql)
+	_, err := db.Command(sql)
 	if err != nil {
 		return err
 	}
@@ -66,12 +64,12 @@ func CreateColumn(db *sql.DB, schema, table, name, kind, defaultValue string) er
 }
 
 // Create index
-func CreateIndex(db *sql.DB, schema, table, field string) error {
+func CreateIndex(db *DB, schema, table, field string) error {
 	sql := SQLDDL(`
 	CREATE INDEX IF NOT EXISTS $2_$3_IDX ON $1.$2($3);`,
 		strs.Uppcase(schema), strs.Uppcase(table), strs.Uppcase(field))
 
-	_, err := Query(db, sql)
+	_, err := db.Command(sql)
 	if err != nil {
 		return err
 	}
@@ -80,7 +78,7 @@ func CreateIndex(db *sql.DB, schema, table, field string) error {
 }
 
 // Create trigger
-func CreateTrigger(db *sql.DB, schema, table, name, when, event, function string) error {
+func CreateTrigger(db *DB, schema, table, name, when, event, function string) error {
 	sql := SQLDDL(`
 	DROP TRIGGER IF EXISTS $3 ON $1.$2 CASCADE;
 	CREATE TRIGGER $3
@@ -89,7 +87,7 @@ func CreateTrigger(db *sql.DB, schema, table, name, when, event, function string
 	EXECUTE PROCEDURE $6;`,
 		strs.Uppcase(schema), strs.Uppcase(table), strs.Uppcase(name), when, event, function)
 
-	_, err := Query(db, sql)
+	_, err := db.Command(sql)
 	if err != nil {
 		return err
 	}
@@ -98,10 +96,10 @@ func CreateTrigger(db *sql.DB, schema, table, name, when, event, function string
 }
 
 // Create serie
-func CreateSequence(db *sql.DB, schema, tag string) error {
+func CreateSequence(db *DB, schema, tag string) error {
 	sql := strs.Format(`CREATE SEQUENCE IF NOT EXISTS %s START 1;`, tag)
 
-	_, err := Query(db, sql)
+	_, err := db.Command(sql)
 	if err != nil {
 		return err
 	}
@@ -110,7 +108,7 @@ func CreateSequence(db *sql.DB, schema, tag string) error {
 }
 
 // Create user
-func CreateUser(db *sql.DB, name, password string) error {
+func CreateUser(db *DB, name, password string) error {
 	passwordHash, err := utility.PasswordHash(password)
 	if err != nil {
 		return err
@@ -118,7 +116,7 @@ func CreateUser(db *sql.DB, name, password string) error {
 
 	sql := strs.Format(`CREATE USER %s WITH PASSWORD '%s';`, name, passwordHash)
 
-	_, err = Query(db, sql)
+	_, err = db.Command(sql)
 	if err != nil {
 		return err
 	}
@@ -127,7 +125,7 @@ func CreateUser(db *sql.DB, name, password string) error {
 }
 
 // Changue password
-func ChangePassword(db *sql.DB, name, password string) error {
+func ChangePassword(db *DB, name, password string) error {
 	passwordHash, err := utility.PasswordHash(password)
 	if err != nil {
 		return err
@@ -135,7 +133,7 @@ func ChangePassword(db *sql.DB, name, password string) error {
 
 	sql := strs.Format(`ALTER USER %s WITH PASSWORD '%s';`, name, passwordHash)
 
-	_, err = Query(db, sql)
+	_, err = db.Command(sql)
 	if err != nil {
 		return err
 	}

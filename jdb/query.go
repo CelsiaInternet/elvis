@@ -6,6 +6,7 @@ import (
 
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/et"
+	"github.com/cgalvisleon/elvis/logs"
 	"github.com/cgalvisleon/elvis/msg"
 	"github.com/cgalvisleon/elvis/strs"
 )
@@ -65,71 +66,148 @@ func SQLParse(sql string, args ...any) string {
 }
 
 /**
-* Query
-* @param db *sql.DB
+* query
+* @param db *DB
+* @param sql string
+* @param args ...any
+* @return *sql.Rows
+* @return error
+**/
+func query(db *DB, sql string, args ...any) (*sql.Rows, error) {
+	if db == nil {
+		return nil, console.AlertF(msg.ERR_COMM)
+	}
+
+	isSelect := func(query string) bool {
+		query = strings.TrimSpace(query)
+		return strings.HasPrefix(strings.ToLower(query), "select")
+	}
+
+	if !isSelect(sql) {
+		return command(db, sql, args...)
+	}
+
+	rows, err := db.db.Query(sql, args...)
+	if err != nil {
+		return nil, console.ErrorF(msg.ERR_SQL, err.Error(), sql)
+	}
+
+	return rows, nil
+}
+
+/**
+* command
+* @param db *DB
+* @param sql string
+* @param args ...any
+* @return *sql.Rows
+* @return error
+**/
+func command(db *DB, sql string, args ...any) (*sql.Rows, error) {
+	if db == nil {
+		return nil, console.AlertF(msg.ERR_COMM)
+	}
+
+	query := SQLParse(sql, args...)
+	rows, err := db.db.Query(query)
+	if err != nil {
+		return nil, console.ErrorF(msg.ERR_SQL, err.Error(), sql)
+	}
+
+	err = db.SetCommand(query)
+	if err != nil {
+		return nil, logs.Alert(err)
+	}
+
+	return rows, nil
+}
+
+/**
+* Command
+* @param db *DB
 * @param sql string
 * @param args ...any
 * @return et.Items
 * @return error
 **/
-func Query(db *sql.DB, sql string, args ...any) (et.Items, error) {
-	if db == nil {
-		return et.Items{}, console.AlertF(msg.ERR_COMM)
-	}
-
-	sql = SQLParse(sql, args...)
-	rows, err := db.Query(sql)
-	if err != nil {
-		return et.Items{}, console.ErrorF(msg.ERR_SQL, err.Error(), sql)
-	}
-	defer rows.Close()
-
-	items := rowsItems(rows)
-
-	return items, nil
-}
-
-/**
-* QueryOne
-* @param db *sql.DB
-* @param sql string
-* @param args ...any
-* @return et.Item
-* @return error
-**/
-func QueryOne(db *sql.DB, sql string, args ...any) (et.Item, error) {
-	if db == nil {
+func (d *DB) Command(sql string, args ...any) (et.Item, error) {
+	if d.db == nil {
 		return et.Item{}, console.AlertF(msg.ERR_COMM)
 	}
 
-	sql = SQLParse(sql, args...)
-	rows, err := db.Query(sql)
+	rows, err := command(d, sql, args...)
 	if err != nil {
 		return et.Item{}, err
 	}
 	defer rows.Close()
 
-	item := rowsItem(rows)
+	result := rowsItem(rows)
 
-	return item, nil
+	return result, nil
+}
+
+/**
+* Query
+* @param db *DB
+* @param sql string
+* @param args ...any
+* @return et.Items
+* @return error
+**/
+func (d *DB) Query(sql string, args ...any) (et.Items, error) {
+	if d.db == nil {
+		return et.Items{}, console.AlertF(msg.ERR_COMM)
+	}
+
+	rows, err := query(d, sql, args...)
+	if err != nil {
+		return et.Items{}, err
+	}
+	defer rows.Close()
+
+	result := rowsItems(rows)
+
+	return result, nil
+}
+
+/**
+* QueryOne
+* @param db *DB
+* @param sql string
+* @param args ...any
+* @return et.Item
+* @return error
+**/
+func (d *DB) QueryOne(sql string, args ...any) (et.Item, error) {
+	if d.db == nil {
+		return et.Item{}, console.AlertF(msg.ERR_COMM)
+	}
+
+	items, err := query(d, sql, args...)
+	if err != nil {
+		return et.Item{}, err
+	}
+
+	result := rowsItem(items)
+
+	return result, nil
 }
 
 /**
 * Source
-* @param db *sql.DB
+* @param db *DB
 * @param sourceField string
 * @param sql string
 * @param args ...any
 * @return et.Items
 * @return error
 **/
-func Source(db *sql.DB, sourceField string, sql string, args ...any) (et.Items, error) {
-	if db == nil {
+func (d *DB) Source(sourceField string, sql string, args ...any) (et.Items, error) {
+	if d.db == nil {
 		return et.Items{}, console.AlertF(msg.ERR_COMM)
 	}
 
-	sql = SQLParse(sql, args...)
-	rows, err := db.Query(sql)
+	rows, err := d.db.Query(sql, args...)
 	if err != nil {
 		return et.Items{}, console.ErrorF(msg.ERR_SQL, err.Error(), sql)
 	}
@@ -142,20 +220,19 @@ func Source(db *sql.DB, sourceField string, sql string, args ...any) (et.Items, 
 
 /**
 * SourceOne
-* @param db *sql.DB
+* @param db *DB
 * @param sourceField string
 * @param sql string
 * @param args ...any
 * @return et.Item
 * @return error
 **/
-func SourceOne(db *sql.DB, sourceField string, sql string, args ...any) (et.Item, error) {
-	if db == nil {
+func (d *DB) SourceOne(sourceField string, sql string, args ...any) (et.Item, error) {
+	if d.db == nil {
 		return et.Item{}, console.AlertF(msg.ERR_COMM)
 	}
 
-	sql = SQLParse(sql, args...)
-	rows, err := db.Query(sql)
+	rows, err := d.db.Query(sql, args...)
 	if err != nil {
 		return et.Item{}, err
 	}
@@ -164,66 +241,4 @@ func SourceOne(db *sql.DB, sourceField string, sql string, args ...any) (et.Item
 	item := sourceItem(rows, sourceField)
 
 	return item, nil
-}
-
-/**
-* DBQuery
-* @param sql string
-* @param args ...any
-* @return et.Items
-* @return error
-**/
-func DBQuery(sql string, args ...any) (et.Items, error) {
-	if conn == nil {
-		return et.Items{}, console.AlertF(msg.ERR_COMM)
-	}
-
-	return Query(conn.Db, sql, args...)
-}
-
-/**
-* DBQueryOne
-* @param sql string
-* @param args ...any
-* @return et.Item
-* @return error
-**/
-func DBQueryOne(sql string, args ...any) (et.Item, error) {
-	if conn == nil {
-		return et.Item{}, console.AlertF(msg.ERR_COMM)
-	}
-
-	return QueryOne(conn.Db, sql, args...)
-}
-
-/**
-* DBSource
-* @param sourceField string
-* @param sql string
-* @param args ...any
-* @return et.Items
-* @return error
-**/
-func DBSource(sourceField string, sql string, args ...any) (et.Items, error) {
-	if conn == nil {
-		return et.Items{}, console.AlertF(msg.ERR_COMM)
-	}
-
-	return Source(conn.Db, sourceField, sql, args...)
-}
-
-/**
-* DBSourceOne
-* @param sourceField string
-* @param sql string
-* @param args ...any
-* @return et.Item
-* @return error
-**/
-func DBSourceOne(sourceField string, sql string, args ...any) (et.Item, error) {
-	if conn == nil {
-		return et.Item{}, console.AlertF(msg.ERR_COMM)
-	}
-
-	return SourceOne(conn.Db, sourceField, sql, args...)
 }

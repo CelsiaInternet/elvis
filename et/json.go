@@ -195,12 +195,37 @@ func (s Json) ValInt(_default int, atribs ...string) int {
 	case string:
 		i, err := strconv.Atoi(v)
 		if err != nil {
-			log.Println("ValInt value int not conver", reflect.TypeOf(v), v)
 			return _default
 		}
 		return i
 	default:
-		log.Println("ValInt value is not int, type:", reflect.TypeOf(v), "value:", v)
+		return _default
+	}
+}
+
+func (s Json) ValInt64(_default int64, atribs ...string) int64 {
+	val := s.ValAny(_default, atribs...)
+
+	switch v := val.(type) {
+	case int:
+		return int64(v)
+	case float64:
+		return int64(v)
+	case float32:
+		return int64(v)
+	case int16:
+		return int64(v)
+	case int32:
+		return int64(v)
+	case int64:
+		return v
+	case string:
+		i, err := strconv.ParseInt(v, 10, 64)
+		if err != nil {
+			return _default
+		}
+		return i
+	default:
 		return _default
 	}
 }
@@ -318,6 +343,10 @@ func (s Json) Str(atribs ...string) string {
 
 func (s Json) Int(atribs ...string) int {
 	return s.ValInt(0, atribs...)
+}
+
+func (s Json) Int64(atribs ...string) int64 {
+	return s.ValInt64(0, atribs...)
 }
 
 func (s Json) Num(atribs ...string) float64 {

@@ -1,21 +1,17 @@
 package jdb
 
 import (
-	"database/sql"
-	"fmt"
-	"time"
-
-	"github.com/cgalvisleon/elvis/cache"
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/strs"
 )
 
-var (
-	makedSeries bool
-)
+func defineSeries(db *DB) error {
+	exist, err := ExistTable(db, "core", "SERIES")
+	if err != nil {
+		return console.Panic(err)
+	}
 
-func defineSeries(db *sql.DB) error {
-	if makedSeries {
+	if exist {
 		return nil
 	}
 
@@ -70,26 +66,27 @@ func defineSeries(db *sql.DB) error {
 	END;
 	$$ LANGUAGE plpgsql;`
 
-	_, err := Query(db, sql)
+	_, err = db.Command(sql)
 	if err != nil {
 		return console.Panic(err)
 	}
-
-	makedSeries = true
 
 	return nil
 }
 
 func NextSerie(tag string) int {
-	if !makedSeries {
+	if conn == nil {
 		return 0
 	}
 
 	sql := `SELECT core.nextserie($1) AS SERIE;`
 
-	item, err := QueryOne(conn.Db, sql, tag)
+	item, err := conn.Command(sql, tag)
 	if err != nil {
 		console.Error(err)
+		return 0
+	}
+	if !item.Ok {
 		return 0
 	}
 
@@ -109,13 +106,9 @@ func NextCode(tag, prefix string) string {
 }
 
 func SetSerie(tag string, val int) (int, error) {
-	if !makedSeries {
-		return 0, nil
-	}
-
 	sql := `SELECT core.setserie($1, $2);`
 
-	_, err := QueryOne(conn.Db, sql, tag, val)
+	_, err := conn.Command(sql, tag, val)
 	if err != nil {
 		return 0, err
 	}
@@ -124,44 +117,14 @@ func SetSerie(tag string, val int) (int, error) {
 }
 
 func LastSerie(tag string) int {
-	if !makedSeries {
-		return 0
-	}
-
 	sql := `SELECT core.currserie($1) AS SERIE;`
 
-	item, err := QueryOne(conn.Db, sql, tag)
+	item, err := conn.Command(sql, tag)
 	if err != nil {
 		return 0
 	}
 
 	result := item.Int("serie")
 
-	return result
-}
-
-func UUIndex(db *sql.DB, tag string) int64 {
-	now := time.Now()
-	result := now.UnixMilli() * 10000
-	val, err := GetVar(db, "REPLICA", 1)
-	if err != nil {
-		return 0
-	}
-
-	replica := int64(val.Int())
-
-	if replica < 10 {
-		replica = replica * 1000
-	} else if replica < 100 {
-		replica = replica * 100
-	} else {
-		replica = replica * 10
-	}
-
-	result = result + replica
-	key := fmt.Sprintf("%s:%d", tag, result)
-	count := cache.Count(key, 1)
-
-	result = result + count
 	return result
 }

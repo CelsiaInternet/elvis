@@ -1,8 +1,6 @@
 package jdb
 
 import (
-	"database/sql"
-
 	"github.com/cgalvisleon/elvis/strs"
 )
 
@@ -11,7 +9,7 @@ import (
 **/
 
 // Exist database
-func ExistDatabase(db *sql.DB, name string) (bool, error) {
+func ExistDatabase(db *DB, name string) (bool, error) {
 	name = strs.Lowcase(name)
 	sql := `
 	SELECT EXISTS(
@@ -19,7 +17,7 @@ func ExistDatabase(db *sql.DB, name string) (bool, error) {
 		FROM pg_database
 		WHERE UPPER(datname) = UPPER($1));`
 
-	item, err := QueryOne(db, sql, name)
+	item, err := db.QueryOne(sql, name)
 	if err != nil {
 		return false, err
 	}
@@ -28,7 +26,7 @@ func ExistDatabase(db *sql.DB, name string) (bool, error) {
 }
 
 // Exist schema
-func ExistSchema(db *sql.DB, name string) (bool, error) {
+func ExistSchema(db *DB, name string) (bool, error) {
 	name = strs.Lowcase(name)
 	sql := `
 	SELECT EXISTS(
@@ -36,7 +34,7 @@ func ExistSchema(db *sql.DB, name string) (bool, error) {
 		FROM pg_namespace
 		WHERE UPPER(nspname) = UPPER($1));`
 
-	item, err := QueryOne(db, sql, name)
+	item, err := db.QueryOne(sql, name)
 	if err != nil {
 		return false, err
 	}
@@ -45,7 +43,7 @@ func ExistSchema(db *sql.DB, name string) (bool, error) {
 }
 
 // Exist table
-func ExistTable(db *sql.DB, schema, name string) (bool, error) {
+func ExistTable(db *DB, schema, name string) (bool, error) {
 	sql := `
 	SELECT EXISTS(
 		SELECT 1
@@ -53,7 +51,7 @@ func ExistTable(db *sql.DB, schema, name string) (bool, error) {
 		WHERE UPPER(table_schema) = UPPER($1)
 		AND UPPER(table_name) = UPPER($2));`
 
-	item, err := QueryOne(db, sql, schema, name)
+	item, err := db.QueryOne(sql, schema, name)
 	if err != nil {
 		return false, err
 	}
@@ -62,7 +60,7 @@ func ExistTable(db *sql.DB, schema, name string) (bool, error) {
 }
 
 // Exist column
-func ExistColum(db *sql.DB, schema, table, name string) (bool, error) {
+func ExistColum(db *DB, schema, table, name string) (bool, error) {
 	sql := `
 	SELECT EXISTS(
 		SELECT 1
@@ -71,7 +69,7 @@ func ExistColum(db *sql.DB, schema, table, name string) (bool, error) {
 		AND UPPER(table_name) = UPPER($2)
 		AND UPPER(column_name) = UPPER($3));`
 
-	item, err := QueryOne(db, sql, schema, table, name)
+	item, err := db.QueryOne(sql, schema, table, name)
 	if err != nil {
 		return false, err
 	}
@@ -80,7 +78,7 @@ func ExistColum(db *sql.DB, schema, table, name string) (bool, error) {
 }
 
 // Exist index
-func ExistIndex(db *sql.DB, schema, table, field string) (bool, error) {
+func ExistIndex(db *DB, schema, table, field string) (bool, error) {
 	indexName := strs.Format(`%s_%s_IDX`, strs.Uppcase(table), strs.Uppcase(field))
 	sql := `
 	SELECT EXISTS(
@@ -90,7 +88,7 @@ func ExistIndex(db *sql.DB, schema, table, field string) (bool, error) {
 		AND UPPER(tablename) = UPPER($2)
 		AND UPPER(indexname) = UPPER($3));`
 
-	item, err := QueryOne(db, sql, schema, table, indexName)
+	item, err := db.QueryOne(sql, schema, table, indexName)
 	if err != nil {
 		return false, err
 	}
@@ -99,7 +97,7 @@ func ExistIndex(db *sql.DB, schema, table, field string) (bool, error) {
 }
 
 // Exist trigger
-func ExistTrigger(db *sql.DB, schema, table, name string) (bool, error) {
+func ExistTrigger(db *DB, schema, table, name string) (bool, error) {
 	sql := `
 	SELECT EXISTS(
 		SELECT 1
@@ -108,7 +106,7 @@ func ExistTrigger(db *sql.DB, schema, table, name string) (bool, error) {
 		AND UPPER(event_object_table) = UPPER($2)
 		AND UPPER(trigger_name) = UPPER($3));`
 
-	item, err := QueryOne(db, sql, schema, table, name)
+	item, err := db.QueryOne(sql, schema, table, name)
 	if err != nil {
 		return false, err
 	}
@@ -117,7 +115,7 @@ func ExistTrigger(db *sql.DB, schema, table, name string) (bool, error) {
 }
 
 // Exist serie
-func ExistSerie(db *sql.DB, schema, name string) (bool, error) {
+func ExistSerie(db *DB, schema, name string) (bool, error) {
 	sql := `
 	SELECT EXISTS(
 		SELECT 1
@@ -125,7 +123,7 @@ func ExistSerie(db *sql.DB, schema, name string) (bool, error) {
 		WHERE UPPER(schemaname) = UPPER($1)
 		AND UPPER(sequencename) = UPPER($2));`
 
-	item, err := QueryOne(db, sql, schema, name)
+	item, err := db.QueryOne(sql, schema, name)
 	if err != nil {
 		return false, err
 	}
@@ -134,7 +132,7 @@ func ExistSerie(db *sql.DB, schema, name string) (bool, error) {
 }
 
 // Exist user
-func ExistUser(db *sql.DB, name string) (bool, error) {
+func ExistUser(db *DB, name string) (bool, error) {
 	name = strs.Uppcase(name)
 	sql := `
 	SELECT EXISTS(
@@ -142,7 +140,7 @@ func ExistUser(db *sql.DB, name string) (bool, error) {
 		FROM pg_roles
 		WHERE UPPER(rolname) = UPPER($1));`
 
-	item, err := QueryOne(db, sql, name)
+	item, err := db.QueryOne(sql, name)
 	if err != nil {
 		return false, err
 	}

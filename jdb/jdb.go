@@ -1,19 +1,12 @@
 package jdb
 
+var conn *DB
+
 /**
-* Ths jdb package makes it easy to create an array of database connections
-* initially to posrtgresql databases.
-*	Provide a connection function, validate the existence of elements such as databases, schemas, tables, colums, index, series and users and
-* it is possible to create them if they do not exist.
-* Also, have a execute to sql sentences to retuns json and json array,
-* that valid you result return records and how many records are returned.
+* Load
+* @return *Conn, error
 **/
-
-var (
-	conn *Conn
-)
-
-func Load() (*Conn, error) {
+func Load() (*DB, error) {
 	if conn != nil {
 		return conn, nil
 	}
@@ -24,7 +17,7 @@ func Load() (*Conn, error) {
 		return nil, err
 	}
 
-	err = InitCore(conn.Db)
+	err = InitCore(conn)
 	if err != nil {
 		return nil, err
 	}
@@ -32,10 +25,27 @@ func Load() (*Conn, error) {
 	return conn, nil
 }
 
+/**
+* Close
+* @return error
+**/
 func Close() error {
-	err := conn.Db.Close()
-	if err != nil {
-		return err
+	if conn == nil {
+		return nil
+	}
+
+	if conn.db != nil {
+		err := conn.db.Close()
+		if err != nil {
+			return err
+		}
+	}
+
+	if conn.dm != nil {
+		err := conn.dm.Close()
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

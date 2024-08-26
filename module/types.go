@@ -1,10 +1,9 @@
 package module
 
 import (
-	"database/sql"
-
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/et"
+	"github.com/cgalvisleon/elvis/jdb"
 	"github.com/cgalvisleon/elvis/linq"
 	"github.com/cgalvisleon/elvis/msg"
 	"github.com/cgalvisleon/elvis/utility"
@@ -12,7 +11,7 @@ import (
 
 var Types *linq.Model
 
-func DefineTypes(db *sql.DB) error {
+func DefineTypes(db *jdb.DB) error {
 	if err := DefineSchemaModule(db); err != nil {
 		return console.Panic(err)
 	}

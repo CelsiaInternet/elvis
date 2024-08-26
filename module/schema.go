@@ -1,14 +1,13 @@
 package module
 
 import (
-	"database/sql"
-
+	"github.com/cgalvisleon/elvis/jdb"
 	"github.com/cgalvisleon/elvis/linq"
 )
 
 var SchemaModule *linq.Schema
 
-func DefineSchemaModule(db *sql.DB) error {
+func DefineSchemaModule(db *jdb.DB) error {
 	if SchemaModule != nil {
 		return nil
 	}

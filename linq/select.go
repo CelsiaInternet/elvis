@@ -79,7 +79,7 @@ func (s *Linq) Find() (et.Items, error) {
 
 	s.sql = strs.Format(`%s;`, s.sql)
 
-	items, err := s.Query()
+	items, err := s.query()
 	if err != nil {
 		return et.Items{}, err
 	}
@@ -98,7 +98,7 @@ func (s *Linq) All() (et.Items, error) {
 func (s *Linq) First() (et.Item, error) {
 	s.sql = s.SqlLimit(1)
 
-	item, err := s.QueryOne()
+	item, err := s.queryOne()
 	if err != nil {
 		return et.Item{}, err
 	}
@@ -111,7 +111,7 @@ func (s *Linq) First() (et.Item, error) {
 func (s *Linq) Limit(limit int) (et.Items, error) {
 	s.sql = s.SqlLimit(limit)
 
-	items, err := s.Query()
+	items, err := s.query()
 	if err != nil {
 		return et.Items{}, err
 	}
@@ -127,7 +127,7 @@ func (s *Linq) Page(page, rows int) (et.Items, error) {
 	offset := (page - 1) * rows
 	s.sql = s.SqlOffset(rows, offset)
 
-	items, err := s.Query()
+	items, err := s.query()
 	if err != nil {
 		return et.Items{}, err
 	}
@@ -142,7 +142,7 @@ func (s *Linq) Page(page, rows int) (et.Items, error) {
 func (s *Linq) Count() int {
 	s.sql = s.SqlCount()
 
-	return s.QueryCount()
+	return s.queryCount()
 }
 
 func (s *Linq) List(page, rows int) (et.List, error) {

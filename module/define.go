@@ -1,15 +1,14 @@
 package module
 
 import (
-	"database/sql"
-
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/et"
+	"github.com/cgalvisleon/elvis/jdb"
 )
 
 var initDefine bool
 
-func InitDefine(db *sql.DB) error {
+func InitDefine(db *jdb.DB) error {
 	if initDefine {
 		return nil
 	}

@@ -1,8 +1,6 @@
 package jdb
 
 import (
-	"database/sql"
-
 	"github.com/cgalvisleon/elvis/strs"
 )
 
@@ -11,10 +9,10 @@ import (
 **/
 
 // Drop database
-func DropDatabase(db *sql.DB, name string) error {
+func DropDatabase(db *DB, name string) error {
 	name = strs.Lowcase(name)
 	sql := strs.Format(`DROP DATABASE %s;`, name)
-	_, err := Query(db, sql)
+	_, err := db.Command(sql)
 	if err != nil {
 		return err
 	}
@@ -23,10 +21,10 @@ func DropDatabase(db *sql.DB, name string) error {
 }
 
 // Drop schema
-func DropSchema(db *sql.DB, name string) error {
+func DropSchema(db *DB, name string) error {
 	name = strs.Lowcase(name)
 	sql := strs.Format(`DROP SCHEMA %s CASCADE;`, name)
-	_, err := Query(db, sql)
+	_, err := db.Command(sql)
 	if err != nil {
 		return err
 	}
@@ -35,9 +33,9 @@ func DropSchema(db *sql.DB, name string) error {
 }
 
 // Drop table
-func DropTable(db *sql.DB, schema, name string) error {
+func DropTable(db *DB, schema, name string) error {
 	sql := strs.Format(`DROP TABLE %s.%s CASCADE;`, schema, name)
-	_, err := Query(db, sql)
+	_, err := db.Command(sql)
 	if err != nil {
 		return err
 	}
@@ -46,9 +44,9 @@ func DropTable(db *sql.DB, schema, name string) error {
 }
 
 // Drop column
-func DropColumn(db *sql.DB, schema, table, name string) error {
+func DropColumn(db *DB, schema, table, name string) error {
 	sql := strs.Format(`ALTER TABLE %s.%s DROP COLUMN %s;`, schema, table, name)
-	_, err := Query(db, sql)
+	_, err := db.Command(sql)
 	if err != nil {
 		return err
 	}
@@ -57,10 +55,10 @@ func DropColumn(db *sql.DB, schema, table, name string) error {
 }
 
 // Drop index
-func DropIndex(db *sql.DB, schema, table, field string) error {
+func DropIndex(db *DB, schema, table, field string) error {
 	indexName := strs.Format(`%s_%s_IDX`, strs.Uppcase(table), strs.Uppcase(field))
 	sql := strs.Format(`DROP INDEX %s.%s CASCADE;`, schema, indexName)
-	_, err := Query(db, sql)
+	_, err := db.Command(sql)
 	if err != nil {
 		return err
 	}
@@ -69,9 +67,9 @@ func DropIndex(db *sql.DB, schema, table, field string) error {
 }
 
 // Drop trigger
-func DropTrigger(db *sql.DB, schema, table, name string) error {
+func DropTrigger(db *DB, schema, table, name string) error {
 	sql := strs.Format(`DROP TRIGGER %s.%s CASCADE;`, schema, name)
-	_, err := Query(db, sql)
+	_, err := db.Command(sql)
 	if err != nil {
 		return err
 	}
@@ -80,9 +78,9 @@ func DropTrigger(db *sql.DB, schema, table, name string) error {
 }
 
 // Drop serie
-func DropSerie(db *sql.DB, schema, name string) error {
+func DropSerie(db *DB, schema, name string) error {
 	sql := strs.Format(`DROP SEQUENCE %s.%s CASCADE;`, schema, name)
-	_, err := Query(db, sql)
+	_, err := db.Command(sql)
 	if err != nil {
 		return err
 	}
@@ -91,10 +89,10 @@ func DropSerie(db *sql.DB, schema, name string) error {
 }
 
 // Drop user
-func DropUser(db *sql.DB, name string) error {
+func DropUser(db *DB, name string) error {
 	name = strs.Uppcase(name)
 	sql := strs.Format(`DROP USER %s;`, name)
-	_, err := Query(db, sql)
+	_, err := db.Command(sql)
 	if err != nil {
 		return err
 	}

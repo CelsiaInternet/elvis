@@ -13,7 +13,7 @@ import (
 
 const Postgres = "postgres"
 
-type Conn struct {
+type DB struct {
 	Description string
 	Driver      string
 	Host        string
@@ -21,12 +21,14 @@ type Conn struct {
 	Dbname      string
 	User        string
 	Connection  string
-	Db          *sql.DB
 	UseCore     bool
+	db          *sql.DB
+	dm          *sql.DB
+	lastcomand  int64
 }
 
-func (c *Conn) Close() error {
-	err := c.Db.Close()
+func (c *DB) Close() error {
+	err := c.db.Close()
 	if err != nil {
 		return err
 	}
@@ -34,7 +36,7 @@ func (c *Conn) Close() error {
 	return nil
 }
 
-func (c *Conn) Describe() et.Json {
+func (c *DB) Describe() et.Json {
 	host := strs.Format(`%s:%d`, c.Host, c.Port)
 	return et.Json{
 		"name":        c.Dbname,
@@ -44,7 +46,7 @@ func (c *Conn) Describe() et.Json {
 	}
 }
 
-func connect() (*Conn, error) {
+func connect() (*DB, error) {
 	driver := envar.EnvarStr("", "DB_DRIVE")
 	host := envar.EnvarStr("", "DB_HOST")
 	port := envar.EnvarInt(5432, "DB_PORT")
@@ -83,7 +85,7 @@ func connect() (*Conn, error) {
 	return db, nil
 }
 
-func ConnectTo(driver, host string, port int, dbname, user, password, application_name string) (*Conn, error) {
+func ConnectTo(driver, host string, port int, dbname, user, password, application_name string) (*DB, error) {
 	var connStr string
 	switch driver {
 	case Postgres:
@@ -99,13 +101,13 @@ func ConnectTo(driver, host string, port int, dbname, user, password, applicatio
 
 	console.LogKF(driver, "Connected host:%s:%d", host, port)
 
-	return &Conn{
+	return &DB{
 		Driver:     driver,
 		Host:       host,
 		Port:       port,
 		Dbname:     dbname,
 		User:       user,
 		Connection: connStr,
-		Db:         db,
+		db:         db,
 	}, nil
 }

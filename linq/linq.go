@@ -1,7 +1,6 @@
 package linq
 
 import (
-	"database/sql"
 	"strings"
 
 	"github.com/cgalvisleon/elvis/console"
@@ -91,7 +90,7 @@ type Validate struct {
 type Linq struct {
 	Tp        int
 	Act       int
-	db        *sql.DB
+	db        *jdb.DB
 	_select   []*Column
 	from      []*FRom
 	where     []*Where
@@ -124,7 +123,7 @@ func NewLinq(act int, model *Model, as ...string) *Linq {
 	return &Linq{
 		Tp:        TpRow,
 		Act:       act,
-		db:        model.Db,
+		db:        model.db,
 		from:      []*FRom{from},
 		fromAs:    []*FRom{from},
 		where:     []*Where{},
@@ -383,13 +382,13 @@ func (c *Linq) AddValidate(col *Column, val any) {
 /**
 * Query
 **/
-func (c *Linq) Query() (et.Items, error) {
+func (c *Linq) query() (et.Items, error) {
 	if c.debug == 1 {
 		console.Log(c.sql)
 	}
 
 	if c.Tp == TpData {
-		result, err := jdb.Source(c.db, SourceField, c.sql)
+		result, err := c.db.Source(SourceField, c.sql)
 		if err != nil {
 			return et.Items{}, err
 		}
@@ -397,7 +396,7 @@ func (c *Linq) Query() (et.Items, error) {
 		return result, nil
 	}
 
-	result, err := jdb.Query(c.db, c.sql)
+	result, err := c.db.Query(c.sql)
 	if err != nil {
 		return et.Items{}, err
 	}
@@ -405,13 +404,13 @@ func (c *Linq) Query() (et.Items, error) {
 	return result, nil
 }
 
-func (c *Linq) QueryOne() (et.Item, error) {
+func (c *Linq) queryOne() (et.Item, error) {
 	if c.debug == 1 {
 		console.Log(c.sql)
 	}
 
 	if c.Tp == TpData {
-		result, err := jdb.SourceOne(c.db, SourceField, c.sql)
+		result, err := c.db.SourceOne(SourceField, c.sql)
 		if err != nil {
 			return et.Item{}, err
 		}
@@ -419,7 +418,7 @@ func (c *Linq) QueryOne() (et.Item, error) {
 		return result, nil
 	}
 
-	result, err := jdb.QueryOne(c.db, c.sql)
+	result, err := c.db.QueryOne(c.sql)
 	if err != nil {
 		return et.Item{}, err
 	}
@@ -427,15 +426,35 @@ func (c *Linq) QueryOne() (et.Item, error) {
 	return result, nil
 }
 
-func (c *Linq) QueryCount() int {
+func (c *Linq) queryCount() int {
 	if c.debug == 1 {
 		console.Log(c.sql)
 	}
 
-	result, err := jdb.QueryOne(c.db, c.sql)
+	result, err := c.db.QueryOne(c.sql)
 	if err != nil {
 		return 0
 	}
 
 	return result.Int("count")
+}
+
+func (c *Linq) command() (et.Item, error) {
+	if c.debug == 1 {
+		console.Log(c.sql)
+	}
+
+	result, err := c.db.Command(c.sql)
+	if err != nil {
+		return et.Item{}, err
+	}
+
+	if c.Tp == TpData {
+		return et.Item{
+			Ok:     result.Ok,
+			Result: result.Json(SourceField),
+		}, nil
+	}
+
+	return result, nil
 }

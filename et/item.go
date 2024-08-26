@@ -132,6 +132,10 @@ func (it *Item) Int(atribs ...string) int {
 	return it.Result.Int(atribs...)
 }
 
+func (it *Item) Int64(atribs ...string) int64 {
+	return it.Result.Int64(atribs...)
+}
+
 func (it *Item) Num(atribs ...string) float64 {
 	return it.Result.Num(atribs...)
 }

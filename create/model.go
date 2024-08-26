@@ -278,14 +278,13 @@ func initModels() error {
 const modelSchema = `package $1
 
 import (
-	"database/sql"
-
-	"github.com/cgalvisleon/elvis/linq"
+	"github.com/cgalvisleon/elvis/jdb"
+	"github.com/cgalvisleon/elvis/linq"	
 )
 
 var $2 *linq.Schema
 
-func defineSchema(db *sql.DB) error {
+func defineSchema(db *jdb.DB) error {
 	if $2 == nil {
 		$2 = linq.NewSchema(db, "$3")
 	}
@@ -571,7 +570,6 @@ Content-Length: 227
 const modelDbHandler = `package $1
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -579,6 +577,7 @@ import (
 	"github.com/cgalvisleon/elvis/cache"
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/et"
+	"github.com/cgalvisleon/elvis/jdb"
 	"github.com/cgalvisleon/elvis/linq"
 	"github.com/cgalvisleon/elvis/msg"
 	"github.com/cgalvisleon/elvis/response"
@@ -588,7 +587,7 @@ import (
 
 var $2 *linq.Model
 
-func Define$2(db *sql.DB) error {
+func Define$2(db *jdb.DB) error {
 	if err := defineSchema(db); err != nil {
 		return console.Panic(err)
 	}

@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/cgalvisleon/elvis/console"
@@ -46,6 +47,8 @@ const VALUE_NOT_BOOL = "Value is not bolean"
 const ROWS = 30
 
 var ping = 0
+var locks = make(map[string]*sync.RWMutex)
+var count = make(map[string]int64)
 
 func Ping() {
 	ping++
@@ -95,6 +98,57 @@ func GenKey(id string) string {
 	}
 
 	return id
+}
+
+/**
+* More return the next value of a serie
+* @param tag string
+* @return int
+**/
+func More(tag string, expiration time.Duration) int64 {
+	lock := locks[tag]
+	if lock == nil {
+		lock = &sync.RWMutex{}
+		locks[tag] = lock
+	}
+
+	lock.Lock()
+	defer lock.Unlock()
+
+	n, ok := count[tag]
+	if !ok {
+		n = 0
+	} else {
+		n++
+	}
+	count[tag] = 0
+
+	clean := func() {
+		delete(count, tag)
+		delete(locks, tag)
+	}
+
+	duration := expiration * time.Second
+	if duration != 0 {
+		go time.AfterFunc(duration, clean)
+	}
+
+	return n
+}
+
+/**
+* UUIndex return the next value of a serie
+* @param tag string
+* @return int64
+**/
+func UUIndex(tag string) int64 {
+	now := time.Now()
+	result := now.UnixMilli() * 10000
+	key := fmt.Sprintf("%s:%d", tag, result)
+	n := More(key, 1*time.Second)
+	result = result + int64(n)
+
+	return result
 }
 
 func Pointer(collection string, id string) string {

@@ -1,10 +1,9 @@
 package module
 
 import (
-	"database/sql"
-
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/et"
+	"github.com/cgalvisleon/elvis/jdb"
 	"github.com/cgalvisleon/elvis/linq"
 	"github.com/cgalvisleon/elvis/msg"
 	"github.com/cgalvisleon/elvis/utility"
@@ -13,7 +12,7 @@ import (
 var Projects *linq.Model
 var ProjectModules *linq.Model
 
-func DefineProjects(db *sql.DB) error {
+func DefineProjects(db *jdb.DB) error {
 	if err := DefineSchemaModule(db); err != nil {
 		return console.Panic(err)
 	}
@@ -57,7 +56,7 @@ func DefineProjects(db *sql.DB) error {
 	return nil
 }
 
-func DefineProjectModules(db *sql.DB) error {
+func DefineProjectModules(db *jdb.DB) error {
 	if err := DefineSchemaModule(db); err != nil {
 		return console.Panic(err)
 	}

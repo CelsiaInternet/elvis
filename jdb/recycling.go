@@ -1,15 +1,16 @@
 package jdb
 
 import (
-	"database/sql"
-
 	"github.com/cgalvisleon/elvis/console"
 )
 
-var makedRecycling bool
+func defineRecycling(db *DB) error {
+	exist, err := ExistTable(db, "core", "RECYCLING")
+	if err != nil {
+		return console.Panic(err)
+	}
 
-func defineRecycling(db *sql.DB) error {
-	if makedRecycling {
+	if exist {
 		return nil
 	}
 
@@ -56,12 +57,10 @@ func defineRecycling(db *sql.DB) error {
   END;
   $$ LANGUAGE plpgsql;`
 
-	_, err := Query(db, sql)
+	_, err = db.Command(sql)
 	if err != nil {
 		return console.Panic(err)
 	}
-
-	makedRecycling = true
 
 	return nil
 }

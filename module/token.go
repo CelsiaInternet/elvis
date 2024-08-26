@@ -1,7 +1,6 @@
 package module
 
 import (
-	"database/sql"
 	"time"
 
 	"github.com/cgalvisleon/elvis/cache"
@@ -42,7 +41,7 @@ func (n *Token) Scan(js *et.Json) error {
 
 var Tokens *linq.Model
 
-func DefineTokens(db *sql.DB) error {
+func DefineTokens(db *jdb.DB) error {
 	if err := DefineSchemaModule(db); err != nil {
 		return console.Panic(err)
 	}
@@ -243,7 +242,7 @@ func LoadTokens() error {
 		ORDER BY INDEX
 		LIMIT %d OFFSET %d;`, rows, offset)
 
-		items, err := jdb.Query(Tokens.Db, sql)
+		items, err := Tokens.Query(sql)
 		if err != nil {
 			return console.Error(err)
 		}
@@ -283,7 +282,7 @@ func UnLoadTokens() error {
 		ORDER BY INDEX
 		LIMIT %d OFFSET %d;`, rows, offset)
 
-		items, err := jdb.Query(Tokens.Db, sql)
+		items, err := Tokens.Query(sql)
 		if err != nil {
 			return console.Error(err)
 		}
@@ -313,7 +312,7 @@ func GetTokensByUserId(userId, search string, page, rows int) (et.List, error) {
   WHERE A.USER_ID=$1
 	AND CONCAT('NAME:', A.NAME, ':APP:', A.APP, ':DEVICE:', A.DEVICE, ':') ILIKE CONCAT('%', $2, '%');`
 
-	result, err := jdb.QueryOne(Tokens.Db, sql, userId, search)
+	result, err := Tokens.QueryOne(sql, userId, search)
 	if err != nil {
 		return et.List{}, err
 	}
@@ -329,7 +328,7 @@ func GetTokensByUserId(userId, search string, page, rows int) (et.List, error) {
 	ORDER BY A.APP, A.DEVICE, A.NAME
   LIMIT $3 OFFSET $4;`
 
-	items, err := jdb.Query(Tokens.Db, sql, userId, search, rows, offset)
+	items, err := Tokens.Query(sql, userId, search, rows, offset)
 	if err != nil {
 		return et.List{}, err
 	}
@@ -368,7 +367,7 @@ func DeleteToken(id string) (et.Item, error) {
   WHERE _ID=$1
   RETURNING *;`
 
-	item, err := jdb.QueryOne(Tokens.Db, sql, id)
+	item, err := Tokens.Command(sql, id)
 	if err != nil {
 		return et.Item{}, err
 	}

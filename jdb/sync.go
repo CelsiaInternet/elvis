@@ -1,15 +1,16 @@
 package jdb
 
 import (
-	"database/sql"
-
 	"github.com/cgalvisleon/elvis/console"
 )
 
-var makedSyncs bool
+func defineSync(db *DB) error {
+	exist, err := ExistTable(db, "core", "SYNCS")
+	if err != nil {
+		return console.Panic(err)
+	}
 
-func defineSync(db *sql.DB) error {
-	if makedSyncs {
+	if exist {
 		return nil
 	}
 
@@ -128,12 +129,10 @@ func defineSync(db *sql.DB) error {
   END;
   $$ LANGUAGE plpgsql;`
 
-	_, err := Query(db, sql)
+	_, err = db.Command(sql)
 	if err != nil {
 		return console.Panic(err)
 	}
-
-	makedSyncs = true
 
 	return nil
 }

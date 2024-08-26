@@ -41,6 +41,17 @@ func (it *Items) Scan(src interface{}) error {
 	return nil
 }
 
+func (it *Items) First() Item {
+	if !it.Ok {
+		return Item{}
+	}
+
+	return Item{
+		Ok:     true,
+		Result: it.Result[0],
+	}
+}
+
 func (it *Items) ValAny(idx int, _default any, atribs ...string) any {
 	if it.Result[idx] == nil {
 		return _default
