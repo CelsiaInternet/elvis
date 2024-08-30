@@ -16,6 +16,7 @@ var (
 	StateField      string    = "_STATE"
 	IdTFiled        string    = "_IDT"
 	schemas         []*Schema = []*Schema{}
+	models          []*Model  = []*Model{}
 )
 
 type Schema struct {
@@ -33,6 +34,7 @@ func NewSchema(db *jdb.DB, name string) *Schema {
 		Models: []*Model{},
 	}
 
+	setListener(db)
 	result.Init()
 	schemas = append(schemas, result)
 

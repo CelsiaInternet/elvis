@@ -19,7 +19,6 @@ type DB struct {
 	Host        string
 	Port        int
 	Dbname      string
-	User        string
 	Connection  string
 	UseCore     bool
 	db          *sql.DB
@@ -106,7 +105,6 @@ func ConnectTo(driver, host string, port int, dbname, user, password, applicatio
 		Host:       host,
 		Port:       port,
 		Dbname:     dbname,
-		User:       user,
 		Connection: connStr,
 		db:         db,
 	}, nil

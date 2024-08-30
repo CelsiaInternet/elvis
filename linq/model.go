@@ -84,8 +84,22 @@ func NewModel(schema *Schema, name, description string, version int) *Model {
 	result.AfterDelete = append(result.AfterDelete, afterDelete)
 
 	schema.Models = append(schema.Models, result)
+	models = append(models, result)
 
 	return result
+}
+
+func Table(schema, name string) *Model {
+	schema = strs.Uppcase(schema)
+	name = strs.Uppcase(name)
+
+	for _, model := range models {
+		if model.Schema.Name == schema && model.Name == name {
+			return model
+		}
+	}
+
+	return nil
 }
 
 func (c *Model) Describe() et.Json {
