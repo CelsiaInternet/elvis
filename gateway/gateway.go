@@ -2,13 +2,10 @@ package gateway
 
 import (
 	"fmt"
-	"net"
-	"net/http"
 	"os"
 	"time"
 
 	"github.com/cgalvisleon/elvis/cache"
-	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/event"
@@ -20,13 +17,12 @@ import (
 
 type Server struct {
 	http *HttpServer
-	rpc  *net.Listener
-	ws   *ws.Conn
+	ws   *ws.Hub
 }
 
 var PackageName = "gateway"
 var PackageTitle = envar.EnvarStr("Apigateway", "PACKAGE_TITLE")
-var PackagePath = "/api/gateway"
+var PackagePath = envar.EnvarStr("/api/gateway", "PATH_URL")
 var PackageVersion = envar.EnvarStr("0.0.1", "VERSION")
 var Company = envar.EnvarStr("", "COMPANY")
 var Web = envar.EnvarStr("", "WEB")
@@ -35,35 +31,35 @@ var Host = strs.Format(`%s:%d`, envar.EnvarStr("http://localhost", "HOST"), enva
 var conn *Server
 
 func New() (*Server, error) {
-	// Create cache server
-	_, err := cache.Load()
-	if err != nil {
-		panic(err)
+	if conn != nil {
+		return conn, nil
 	}
 
-	// Create event server
+	// Cache
+	_, err := cache.Load()
+	if err != nil {
+		return nil, err
+	}
+
+	// Event
 	_, err = event.Load()
+	if err != nil {
+		return nil, err
+	}
+
+	// WS server
+	ws, err := ws.Server()
 	if err != nil {
 		panic(err)
 	}
 
 	// HTTP server
-	httpServer := newHttpServer()
-
-	// RPC server
-	rpcServer := newRpc()
-
-	// WS server
-	wsServer, err := ws.Load()
-	if err != nil {
-		panic(err)
-	}
+	http := newHttpServer()
 
 	// Create a new server
 	conn = &Server{
-		http: httpServer,
-		rpc:  &rpcServer,
-		ws:   wsServer,
+		http: http,
+		ws:   ws,
 	}
 
 	return conn, nil
@@ -75,26 +71,7 @@ func (serv *Server) Close() error {
 
 func (serv *Server) Start() {
 	// Start HTTP server
-	go func() {
-		if serv.http == nil {
-			return
-		}
-
-		svr := *serv.http
-		console.LogKF("Http", "Running Api Gateway on http://localhost%s", svr.addr)
-		console.Fatal(http.ListenAndServe(svr.addr, svr.handler))
-	}()
-
-	// Start RPC server
-	go func() {
-		if serv.rpc == nil {
-			return
-		}
-
-		svr := *serv.rpc
-		console.LogKF("RPC", "Running on tcp:localhost:%s", svr.Addr().String())
-		http.Serve(svr, nil)
-	}()
+	InitHttp(serv)
 
 	// Init events
 	initEvents()

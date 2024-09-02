@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
+	"sync"
 
 	"github.com/cgalvisleon/elvis/cache"
 	"github.com/cgalvisleon/elvis/console"
@@ -29,7 +30,6 @@ const (
 	POST    = "POST"
 	PUT     = "PUT"
 	TRACE   = "TRACE"
-	WS      = "WS"
 )
 
 var methodMap = map[string]bool{
@@ -45,6 +45,7 @@ var methodMap = map[string]bool{
 }
 
 type HttpServer struct {
+	Id              string
 	addr            string
 	handler         http.Handler
 	mux             *http.ServeMux
@@ -57,6 +58,7 @@ type HttpServer struct {
 	middlewares     []func(http.Handler) http.Handler
 	routesKey       string
 	pakagesKey      string
+	lock            *sync.RWMutex
 }
 
 func newHttpServer() *HttpServer {
@@ -65,6 +67,7 @@ func newHttpServer() *HttpServer {
 
 	port := envar.EnvarInt(3300, "PORT")
 	result := &HttpServer{
+		Id:              "api-gateway",
 		addr:            strs.Format(":%d", port),
 		handler:         cors.AllowAll().Handler(mux),
 		mux:             mux,
@@ -75,13 +78,102 @@ func newHttpServer() *HttpServer {
 		pakages:         []*Pakage{},
 		handlers:        make(map[string]http.HandlerFunc),
 		middlewares:     make([]func(http.Handler) http.Handler, 0),
-		routesKey:       "gateway/routes",
-		pakagesKey:      "gateway/packages",
+		routesKey:       "apigateway/routes",
+		pakagesKey:      "apigateway/packages",
 	}
 	result.mux.HandleFunc("/", result.handlerFn)
-	basicRouter(result)
+	result.Get("/version", version, "Api Gateway")
+	result.Get("/apigateway/all", getAll, "Api Gateway")
+	result.Post("/apigateway", upsert, "Api Gateway")
+	result.Get("/ws", result.handlerWS, "Api Gateway")
+	result.Post("/ws", connectWS, "Api Gateway")
 
 	return result
+}
+
+/**
+* InitHttp
+* @param srv *Server
+**/
+func InitHttp(srv *Server) {
+	if srv == nil {
+		return
+	}
+
+	srv.http.Start()
+	srv.http.Load()
+}
+
+/**
+* Start
+**/
+func (s *HttpServer) Start() {
+	go func() {
+		console.LogF("Http", "Load server on http://localhost%s", s.addr)
+		console.Fatal(http.ListenAndServe(s.addr, s.handler))
+	}()
+}
+
+/**
+* Save
+* @return error
+**/
+func (s *HttpServer) Save() error {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	jsonRoutes, err := json.Marshal(s.routes)
+	if err != nil {
+		return err
+	}
+
+	jsonPakages, err := json.Marshal(s.pakages)
+	if err != nil {
+		return err
+	}
+
+	cache.Set(s.Id+"-routes", string(jsonRoutes), 0)
+	cache.Set(s.Id+"-packages", string(jsonPakages), 0)
+
+	return nil
+}
+
+/**
+* LoadRouter
+* @return error
+**/
+func (s *HttpServer) Load() error {
+	jsonRoutes, err := json.Marshal(s.routes)
+	if err != nil {
+		return err
+	}
+
+	strRoutes, err := cache.Get(s.Id+"-routes", string(jsonRoutes))
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal([]byte(strRoutes), &s.routes)
+	if err != nil {
+		return err
+	}
+
+	jsonPakages, err := json.Marshal(s.pakages)
+	if err != nil {
+		return err
+	}
+
+	strPakages, err := cache.Get(s.Id+"-packages", string(jsonPakages))
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal([]byte(strPakages), &s.pakages)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 /**
@@ -106,64 +198,6 @@ func (s *HttpServer) Handler(handlerFn http.HandlerFunc) {
 **/
 func (s *HttpServer) HandlerWebSocket(handlerFn http.HandlerFunc) {
 	s.handlerWS = handlerFn
-}
-
-/**
-* LoadRouter
-* @return error
-**/
-func (s *HttpServer) LoadRouter() error {
-	_routes, err := cache.Get(s.routesKey, "{routes:[]}")
-	if err != nil {
-		return err
-	}
-
-	err = json.Unmarshal([]byte(_routes), &s.routes)
-	if err != nil {
-		return err
-	}
-
-	_pakages, err := cache.Get(s.pakagesKey, "{pakages:[]}")
-	if err != nil {
-		return err
-	}
-
-	err = json.Unmarshal([]byte(_pakages), &s.pakages)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-/**
-* Save
-* @return error
-**/
-func (s *HttpServer) Save() error {
-	// Convertion struct to json
-	_routes, err := et.Marshal(s.routes)
-	if err != nil {
-		return err
-	}
-
-	// Save json to cache
-	err = cache.Set(s.routesKey, _routes.ToString(), 0)
-	if err != nil {
-		return err
-	}
-
-	_pakages, err := et.Marshal(s.pakages)
-	if err != nil {
-		return err
-	}
-
-	err = cache.Set(s.pakagesKey, _pakages.ToString(), 0)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 /**

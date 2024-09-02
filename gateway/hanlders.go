@@ -72,12 +72,37 @@ func getAll(w http.ResponseWriter, r *http.Request) {
 }
 
 /**
+* connectWS
+* @params w http.ResponseWriter
+* @params r *http.Request
+**/
+func connectWS(w http.ResponseWriter, r *http.Request) {
+	body, _ := response.GetBody(r)
+	host := body.Str("host")
+	schema := body.Str("schema")
+	clientId := body.Str("clientId")
+	name := body.Str("name")
+
+	cliente, err := ws.ConnectWs(host, schema, clientId, name)
+	if err != nil {
+		response.HTTPError(w, r, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	result := et.Json{
+		"message": "Connected WS",
+		"client":  cliente,
+	}
+	response.JSON(w, r, http.StatusOK, result)
+}
+
+/**
 * handlerWS
 * @params w http.ResponseWriter
 * @params r *http.Request
 **/
 func handlerWS(w http.ResponseWriter, r *http.Request) {
-	_, err := ws.Connect(w, r)
+	_, err := ws.ConnectHttp(w, r)
 	if err != nil {
 		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return

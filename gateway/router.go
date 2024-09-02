@@ -102,17 +102,6 @@ func findResolve(tag string, routes []*Route, route *Resolve) (*Route, *Resolve)
 }
 
 /**
-* basicRouter
-* @param server *HttpServer
-**/
-func basicRouter(server *HttpServer) {
-	server.Get("/version", version, "Api Gateway")
-	server.Get("/gateway/all", getAll, "Api Gateway")
-	server.Post("/gateway", upsert, "Api Gateway")
-	server.Get("/ws", server.handlerWS, "Api Gateway")
-}
-
-/**
 * Connect
 * @param path string
 * @param handlerFn http.HandlerFunc

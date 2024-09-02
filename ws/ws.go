@@ -1,24 +1,26 @@
 package ws
 
-import (
-	"sync"
-)
+var conn *Hub
 
-var (
-	conn *Conn
-	once sync.Once
-)
+/**
+* Server creates a new Websocket Hub
+* @return *Hub
+**/
+func Server() (*Hub, error) {
+	if conn != nil {
+		return conn, nil
+	}
 
-type Conn struct {
-	hub *Hub
-}
-
-func Load() (*Conn, error) {
-	once.Do(connect)
+	conn := NewHub()
+	go conn.Run()
 
 	return conn, nil
 }
 
+/**
+* Close the Websocket Hub
+* @return error
+**/
 func Close() error {
 	return nil
 }

@@ -303,7 +303,7 @@ func GenToken(id, app, name, kind, username, device string, duration time.Durati
 }
 
 /**
-* GetToken
+* GetClient
 * @param r *http.Request
 * @return et.Json
 **/
