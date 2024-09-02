@@ -109,7 +109,7 @@ func InitHttp(srv *Server) {
 **/
 func (s *HttpServer) Start() {
 	go func() {
-		console.LogF("Http", "Load server on http://localhost%s", s.addr)
+		console.LogKF("Http", "Load server on http://localhost%s", s.addr)
 		console.Fatal(http.ListenAndServe(s.addr, s.handler))
 	}()
 }
