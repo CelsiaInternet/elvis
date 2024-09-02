@@ -15,8 +15,14 @@ func MkProject(packageName, name, author, schema string) error {
 		return err
 	}
 
-	ProgressNext(20)
+	ProgressNext(10)
 	err = MakeEnv(name)
+	if err != nil {
+		return err
+	}
+
+	ProgressNext(10)
+	err = MakeGitignore(name)
 	if err != nil {
 		return err
 	}

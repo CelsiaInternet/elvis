@@ -368,7 +368,7 @@ import (
 )
 
 type Controller struct {
-	Db *jdb.Conn
+	Db *jdb.DB
 }
 
 func (c *Controller) Version(ctx context.Context) (et.Json, error) {
@@ -409,7 +409,7 @@ import (
 )
 
 type Controller struct {
-	Db *jdb.Conn
+	Db *jdb.DB
 }
 
 func (c *Controller) Version(ctx context.Context) (et.Json, error) {
@@ -1135,3 +1135,37 @@ services:
       # RPC
       - "PORT_RPC=4200"
 `
+
+const modelGitignore = `# Created by https://www.toptal.com/developers/gitignore/api/go
+# Edit at https://www.toptal.com/developers/gitignore?templates=go
+
+### Go ###
+# If you prefer the allow list template instead of the deny list, see community template:
+# https://github.com/github/gitignore/blob/main/community/Golang/Go.AllowList.gitignore
+#
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+.env
+data
+build
+sql
+.vscode
+
+# Test binary, built with 'go test -c'
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Dependency directories (remove the comment below to include it)
+# vendor/
+
+# Go workspace file
+go.work
+
+# Credencial acces token to AWS server
+*.pem`
