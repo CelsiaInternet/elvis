@@ -197,7 +197,7 @@ func (h *Hub) broadcast(channel *Channel, msg Message, ignored []string, from et
 	msg.From = from
 	msg.Ignored = ignored
 	if len(channel.Group) > 0 {
-		for queue, _ := range channel.Group {
+		for queue := range channel.Group {
 			client := channel.NextTurn(queue)
 			if client != nil {
 				return client.sendMessage(msg)

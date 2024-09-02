@@ -64,12 +64,12 @@ func (c *Client) read() {
 	}()
 
 	for {
-		mt, message, err := c.socket.ReadMessage()
+		_, message, err := c.socket.ReadMessage()
 		if err != nil {
 			break
 		}
 
-		c.listen(mt, message)
+		c.listen(message)
 	}
 }
 
@@ -150,10 +150,9 @@ func (c *Client) clear() {
 
 /**
 * listen
-* @param int
 * @param []byte
 **/
-func (c *Client) listen(messageType int, message []byte) {
+func (c *Client) listen(message []byte) {
 	send := func(ok bool, message string) {
 		msg := NewMessage(c.hub.Identify(), et.Json{
 			"ok":      ok,
