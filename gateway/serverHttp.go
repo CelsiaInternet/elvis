@@ -109,37 +109,13 @@ func InitHttp(srv *Server) {
 **/
 func (s *HttpServer) Start() {
 	go func() {
-		console.LogKF("Http", "Load server on http://localhost%s", s.addr)
+		console.LogKF("Http", `Load server on http://localhost%s`, s.addr)
 		console.Fatal(http.ListenAndServe(s.addr, s.handler))
 	}()
 }
 
 /**
-* Save
-* @return error
-**/
-func (s *HttpServer) Save() error {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-
-	jsonRoutes, err := json.Marshal(s.routes)
-	if err != nil {
-		return err
-	}
-
-	jsonPakages, err := json.Marshal(s.pakages)
-	if err != nil {
-		return err
-	}
-
-	cache.Set(s.Id+"-routes", string(jsonRoutes), 0)
-	cache.Set(s.Id+"-packages", string(jsonPakages), 0)
-
-	return nil
-}
-
-/**
-* LoadRouter
+* Load
 * @return error
 **/
 func (s *HttpServer) Load() error {
@@ -152,6 +128,8 @@ func (s *HttpServer) Load() error {
 	if err != nil {
 		return err
 	}
+
+	console.Debug(strRoutes)
 
 	err = json.Unmarshal([]byte(strRoutes), &s.routes)
 	if err != nil {
@@ -172,6 +150,30 @@ func (s *HttpServer) Load() error {
 	if err != nil {
 		return err
 	}
+
+	return nil
+}
+
+/**
+* Save
+* @return error
+**/
+func (s *HttpServer) Saved() error {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	jsonRoutes, err := json.Marshal(s.routes)
+	if err != nil {
+		return err
+	}
+
+	jsonPakages, err := json.Marshal(s.pakages)
+	if err != nil {
+		return err
+	}
+
+	cache.Set(s.Id+"-routes", string(jsonRoutes), 0)
+	cache.Set(s.Id+"-packages", string(jsonPakages), 0)
 
 	return nil
 }
@@ -273,10 +275,9 @@ func (s *HttpServer) GetResolve(method, path string) *Resolve {
 * @param path string
 * @param resolve string
 * @param kind string
-* @param stage string
 * @param packageName string
  */
-func (s *HttpServer) AddRoute(method, path, resolve, kind, stage, packageName string) {
+func (s *HttpServer) AddRoute(method, path, resolve, kind, packageName string) {
 	method = strings.ToUpper(method)
 	ok := methodMap[method]
 	if !ok {
@@ -304,7 +305,6 @@ func (s *HttpServer) AddRoute(method, path, resolve, kind, stage, packageName st
 		route.Resolve = et.Json{
 			"method":  method,
 			"kind":    kind,
-			"stage":   stage,
 			"resolve": resolve,
 		}
 

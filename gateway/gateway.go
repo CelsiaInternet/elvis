@@ -20,9 +20,8 @@ type Server struct {
 	ws   *ws.Hub
 }
 
-var PackageName = "gateway"
+var PackageName = "Apigateway"
 var PackageTitle = envar.EnvarStr("Apigateway", "PACKAGE_TITLE")
-var PackagePath = envar.EnvarStr("/api/gateway", "PATH_URL")
 var PackageVersion = envar.EnvarStr("0.0.1", "VERSION")
 var Company = envar.EnvarStr("", "COMPANY")
 var Web = envar.EnvarStr("", "WEB")

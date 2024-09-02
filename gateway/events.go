@@ -7,8 +7,6 @@ import (
 )
 
 func initEvents() {
-	console.LogK("Events", "Running svents stack")
-
 	err := event.Stack("gateway/upsert", eventAction)
 	if err != nil {
 		console.Error(err)
@@ -16,20 +14,19 @@ func initEvents() {
 
 }
 
-func eventAction(m event.CreatedEvenMessage) {
+func eventAction(m event.EvenMessage) {
 	data, err := et.ToJson(m.Data)
 	if err != nil {
 		console.Error(err)
 	}
 
+	kind := data.ValStr("HTTP", "kind")
 	method := data.Str("method")
 	path := data.Str("path")
 	resolve := data.Str("resolve")
-	kind := data.ValStr("HTTP", "kind")
-	stage := data.ValStr("default", "stage")
 	packageName := data.Str("package")
 
-	conn.http.AddRoute(method, path, resolve, kind, stage, packageName)
+	conn.http.AddRoute(method, path, resolve, kind, packageName)
 
-	console.LogKF("Api gateway", `[%s] %s - %s`, method, path, packageName)
+	console.LogKF("Api gateway", `[%s] %s -> %s - %s`, method, path, resolve, packageName)
 }

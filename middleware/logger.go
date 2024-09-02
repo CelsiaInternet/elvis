@@ -4,17 +4,13 @@ import (
 	"bytes"
 	"context"
 	"log"
-	"math"
 	"net/http"
 	"os"
 	"runtime"
 	"time"
 
 	lg "github.com/cgalvisleon/elvis/console"
-	"github.com/cgalvisleon/elvis/et"
-	"github.com/cgalvisleon/elvis/event"
 	"github.com/cgalvisleon/elvis/utility"
-	"github.com/shirou/gopsutil/v3/mem"
 )
 
 var (
@@ -53,88 +49,17 @@ func Logger(next http.Handler) http.Handler {
 func RequestLogger(f LogFormatter) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
+			metric := NewMetric(r)
+			metric.CallExecute()
+			w.Header().Set("Reqid", utility.UUID())
+			rww := &ResponseWriterWrapper{ResponseWriter: w, StatusCode: http.StatusOK, Host: r.Host}
+			ww := NewWrapResponseWriter(rww, r.ProtoMajor)
+			metric.CallExecute()
 			entry := f.NewLogEntry(r)
-			ww := NewWrapResponseWriter(w, r.ProtoMajor)
+			rw := WithLogEntry(r, entry)
 
-			t1 := time.Now()
-			reqID := utility.NewId()
-			endPoint := r.URL.Path
-			method := r.Method
-			hostName, _ := os.Hostname()
-			var mTotal uint64
-			var mUsed uint64
-			var mFree uint64
-			memory, err := mem.VirtualMemory()
-			if err != nil {
-				mFree = 0
-				mTotal = 0
-				mUsed = 0
-			}
-			mTotal = memory.Total
-			mUsed = memory.Used
-			mFree = memory.Total - memory.Used
-			pFree := float64(mFree) / float64(mTotal) * 100
-			requests_host := localRequests(hostName)
-			requests_endpoint := localRequests(endPoint)
-			scheme := "http"
-			if r.TLS != nil {
-				scheme = "https"
-			}
-
-			defer func() {
-				telemetry := et.Json{
-					"reqID":     reqID,
-					"date_time": t1,
-					"host_name": hostName,
-					"request": et.Json{
-						"method":   method,
-						"endpoint": endPoint,
-						"status":   ww.Status(),
-						"bytes":    ww.BytesWritten(),
-						"header":   ww.Header(),
-						"scheme":   scheme,
-						"host":     r.Host,
-					},
-					"since": et.Json{
-						"value": time.Since(t1),
-						"unity": "Milliseconds",
-					},
-					"memory": et.Json{
-						"unity":        "MB",
-						"total":        mTotal / 1024 / 1024,
-						"used":         mUsed / 1024 / 1024,
-						"free":         mFree / 1024 / 1024,
-						"percent_free": math.Floor(pFree*100) / 100,
-					},
-					"request_host": et.Json{
-						"host":   requests_host.Tag,
-						"day":    requests_host.Day,
-						"hour":   requests_host.Hour,
-						"minute": requests_host.Minute,
-						"second": requests_host.Seccond,
-						"limit":  requests_host.Limit,
-					},
-					"requests_endpoint": et.Json{
-						"endpoint": requests_endpoint.Tag,
-						"day":      requests_endpoint.Day,
-						"hour":     requests_endpoint.Hour,
-						"minute":   requests_endpoint.Minute,
-						"second":   requests_endpoint.Seccond,
-						"limit":    requests_endpoint.Limit,
-					},
-				}
-
-				entry.Write(ww.Status(), ww.BytesWritten(), ww.Header(), time.Since(t1), nil)
-
-				go event.Log("telemetry", telemetry)
-
-				if requests_host.Seccond > requests_host.Limit {
-					go event.Log("requests/overflow", telemetry)
-				}
-			}()
-
-			w.Header().Set("Reqid", reqID)
-			next.ServeHTTP(ww, WithLogEntry(r, entry))
+			next.ServeHTTP(ww, rw)
+			metric.DoneRWW(rww, rw)
 		}
 
 		return http.HandlerFunc(fn)

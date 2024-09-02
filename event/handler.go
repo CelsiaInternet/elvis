@@ -19,7 +19,7 @@ func Publish(clientId, channel string, data map[string]interface{}) error {
 
 	now := time.Now().UTC()
 	id := uuid.NewString()
-	msg := CreatedEvenMessage{
+	msg := EvenMessage{
 		Created_at: now,
 		Id:         id,
 		ClientId:   clientId,
@@ -39,12 +39,12 @@ func Publish(clientId, channel string, data map[string]interface{}) error {
 }
 
 // Basic function to subscribe to a channel
-func Subscribe(channel string, f func(CreatedEvenMessage)) (err error) {
+func Subscribe(channel string, f func(EvenMessage)) (err error) {
 	if conn == nil {
 		return
 	}
 
-	msg := CreatedEvenMessage{
+	msg := EvenMessage{
 		Channel: channel,
 	}
 	conn.eventCreatedSub, err = conn.conn.Subscribe(msg.Type(), func(m *nats.Msg) {
@@ -56,12 +56,12 @@ func Subscribe(channel string, f func(CreatedEvenMessage)) (err error) {
 }
 
 // Basic function to subscrite kind stack to a channel
-func Stack(channel string, f func(CreatedEvenMessage)) (err error) {
+func Stack(channel string, f func(EvenMessage)) (err error) {
 	if conn == nil {
 		return
 	}
 
-	msg := CreatedEvenMessage{
+	msg := EvenMessage{
 		Channel: channel,
 	}
 

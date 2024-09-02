@@ -30,7 +30,7 @@ func JsonToArrayJson(src map[string]interface{}) ([]Json, error) {
 	return result, nil
 }
 
-func Marshal(src interface{}) (Json, error) {
+func Object(src interface{}) (Json, error) {
 	j, err := json.Marshal(src)
 	if err != nil {
 		return Json{}, err
@@ -45,6 +45,21 @@ func Marshal(src interface{}) (Json, error) {
 	return result, nil
 }
 
+func Array(src interface{}) ([]Json, error) {
+	j, err := json.Marshal(src)
+	if err != nil {
+		return []Json{}, err
+	}
+
+	result := []Json{}
+	err = json.Unmarshal(j, &result)
+	if err != nil {
+		return []Json{}, err
+	}
+
+	return result, nil
+}
+
 func (s *Json) Scan(src interface{}) error {
 	var ba []byte
 	switch v := src.(type) {
@@ -53,7 +68,7 @@ func (s *Json) Scan(src interface{}) error {
 	case string:
 		ba = []byte(v)
 	default:
-		return console.ErrorF(`json/Scan - Failed to unmarshal JSON value:%s`, src)
+		return console.ErrorF(`json/Scan - Failed to unmarshal JSON type:%s`, reflect.TypeOf(v))
 	}
 
 	t := map[string]interface{}{}

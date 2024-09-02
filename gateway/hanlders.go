@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/middleware"
 	"github.com/cgalvisleon/elvis/response"
@@ -46,10 +47,9 @@ func upsert(w http.ResponseWriter, r *http.Request) {
 	path := body.Str("path")
 	resolve := body.Str("resolve")
 	kind := body.ValStr("HTTP", "kind")
-	stage := body.ValStr("default", "stage")
 	packageName := body.Str("package")
 
-	conn.http.AddRoute(method, path, resolve, kind, stage, packageName)
+	conn.http.AddRoute(method, path, resolve, kind, packageName)
 
 	response.JSON(w, r, http.StatusOK, et.Json{
 		"message": "Router added",
@@ -62,7 +62,8 @@ func upsert(w http.ResponseWriter, r *http.Request) {
 * @params r *http.Request
 **/
 func getAll(w http.ResponseWriter, r *http.Request) {
-	_pakages, err := et.Marshal(conn.http.pakages)
+	console.Debug("Get all routes")
+	_pakages, err := et.Array(conn.http.pakages)
 	if err != nil {
 		response.HTTPError(w, r, http.StatusInternalServerError, err.Error())
 		return

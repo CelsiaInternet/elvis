@@ -3,11 +3,17 @@ package router
 import (
 	"net/http"
 
-	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/event"
 	"github.com/cgalvisleon/elvis/middleware"
 	"github.com/go-chi/chi/v5"
+)
+
+type TypeRoute int
+
+const (
+	HTTP TypeRoute = iota
+	REST
 )
 
 const (
@@ -21,16 +27,7 @@ const (
 	HandlerFunc = "HandlerFunc"
 )
 
-func EventApiGateway(method, path, packageName, packagePath, host string) {
-	kind := "HTTP"
-	develop := envar.EnvarStr("development", "ENV")
-	if develop == "production" {
-		kind = "REST"
-	}
-
-	path = packagePath + path
-	resolve := host + path
-
+func SetApiGateway(method, path, resolve string, kind TypeRoute, packageName string) {
 	event.Publish("gateway", "gateway/upsert", et.Json{
 		"kind":    kind,
 		"method":  method,
@@ -38,6 +35,13 @@ func EventApiGateway(method, path, packageName, packagePath, host string) {
 		"resolve": resolve,
 		"package": packageName,
 	})
+}
+
+func pushApiGateway(method, path, packagePath, host, packageName string) {
+	path = packagePath + path
+	resolve := host + path
+
+	SetApiGateway(method, path, resolve, HTTP, packageName)
 }
 
 func PublicRoute(r *chi.Mux, method, path string, h http.HandlerFunc, packageName, packagePath, host string) *chi.Mux {
@@ -60,7 +64,7 @@ func PublicRoute(r *chi.Mux, method, path string, h http.HandlerFunc, packageNam
 		r.HandleFunc(path, h)
 	}
 
-	EventApiGateway(method, path, packageName, packagePath, host)
+	pushApiGateway(method, path, packagePath, host, packageName)
 
 	return r
 }
@@ -85,7 +89,7 @@ func ProtectRoute(r *chi.Mux, method, path string, h http.HandlerFunc, packageNa
 		r.With(middleware.Authorization).HandleFunc(path, h)
 	}
 
-	EventApiGateway(method, path, packageName, packagePath, host)
+	pushApiGateway(method, path, packagePath, host, packageName)
 
 	return r
 }

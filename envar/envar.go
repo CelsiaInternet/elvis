@@ -67,6 +67,17 @@ func EnvarInt(_default int, _var string) int {
 	return val
 }
 
+func EnvarInt64(_default int64, _var string) int64 {
+	result := EnvarStr(strconv.FormatInt(_default, 10), _var)
+
+	val, err := strconv.ParseInt(result, 10, 64)
+	if err != nil {
+		return _default
+	}
+
+	return val
+}
+
 func EnvarBool(_default bool, _var string) bool {
 	result := EnvarStr(strconv.FormatBool(_default), _var)
 

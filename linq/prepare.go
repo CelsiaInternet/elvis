@@ -3,7 +3,6 @@ package linq
 import (
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/strs"
-	"github.com/cgalvisleon/elvis/utility"
 )
 
 /**
@@ -24,7 +23,7 @@ func (c *Model) Consolidate(linq *Linq) *Linq {
 
 		if idxCol == -1 {
 			idx := c.TitleIdx(k)
-			if idx != -1 && utility.ContainsInt([]int{TpReference}, c.Definition[idx].Tp) {
+			if idx != -1 && c.Definition[idx].Tp.In([]TypeColum{TpReference}) {
 				col = c.Definition[idx]
 				linq.AddValidate(col, v)
 				reference := linq.data.Json(k)
@@ -43,7 +42,7 @@ func (c *Model) Consolidate(linq *Linq) *Linq {
 			linq.AddValidate(col, v)
 		}
 
-		if utility.ContainsInt([]int{TpField, TpFunction, TpDetail}, col.Tp) {
+		if !col.Tp.In([]TypeColum{TpField, TpFunction, TpDetail}) {
 			continue
 		} else if k == strs.Lowcase(c.SourceField) {
 			atribs := linq.data.Json(k)
@@ -60,12 +59,12 @@ func (c *Model) Consolidate(linq *Linq) *Linq {
 			} else {
 				source = atribs
 			}
-		} else if utility.ContainsInt([]int{TpColumn}, col.Tp) {
+		} else if col.Tp.In([]TypeColum{TpColumn}) {
 			delete(source, k)
 			setValue(k, v)
 			col := c.Column(k)
 			linq.AddValidate(col, v)
-		} else if utility.ContainsInt([]int{TpAtrib}, col.Tp) {
+		} else if col.Tp.In([]TypeColum{TpAtrib}) {
 			source.Set(k, v)
 		}
 	}

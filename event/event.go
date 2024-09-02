@@ -10,7 +10,7 @@ var conn *Conn
 type Conn struct {
 	conn             *nats.Conn
 	eventCreatedSub  *nats.Subscription
-	eventCreatedChan chan CreatedEvenMessage
+	eventCreatedChan chan EvenMessage
 }
 
 func (c *Conn) Lock(key string) bool {

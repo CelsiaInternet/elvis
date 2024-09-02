@@ -9,7 +9,7 @@ type Message interface {
 	Type() string
 }
 
-type CreatedEvenMessage struct {
+type EvenMessage struct {
 	Created_at time.Time              `json:"created_at"`
 	Id         string                 `json:"id"`
 	ClientId   string                 `json:"client_id"`
@@ -17,11 +17,11 @@ type CreatedEvenMessage struct {
 	Data       map[string]interface{} `json:"data"`
 }
 
-func (m CreatedEvenMessage) Type() string {
+func (m EvenMessage) Type() string {
 	return m.Channel
 }
 
-func (m CreatedEvenMessage) ToString() string {
+func (m EvenMessage) ToString() string {
 	j, err := json.Marshal(m)
 	if err != nil {
 		return ""

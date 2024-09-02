@@ -2,20 +2,33 @@ package linq
 
 import (
 	"errors"
+	"slices"
 
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/strs"
 	"github.com/cgalvisleon/elvis/utility"
 )
 
-const TpColumn = 0
-const TpAtrib = 1
-const TpDetail = 2
-const TpReference = 3
-const TpCaption = 4
-const TpFunction = 5
-const TpClone = 6
-const TpField = 7
+type TypeColum int
+
+const (
+	TpColumn TypeColum = iota
+	TpAtrib
+	TpDetail
+	TpReference
+	TpCaption
+	TpFunction
+	TpClone
+	TpField
+)
+
+/**
+* In Verify if the type column is in the list
+**/
+func (t *TypeColum) In(list []TypeColum) bool {
+	idx := slices.Index(list, *t)
+	return idx != -1
+}
 
 /**
 *
@@ -64,7 +77,7 @@ type Details func(col *Column, data *et.Json)
 
 type Column struct {
 	Model       *Model
-	Tp          int
+	Tp          TypeColum
 	Column      *Column
 	name        string
 	Title       string

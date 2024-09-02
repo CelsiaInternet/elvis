@@ -250,7 +250,7 @@ func initEvents() {
 
 }
 
-func eventAction(m event.CreatedEvenMessage) {
+func eventAction(m event.EvenMessage) {
 	data, err := et.ToJson(m.Data)
 	if err != nil {
 		console.Error(err)
