@@ -145,7 +145,7 @@ func (c *Model) Describe() et.Json {
 func (c *Model) Model() et.Json {
 	var result et.Json = et.Json{}
 	for _, col := range c.Definition {
-		if !col.Tp.In([]TypeColum{TpColumn, TpAtrib, TpDetail}) {
+		if !utility.ContainsInt([]int{TpColumn, TpAtrib, TpDetail}, col.Tp) {
 			continue
 		}
 
