@@ -4,6 +4,7 @@ import (
 	"database/sql"
 
 	"github.com/cgalvisleon/elvis/et"
+	"github.com/cgalvisleon/elvis/strs"
 )
 
 func rowsItems(rows *sql.Rows) et.Items {
@@ -34,6 +35,7 @@ func rowsItem(rows *sql.Rows) et.Item {
 }
 
 func sourceItems(rows *sql.Rows, source string) et.Items {
+	source = strs.Lowcase(source)
 	var result et.Items = et.Items{}
 	for rows.Next() {
 		var item et.Json
@@ -48,6 +50,7 @@ func sourceItems(rows *sql.Rows, source string) et.Items {
 }
 
 func sourceItem(rows *sql.Rows, source string) et.Item {
+	source = strs.Lowcase(source)
 	var result et.Item = et.Item{}
 	for rows.Next() {
 		var item et.Json
