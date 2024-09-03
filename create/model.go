@@ -264,10 +264,11 @@ const modelModel = `package $1
 
 import (
 	"github.com/cgalvisleon/elvis/console"
+	"github.com/cgalvisleon/elvis/jdb"
 )
 
-func initModels() error {
-	if err := Define$2(); err != nil {
+func initModels(db *jdb.DB) error {
+	if err := Define$2(db); err != nil {
 		return console.Panic(err)
 	}
 
@@ -388,7 +389,7 @@ func (c *Controller) Version(ctx context.Context) (et.Json, error) {
 }
 
 func (c *Controller) Init(ctx context.Context) {
-	initModels(c.Db.Db)
+	initModels(c.Db)
 	initEvents()
 }
 
@@ -570,11 +571,8 @@ Content-Length: 227
 const modelDbHandler = `package $1
 
 import (
-	"encoding/json"
-	"fmt"
 	"net/http"
 
-	"github.com/cgalvisleon/elvis/cache"
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/jdb"
@@ -654,7 +652,7 @@ func Define$2(db *jdb.DB) error {
 * @return et.Item, error
 **/
 func Get$2ById(id string) (et.Item, error) {
-	result, err = $2.Data().
+	result, err := $2.Data().
 		Where($2.Column("_id").Eq(id)).
 		First()
 	if err != nil {
@@ -765,7 +763,7 @@ func UpSert$2(project_id, id, name, description string, data et.Json) (et.Item, 
 		return et.Item{}, console.Alert(msg.RECORD_NOT_UPDATE)
 	}
 
-	_, err = Valida$2(id, service_id)
+	_, err = Valida$2(id, name)
 	if err != nil {
 		return et.Item{}, err
 	}
@@ -884,9 +882,11 @@ func All$2(project_id, state, search string, page, rows int, _select string) (et
 func (rt *Router) upSert$2(w http.ResponseWriter, r *http.Request) {
 	body, _ := response.GetBody(r)
 	project_id := body.Str("project_id")
-	id := body.Str("id")	
+	id := body.Str("id")
+	name := body.Str("name")
+	description := body.Str("description")
 
-	result, err := UpSert$2(project_id, id, body)
+	result, err := UpSert$2(project_id, id, name, description, body)
 	if err != nil {
 		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
