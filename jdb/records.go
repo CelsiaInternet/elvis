@@ -4,14 +4,14 @@ import (
 	"github.com/cgalvisleon/elvis/console"
 )
 
-func defineSync(db *DB) error {
+func defineRecords(db *DB) error {
 	exist, err := ExistTable(db, "core", "REDORDS")
 	if err != nil {
 		return console.Panic(err)
 	}
 
 	if exist {
-		return nil
+		return defineRecordsFunction(db)
 	}
 
 	sql := `
@@ -27,9 +27,19 @@ func defineSync(db *DB) error {
   CREATE INDEX IF NOT EXISTS REDORDS_TABLE_SCHEMA_IDX ON core.REDORDS(TABLE_SCHEMA);
   CREATE INDEX IF NOT EXISTS REDORDS_TABLE_NAME_IDX ON core.REDORDS(TABLE_NAME);
   CREATE INDEX IF NOT EXISTS REDORDS__IDT_IDX ON core.REDORDS(_IDT);  
-	CREATE INDEX IF NOT EXISTS REDORDS_INDEX_IDX ON core.REDORDS(INDEX);
+	CREATE INDEX IF NOT EXISTS REDORDS_INDEX_IDX ON core.REDORDS(INDEX);`
 
-  CREATE OR REPLACE FUNCTION core.REDORDS_BEFORE_INSERT()
+	_, err = db.Command(sql)
+	if err != nil {
+		return console.Panic(err)
+	}
+
+	return defineRecordsFunction(db)
+}
+
+func defineRecordsFunction(db *DB) error {
+	sql := `
+	CREATE OR REPLACE FUNCTION core.REDORDS_BEFORE_INSERT()
   RETURNS
     TRIGGER AS $$  
   BEGIN
@@ -147,7 +157,7 @@ func defineSync(db *DB) error {
   END;
   $$ LANGUAGE plpgsql;`
 
-	_, err = db.Command(sql)
+	_, err := db.Command(sql)
 	if err != nil {
 		return console.Panic(err)
 	}

@@ -229,7 +229,7 @@ func GetFromToken(ctx context.Context, tokenString string) (*Claim, error) {
 
 	err = cache.SetCtx(ctx, key, c, result.Duration)
 	if err != nil {
-		return nil, logs.Nerror(MSG_TOKEN_INVALID)
+		return nil, err
 	}
 
 	return result, nil

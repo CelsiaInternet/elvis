@@ -22,7 +22,7 @@ func InitCore(db *DB) error {
 		return err
 	}
 
-	if err := defineSync(db); err != nil {
+	if err := defineRecords(db); err != nil {
 		return err
 	}
 
@@ -59,8 +59,18 @@ func defineCore(db *DB) error {
 		INDEX BIGINT DEFAULT 0,
 		PRIMARY KEY(_ID)
 	);
-	CREATE INDEX IF NOT EXISTS COMMAND_INDEX_IDX ON core.COMMAND(INDEX);
+	CREATE INDEX IF NOT EXISTS COMMAND_INDEX_IDX ON core.COMMAND(INDEX);`
 
+	_, err := db.db.Exec(sql)
+	if err != nil {
+		return err
+	}
+
+	return defineCoreFunction(db)
+}
+
+func defineCoreFunction(db *DB) error {
+	sql := `
 	CREATE OR REPLACE FUNCTION core.COMMAND_INSERT()
   RETURNS
     TRIGGER AS $$  

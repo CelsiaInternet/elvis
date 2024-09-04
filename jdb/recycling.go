@@ -11,7 +11,7 @@ func defineRecycling(db *DB) error {
 	}
 
 	if exist {
-		return nil
+		return defineRecyclingFunction(db)
 	}
 
 	sql := `  
@@ -26,15 +26,25 @@ func defineRecycling(db *DB) error {
   CREATE INDEX IF NOT EXISTS RECYCLING_TABLE_SCHEMA_IDX ON core.RECYCLING(TABLE_SCHEMA);
   CREATE INDEX IF NOT EXISTS RECYCLING_TABLE_NAME_IDX ON core.RECYCLING(TABLE_NAME);
   CREATE INDEX IF NOT EXISTS RECYCLING__IDT_IDX ON core.RECYCLING(_IDT);
-	CREATE INDEX IF NOT EXISTS RECYCLING_INDEX_IDX ON core.RECYCLING(INDEX);  
+	CREATE INDEX IF NOT EXISTS RECYCLING_INDEX_IDX ON core.RECYCLING(INDEX);`
 
+	_, err = db.Command(sql)
+	if err != nil {
+		return console.Panic(err)
+	}
+
+	return defineRecyclingFunction(db)
+}
+
+func defineRecyclingFunction(db *DB) error {
+	sql := `  
   CREATE OR REPLACE FUNCTION core.RECYCLING_UPDATE()
   RETURNS
     TRIGGER AS $$
   DECLARE
     CHANNEL VARCHAR(250);
   BEGIN
-    IF NEW._STATE != OLD._STATE AND NEW._STATE == '-2' THEN      
+    IF NEW._STATE != OLD._STATE AND NEW._STATE = '-2' THEN      
       INSERT INTO core.RECYCLING(TABLE_SCHEMA, TABLE_NAME, _IDT)
       VALUES (TG_TABLE_SCHEMA, TG_TABLE_NAME, NEW._IDT);
 
@@ -57,7 +67,7 @@ func defineRecycling(db *DB) error {
   END;
   $$ LANGUAGE plpgsql;`
 
-	_, err = db.Command(sql)
+	_, err := db.Command(sql)
 	if err != nil {
 		return console.Panic(err)
 	}

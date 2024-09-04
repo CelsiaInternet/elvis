@@ -12,7 +12,7 @@ func defineSeries(db *DB) error {
 	}
 
 	if exist {
-		return nil
+		return defineRecyclingFunction(db)
 	}
 
 	sql := `
@@ -20,8 +20,18 @@ func defineSeries(db *DB) error {
 		SERIE VARCHAR(250) DEFAULT '',
 		VALUE BIGINT DEFAULT 0,
 		PRIMARY KEY(SERIE)
-	);
-	
+	);`
+
+	_, err = db.Command(sql)
+	if err != nil {
+		return console.Panic(err)
+	}
+
+	return defineSeriesFunction(db)
+}
+
+func defineSeriesFunction(db *DB) error {
+	sql := `
 	CREATE OR REPLACE FUNCTION core.nextserie(tag VARCHAR(250))
 	RETURNS BIGINT AS $$
 	DECLARE
@@ -66,7 +76,7 @@ func defineSeries(db *DB) error {
 	END;
 	$$ LANGUAGE plpgsql;`
 
-	_, err = db.Command(sql)
+	_, err := db.Command(sql)
 	if err != nil {
 		return console.Panic(err)
 	}

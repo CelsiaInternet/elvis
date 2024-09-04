@@ -88,30 +88,10 @@ type Server struct {
 	rpc  *net.Listener
 }
 
-func New() (*Server, error) {
-	_, err := cache.Load()
-	if err != nil {
-		panic(err)
-	}
-
-	_, err = event.Load()
-	if err != nil {
-		panic(err)
-	}
-
-	_, err = jdb.Load()
-	if err != nil {
-		panic(err)
-	}
-
-	/**
-	* HTTP
-	**/
-
+func New() (*Server, error) {	
 	server := Server{}
 
 	port := envar.EnvarInt(3300, "PORT")
-
 	if port != 0 {
 		r := chi.NewRouter()
 
@@ -136,12 +116,8 @@ func New() (*Server, error) {
 
 		server.http = serv
 	}
-
-	/**
-	 * RPC
-	 **/
+	
 	rpc := envar.EnvarInt(0, "RPC")
-
 	if rpc != 0 {
 		serv := v1.NewRpc(rpc)
 
@@ -192,18 +168,37 @@ import (
 	"net/rpc"
 	"time"
 
+	"github.com/cgalvisleon/elvis/cache"
+	"github.com/cgalvisleon/elvis/event"
+	"github.com/cgalvisleon/elvis/jdb"
 	"github.com/cgalvisleon/elvis/utility"
 	"github.com/dimiro1/banner"
 	"github.com/go-chi/chi/v5"
-	"github.com/mattn/go-colorable"	
+	"github.com/mattn/go-colorable"
 	pkg "$1/pkg/$2"	
 )
 
 func New() http.Handler {
 	r := chi.NewRouter()
-	
+
+	_, err := cache.Load()
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = event.Load()
+	if err != nil {
+		panic(err)
+	}
+
+	db, err := jdb.Load()
+	if err != nil {
+		panic(err)
+	}
+
 	_pkg := &pkg.Router{
 		Repository: &pkg.Controller{
+			Db: db,
 		},
 	}
 
