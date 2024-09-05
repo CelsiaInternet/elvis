@@ -4,7 +4,9 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"io"
 
@@ -56,4 +58,11 @@ func DecryptMessage(message string) (string, error) {
 	stream.XORKeyStream(cipherText, cipherText)
 
 	return string(cipherText), nil
+}
+
+func HashSha256(message string) string {
+	hash := sha256.New()
+	hash.Write([]byte(message))
+	hashBytes := hash.Sum(nil)
+	return hex.EncodeToString(hashBytes)
 }

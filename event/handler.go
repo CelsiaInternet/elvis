@@ -44,6 +44,10 @@ func Subscribe(channel string, f func(EvenMessage)) (err error) {
 		return
 	}
 
+	if len(channel) == 0 {
+		return
+	}
+
 	msg := EvenMessage{
 		Channel: channel,
 	}
@@ -58,6 +62,10 @@ func Subscribe(channel string, f func(EvenMessage)) (err error) {
 // Basic function to subscrite kind stack to a channel
 func Stack(channel string, f func(EvenMessage)) (err error) {
 	if conn == nil {
+		return
+	}
+
+	if len(channel) == 0 {
 		return
 	}
 

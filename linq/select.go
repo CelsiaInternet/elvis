@@ -103,7 +103,9 @@ func (s *Linq) First() (et.Item, error) {
 		return et.Item{}, err
 	}
 
-	s.Details(&item.Result)
+	if item.Ok {
+		s.Details(&item.Result)
+	}
 
 	return item, nil
 }

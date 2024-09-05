@@ -224,7 +224,7 @@ func GetProjectModules(projectId, state, search string, page, rows int) (et.List
 
 	auxState := state
 
-	if auxState == "*" {
+	if auxState != "" {
 		state = utility.FOR_DELETE
 
 		return linq.From(Modules, "A").

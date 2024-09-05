@@ -14,13 +14,13 @@ ENV GO111MODULE=on \
 
 WORKDIR /src
 
-COPY go.mod .
-COPY go.sum .
+COPY go.mod go.sum ./
 RUN go mod download
-
 COPY . .
 
-RUN gofmt -w . && go build ./cmd/$1
+RUN gofmt -w . && go build -v -o /$1 ./cmd/$1
+
+RUN chmod +x /$1
 
 FROM scratch
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/

@@ -525,6 +525,7 @@ func (s Json) Set(key string, val interface{}) bool {
 	}
 
 	s[key] = val
+
 	return false
 }
 

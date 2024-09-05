@@ -450,9 +450,11 @@ func (c *Linq) command() (et.Item, error) {
 	}
 
 	if c.Tp == TpData {
+		sourceField := strs.Lowcase(SourceField)
+
 		return et.Item{
 			Ok:     result.Ok,
-			Result: result.Json(SourceField),
+			Result: result.Json(sourceField),
 		}, nil
 	}
 
