@@ -14,6 +14,7 @@ import (
 	"github.com/cgalvisleon/elvis/response"
 	"github.com/cgalvisleon/elvis/strs"
 	"github.com/cgalvisleon/elvis/utility"
+	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/v3/mem"
 )
 
@@ -133,16 +134,16 @@ type Metrics struct {
 	Host             string
 	EndPoint         string
 	Method           string
+	Proto            string
 	RemoteAddr       string
 	HostName         string
-	Proto            string
-	MTotal           uint64
-	MUsed            uint64
-	MFree            uint64
-	PFree            float64
 	RequestsHost     Request
 	RequestsEndpoint Request
 	Scheme           string
+	CPUUsage         float64
+	MemoryTotal      uint64
+	MemoeryUsage     uint64
+	MmemoryFree      uint64
 }
 
 /**
@@ -152,7 +153,7 @@ type Metrics struct {
 func NewMetric(r *http.Request) *Metrics {
 	result := &Metrics{}
 	result.TimeBegin = time.Now()
-	result.ReqID = utility.NewId()
+	result.ReqID = utility.UUID()
 	result.EndPoint = r.URL.Path
 	result.Method = r.Method
 	result.Proto = r.Proto
@@ -166,24 +167,28 @@ func NewMetric(r *http.Request) *Metrics {
 		result.RemoteAddr = strs.Split(result.RemoteAddr, ",")[0]
 	}
 	result.HostName, _ = os.Hostname()
-	memory, err := mem.VirtualMemory()
-	if err != nil {
-		result.MFree = 0
-		result.MTotal = 0
-		result.MUsed = 0
-		result.PFree = 0
-	} else {
-		result.MTotal = memory.Total
-		result.MUsed = memory.Used
-		result.MFree = memory.Total - memory.Used
-		result.PFree = float64(result.MFree) / float64(result.MTotal) * 100
-	}
 	result.RequestsHost = callRequests(result.HostName)
 	result.RequestsEndpoint = callRequests(result.EndPoint)
 	result.Scheme = "http"
 	if r.TLS != nil {
 		result.Scheme = "https"
 	}
+
+	percentages, err := cpu.Percent(time.Second, false)
+	if err != nil {
+		result.CPUUsage = 0
+	}
+	result.CPUUsage = percentages[0]
+
+	v, err := mem.VirtualMemory()
+	if err != nil {
+		result.MemoryTotal = 0
+		result.MemoeryUsage = 0
+		result.MmemoryFree = 0
+	}
+	result.MemoryTotal = v.Total
+	result.MemoeryUsage = v.Used
+	result.MmemoryFree = v.Free
 
 	return result
 }
@@ -246,12 +251,13 @@ func (m *Metrics) println() et.Json {
 			"scheme": m.Scheme,
 			"host":   m.Host,
 		},
-		"memory": et.Json{
+		"system": et.Json{
 			"unity":        "MB",
-			"total":        m.MTotal / 1024 / 1024,
-			"used":         m.MUsed / 1024 / 1024,
-			"free":         m.MFree / 1024 / 1024,
-			"percent_free": math.Floor(m.PFree*100) / 100,
+			"total":        m.MemoryTotal / 1024 / 1024,
+			"used":         m.MemoeryUsage / 1024 / 1024,
+			"free":         m.MmemoryFree / 1024 / 1024,
+			"percent_free": math.Floor(float64(m.MmemoryFree) / float64(m.MemoryTotal)),
+			"cpu_usage":    m.CPUUsage,
 		},
 		"request_host": et.Json{
 			"host":   m.RequestsHost.Tag,

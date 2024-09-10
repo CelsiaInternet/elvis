@@ -11,7 +11,7 @@ func Server() (*Hub, error) {
 		return conn, nil
 	}
 
-	conn := NewHub()
+	conn = NewHub()
 	go conn.Run()
 
 	return conn, nil
