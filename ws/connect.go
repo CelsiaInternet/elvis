@@ -19,11 +19,7 @@ import (
 * @return *Client
 * @return error
 **/
-func ConnectHttp(w http.ResponseWriter, r *http.Request) (*Client, error) {
-	if conn == nil {
-		return nil, logs.Log(ERR_NOT_WS_SERVICE)
-	}
-
+func (h *Hub) ConnectHttp(w http.ResponseWriter, r *http.Request) (*Client, error) {
 	socket, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		return nil, err
@@ -33,7 +29,7 @@ func ConnectHttp(w http.ResponseWriter, r *http.Request) (*Client, error) {
 	clientId := middleware.ClientIDKey.String(ctx, utility.UUID())
 	name := middleware.NameKey.String(ctx, "Anonimo")
 
-	return conn.connect(socket, clientId, name)
+	return h.connect(socket, clientId, name)
 }
 
 /**
