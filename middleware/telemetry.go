@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"encoding/json"
 	"fmt"
 	"math"
 	"net/http"
@@ -11,12 +12,18 @@ import (
 	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/event"
-	"github.com/cgalvisleon/elvis/response"
 	"github.com/cgalvisleon/elvis/strs"
 	"github.com/cgalvisleon/elvis/utility"
 	"github.com/shirou/gopsutil/cpu"
-	"github.com/shirou/gopsutil/v3/mem"
+	"github.com/shirou/gopsutil/mem"
 )
+
+var hostName, _ = os.Hostname()
+
+type Result struct {
+	Ok     bool        `json:"ok"`
+	Result interface{} `json:"result"`
+}
 
 type ContentLength struct {
 	Header int
@@ -151,46 +158,193 @@ type Metrics struct {
 * @params r *http.Request
 **/
 func NewMetric(r *http.Request) *Metrics {
-	result := &Metrics{}
-	result.TimeBegin = time.Now()
-	result.ReqID = utility.UUID()
-	result.EndPoint = r.URL.Path
-	result.Method = r.Method
-	result.Proto = r.Proto
-	result.RemoteAddr = r.Header.Get("X-Forwarded-For")
-	if result.RemoteAddr == "" {
-		result.RemoteAddr = r.Header.Get("X-Real-IP")
+	remoteAddr := r.Header.Get("X-Forwarded-For")
+	if remoteAddr == "" {
+		remoteAddr = r.Header.Get("X-Real-IP")
 	}
-	if result.RemoteAddr == "" {
-		result.RemoteAddr = r.RemoteAddr
-	} else {
-		result.RemoteAddr = strs.Split(result.RemoteAddr, ",")[0]
+	if remoteAddr != "" {
+		remoteAddr = strs.Split(remoteAddr, ",")[0]
 	}
-	result.HostName, _ = os.Hostname()
-	result.RequestsHost = callRequests(result.HostName)
-	result.RequestsEndpoint = callRequests(result.EndPoint)
-	result.Scheme = "http"
+	endPoint := r.URL.Path
+	scheme := "http"
 	if r.TLS != nil {
-		result.Scheme = "https"
+		scheme = "https"
 	}
 
-	percentages, err := cpu.Percent(time.Second, false)
-	if err != nil {
-		result.CPUUsage = 0
+	result := &Metrics{
+		TimeBegin:        time.Now(),
+		ReqID:            utility.UUID(),
+		EndPoint:         endPoint,
+		Method:           r.Method,
+		Proto:            r.Proto,
+		RemoteAddr:       remoteAddr,
+		HostName:         hostName,
+		RequestsHost:     callRequests(hostName),
+		RequestsEndpoint: callRequests(endPoint),
+		Scheme:           scheme,
 	}
-	result.CPUUsage = percentages[0]
 
-	v, err := mem.VirtualMemory()
-	if err != nil {
-		result.MemoryTotal = 0
-		result.MemoeryUsage = 0
-		result.MmemoryFree = 0
-	}
-	result.MemoryTotal = v.Total
-	result.MemoeryUsage = v.Used
-	result.MmemoryFree = v.Free
+	go result.CallCPUUsage()
+	go result.CallMemoryUsage()
 
 	return result
+}
+
+/**
+* CallCPUUsage
+**/
+func (m *Metrics) CallCPUUsage() {
+	percentages, err := cpu.Percent(time.Second, false)
+	if err != nil {
+		m.CPUUsage = 0
+	}
+	m.CPUUsage = percentages[0]
+}
+
+/**
+* CallMemoryUsage
+**/
+func (m *Metrics) CallMemoryUsage() {
+	v, err := mem.VirtualMemory()
+	if err != nil {
+		m.MemoryTotal = 0
+		m.MemoeryUsage = 0
+		m.MmemoryFree = 0
+	}
+	m.MemoryTotal = v.Total
+	m.MemoeryUsage = v.Used
+	m.MmemoryFree = v.Free
+}
+
+/**
+* CallSearchTime
+**/
+func (m *Metrics) CallSearchTime() {
+	m.SearchTime = time.Since(m.TimeBegin)
+	m.TimeExec = time.Now()
+}
+
+/**
+* DoneFn
+* @params rw *ResponseWriterWrapper
+* @params r *http.Request
+* @return et.Json
+**/
+func (m *Metrics) DoneFn(rw *ResponseWriterWrapper) et.Json {
+	m.TimeEnd = time.Now()
+	m.ResponseTime = time.Since(m.TimeExec)
+	m.Latency = time.Since(m.TimeBegin)
+	m.Downtime = m.Latency - m.ResponseTime
+	m.StatusCode = rw.StatusCode
+	m.Status = http.StatusText(rw.StatusCode)
+	m.ContentLength = ContentLength{
+		Header: rw.SizeHeader,
+		Body:   rw.SizeBody,
+		Total:  rw.SizeTotal,
+	}
+	m.Header = rw.Header()
+	m.Host = rw.Host
+
+	return m.println()
+}
+
+func (m *Metrics) WriteResponse(w http.ResponseWriter, r *http.Request, statusCode int, e []byte) error {
+	rw := &ResponseWriterWrapper{ResponseWriter: w, StatusCode: statusCode, Host: r.Host}
+
+	rw.Header().Set("Content-Type", "application/json; charset=utf-8")
+	rw.WriteHeader(statusCode)
+	rw.Write(e)
+
+	m.DoneFn(rw)
+	return nil
+}
+
+func (m *Metrics) JSON(w http.ResponseWriter, r *http.Request, statusCode int, dt interface{}) error {
+	if dt == nil {
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(statusCode)
+		return nil
+	}
+
+	result := Result{
+		Ok:     http.StatusOK == statusCode,
+		Result: dt,
+	}
+
+	e, err := json.Marshal(result)
+	if err != nil {
+		return err
+	}
+
+	return m.WriteResponse(w, r, statusCode, e)
+}
+
+func (m *Metrics) ITEM(w http.ResponseWriter, r *http.Request, statusCode int, dt et.Item) error {
+	if &dt == (&et.Item{}) {
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(statusCode)
+		return nil
+	}
+
+	e, err := json.Marshal(dt)
+	if err != nil {
+		return err
+	}
+
+	return m.WriteResponse(w, r, statusCode, e)
+}
+
+func (m *Metrics) ITEMS(w http.ResponseWriter, r *http.Request, statusCode int, dt et.Items) error {
+	if &dt == (&et.Items{}) {
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(statusCode)
+		return nil
+	}
+
+	e, err := json.Marshal(dt)
+	if err != nil {
+		return err
+	}
+
+	return m.WriteResponse(w, r, statusCode, e)
+}
+
+func (m *Metrics) HTTPError(w http.ResponseWriter, r *http.Request, statusCode int, message string) error {
+	msg := et.Json{
+		"message": message,
+	}
+
+	return m.JSON(w, r, statusCode, msg)
+}
+
+/**
+* Unauthorized
+* @params w http.ResponseWriter
+* @params r *http.Request
+**/
+func (m *Metrics) Unauthorized(w http.ResponseWriter, r *http.Request) {
+	m.HTTPError(w, r, http.StatusUnauthorized, "401 Unauthorized")
+}
+
+/**
+* HandlerFunc
+* @params handler http.HandlerFunc
+* @params w http.ResponseWriter
+* @params r *http.Request
+**/
+func (m *Metrics) HandlerFunc(handler http.HandlerFunc, w http.ResponseWriter, r *http.Request) {
+	rw := &ResponseWriterWrapper{ResponseWriter: w, StatusCode: http.StatusOK, Host: r.Host}
+	isWebSocket := r.Method == http.MethodGet &&
+		r.Header.Get("Upgrade") == "websocket" &&
+		r.Header.Get("Connection") == "Upgrade" &&
+		r.Header.Get("Sec-WebSocket-Key") != ""
+	if isWebSocket {
+		handler(w, r)
+	} else {
+		handler(rw, r)
+	}
+
+	go m.DoneFn(rw)
 }
 
 /**
@@ -284,141 +438,4 @@ func (m *Metrics) println() et.Json {
 	}
 
 	return result
-}
-
-/**
-* CallExecute
-**/
-func (m *Metrics) CallExecute() {
-	m.SearchTime = time.Since(m.TimeBegin)
-	m.TimeExec = time.Now()
-}
-
-/**
-* Done
-* @params res *http.Response
-**/
-func (m *Metrics) Done(res *http.Response) et.Json {
-	m.TimeEnd = time.Now()
-	m.ResponseTime = time.Since(m.TimeExec)
-	m.Latency = time.Since(m.TimeBegin)
-	m.Downtime = m.SearchTime - m.ResponseTime
-	m.StatusCode = res.StatusCode
-	m.Status = strs.Format(`%d %s`, res.StatusCode, http.StatusText(res.StatusCode))
-	m.ContentLength = contentLength(res)
-	m.Header = res.Header
-	m.Host = res.Request.Host
-
-	return m.println()
-}
-
-/**
-* DoneRWW
-* @params rw *ResponseWriterWrapper
-* @params r *http.Request
-* @return et.Json
-**/
-func (m *Metrics) DoneRWW(w *ResponseWriterWrapper, r *http.Request) et.Json {
-	m.TimeEnd = time.Now()
-	m.ResponseTime = time.Since(m.TimeExec)
-	m.Latency = time.Since(m.TimeBegin)
-	m.Downtime = m.Latency - m.ResponseTime
-	m.StatusCode = w.StatusCode
-	m.Status = strs.Format(`%d %s`, w.StatusCode, http.StatusText(w.StatusCode))
-	m.ContentLength = w.ContentLength()
-	m.Header = w.Header()
-	m.Host = w.Host
-
-	return m.println()
-}
-
-/**
-* DoneFn
-* @params rw *ResponseWriterWrapper
-* @params r *http.Request
-* @return et.Json
-**/
-func (m *Metrics) DoneFn(rw *ResponseWriterWrapper, r *http.Request) et.Json {
-	m.TimeEnd = time.Now()
-	m.ResponseTime = time.Since(m.TimeExec)
-	m.Latency = time.Since(m.TimeBegin)
-	m.Downtime = m.Latency - m.ResponseTime
-	m.StatusCode = rw.StatusCode
-	m.Status = http.StatusText(rw.StatusCode)
-	m.ContentLength = ContentLength{
-		Header: rw.SizeHeader,
-		Body:   rw.SizeBody,
-		Total:  rw.SizeTotal,
-	}
-	m.Header = rw.Header()
-	m.Host = rw.Host
-
-	return m.println()
-}
-
-/**
-* Unauthorized
-* @params w http.ResponseWriter
-* @params r *http.Request
-**/
-func (m *Metrics) Unauthorized(w http.ResponseWriter, r *http.Request) {
-	rw := &ResponseWriterWrapper{ResponseWriter: w, StatusCode: http.StatusUnauthorized, Host: r.Host}
-	m.CallExecute()
-	response.HTTPError(rw, r, http.StatusUnauthorized, "401 Unauthorized")
-	go m.DoneFn(rw, r)
-}
-
-/**
-* NotFound
-* @params handler http.HandlerFunc
-* @params w http.ResponseWriter
-* @params r *http.Request
-**/
-func (m *Metrics) NotFound(handler http.HandlerFunc, w http.ResponseWriter, r *http.Request) {
-	rw := &ResponseWriterWrapper{ResponseWriter: w, StatusCode: http.StatusNotFound, Host: r.Host}
-	m.CallExecute()
-	handler(rw, r)
-	go m.DoneFn(rw, r)
-}
-
-/**
-* HandlerFunc
-* @params handler http.HandlerFunc
-* @params w http.ResponseWriter
-* @params r *http.Request
-**/
-func (m *Metrics) HandlerFunc(handler http.HandlerFunc, w http.ResponseWriter, r *http.Request) {
-	rw := &ResponseWriterWrapper{ResponseWriter: w, StatusCode: http.StatusOK, Host: r.Host}
-	isWebSocket := r.Method == http.MethodGet &&
-		r.Header.Get("Upgrade") == "websocket" &&
-		r.Header.Get("Connection") == "Upgrade" &&
-		r.Header.Get("Sec-WebSocket-Key") != ""
-	if isWebSocket {
-		handler(w, r)
-	} else {
-		handler(rw, r)
-	}
-
-	go m.DoneFn(rw, r)
-}
-
-/**
-* Handler
-* @params handler http.Handler
-* @params w http.ResponseWriter
-* @params r *http.Request
-**/
-func (m *Metrics) Handler(handler http.Handler, w http.ResponseWriter, r *http.Request) {
-	rw := &ResponseWriterWrapper{ResponseWriter: w, StatusCode: http.StatusOK, Host: r.Host}
-	isWebSocket := r.Method == http.MethodGet &&
-		r.Header.Get("Upgrade") == "websocket" &&
-		r.Header.Get("Connection") == "Upgrade" &&
-		r.Header.Get("Sec-WebSocket-Key") != ""
-	if isWebSocket {
-		handler.ServeHTTP(w, r)
-	} else {
-		handler.ServeHTTP(rw, r)
-	}
-
-	go m.DoneFn(rw, r)
 }

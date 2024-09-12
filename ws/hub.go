@@ -2,8 +2,6 @@ package ws
 
 import (
 	"net/http"
-	"os"
-	"sync"
 	"time"
 
 	"github.com/cgalvisleon/elvis/et"
@@ -34,7 +32,6 @@ type Hub struct {
 	channels   []*Channel
 	register   chan *Client
 	unregister chan *Client
-	mutex      *sync.Mutex
 	adapter    *RedisAdapter
 	run        bool
 }
@@ -46,8 +43,9 @@ type Hub struct {
 func NewHub() *Hub {
 	id := utility.UUID()
 	name := "Websocket Hub"
-	result := &Hub{
-		Id:   id,
+
+	return &Hub{
+		Id:   utility.UUID(),
 		Name: name,
 		Params: &HubParams{
 			Id:   id,
@@ -57,11 +55,8 @@ func NewHub() *Hub {
 		channels:   make([]*Channel, 0),
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
-		mutex:      &sync.Mutex{},
 		run:        false,
 	}
-
-	return result
 }
 
 /**
@@ -73,8 +68,7 @@ func (h *Hub) Run() {
 	}
 
 	h.run = true
-	host, _ := os.Hostname()
-	logs.Logf("Websocket", "Run server host:%s", host)
+	logs.Log("Websocket", "Run websocket hub")
 
 	for {
 		select {
@@ -97,7 +91,7 @@ func (h *Hub) Close() {
 * Identify the hub
 * @return et.Json
 **/
-func (h *Hub) Identify() et.Json {
+func (h *Hub) from() et.Json {
 	return et.Json{
 		"id":   h.Id,
 		"name": h.Name,
@@ -109,23 +103,20 @@ func (h *Hub) Identify() et.Json {
 * @param client *Client
 **/
 func (h *Hub) onConnect(client *Client) {
-	h.mutex.Lock()
-	defer h.mutex.Unlock()
-
 	h.clients = append(h.clients, client)
 	client.Addr = client.socket.RemoteAddr().String()
 
 	logs.Debug("Client clientId:", client.Id)
 	logs.Debug("Client clientName:", client.Name)
 
-	msg := NewMessage(h.Identify(), et.Json{
+	msg := NewMessage(h.from(), et.Json{
 		"ok":      true,
 		"message": "Connected successfully",
 		"client":  client.From(),
 	}, m.TpConnect)
 	msg.Channel = "ws/connect"
 
-	h.Mute(msg.Channel, msg, []string{client.Id}, h.Identify())
+	h.Mute(msg.Channel, msg, []string{client.Id}, h.from())
 	client.sendMessage(msg)
 
 	logs.Logf("Websocket", MSG_CLIENT_CONNECT, client.Id, h.Id)
@@ -136,9 +127,6 @@ func (h *Hub) onConnect(client *Client) {
 * @param client *Client
 **/
 func (h *Hub) onDisconnect(client *Client) {
-	h.mutex.Lock()
-	defer h.mutex.Unlock()
-
 	client.close()
 	client.clear()
 	idx := slices.IndexFunc(h.clients, func(c *Client) bool { return c.Id == client.Id })
@@ -147,14 +135,14 @@ func (h *Hub) onDisconnect(client *Client) {
 	h.clients[len(h.clients)-1] = nil
 	h.clients = h.clients[:len(h.clients)-1]
 
-	msg := NewMessage(h.Identify(), et.Json{
+	msg := NewMessage(h.from(), et.Json{
 		"ok":      true,
 		"message": "Client disconnected",
 		"client":  client.From(),
 	}, m.TpDisconnect)
 	msg.Channel = "ws/disconnect"
 
-	h.Mute(msg.Channel, msg, []string{client.Id}, h.Identify())
+	h.Mute(msg.Channel, msg, []string{client.Id}, h.from())
 
 	logs.Logf("Websocket", MSG_CLIENT_DISCONNECT, client.Id, h.Id)
 }

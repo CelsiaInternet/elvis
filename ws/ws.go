@@ -1,6 +1,10 @@
 package ws
 
-import "sync"
+import (
+	"sync"
+
+	"github.com/cgalvisleon/elvis/console"
+)
 
 var once sync.Once
 
@@ -9,14 +13,12 @@ var once sync.Once
 * @return *Hub
 **/
 func Server() (*Hub, error) {
-	var result *Hub
-
-	initial := func() {
-		result = NewHub()
-		go result.Run()
+	result := NewHub()
+	if result == nil {
+		return nil, console.Alert("Error creating new Websocket Hub")
 	}
 
-	once.Do(initial)
+	go result.Run()
 
 	return result, nil
 }

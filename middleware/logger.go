@@ -50,16 +50,15 @@ func RequestLogger(f LogFormatter) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
 			metric := NewMetric(r)
-			metric.CallExecute()
+			metric.CallSearchTime()
 			w.Header().Set("Reqid", utility.UUID())
 			rww := &ResponseWriterWrapper{ResponseWriter: w, StatusCode: http.StatusOK, Host: r.Host}
 			ww := NewWrapResponseWriter(rww, r.ProtoMajor)
-			metric.CallExecute()
 			entry := f.NewLogEntry(r)
 			rw := WithLogEntry(r, entry)
 
 			next.ServeHTTP(ww, rw)
-			metric.DoneRWW(rww, rw)
+			metric.DoneFn(rww)
 		}
 
 		return http.HandlerFunc(fn)

@@ -3,7 +3,7 @@ module github.com/cgalvisleon/elvis
 go 1.18
 
 require (
-	github.com/aws/aws-sdk-go v1.44.331
+	github.com/aws/aws-sdk-go v1.55.5
 	github.com/go-chi/chi/v5 v5.0.12
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/google/uuid v1.3.1

@@ -154,7 +154,7 @@ func (c *Client) clear() {
 **/
 func (c *Client) listen(message []byte) {
 	send := func(ok bool, message string) {
-		msg := NewMessage(c.hub.Identify(), et.Json{
+		msg := NewMessage(c.hub.from(), et.Json{
 			"ok":      ok,
 			"message": message,
 		}, m.TpDirect)
