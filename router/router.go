@@ -6,6 +6,8 @@ import (
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/event"
 	"github.com/cgalvisleon/elvis/middleware"
+	"github.com/cgalvisleon/elvis/strs"
+	"github.com/cgalvisleon/elvis/utility"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -27,21 +29,62 @@ const (
 	HandlerFunc = "HandlerFunc"
 )
 
-func SetApiGateway(method, path, resolve string, kind TypeRoute, packageName string) {
-	event.Publish("gateway", "gateway/upsert", et.Json{
-		"kind":    kind,
-		"method":  method,
-		"path":    path,
-		"resolve": resolve,
-		"package": packageName,
-	})
+type TpHeader int
+
+const (
+	TpKeepHeader TpHeader = iota
+	TpJoinHeader
+	TpReplaceHeader
+)
+
+/**
+* String
+* @return string
+**/
+func (t TpHeader) String() string {
+	switch t {
+	case TpKeepHeader:
+		return "Keep the resolve header"
+	case TpJoinHeader:
+		return "Join request header with the resolve header"
+	case TpReplaceHeader:
+		return "Replace resolve header with replace header"
+	default:
+		return "Unknown"
+	}
 }
 
-func pushApiGateway(method, path, packagePath, host, packageName string) {
+/**
+* StrToTpHeader
+* @param str string
+* @return TpHeader
+**/
+func StrToTpHeader(str string) TpHeader {
+	switch strs.Lowcase(str) {
+	case "join":
+		return TpJoinHeader
+	case "replace":
+		return TpReplaceHeader
+	default:
+		return TpKeepHeader
+	}
+}
+
+func pushApiGateway(method, path, packagePath, host, packageName string, private bool) {
 	path = packagePath + path
 	resolve := host + path
 
-	SetApiGateway(method, path, resolve, HTTP, packageName)
+	event.Publish("apigateway", "apigateway/set/resolve", et.Json{
+		"kind":        HTTP,
+		"method":      method,
+		"path":        path,
+		"resolve":     resolve,
+		"package":     packageName,
+		"tpHeader":    TpReplaceHeader,
+		"private":     private,
+		"packageName": packageName,
+		"_id":         utility.UUID(),
+	})
 }
 
 func PublicRoute(r *chi.Mux, method, path string, h http.HandlerFunc, packageName, packagePath, host string) *chi.Mux {
@@ -64,7 +107,7 @@ func PublicRoute(r *chi.Mux, method, path string, h http.HandlerFunc, packageNam
 		r.HandleFunc(path, h)
 	}
 
-	pushApiGateway(method, path, packagePath, host, packageName)
+	pushApiGateway(method, path, packagePath, host, packageName, false)
 
 	return r
 }
@@ -89,7 +132,7 @@ func ProtectRoute(r *chi.Mux, method, path string, h http.HandlerFunc, packageNa
 		r.With(middleware.Authorization).HandleFunc(path, h)
 	}
 
-	pushApiGateway(method, path, packagePath, host, packageName)
+	pushApiGateway(method, path, packagePath, host, packageName, true)
 
 	return r
 }

@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/cgalvisleon/elvis/claim"
 	"github.com/cgalvisleon/elvis/logs"
 	"github.com/cgalvisleon/elvis/middleware"
 	"github.com/cgalvisleon/elvis/strs"
@@ -27,7 +26,7 @@ func (h *Hub) ConnectHttp(w http.ResponseWriter, r *http.Request) (*Client, erro
 
 	ctx := r.Context()
 	clientId := middleware.ClientIDKey.String(ctx, utility.UUID())
-	name := middleware.NameKey.String(ctx, "Anonimo")
+	name := middleware.NameKey.String(ctx, "Anonymous")
 
 	return h.connect(socket, clientId, name)
 }
@@ -47,16 +46,10 @@ func ConnectWs(host, scheme, clientId, name string) (*websocket.Conn, error) {
 	}
 
 	path := strs.Format("/%s", scheme)
-
 	u := url.URL{Scheme: scheme, Host: host, Path: path}
-	header := make(http.Header)
-	tk, err := claim.GenToken(clientId, "ws", name, "ws", name, "microservice", 0)
-	if err != nil {
-		return nil, err
-	}
-
-	tk = strs.Format(`Bearer %s`, tk)
-	header.Add("Authorization", tk)
+	header := http.Header{}
+	header.Add("clientId", clientId)
+	header.Add("name", name)
 	result, _, err := websocket.DefaultDialer.Dial(u.String(), header)
 	if err != nil {
 		return nil, err

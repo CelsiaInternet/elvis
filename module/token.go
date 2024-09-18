@@ -101,6 +101,11 @@ func DefineTokens(db *jdb.DB) error {
 	return nil
 }
 
+/**
+* loadToken
+* @param token *Token
+* @return error
+**/
 func loadToken(token *Token) error {
 	err := claim.SetToken(token.App, token.Device, token.Id, token.Token)
 	if err != nil {
@@ -110,9 +115,15 @@ func loadToken(token *Token) error {
 	return nil
 }
 
-func unLoadTokenById(app, device, id string) error {
-	key := claim.TokenKey(app, device, id)
-	_, err := cache.Del(key)
+/**
+* unLoadToken
+* @param app string
+* @param device string
+* @param id string
+* @return error
+**/
+func unLoadToken(app, device, id string) error {
+	err := claim.DeleteToken(app, device, id)
 	if err != nil {
 		return err
 	}
@@ -121,8 +132,26 @@ func unLoadTokenById(app, device, id string) error {
 }
 
 /**
-* Token
-*	Handler for CRUD data
+* defaultToken
+**/
+func defaultToken() {
+	production := envar.EnvarBool(false, "PRODUCTION")
+	if !production {
+		item, err := UpSetToken("-1", "DEFAULT_TOKEN", "", "requests", "Default token", "DEFAULT_TOKEN")
+		if err != nil {
+			return
+		}
+
+		token := item.Get("token")
+		console.Log("Default token: ", token)
+	}
+}
+
+/**
+* GetTokenById
+* @param id string
+* @return et.Item
+* @return error
 **/
 func GetTokenById(id string) (et.Item, error) {
 	item, err := Tokens.Data().
@@ -135,6 +164,17 @@ func GetTokenById(id string) (et.Item, error) {
 	return item, nil
 }
 
+/**
+* UpSetToken
+* @param projeectId string
+* @param id string
+* @param app string
+* @param device string
+* @param name string
+* @param userId string
+* @return et.Item
+* @return error
+**/
 func UpSetToken(projeectId, id, app, device, name, userId string) (et.Item, error) {
 	user, err := GetUserById(userId)
 	if err != nil {
@@ -142,7 +182,7 @@ func UpSetToken(projeectId, id, app, device, name, userId string) (et.Item, erro
 	}
 
 	if !user.Ok {
-		return et.Item{}, console.Alert(msg.USER_NOT_FONUND)
+		return et.Item{}, console.NewError(msg.USER_NOT_FONUND)
 	}
 
 	id = utility.GenId(id)
@@ -152,11 +192,9 @@ func UpSetToken(projeectId, id, app, device, name, userId string) (et.Item, erro
 	}
 
 	if current.Ok {
-		data := et.Json{
+		item, err := Tokens.Update(et.Json{
 			"name": name,
-		}
-
-		item, err := Tokens.Update(data).
+		}).
 			Where(Tokens.Col("_id").Eq(id)).
 			CommandOne()
 		if err != nil {
@@ -170,64 +208,55 @@ func UpSetToken(projeectId, id, app, device, name, userId string) (et.Item, erro
 				"_id":     id,
 			}),
 		}, nil
-	} else {
-		token, err := claim.GenToken(id, app, name, "token", app, device, 0)
-		if err != nil {
-			return et.Item{}, console.Error(err)
-		}
-
-		data := et.Json{}
-		data.Set("project_id", projeectId)
-		data.Set("_id", id)
-		data.Set("user_id", userId)
-		data.Set("app", app)
-		data.Set("device", device)
-		data.Set("name", name)
-		data.Set("token", token)
-
-		item, err := Tokens.Insert(data).
-			CommandOne()
-		if err != nil {
-			return et.Item{}, console.Error(err)
-		}
-
-		err = loadToken(&Token{
-			Date_make:   item.Time("date_make"),
-			Date_update: item.Time("date_update"),
-			Id:          id,
-			Name:        name,
-			App:         app,
-			Device:      device,
-			Token:       token,
-			Index:       item.Index(),
-		})
-		if err != nil {
-			return et.Item{}, console.Error(err)
-		}
-
-		return et.Item{
-			Ok: item.Ok,
-			Result: et.OkOrNotJson(item.Ok, item.Result, et.Json{
-				"message": msg.RECORD_NOT_CREATE,
-				"_id":     id,
-			}),
-		}, nil
 	}
+
+	token, err := claim.GenToken(id, app, name, "token", app, device, 0)
+	if err != nil {
+		return et.Item{}, err
+	}
+
+	data := et.Json{}
+	data.Set("project_id", projeectId)
+	data.Set("_id", id)
+	data.Set("user_id", userId)
+	data.Set("app", app)
+	data.Set("device", device)
+	data.Set("name", name)
+	data.Set("token", token)
+
+	item, err := Tokens.Insert(data).
+		CommandOne()
+	if err != nil {
+		return et.Item{}, err
+	}
+
+	err = loadToken(&Token{
+		Date_make:   item.Time("date_make"),
+		Date_update: item.Time("date_update"),
+		Id:          id,
+		Name:        name,
+		App:         app,
+		Device:      device,
+		Token:       token,
+		Index:       item.Index(),
+	})
+	if err != nil {
+		return et.Item{}, err
+	}
+
+	return et.Item{
+		Ok: item.Ok,
+		Result: et.OkOrNotJson(item.Ok, item.Result, et.Json{
+			"message": msg.RECORD_NOT_CREATE,
+			"_id":     id,
+		}),
+	}, nil
 }
 
-func defaultToken() {
-	production := envar.EnvarBool(false, "PRODUCTION")
-	if !production {
-		item, err := UpSetToken("-1", "DEFAULT_TOKEN", "", "requests", "Default token", "USER.ADMIN")
-		if err != nil {
-			return
-		}
-
-		token := item.Get("token")
-		console.Log("Default token: ", token)
-	}
-}
-
+/**
+* LoadTokens
+* @return error
+**/
 func LoadTokens() error {
 	var ok bool = true
 	var rows int = 30
@@ -268,6 +297,10 @@ func LoadTokens() error {
 	return nil
 }
 
+/**
+* UnLoadTokens
+* @return error
+**/
 func UnLoadTokens() error {
 	var ok bool = true
 	var rows int = 30
@@ -291,7 +324,7 @@ func UnLoadTokens() error {
 			app := item.Str("app")
 			device := item.Str("device")
 			id := item.Id()
-			err = unLoadTokenById(app, device, id)
+			err = unLoadToken(app, device, id)
 			if err != nil {
 				return console.Error(err)
 			}
@@ -305,6 +338,15 @@ func UnLoadTokens() error {
 	return nil
 }
 
+/**
+* GetTokensByUserId
+* @param userId string
+* @param search string
+* @param page int
+* @param rows int
+* @return et.List
+* @return error
+**/
 func GetTokensByUserId(userId, search string, page, rows int) (et.List, error) {
 	sql := `
   SELECT COUNT(*) AS COUNT
@@ -352,6 +394,12 @@ func GetTokensByUserId(userId, search string, page, rows int) (et.List, error) {
 	return items.ToList(all, page, rows), nil
 }
 
+/**
+* DeleteToken
+* @param id string
+* @return et.Item
+* @return error
+**/
 func DeleteToken(id string) (et.Item, error) {
 	current, err := GetTokenById(id)
 	if err != nil {
@@ -374,7 +422,7 @@ func DeleteToken(id string) (et.Item, error) {
 
 	app := item.Str("app")
 	device := item.Str("device")
-	err = unLoadTokenById(app, device, id)
+	err = unLoadToken(app, device, id)
 	if err != nil {
 		return et.Item{}, err
 	}

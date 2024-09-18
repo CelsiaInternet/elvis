@@ -286,6 +286,23 @@ func SetToken(app, device, id, token string) error {
 }
 
 /**
+* DeleteToken
+* @param app string
+* @param device string
+* @param id string
+* @return error
+**/
+func DeleteToken(app, device, id string) error {
+	key := TokenKey(app, device, id)
+	_, err := cache.Del(key)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+/**
 * GetToken
 * @param id string
 * @param app string
