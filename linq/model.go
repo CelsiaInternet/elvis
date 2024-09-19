@@ -29,17 +29,18 @@ type Model struct {
 	PrimaryKeys        []string
 	ForeignKey         []*Reference
 	Index              []string
-	SourceField        string
-	DateMakeField      string
-	DateUpdateField    string
-	SerieField         string
-	CodeField          string
-	ProjectField       string
-	StateField         string
+	SourceField        *Column
+	DateMakeField      *Column
+	DateUpdateField    *Column
+	SerieField         *Column
+	CodeField          *Column
+	ProjectField       *Column
+	StateField         *Column
 	IdTFiled           *Column
 	Ddl                string
 	integrityAtrib     bool
 	integrityReference bool
+	indexeSource       bool
 	UseDateMake        bool
 	UseDateUpdate      bool
 	UseState           bool
@@ -66,16 +67,11 @@ func NewModel(schema *Schema, name, description string, version int) *Model {
 		Description:        description,
 		Table:              table,
 		Version:            version,
-		SourceField:        SourceField,
-		DateMakeField:      DateMakeField,
-		DateUpdateField:    DateUpdateField,
-		SerieField:         SerieField,
-		CodeField:          CodeField,
-		ProjectField:       ProjectField,
-		StateField:         StateField,
 		integrityReference: true,
+		indexeSource:       true,
 	}
 
+	result.SourceField = NewColumn(result, SourceField, "", "JSONB", "{}")
 	result.BeforeInsert = append(result.BeforeInsert, beforeInsert)
 	result.AfterInsert = append(result.AfterInsert, afterInsert)
 	result.BeforeUpdate = append(result.BeforeUpdate, beforeUpdate)
@@ -133,6 +129,7 @@ func (c *Model) Describe() et.Json {
 		"projectField":       c.ProjectField,
 		"integrityAtrib":     c.integrityAtrib,
 		"integrityReference": c.integrityReference,
+		"indexeSource":       c.indexeSource,
 		"useDateMake":        c.UseDateMake,
 		"useDateUpdate":      c.UseDateUpdate,
 		"useState":           c.UseState,
@@ -153,7 +150,7 @@ func (c *Model) Model() et.Json {
 			for _, atr := range col.Atribs {
 				result.Set(atr.name, atr.Default)
 			}
-		} else if col.name == c.SourceField {
+		} else if col.name == SourceField {
 			continue
 		} else if col.Type == "JSON" && col.Default == "[]" {
 			result.Set(col.name, []et.Json{})
@@ -291,7 +288,7 @@ func (c *Model) TitleIdx(name string) int {
 }
 
 func (c *Model) AtribIdx(name string) int {
-	source := c.Col(c.SourceField)
+	source := c.Col(SourceField)
 	if source == nil {
 		return -1
 	}
@@ -348,6 +345,12 @@ func (c *Model) IntegrityAtrib(ok bool) *Model {
 
 func (c *Model) IntegrityReference(ok bool) *Model {
 	c.integrityReference = ok
+
+	return c
+}
+
+func (c *Model) IndexSource(ok bool) *Model {
+	c.indexeSource = ok
 
 	return c
 }

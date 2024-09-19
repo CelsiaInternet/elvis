@@ -15,11 +15,11 @@ func (c *Model) DefineColum(name, description, _type string, _default any) *Mode
 }
 
 func (c *Model) DefineAtrib(name, description, _type string, _default any) *Model {
-	source := NewColumn(c, c.SourceField, "", "JSONB", "{}")
+	source := NewColumn(c, SourceField, "", "JSONB", "{}")
 	result := NewColumn(c, name, description, _type, _default)
+	result.name = strs.Lowcase(name)
 	result.Tp = TpAtrib
 	result.Column = source
-	result.name = strs.Lowcase(name)
 	source.Atribs = append(source.Atribs, result)
 
 	return c

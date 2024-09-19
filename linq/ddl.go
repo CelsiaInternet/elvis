@@ -33,12 +33,18 @@ func ddlColumn(col *Column) string {
 
 func ddlIndex(col *Column) string {
 	result := jdb.SQLDDL(`CREATE INDEX IF NOT EXISTS $2_$3_$4_IDX ON $1($4);`, col.Model.Table, strs.Uppcase(col.Model.Schema.Name), col.Model.Name, strs.Uppcase(col.name))
+	if col.Low() == strs.Lowcase(SourceField) && col.Model.indexeSource {
+		result = jdb.SQLDDL(`CREATE INDEX IF NOT EXISTS $2_$3_$4_IDX ON $1 USING GIN($4);`, col.Model.Table, strs.Uppcase(col.Model.Schema.Name), col.Model.Name, strs.Uppcase(col.name))
+	}
 
 	return result
 }
 
 func ddlUniqueIndex(col *Column) string {
 	result := jdb.SQLDDL(`CREATE UNIQUE INDEX IF NOT EXISTS $2_$3_$4_IDX ON $1($4);`, col.Model.Table, strs.Uppcase(col.Model.Schema.Name), col.Model.Name, strs.Uppcase(col.name))
+	if col.Low() == strs.Lowcase(SourceField) && col.Model.indexeSource {
+		result = jdb.SQLDDL(`CREATE UNIQUE INDEX IF NOT EXISTS $2_$3_$4_IDX ON $1 USING GIN($4);`, col.Model.Table, strs.Uppcase(col.Model.Schema.Name), col.Model.Name, strs.Uppcase(col.name))
+	}
 
 	return result
 }

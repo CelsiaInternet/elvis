@@ -45,7 +45,7 @@ func (c *Linq) SqlColumDef(cols ...*Column) string {
 			n++
 			def := col.Def(c)
 
-			if col.name == col.Model.SourceField {
+			if col.name == SourceField {
 				data = col.As(c)
 			} else if _, exist := atribs[col.name]; !exist {
 				atribs[col.name] = col.name
@@ -99,7 +99,7 @@ func (c *Linq) SqlColums(cols ...*Column) string {
 				result = strs.Append(result, res, ",")
 			}
 
-			result = strs.Format(`%s AS %s`, result, c.from[0].model.SourceField)
+			result = strs.Format(`%s AS %s`, result, SourceField)
 		} else {
 			for _, col := range cols {
 				if col.Tp == TpDetail {
@@ -108,7 +108,7 @@ func (c *Linq) SqlColums(cols ...*Column) string {
 			}
 
 			result = c.SqlColumDef(cols...)
-			result = strs.Format(`%s AS %s`, result, c.from[0].model.SourceField)
+			result = strs.Format(`%s AS %s`, result, SourceField)
 		}
 	} else if n > 0 {
 		for _, col := range cols {
@@ -182,7 +182,7 @@ func (c *Linq) SqlCurrent() string {
 	if n > 0 {
 		result = c.SqlColumDef(cols...)
 		if c.Tp == TpData {
-			result = strs.Format(`%s AS %s`, result, c.from[0].model.SourceField)
+			result = strs.Format(`%s AS %s`, result, SourceField)
 		}
 	} else {
 		result = "*"
@@ -323,7 +323,7 @@ func (c *Linq) SqlIndex() string {
 	var cols []*Column = []*Column{}
 	from := c.from[0].model
 	if from.UseSerie {
-		col := from.Col(from.SerieField)
+		col := from.Col(SerieField)
 		cols = append(cols, col)
 	} else {
 		for _, key := range from.PrimaryKeys {
@@ -334,7 +334,7 @@ func (c *Linq) SqlIndex() string {
 
 	result = c.SqlColumDef(cols...)
 	if c.Tp == TpData {
-		result = strs.Format(`%s AS %s`, result, c.from[0].model.SourceField)
+		result = strs.Format(`%s AS %s`, result, SourceField)
 	}
 
 	if len(result) > 0 {
@@ -407,8 +407,8 @@ func (c *Linq) SqlUpdate() string {
 		field := strs.Uppcase(key)
 		value := et.Unquote(val)
 
-		if model.UseSource && field == strs.Uppcase(model.SourceField) {
-			vals := strs.Uppcase(model.SourceField)
+		if model.UseSource && field == strs.Uppcase(SourceField) {
+			vals := strs.Uppcase(SourceField)
 			atribs := c.new.Json(strs.Lowcase(field))
 
 			for ak, av := range atribs {

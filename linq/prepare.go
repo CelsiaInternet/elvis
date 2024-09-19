@@ -45,7 +45,7 @@ func (c *Model) Consolidate(linq *Linq) *Linq {
 
 		if utility.ContainsInt([]int{TpField, TpFunction, TpDetail}, col.Tp) {
 			continue
-		} else if k == strs.Lowcase(c.SourceField) {
+		} else if k == strs.Lowcase(SourceField) {
 			atribs := linq.data.Json(k)
 
 			if c.integrityAtrib {
@@ -71,7 +71,7 @@ func (c *Model) Consolidate(linq *Linq) *Linq {
 	}
 
 	if c.UseSource && len(source) > 0 {
-		setValue(c.SourceField, source)
+		setValue(SourceField, source)
 	}
 
 	linq.new = &new

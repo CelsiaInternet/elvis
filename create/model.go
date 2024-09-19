@@ -612,6 +612,7 @@ func Define$2(db *jdb.DB) error {
 		"name:Atributo requerido (name)",
 	})
 	$2.IntegrityAtrib(true)
+	$2.IndexSource(true)
 	$2.Trigger(linq.BeforeInsert, func(model *linq.Model, old, new *et.Json, data et.Json) error {
 		return nil
 	})
@@ -976,7 +977,7 @@ func (rt *Router) all$2(w http.ResponseWriter, r *http.Request) {
 **/
 
 /** Copy this code to func initModel in model.go
-	if err := Define$2(); err != nil {
+	if err := Define$2(db); err != nil {
 		return console.Panic(err)
 	}
 **/

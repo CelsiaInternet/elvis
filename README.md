@@ -6,7 +6,7 @@
 go mod tidy &&
 gofmt -w . &&
 git update &&
-git tag v1.0.8
+git tag v1.0.9 &&
 git tags
 
 git push origin --tags
@@ -21,8 +21,8 @@ go run github.com/cgalvisleon/elvis/cmd/apigateway
 
 go build ./cmd/apigateway
 
-go get -u github.com/cgalvisleon/elvis@v1.0.8
-go get github.com/cgalvisleon/elvis@v1.0.8
+go get -u github.com/cgalvisleon/elvis@v1.0.9
+go get github.com/cgalvisleon/elvis@v1.0.9
 ```
 
 # Build
