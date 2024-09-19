@@ -67,20 +67,17 @@ func main() {
 const modelService = `package module
 
 import (
-	"net"
 	"net/http"
 
-	"github.com/cgalvisleon/elvis/cache"
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/envar"
-	"github.com/cgalvisleon/elvis/event"
-	"github.com/cgalvisleon/elvis/jdb"
+	"github.com/cgalvisleon/elvis/jrpc"
 	"github.com/cgalvisleon/elvis/middleware"
 	"github.com/cgalvisleon/elvis/response"
 	"github.com/cgalvisleon/elvis/strs"
 	"github.com/go-chi/chi/v5"
-	v1 "$1/internal/service/$2/v1"	
 	"github.com/rs/cors"
+	v1 "$1/internal/service/$2/v1"
 )
 
 type Server struct {
@@ -116,12 +113,13 @@ func New() (*Server, error) {
 
 		server.http = serv
 	}
-	
-	rpc := envar.EnvarInt(0, "RPC")
-	if rpc != 0 {
-		serv := v1.NewRpc(rpc)
+		
+	rpcPort := envar.EnvarInt(0, "RPC_PORT")
+	if rpcPort != 0 {
+		rpcHost := envar.EnvarStr("localhost", "RPC_HOST")
+		serv := v1.Rpc(rpcHost, rpcPort)
 
-		server.rpc = &serv
+		server.rpc = serv
 	}
 
 	return &server, nil
@@ -143,16 +141,8 @@ func (serv *Server) Start() {
 		console.Fatal(serv.http.ListenAndServe())
 	}()
 
-	go func() {
-		if serv.rpc == nil {
-			return
-		}
-
-		svr := *serv.rpc
-		console.LogKF("RPC", "Running on tcp:localhost:%s", svr.Addr().String())
-		http.Serve(svr, nil)
-	}()
-
+	go serv.rpc.Start()
+	
 	v1.Banner()
 
 	<-make(chan struct{})
@@ -163,14 +153,13 @@ const modelApi = `package v1
 
 import (
 	"fmt"
-	"net"
 	"net/http"
-	"net/rpc"
 	"time"
 
 	"github.com/cgalvisleon/elvis/cache"
 	"github.com/cgalvisleon/elvis/event"
 	"github.com/cgalvisleon/elvis/jdb"
+	"github.com/cgalvisleon/elvis/jrpc"
 	"github.com/cgalvisleon/elvis/utility"
 	"github.com/dimiro1/banner"
 	"github.com/go-chi/chi/v5"
@@ -208,15 +197,17 @@ func New() http.Handler {
 }
 
 func Close() {
+	cache.Close()
+	event.Close()
 }
 
-func NewRpc(port int) net.Listener {
-	rpc.HandleHTTP()
-
-	result, err := net.Listen("tcp", utility.Address("0.0.0.0", port))
+func Rpc(host string, port int) *jrpc.Server {
+	result, err := jrpc.NewServer(port)
 	if err != nil {
-		panic(err)
+		return nil
 	}
+
+	result.Mount(host, port, new(pkg.Services))
 
 	return result
 }
@@ -292,39 +283,12 @@ func defineSchema(db *jdb.DB) error {
 const modelhRpc = `package $1
 
 import (
-	"net/rpc"
-
-	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/et"
-	"github.com/cgalvisleon/elvis/msg"
 )
 
-var initRpc bool
+type Services struct{}
 
-type Service et.Item
-
-type RPC struct{}
-
-var Rpc *RPC
-
-func InitRpc() error {
-	service := new(Service)
-
-	err := rpc.Register(service)
-	if err != nil {
-		return console.Error(err)
-	}
-
-	initRpc = true
-
-	return nil
-}
-
-func (c *Service) Version(require []byte, response *[]byte) error {
-	if !initRpc {
-		return console.Alert(msg.RPC_NOT_FOUND)
-	}
-
+func (c *Services) Version(require []byte, response *[]byte) error {
 	rq := et.ByteToJson(require)
 	help := rq.Str("help")
 
@@ -341,7 +305,20 @@ func (c *Service) Version(require []byte, response *[]byte) error {
 
 	return nil
 }
-	
+
+func (c *Services) Get$2ById(require []byte, response *[]byte) error {
+	rq := et.ByteToJson(require)
+	id := rq.Str("id")
+
+	result, err := Get$2ById(id)
+	if err != nil {
+		return err
+	}
+
+	*response = result.ToByte()
+
+	return nil
+}	
 `
 
 const modelMsg = `package $1

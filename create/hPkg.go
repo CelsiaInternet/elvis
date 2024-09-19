@@ -105,13 +105,14 @@ func MakeModel(packageName, modelo, schema string) error {
 	return nil
 }
 
-func MakeRpc(name string) error {
+func MakeRpc(name, modelo string) error {
 	path, err := file.MakeFolder("pkg", name)
 	if err != nil {
 		return err
 	}
 
-	_, err = file.MakeFile(path, "hRpc.go", modelhRpc, name)
+	modelo = strs.Titlecase(modelo)
+	_, err = file.MakeFile(path, "rpc.go", modelhRpc, name, modelo)
 	if err != nil {
 		return err
 	}

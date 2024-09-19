@@ -14,7 +14,11 @@ func defineRecycling(db *DB) error {
 		return defineRecyclingFunction(db)
 	}
 
-	sql := `  
+	sql := `
+  CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+	CREATE EXTENSION IF NOT EXISTS pgcrypto;
+	CREATE SCHEMA IF NOT EXISTS core;
+  
   CREATE TABLE IF NOT EXISTS core.RECYCLING(
     DATE_MAKE TIMESTAMP DEFAULT NOW(),
     TABLE_SCHEMA VARCHAR(80) DEFAULT '',

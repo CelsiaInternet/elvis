@@ -12,10 +12,14 @@ func defineSeries(db *DB) error {
 	}
 
 	if exist {
-		return defineRecyclingFunction(db)
+		return defineSeriesFunction(db)
 	}
 
 	sql := `
+	CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+	CREATE EXTENSION IF NOT EXISTS pgcrypto;
+	CREATE SCHEMA IF NOT EXISTS core;
+
   CREATE TABLE IF NOT EXISTS core.SERIES(
 		SERIE VARCHAR(250) DEFAULT '',
 		VALUE BIGINT DEFAULT 0,
@@ -84,14 +88,14 @@ func defineSeriesFunction(db *DB) error {
 	return nil
 }
 
-func NextSerie(tag string) int {
-	if conn == nil {
+func NextSerie(db *DB, tag string) int {
+	if !db.UseCore {
 		return 0
 	}
 
 	sql := `SELECT core.nextserie($1) AS SERIE;`
 
-	item, err := conn.Command(sql, tag)
+	item, err := db.Command(sql, tag)
 	if err != nil {
 		console.Error(err)
 		return 0
@@ -105,8 +109,8 @@ func NextSerie(tag string) int {
 	return result
 }
 
-func NextCode(tag, prefix string) string {
-	num := NextSerie(tag)
+func NextCode(db *DB, tag, prefix string) string {
+	num := NextSerie(db, tag)
 
 	if len(prefix) == 0 {
 		return strs.Format("%08v", num)
@@ -115,10 +119,10 @@ func NextCode(tag, prefix string) string {
 	}
 }
 
-func SetSerie(tag string, val int) (int, error) {
+func SetSerie(db *DB, tag string, val int) (int, error) {
 	sql := `SELECT core.setserie($1, $2);`
 
-	_, err := conn.Command(sql, tag, val)
+	_, err := db.Command(sql, tag, val)
 	if err != nil {
 		return 0, err
 	}
@@ -126,10 +130,10 @@ func SetSerie(tag string, val int) (int, error) {
 	return val, nil
 }
 
-func LastSerie(tag string) int {
+func LastSerie(db *DB, tag string) int {
 	sql := `SELECT core.currserie($1) AS SERIE;`
 
-	item, err := conn.Command(sql, tag)
+	item, err := db.Command(sql, tag)
 	if err != nil {
 		return 0
 	}

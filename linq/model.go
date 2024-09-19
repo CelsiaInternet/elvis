@@ -177,6 +177,14 @@ func (c *Model) Model() et.Json {
 }
 
 /**
+* Db
+* @return *jdb.DB
+**/
+func (c *Model) Db() *jdb.DB {
+	return c.db
+}
+
+/**
 * DDL
 **/
 func (c *Model) Init() error {

@@ -18,7 +18,7 @@ func beforeInsert(model *Model, old, new *et.Json, data et.Json) error {
 	}
 
 	if model.UseSerie {
-		index := jdb.NextSerie(model.Table)
+		index := jdb.NextSerie(model.db, model.Table)
 		new.Set(SerieField, index)
 	}
 

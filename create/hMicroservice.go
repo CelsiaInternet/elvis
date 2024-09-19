@@ -86,9 +86,9 @@ func MkMolue(packageName, modelo, schema string) error {
 	return nil
 }
 
-func MkRpc(name string) error {
+func MkRpc(name, modelo string) error {
 	ProgressNext(10)
-	err := MakeRpc(name)
+	err := MakeRpc(name, modelo)
 	if err != nil {
 		return err
 	}
