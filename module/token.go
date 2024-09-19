@@ -6,7 +6,6 @@ import (
 	"github.com/cgalvisleon/elvis/cache"
 	"github.com/cgalvisleon/elvis/claim"
 	"github.com/cgalvisleon/elvis/console"
-	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/jdb"
 	"github.com/cgalvisleon/elvis/linq"
@@ -132,22 +131,6 @@ func unLoadToken(app, device, id string) error {
 }
 
 /**
-* defaultToken
-**/
-func defaultToken() {
-	production := envar.EnvarBool(false, "PRODUCTION")
-	if !production {
-		item, err := UpSetToken("-1", "DEFAULT_TOKEN", "", "requests", "Default token", "DEFAULT_TOKEN")
-		if err != nil {
-			return
-		}
-
-		token := item.Get("token")
-		console.Log("Default token: ", token)
-	}
-}
-
-/**
 * GetTokenById
 * @param id string
 * @return et.Item
@@ -210,7 +193,7 @@ func UpSetToken(projeectId, id, app, device, name, userId string) (et.Item, erro
 		}, nil
 	}
 
-	token, err := claim.GenToken(id, app, name, "token", app, device, 0)
+	token, err := claim.NewToken(id, app, name, "token", app, device, 0)
 	if err != nil {
 		return et.Item{}, err
 	}

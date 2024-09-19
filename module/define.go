@@ -108,13 +108,10 @@ func InitData() error {
 	ADMIN_PHONE := envar.EnvarStr("", "ADMIN_PHONE")
 	ADMIN_NAME := envar.EnvarStr("", "ADMIN_NAME")
 	ADMIN_EMAIL := envar.EnvarStr("", "ADMIN_EMAIL")
-	_, err := InitAdmin(ADMIN_NAME, ADMIN_COUNTRY, ADMIN_PHONE, ADMIN_EMAIL)
+	_, err := UpSetAdmin(ADMIN_NAME, ADMIN_COUNTRY, ADMIN_PHONE, ADMIN_EMAIL)
 	if err != nil {
 		return err
 	}
-
-	// Default token
-	defaultToken()
 
 	if _, err := Folders.Upsert(et.Json{
 		"_id": "-1",

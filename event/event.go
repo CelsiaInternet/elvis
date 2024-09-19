@@ -1,7 +1,6 @@
 package event
 
 import (
-	"github.com/cgalvisleon/elvis/cache"
 	"github.com/nats-io/nats.go"
 )
 
@@ -11,15 +10,6 @@ type Conn struct {
 	conn             *nats.Conn
 	eventCreatedSub  *nats.Subscription
 	eventCreatedChan chan EvenMessage
-}
-
-func (c *Conn) Lock(key string) bool {
-	val, err := cache.Del(key)
-	if err != nil {
-		return false
-	}
-
-	return val == 1
 }
 
 func Load() (*Conn, error) {

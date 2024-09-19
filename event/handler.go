@@ -4,41 +4,92 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/cgalvisleon/elvis/cache"
+	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/response"
-	"github.com/google/uuid"
+	"github.com/cgalvisleon/elvis/utility"
 	"github.com/nats-io/nats.go"
 )
 
-// Basic function to publish a message to a channel
-func Publish(clientId, channel string, data map[string]interface{}) error {
+type WorkStatus int
+
+const (
+	WorkStatusPending WorkStatus = iota
+	WorkStatusAccepted
+	WorkStatusProcessing
+	WorkStatusCompleted
+	WorkStatusFailed
+)
+
+/**
+* String
+* @return string
+**/
+func (s WorkStatus) String() string {
+	switch s {
+	case WorkStatusPending:
+		return "Pending"
+	case WorkStatusAccepted:
+		return "Accepted"
+	case WorkStatusProcessing:
+		return "Processing"
+	case WorkStatusCompleted:
+		return "Completed"
+	case WorkStatusFailed:
+		return "Failed"
+	default:
+		return "Unknown"
+	}
+}
+
+/**
+* ToWorkStatus
+* @param int n
+* @return WorkStatus
+**/
+func ToWorkStatus(n int) WorkStatus {
+	switch n {
+	case 0:
+		return WorkStatusPending
+	case 1:
+		return WorkStatusAccepted
+	case 2:
+		return WorkStatusProcessing
+	case 3:
+		return WorkStatusCompleted
+	case 4:
+		return WorkStatusFailed
+	default:
+		return WorkStatusPending
+	}
+}
+
+/**
+* Publish
+* @param channel string
+* @param data et.Json
+* @return error
+**/
+func Publish(channel string, data et.Json) error {
 	if conn == nil {
 		return nil
 	}
 
-	now := time.Now().UTC()
-	id := uuid.NewString()
-	msg := EvenMessage{
-		Created_at: now,
-		Id:         id,
-		ClientId:   clientId,
-		Channel:    channel,
-		Data:       data,
-	}
-
-	dt, err := conn.encodeMessage(msg)
+	msg := NewEvenMessage(channel, data)
+	dt, err := msg.Encode()
 	if err != nil {
 		return err
 	}
 
-	key := id
-	cache.Set(key, msg.ToString(), 15)
-
-	return conn.conn.Publish(msg.Type(), dt)
+	return conn.conn.Publish(msg.Channel, dt)
 }
 
-// Basic function to subscribe to a channel
+/**
+* Subscribe
+* @param channel string
+* @param f func(EvenMessage)
+* @return error
+**/
 func Subscribe(channel string, f func(EvenMessage)) (err error) {
 	if conn == nil {
 		return
@@ -48,108 +99,118 @@ func Subscribe(channel string, f func(EvenMessage)) (err error) {
 		return
 	}
 
-	msg := EvenMessage{
-		Channel: channel,
-	}
-	conn.eventCreatedSub, err = conn.conn.Subscribe(msg.Type(), func(m *nats.Msg) {
-		conn.decodeMessage(m.Data, &msg)
-		f(msg)
-	})
+	conn.eventCreatedSub, err = conn.conn.Subscribe(channel,
+		func(m *nats.Msg) {
+			msg, err := DecodeMessage(m.Data)
+			if err != nil {
+				return
+			}
 
-	return
-}
-
-// Basic function to subscrite kind stack to a channel
-func Stack(channel string, f func(EvenMessage)) (err error) {
-	if conn == nil {
-		return
-	}
-
-	if len(channel) == 0 {
-		return
-	}
-
-	msg := EvenMessage{
-		Channel: channel,
-	}
-
-	conn.eventCreatedSub, err = conn.conn.Subscribe(channel, func(m *nats.Msg) {
-		conn.decodeMessage(m.Data, &msg)
-		key := msg.Id
-
-		ok := conn.Lock(key)
-		if !ok {
-			return
-		}
-
-		f(msg)
-	})
+			f(msg)
+		},
+	)
 
 	return
 }
 
 /**
-* Worker
-* @param event string
-* @param data et.Json
+* Queue
+* @param string channel
+* @param func(EvenMessage) f
+* @return error
 **/
-func Worker(event string, data et.Json) {
-	go Publish("service_event", event, data)
+func Queue(channel, queue string, f func(EvenMessage)) (err error) {
+	if conn == nil {
+		return console.NewError(ERR_NOT_CONNECT)
+	}
 
-	go Publish("service_event", "event/publish", et.Json{
-		"event": event,
-		"data":  data,
-	})
+	if len(channel) == 0 {
+		return nil
+	}
+
+	conn.eventCreatedSub, err = conn.conn.QueueSubscribe(
+		channel,
+		queue,
+		func(m *nats.Msg) {
+			msg, err := DecodeMessage(m.Data)
+			if err != nil {
+				return
+			}
+
+			f(msg)
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+/**
+* Stack
+* @param channel string
+* @param f func(EvenMessage)
+* @return error
+**/
+func Stack(channel string, f func(EvenMessage)) error {
+	return Queue(channel, "stack", f)
 }
 
 /**
 * Work
-* @param worker string
-* @param work_id string
+* @param event string
 * @param data et.Json
 **/
-func Work(worker, work_id string, data et.Json) {
-	go Publish("service_event", "event/work", et.Json{
-		"work":    worker,
-		"work_id": work_id,
-		"data":    data,
-	})
+func Work(event string, data et.Json) et.Json {
+	work := et.Json{
+		"created_at": time.Now(),
+		"_id":        utility.UUID(),
+		"event":      event,
+		"data":       data,
+	}
+
+	go Publish("event/worker", work)
+	go Publish(event, work)
+
+	return work
 }
 
 /**
-* Working
-* @param worker string
+* WorkState
 * @param work_id string
+* @param status WorkStatus
+* @param data et.Json
 **/
-func Working(worker, work_id string) {
-	go Publish("service_event", "event/work/begin", et.Json{
-		"worker":  worker,
-		"work_id": work_id,
-	})
+func WorkState(work_id string, status WorkStatus, data et.Json) {
+	work := et.Json{
+		"created_at": time.Now(),
+		"_id":        work_id,
+		"status":     status.String(),
+		"data":       data,
+	}
+
+	go Publish("event/worker/state", work)
 }
 
 /**
-* Done
-* @param work_id string
-* @param event string
+* Data
+* @param string channel
+* @param func(Message) reciveFn
+* @return error
 **/
-func Done(work_id, event string) {
-	go Publish("service_event", "event/work/done", et.Json{
-		"work_id": work_id,
-		"event":   event,
-	})
+func Data(channel string, data et.Json) error {
+	return Publish(channel, data)
 }
 
 /**
-* Rejected
-* @param work_id string
-* @param event string
+* Source
+* @param string channel
+* @param func(Message) reciveFn
+* @return error
 **/
-func Rejected(work_id, event string) {
-	go Publish("service_event", "event/work/rejected", et.Json{
-		"work_id": work_id,
-		"event":   event,
-	})
+func Source(channel string, f func(EvenMessage)) error {
+	return Subscribe(channel, f)
 }
 
 /**
@@ -158,7 +219,31 @@ func Rejected(work_id, event string) {
 * @param data et.Json
 **/
 func Log(event string, data et.Json) {
-	go Publish("service_log", event, data)
+	go Publish("log", data)
+}
+
+/**
+* Telemetry
+* @param data et.Json
+**/
+func Telemetry(data et.Json) {
+	go Publish("telemetry", data)
+}
+
+/**
+* Overflow
+* @param data et.Json
+**/
+func Overflow(data et.Json) {
+	go Publish("requests/overflow", data)
+}
+
+/**
+* TokenLastUse
+* @param data et.Json
+**/
+func TokenLastUse(data et.Json) {
+	go Publish("telemetry.token.last_use", data)
 }
 
 /**
@@ -171,11 +256,7 @@ func Test(w http.ResponseWriter, r *http.Request) {
 	event := body.Str("event")
 	data := body.Json("data")
 
-	Worker(event, data)
+	work := Work(event, data)
 
-	response.JSON(w, r, http.StatusOK, et.Json{
-		"status":  "ok",
-		"event":   event,
-		"message": "Event published",
-	})
+	response.JSON(w, r, http.StatusOK, work)
 }

@@ -145,6 +145,14 @@ func Alert(message string) error {
 	return err
 }
 
+func AlertE(err error) error {
+	if err != nil {
+		Printl("Alert", "Yellow", err.Error())
+	}
+
+	return err
+}
+
 func AlertF(format string, args ...any) error {
 	message := strs.Format(format, args...)
 	return Alert(message)
@@ -198,9 +206,9 @@ func PanicF(format string, args ...any) error {
 }
 
 func Ping() {
-	Log("PING")
+	Log("PONG")
 }
 
 func Pong() {
-	Log("PONG")
+	Log("PING")
 }

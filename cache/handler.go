@@ -54,7 +54,7 @@ func GetCtx(ctx context.Context, key, def string) (string, error) {
 	result, err := conn.db.Get(ctx, key).Result()
 	switch {
 	case err == redis.Nil:
-		return def, IsNil
+		return def, nil
 	case err != nil:
 		return def, err
 	default:

@@ -104,6 +104,10 @@ func ITEM(w http.ResponseWriter, r *http.Request, statusCode int, dt et.Item) er
 		return err
 	}
 
+	if !dt.Ok {
+		statusCode = http.StatusNotFound
+	}
+
 	return WriteResponse(w, statusCode, e)
 }
 
@@ -119,6 +123,10 @@ func ITEMS(w http.ResponseWriter, r *http.Request, statusCode int, dt et.Items) 
 		return err
 	}
 
+	if !dt.Ok {
+		statusCode = http.StatusNotFound
+	}
+
 	return WriteResponse(w, statusCode, e)
 }
 
@@ -132,6 +140,10 @@ func HTTPError(w http.ResponseWriter, r *http.Request, statusCode int, message s
 
 func HTTPAlert(w http.ResponseWriter, r *http.Request, message string) error {
 	return HTTPError(w, r, http.StatusBadRequest, message)
+}
+
+func Unauthorized(w http.ResponseWriter, r *http.Request) {
+	HTTPError(w, r, http.StatusUnauthorized, "401 Unauthorized")
 }
 
 func Stream(w http.ResponseWriter, r *http.Request, statusCode int, dt interface{}) error {

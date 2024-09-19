@@ -74,7 +74,7 @@ func pushApiGateway(method, path, packagePath, host, packageName string, private
 	path = packagePath + path
 	resolve := host + path
 
-	event.Publish("apigateway", "apigateway/set/resolve", et.Json{
+	event.Publish("apigateway/set/resolve", et.Json{
 		"kind":        HTTP,
 		"method":      method,
 		"path":        path,

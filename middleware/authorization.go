@@ -10,6 +10,7 @@ import (
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/event"
+	"github.com/cgalvisleon/elvis/response"
 	"github.com/cgalvisleon/elvis/utility"
 )
 
@@ -81,17 +82,16 @@ func GetAuthorization(w http.ResponseWriter, r *http.Request) (string, error) {
 **/
 func Authorization(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		metric := NewMetric(r)
 		ctx := r.Context()
 		tokenString, err := GetAuthorization(w, r)
 		if err != nil {
-			metric.Unauthorized(w, r)
+			response.Unauthorized(w, r)
 			return
 		}
 
-		c, err := claim.GetFromToken(ctx, tokenString)
+		c, err := claim.GetFromToken(tokenString)
 		if err != nil {
-			metric.Unauthorized(w, r)
+			response.Unauthorized(w, r)
 			return
 		}
 
@@ -114,7 +114,7 @@ func Authorization(next http.Handler) http.Handler {
 			"token":     tokenString,
 		}
 
-		go event.Log("telemetry.token.last_use", data)
+		go event.TokenLastUse(data)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

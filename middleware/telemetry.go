@@ -431,10 +431,10 @@ func (m *Metrics) println() et.Json {
 		},
 	}
 
-	go event.Log("telemetry", result)
+	go event.Telemetry(result)
 
 	if m.RequestsHost.Seccond > m.RequestsHost.Limit {
-		go event.Log("requests/overflow", result)
+		go event.Overflow(result)
 	}
 
 	return result

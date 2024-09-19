@@ -8,7 +8,7 @@ import (
 	"github.com/cgalvisleon/elvis/msg"
 )
 
-func PubCtx(ctx context.Context, channel string, message interface{}) error {
+func pubCtx(ctx context.Context, channel string, message interface{}) error {
 	if conn == nil {
 		return logs.Errorm(msg.ERR_NOT_CACHE_SERVICE)
 	}
@@ -23,10 +23,10 @@ func PubCtx(ctx context.Context, channel string, message interface{}) error {
 
 func Pub(channel string, message interface{}) error {
 	ctx := context.Background()
-	return PubCtx(ctx, channel, message)
+	return pubCtx(ctx, channel, message)
 }
 
-func SubCtx(ctx context.Context, channel string, f func(interface{})) {
+func subCtx(ctx context.Context, channel string, f func(interface{})) {
 	if conn == nil {
 		return
 	}
@@ -44,5 +44,5 @@ func SubCtx(ctx context.Context, channel string, f func(interface{})) {
 
 func Sub(channel string, f func(interface{})) {
 	ctx := context.Background()
-	SubCtx(ctx, channel, f)
+	subCtx(ctx, channel, f)
 }

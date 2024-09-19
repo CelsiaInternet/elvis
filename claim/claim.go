@@ -1,14 +1,12 @@
 package claim
 
 import (
-	"context"
 	"net/http"
 	"time"
 
 	"github.com/cgalvisleon/elvis/cache"
 	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/et"
-	"github.com/cgalvisleon/elvis/event"
 	"github.com/cgalvisleon/elvis/logs"
 	"github.com/cgalvisleon/elvis/strs"
 	"github.com/cgalvisleon/elvis/utility"
@@ -27,7 +25,20 @@ type Claim struct {
 }
 
 /**
-* getToken
+* TokenKey
+* @param app string
+* @param device string
+* @param id string
+* @return string
+**/
+func TokenKey(app, device, id string) string {
+	str := strs.Append(app, device, "-")
+	str = strs.Append(str, id, "-")
+	return strs.Format(`token:%s`, str)
+}
+
+/**
+* NewToken
 * @param id string
 * @param app string
 * @param name string
@@ -39,8 +50,8 @@ type Claim struct {
 * @return key string
 * @return err error
 **/
-func genToken(id, app, name, kind, username, device string, duration time.Duration) (token, key string, err error) {
-	secret := envar.EnvarStr("", "SECRET")
+func NewToken(id, app, name, kind, username, device string, duration time.Duration) (string, error) {
+	secret := envar.EnvarStr("1977", "SECRET")
 	c := Claim{}
 	c.ID = id
 	c.App = app
@@ -50,43 +61,37 @@ func genToken(id, app, name, kind, username, device string, duration time.Durati
 	c.Device = device
 	c.Duration = duration
 	_jwt := jwt.NewWithClaims(jwt.SigningMethodHS256, c)
-	token, err = _jwt.SignedString([]byte(secret))
+	token, err := _jwt.SignedString([]byte(secret))
 	if err != nil {
-		return
+		return "", err
 	}
-	key = TokenKey(app, device, id)
 
-	return
+	return token, nil
 }
 
 /**
-* DelTokenCtx
-* @param ctx context.Context
+* DeleteToken
 * @param app string
 * @param device string
 * @param id string
 * @return error
 **/
-func DelTokenCtx(ctx context.Context, app, device, id string) error {
+func DeleteToken(app, device, id string) error {
 	key := TokenKey(app, device, id)
-	_, err := cache.DelCtx(ctx, key)
+	_, err := cache.Del(key)
 	if err != nil {
 		return err
 	}
-
-	event.Publish(key, "token/delete", et.Json{
-		"key": key,
-	})
 
 	return nil
 }
 
 /**
-* DelTokeStrng
+* DeleteTokeByStrng
 * @param tokenString string
 * @return error
 **/
-func DelTokeStrng(tokenString string) error {
+func DeleteTokeByStrng(tokenString string) error {
 	secret := envar.EnvarStr("", "SECRET")
 	token, err := jwt.Parse(tokenString, func(*jwt.Token) (interface{}, error) {
 		return []byte(secret), nil
@@ -115,21 +120,7 @@ func DelTokeStrng(tokenString string) error {
 		return nil
 	}
 
-	ctx := context.Background()
-	return DelTokenCtx(ctx, app, device, id)
-}
-
-/**
-* TokenKey
-* @param app string
-* @param device string
-* @param id string
-* @return string
-**/
-func TokenKey(app, device, id string) string {
-	str := strs.Append(app, device, "-")
-	str = strs.Append(str, id, "-")
-	return strs.Format(`token:%s`, str)
+	return DeleteToken(app, device, id)
 }
 
 /**
@@ -206,19 +197,18 @@ func ParceToken(tokenString string) (*Claim, error) {
 
 /**
 * GetFromToken
-* @param ctx context.Context
 * @param tokenString string
 * @return *Claim
 * @return error
 **/
-func GetFromToken(ctx context.Context, tokenString string) (*Claim, error) {
+func GetFromToken(tokenString string) (*Claim, error) {
 	result, err := ParceToken(tokenString)
 	if err != nil {
 		return nil, err
 	}
 
 	key := TokenKey(result.App, result.Device, result.ID)
-	c, err := cache.GetCtx(ctx, key, "")
+	c, err := cache.Get(key, "")
 	if err != nil {
 		return nil, logs.Nerror(MSG_TOKEN_INVALID)
 	}
@@ -227,44 +217,12 @@ func GetFromToken(ctx context.Context, tokenString string) (*Claim, error) {
 		return nil, logs.Nerror(MSG_TOKEN_INVALID)
 	}
 
-	err = cache.SetCtx(ctx, key, c, result.Duration)
+	err = cache.Set(key, c, result.Duration)
 	if err != nil {
 		return nil, err
 	}
 
 	return result, nil
-}
-
-/**
-* genTokenCtx
-* @param ctx context.Context
-* @param id string
-* @param app string
-* @param name string
-* @param kind string
-* @param username string
-* @param device string
-* @param duration time.Duration
-* @return string
-* @return error
-**/
-func genTokenCtx(ctx context.Context, id, app, name, kind, username, device string, duration time.Duration) (string, error) {
-	token, key, err := genToken(id, app, name, kind, username, device, duration)
-	if err != nil {
-		return "", err
-	}
-
-	err = cache.SetCtx(ctx, key, token, duration)
-	if err != nil {
-		return "", err
-	}
-
-	event.Publish(key, "token/create", et.Json{
-		"key":  key,
-		"toke": token,
-	})
-
-	return token, nil
 }
 
 /**
@@ -283,40 +241,6 @@ func SetToken(app, device, id, token string) error {
 	}
 
 	return nil
-}
-
-/**
-* DeleteToken
-* @param app string
-* @param device string
-* @param id string
-* @return error
-**/
-func DeleteToken(app, device, id string) error {
-	key := TokenKey(app, device, id)
-	_, err := cache.Del(key)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-/**
-* GetToken
-* @param id string
-* @param app string
-* @param name string
-* @param kind string
-* @param username string
-* @param device string
-* @param duration time.Duration
-* @return string
-* @return error
-**/
-func GenToken(id, app, name, kind, username, device string, duration time.Duration) (string, error) {
-	ctx := context.Background()
-	return genTokenCtx(ctx, id, app, name, kind, username, device, duration)
 }
 
 /**
