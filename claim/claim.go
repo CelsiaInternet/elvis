@@ -78,7 +78,7 @@ func NewToken(id, app, name, kind, username, device string, duration time.Durati
 **/
 func DeleteToken(app, device, id string) error {
 	key := TokenKey(app, device, id)
-	_, err := cache.Del(key)
+	_, err := cache.Delete(key)
 	if err != nil {
 		return err
 	}

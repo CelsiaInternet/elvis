@@ -104,6 +104,15 @@ func LogF(format string, args ...any) error {
 	return Log(message)
 }
 
+func Rpc(args ...any) error {
+	pc, _, _, _ := runtime.Caller(2)
+	fn := runtime.FuncForPC(pc)
+	kind := fmt.Sprintf("Rpc:%s", fn.Name())
+	Printl(kind, "Blue", args...)
+
+	return nil
+}
+
 func Debug(args ...any) error {
 	Printl("Debug", "Cyan", args...)
 	return nil
@@ -187,7 +196,6 @@ func FatalF(format string, args ...any) {
 
 func Panic(err error) error {
 	Printl("Panic", "Red", err.Error())
-
 	os.Exit(1)
 
 	return err

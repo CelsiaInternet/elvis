@@ -41,8 +41,8 @@ func (c *Model) DefineUniqueIndex(index []string) *Model {
 	for _, name := range c.Index {
 		col := c.Col(name)
 		if col != nil {
-			col.Indexed = true
 			col.Unique = true
+			col.Indexed = true
 			c.IndexAdd(name)
 		}
 	}
@@ -65,7 +65,6 @@ func (c *Model) DefinePrimaryKey(keys []string) *Model {
 	for _, name := range keys {
 		col := c.Col(name)
 		if col != nil {
-			col.Unique = true
 			col.Required = true
 			col.PrimaryKey = true
 			c.PrimaryKeys = append(c.PrimaryKeys, name)

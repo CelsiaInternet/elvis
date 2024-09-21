@@ -1,6 +1,7 @@
 package event
 
 import (
+	"github.com/cgalvisleon/elvis/console"
 	"github.com/nats-io/nats.go"
 )
 
@@ -35,9 +36,9 @@ func Close() {
 		conn.eventCreatedSub.Unsubscribe()
 	}
 
-	if conn.eventCreatedChan == nil {
-		return
+	if conn.eventCreatedChan != nil {
+		close(conn.eventCreatedChan)
 	}
 
-	close(conn.eventCreatedChan)
+	console.LogK("Event", `Disconnect...`)
 }

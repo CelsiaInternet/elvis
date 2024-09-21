@@ -10,7 +10,6 @@ import (
 	"time"
 
 	lg "github.com/cgalvisleon/elvis/console"
-	"github.com/cgalvisleon/elvis/utility"
 )
 
 var (
@@ -51,7 +50,7 @@ func RequestLogger(f LogFormatter) func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
 			metric := NewMetric(r)
 			metric.CallSearchTime()
-			w.Header().Set("Reqid", utility.UUID())
+			w.Header().Set("Reqid", metric.ReqID)
 			rww := &ResponseWriterWrapper{ResponseWriter: w, StatusCode: http.StatusOK, Host: r.Host}
 			ww := NewWrapResponseWriter(rww, r.ProtoMajor)
 			entry := f.NewLogEntry(r)

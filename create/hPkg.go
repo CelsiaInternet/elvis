@@ -50,6 +50,12 @@ func MakePkg(name, schema string) error {
 			return err
 		}
 
+		modelo = strs.Titlecase(modelo)
+		_, err = file.MakeFile(path, "rpc.go", modelhRpc, name, modelo)
+		if err != nil {
+			return err
+		}
+
 		title := strs.Titlecase(name)
 		_, err = file.MakeFile(path, "router.go", modelDbRouter, name, title)
 		if err != nil {

@@ -191,6 +191,43 @@ func NewMetric(r *http.Request) *Metrics {
 }
 
 /**
+* NewRpcMetric
+* @params r *http.Request
+**/
+func NewRpcMetric(method string) *Metrics {
+	endPoint := method
+	scheme := "rpc"
+
+	result := &Metrics{
+		TimeBegin:        time.Now(),
+		ReqID:            utility.UUID(),
+		EndPoint:         endPoint,
+		Method:           "RPC",
+		Proto:            "Http/1.2",
+		HostName:         hostName,
+		RequestsHost:     callRequests(hostName),
+		RequestsEndpoint: callRequests(endPoint),
+		Scheme:           scheme,
+	}
+
+	go result.CallCPUUsage()
+	go result.CallMemoryUsage()
+
+	return result
+}
+
+/**
+* SetAddress
+* @params address string
+* @return *Metrics
+**/
+func (m *Metrics) SetAddress(address string) *Metrics {
+	m.RemoteAddr = address
+
+	return m
+}
+
+/**
 * CallCPUUsage
 **/
 func (m *Metrics) CallCPUUsage() {
@@ -236,7 +273,7 @@ func (m *Metrics) DoneFn(rw *ResponseWriterWrapper) et.Json {
 	m.Latency = time.Since(m.TimeBegin)
 	m.Downtime = m.Latency - m.ResponseTime
 	m.StatusCode = rw.StatusCode
-	m.Status = http.StatusText(rw.StatusCode)
+	m.Status = http.StatusText(m.StatusCode)
 	m.ContentLength = ContentLength{
 		Header: rw.SizeHeader,
 		Body:   rw.SizeBody,
@@ -244,6 +281,31 @@ func (m *Metrics) DoneFn(rw *ResponseWriterWrapper) et.Json {
 	}
 	m.Header = rw.Header()
 	m.Host = rw.Host
+
+	return m.println()
+}
+
+func (m *Metrics) DoneRpc(r interface{}) et.Json {
+	var size int
+	jsonData, err := json.Marshal(r)
+	if err != nil {
+		size = 0
+	} else {
+		size = len(jsonData)
+		size = size / 1024
+	}
+
+	m.TimeEnd = time.Now()
+	m.ResponseTime = time.Since(m.TimeExec)
+	m.Latency = time.Since(m.TimeBegin)
+	m.Downtime = m.Latency - m.ResponseTime
+	m.StatusCode = http.StatusOK
+	m.Status = http.StatusText(m.StatusCode)
+	m.ContentLength = ContentLength{
+		Header: 0,
+		Body:   size,
+		Total:  size,
+	}
 
 	return m.println()
 }
@@ -291,6 +353,10 @@ func (m *Metrics) ITEM(w http.ResponseWriter, r *http.Request, statusCode int, d
 		return err
 	}
 
+	if !dt.Ok {
+		statusCode = http.StatusNotFound
+	}
+
 	return m.WriteResponse(w, r, statusCode, e)
 }
 
@@ -304,6 +370,10 @@ func (m *Metrics) ITEMS(w http.ResponseWriter, r *http.Request, statusCode int, 
 	e, err := json.Marshal(dt)
 	if err != nil {
 		return err
+	}
+
+	if !dt.Ok {
+		statusCode = http.StatusNotFound
 	}
 
 	return m.WriteResponse(w, r, statusCode, e)
@@ -324,27 +394,6 @@ func (m *Metrics) HTTPError(w http.ResponseWriter, r *http.Request, statusCode i
 **/
 func (m *Metrics) Unauthorized(w http.ResponseWriter, r *http.Request) {
 	m.HTTPError(w, r, http.StatusUnauthorized, "401 Unauthorized")
-}
-
-/**
-* HandlerFunc
-* @params handler http.HandlerFunc
-* @params w http.ResponseWriter
-* @params r *http.Request
-**/
-func (m *Metrics) HandlerFunc(handler http.HandlerFunc, w http.ResponseWriter, r *http.Request) {
-	rw := &ResponseWriterWrapper{ResponseWriter: w, StatusCode: http.StatusOK, Host: r.Host}
-	isWebSocket := r.Method == http.MethodGet &&
-		r.Header.Get("Upgrade") == "websocket" &&
-		r.Header.Get("Connection") == "Upgrade" &&
-		r.Header.Get("Sec-WebSocket-Key") != ""
-	if isWebSocket {
-		handler(w, r)
-	} else {
-		handler(rw, r)
-	}
-
-	go m.DoneFn(rw)
 }
 
 /**
@@ -377,9 +426,9 @@ func (m *Metrics) println() et.Json {
 	lg.CW(w, lg.NWhite, " Response:%s", m.ResponseTime)
 	lg.CW(w, lg.NRed, " Downtime:%s", m.Downtime)
 	if m.RequestsHost.Seccond > m.RequestsHost.Limit {
-		lg.CW(w, lg.NRed, " - Request S:%vM:%vH:%vL:%v", m.RequestsHost.Seccond, m.RequestsHost.Minute, m.RequestsHost.Hour, m.RequestsHost.Limit)
+		lg.CW(w, lg.NRed, " - Request S:%vM:%vH:%vD:%vL:%v", m.RequestsHost.Seccond, m.RequestsHost.Minute, m.RequestsHost.Hour, m.RequestsHost.Day, m.RequestsHost.Limit)
 	} else {
-		lg.CW(w, lg.NYellow, " - Request S:%vM:%vH:%vL:%v", m.RequestsHost.Seccond, m.RequestsHost.Minute, m.RequestsHost.Hour, m.RequestsHost.Limit)
+		lg.CW(w, lg.NYellow, " - Request S:%vM:%vH:%vD:%vL:%v", m.RequestsHost.Seccond, m.RequestsHost.Minute, m.RequestsHost.Hour, m.RequestsHost.Day, m.RequestsHost.Limit)
 	}
 	lg.Println(w)
 

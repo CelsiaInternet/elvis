@@ -110,7 +110,7 @@ func SendAction(ctx context.Context, to string, subject string, title string, me
 
 func VerifyMail(ctx context.Context, device string, name string, email string) error {
 	code := utility.GetCodeVerify(6)
-	cache.SetVerify(device, email, code)
+	cache.SetVerify(device, email, code, 5*60)
 
 	to := strs.Format("%s <%s>", name, email)
 	_, err := SendVerify(ctx, to, msg.MSG_MAIL_001, msg.MSG_MAIL_002, email, code)

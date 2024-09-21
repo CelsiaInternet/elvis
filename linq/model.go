@@ -71,7 +71,6 @@ func NewModel(schema *Schema, name, description string, version int) *Model {
 		indexeSource:       true,
 	}
 
-	result.SourceField = NewColumn(result, SourceField, "", "JSONB", "{}")
 	result.BeforeInsert = append(result.BeforeInsert, beforeInsert)
 	result.AfterInsert = append(result.AfterInsert, afterInsert)
 	result.BeforeUpdate = append(result.BeforeUpdate, beforeUpdate)

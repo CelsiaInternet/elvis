@@ -42,7 +42,7 @@ import (
 
 func main() {
 	envar.SetvarInt("port", 3000, "Port server", "PORT")
-	envar.SetvarInt("rpc", 4200, "Port rpc server", "RPC")
+	envar.SetvarInt("rpc", 4200, "Port rpc server", "RPC_PORT")
 	envar.SetvarStr("dbhost", "localhost", "Database host", "DB_HOST")
 	envar.SetvarInt("dbport", 5432, "Database port", "DB_PORT")
 	envar.SetvarStr("dbname", "", "Database name", "DB_NAME")
@@ -71,7 +71,6 @@ import (
 
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/envar"
-	"github.com/cgalvisleon/elvis/jrpc"
 	"github.com/cgalvisleon/elvis/middleware"
 	"github.com/cgalvisleon/elvis/response"
 	"github.com/cgalvisleon/elvis/strs"
@@ -82,7 +81,6 @@ import (
 
 type Server struct {
 	http *http.Server
-	rpc  *net.Listener
 }
 
 func New() (*Server, error) {	
@@ -113,43 +111,36 @@ func New() (*Server, error) {
 
 		server.http = serv
 	}
-		
-	rpcPort := envar.EnvarInt(0, "RPC_PORT")
-	if rpcPort != 0 {
-		rpcHost := envar.EnvarStr("localhost", "RPC_HOST")
-		serv := v1.Rpc(rpcHost, rpcPort)
-
-		server.rpc = serv
-	}
-
+	
 	return &server, nil
 }
 
-func (serv *Server) Close() error {
+func (serv *Server) Close() {
 	v1.Close()
-	return nil
+
+	console.LogK("Http", "Shutting down server...")
+}
+
+func (serv *Server) StartHttpServer() {
+	if serv.http == nil {
+		return
+	}
+
+	svr := serv.http
+	console.LogKF("Http", "Running on http://localhost%s", svr.Addr)
+	console.Fatal(serv.http.ListenAndServe())
 }
 
 func (serv *Server) Start() {
-	go func() {
-		if serv.http == nil {
-			return
-		}
+	go serv.StartHttpServer()
 
-		svr := serv.http
-		console.LogKF("Http", "Running on http://localhost%s", svr.Addr)
-		console.Fatal(serv.http.ListenAndServe())
-	}()
-
-	go serv.rpc.Start()
-	
 	v1.Banner()
 
 	<-make(chan struct{})
 }
 `
 
-const modelApi = `package v1
+const modelDbApi = `package v1
 
 import (
 	"fmt"
@@ -193,23 +184,74 @@ func New() http.Handler {
 
 	r.Mount(pkg.PackagePath, _pkg.Routes())
 
+	pkg.StartRpcServer()
+
+	return r
+}
+
+func Close() {
+	jrpc.Close()
+	cache.Close()
+	event.Close()
+}
+
+func Banner() {
+	time.Sleep(3 * time.Second)
+	templ := utility.BannerTitle(pkg.PackageName, pkg.PackageVersion, 4)
+	banner.InitString(colorable.NewColorableStdout(), true, true, templ)
+	fmt.Println()
+}
+`
+
+const modelApi = `package v1
+
+import (
+	"fmt"
+	"net/http"
+	"time"
+
+	"github.com/cgalvisleon/elvis/cache"
+	"github.com/cgalvisleon/elvis/event"
+	"github.com/cgalvisleon/elvis/jdb"
+	"github.com/cgalvisleon/elvis/utility"
+	"github.com/dimiro1/banner"
+	"github.com/go-chi/chi/v5"
+	"github.com/mattn/go-colorable"
+	pkg "$1/pkg/$2"	
+)
+
+func New() http.Handler {
+	r := chi.NewRouter()
+
+	_, err := cache.Load()
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = event.Load()
+	if err != nil {
+		panic(err)
+	}
+
+	db, err := jdb.Load()
+	if err != nil {
+		panic(err)
+	}
+
+	_pkg := &pkg.Router{
+		Repository: &pkg.Controller{
+			Db: db,
+		},
+	}
+
+	r.Mount(pkg.PackagePath, _pkg.Routes())
+
 	return r
 }
 
 func Close() {
 	cache.Close()
 	event.Close()
-}
-
-func Rpc(host string, port int) *jrpc.Server {
-	result, err := jrpc.NewServer(port)
-	if err != nil {
-		return nil
-	}
-
-	result.Mount(host, port, new(pkg.Services))
-
-	return result
 }
 
 func Banner() {
@@ -283,41 +325,55 @@ func defineSchema(db *jdb.DB) error {
 const modelhRpc = `package $1
 
 import (
+	"github.com/cgalvisleon/elvis/console"
+	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/et"
+	"github.com/cgalvisleon/elvis/jrpc"
 )
 
 type Services struct{}
 
-func (c *Services) Version(require []byte, response *[]byte) error {
-	rq := et.ByteToJson(require)
-	help := rq.Str("help")
-
-	result := et.Item{
-		Ok: true,
-		Result: et.Json{
-			"service": PackageName,
-			"host":    HostName,
-			"help":    help,
-		},
+func StartRpcServer() {
+	jrpc.Load()
+	services := new(Services)
+	err := jrpc.Mount(services, PackageName)
+	if err != nil {
+		console.Fatal(err)
 	}
 
-	*response = result.ToByte()
-
-	return nil
+	go jrpc.StartServer()
 }
 
-func (c *Services) Get$2ById(require []byte, response *[]byte) error {
-	rq := et.ByteToJson(require)
-	id := rq.Str("id")
+func (c *Services) Version(require et.Json, response *et.Item) error {
+	company := envar.EnvarStr("", "COMPANY")
+	web := envar.EnvarStr("", "WEB")
+	version := envar.EnvarStr("", "VERSION")
+	help := envar.EnvarStr("", "RPC_HELP")
+	response.Ok = true
+	response.Result = et.Json{
+		"methos":  "RPC",
+		"version": version,
+		"service": PackageName,
+		"host":    HostName,
+		"company": company,
+		"web":     web,
+		"help":    help,
+	}
+
+	return console.Rpc(response)
+}
+
+func (c *Services) Get$2ById(require et.Json, response *et.Item) error {
+	id := require.Str("id")
 
 	result, err := Get$2ById(id)
 	if err != nil {
 		return err
 	}
 
-	*response = result.ToByte()
+	*response = result
 
-	return nil
+	return console.Rpc(response)
 }	
 `
 
@@ -437,7 +493,8 @@ type Router struct {
 }
 
 func (rt *Router) Routes() http.Handler {
-	var host = strs.Format("%s:%d", envar.EnvarStr("http://localhost", "HOST"), envar.EnvarInt(3300, "PORT"))
+	defaultHost := strs.Format("http://%s", HostName)
+	var host = strs.Format("%s:%d", envar.EnvarStr(defaultHost, "HOST"), envar.EnvarInt(3300, "PORT"))
 
 	r := chi.NewRouter()
 

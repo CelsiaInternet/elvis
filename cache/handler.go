@@ -17,118 +17,29 @@ import (
 const IsNil = redis.Nil
 
 /**
-* SetCtx
-* @params ctx context.Context
+* Set
 * @params key string
-* @params val string
+* @params val interface{}
 * @params second time.Duration
 * @return error
 **/
-func SetCtx(ctx context.Context, key, val string, second time.Duration) error {
+func Set(key string, val interface{}, second time.Duration) error {
 	if conn == nil {
 		return logs.Log(msg.ERR_NOT_CACHE_SERVICE)
 	}
 
-	duration := second * time.Second
-
-	err := conn.db.Set(ctx, key, val, duration).Err()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-/**
-* GetCtx
-* @params ctx context.Context
-* @params key string
-* @params def string
-* @return string, error
-**/
-func GetCtx(ctx context.Context, key, def string) (string, error) {
-	if conn == nil {
-		return def, logs.Log(msg.ERR_NOT_CACHE_SERVICE)
-	}
-
-	result, err := conn.db.Get(ctx, key).Result()
-	switch {
-	case err == redis.Nil:
-		return def, nil
-	case err != nil:
-		return def, err
+	switch v := val.(type) {
+	case et.Json:
+		return SetCtx(conn.ctx, key, v.ToString(), second)
+	case et.Items:
+		return SetCtx(conn.ctx, key, v.ToString(), second)
+	case et.Item:
+		return SetCtx(conn.ctx, key, v.ToString(), second)
 	default:
-		return result, nil
-	}
-}
-
-/**
-* DelCtx
-* @params ctx context.Context
-* @params key string
-* @return int64, error
-**/
-func DelCtx(ctx context.Context, key string) (int64, error) {
-	if conn == nil {
-		return 0, logs.Log(msg.ERR_NOT_CACHE_SERVICE)
-	}
-
-	intCmd := conn.db.Del(ctx, key)
-
-	return intCmd.Val(), intCmd.Err()
-}
-
-/**
-* HSetCtx
-* @params ctx context.Context
-* @params key string
-* @params val map[string]string
-* @return error
-**/
-func HSetCtx(ctx context.Context, key string, val map[string]string) error {
-	if conn == nil {
-		return logs.Log(msg.ERR_NOT_CACHE_SERVICE)
-	}
-
-	err := conn.db.HSet(ctx, key, val).Err()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-/**
-* HGetCtx
-* @params ctx context.Context
-* @params key string
-* @return map[string]string, error
-**/
-func HGetCtx(ctx context.Context, key string) (map[string]string, error) {
-	if conn == nil {
-		return map[string]string{}, logs.Log(msg.ERR_NOT_CACHE_SERVICE)
-	}
-
-	result := conn.db.HGetAll(ctx, key).Val()
-
-	return result, nil
-}
-
-/**
-* HDelCtx
-* @params ctx context.Context
-* @params key string
-* @params atr string
-* @return error
-**/
-func HDelCtx(ctx context.Context, key, atr string) error {
-	if conn == nil {
-		return logs.Log(msg.ERR_NOT_CACHE_SERVICE)
-	}
-
-	err := conn.db.Do(ctx, "HDEL", key, atr).Err()
-	if err != nil {
-		return err
+		val, ok := val.(string)
+		if ok {
+			return SetCtx(conn.ctx, key, val, second)
+		}
 	}
 
 	return nil
@@ -146,6 +57,19 @@ func Get(key, def string) (string, error) {
 	}
 
 	return GetCtx(conn.ctx, key, def)
+}
+
+/**
+* Delete
+* @params key string
+* @return int64, error
+**/
+func Delete(key string) (int64, error) {
+	if conn == nil {
+		return 0, logs.Log(msg.ERR_NOT_CACHE_SERVICE)
+	}
+
+	return DeleteCtx(conn.ctx, key)
 }
 
 /**
@@ -179,48 +103,6 @@ func Count(key string, expiration time.Duration) int64 {
 	Set(key, val, expiration)
 
 	return num
-}
-
-/**
-* Del
-* @params key string
-* @return int64, error
-**/
-func Del(key string) (int64, error) {
-	if conn == nil {
-		return 0, logs.Log(msg.ERR_NOT_CACHE_SERVICE)
-	}
-
-	return DelCtx(conn.ctx, key)
-}
-
-/**
-* Set
-* @params key string
-* @params val interface{}
-* @params second time.Duration
-* @return error
-**/
-func Set(key string, val interface{}, second time.Duration) error {
-	if conn == nil {
-		return logs.Log(msg.ERR_NOT_CACHE_SERVICE)
-	}
-
-	switch v := val.(type) {
-	case et.Json:
-		return SetCtx(conn.ctx, key, v.ToString(), second)
-	case et.Items:
-		return SetCtx(conn.ctx, key, v.ToString(), second)
-	case et.Item:
-		return SetCtx(conn.ctx, key, v.ToString(), second)
-	default:
-		val, ok := val.(string)
-		if ok {
-			return SetCtx(conn.ctx, key, val, second)
-		}
-	}
-
-	return nil
 }
 
 /**
@@ -286,7 +168,7 @@ func Empty() error {
 	iter := conn.db.Scan(ctx, 0, "*", 0).Iterator()
 	for iter.Next(ctx) {
 		key := iter.Val()
-		DelCtx(ctx, key)
+		DeleteCtx(ctx, key)
 	}
 
 	return nil
@@ -387,17 +269,17 @@ func HGetAtrib(key, atr string) (string, error) {
 }
 
 /**
-* HDel
+* HDelete
 * @params key string
 * @params atr string
 * @return error
 **/
-func HDel(key, atr string) error {
+func HDelete(key, atr string) error {
 	if conn == nil {
 		return logs.Log(msg.ERR_NOT_CACHE_SERVICE)
 	}
 
-	return HDelCtx(conn.ctx, key, atr)
+	return HDeleteCtx(conn.ctx, key, atr)
 }
 
 /**
@@ -407,9 +289,9 @@ func HDel(key, atr string) error {
 * @params val string
 * @return error
 **/
-func SetVerify(device, key, val string) error {
+func SetVerify(device, key, val string, duration time.Duration) error {
 	key = strs.Format(`verify:%s:%s`, device, key)
-	return Set(key, val, 5*60)
+	return Set(key, val, duration)
 }
 
 /**
@@ -424,14 +306,14 @@ func GetVerify(device string, key string) (string, error) {
 }
 
 /**
-* DelVerify
+* DeleteVerify
 * @params device string
 * @params key string
 * @return int64, error
 **/
-func DelVerify(device string, key string) (int64, error) {
+func DeleteVerify(device string, key string) (int64, error) {
 	key = strs.Format(`verify:%s:%s`, device, key)
-	return Del(key)
+	return Delete(key)
 }
 
 /**
@@ -593,15 +475,15 @@ func HandlerGet(w http.ResponseWriter, r *http.Request) {
 }
 
 /**
-* HandlerDel
+* HandlerDelete
 * @params w http.ResponseWriter
 * @params r *http.Request
 **/
-func HandlerDel(w http.ResponseWriter, r *http.Request) {
+func HandlerDelete(w http.ResponseWriter, r *http.Request) {
 	query := response.GetQuery(r)
 	key := query.Str("key")
 
-	result, err := Del(key)
+	result, err := Delete(key)
 	if logs.Alert(err) != nil {
 		response.HTTPError(w, r, http.StatusInternalServerError, err.Error())
 		return

@@ -3,6 +3,7 @@ package cache
 import (
 	"context"
 
+	"github.com/cgalvisleon/elvis/console"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -29,10 +30,10 @@ func Load() (*Conn, error) {
 	return conn, nil
 }
 
-func Close() error {
-	if conn.db == nil {
-		return nil
+func Close() {
+	if conn.db != nil {
+		conn.db.Close()
 	}
 
-	return conn.db.Close()
+	console.LogK("Cache", `Disconnect...`)
 }

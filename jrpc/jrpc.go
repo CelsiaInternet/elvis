@@ -3,125 +3,309 @@ package jrpc
 import (
 	"encoding/json"
 	"net"
-	"net/http"
 	"net/rpc"
+	"os"
 	"reflect"
+	"slices"
+	"strings"
 
 	"github.com/cgalvisleon/elvis/cache"
 	"github.com/cgalvisleon/elvis/console"
+	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/et"
-	"github.com/cgalvisleon/elvis/event"
+	"github.com/cgalvisleon/elvis/middleware"
 	"github.com/cgalvisleon/elvis/strs"
 )
 
-type Route struct {
-	Host string
-	Port int
-}
-
 type Router struct {
-	PackageName string            `json:"packageName"`
-	Routes      map[string]*Route `json:"routes"`
+	key         string
+	PackageName string             `json:"packageName"`
+	Host        string             `json:"host"`
+	Port        int                `json:"port"`
+	Solvers     map[string]et.Json `json:"routes"`
 }
 
-func NewRouter() *Router {
-	return &Router{
-		Routes: make(map[string]*Route),
-	}
-}
+var conn *Router
 
-type Server struct {
-	rpc    *net.Listener
-	Router *Router
-}
-
-func NewServer(port int) (*Server, error) {
+/**
+* NewServer
+**/
+func StartServer() {
 	_, err := cache.Load()
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	server := &Server{
-		Router: NewRouter(),
+	address := strs.Format(`:%d`, conn.Port)
+	listener, err := net.Listen("tcp", address)
+	if err != nil {
+		console.Fatal(err)
 	}
 
-	rpc, err := net.Listen("tcp", strs.Format(":%d", port))
+	console.LogKF("Rpc", `Running on %s`, listener.Addr())
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			console.PanicF("Error al aceptar la conexión:%s", err.Error())
+			continue
+		}
+		go rpc.ServeConn(conn)
+	}
+}
+
+/**
+* getRouters
+* @param name string
+* @return []*Router
+* @return error
+**/
+func getRouters(name string) ([]*Router, error) {
+	routers := make([]*Router, 0)
+	jsonRoutes, err := json.Marshal(routers)
 	if err != nil {
 		return nil, err
 	}
 
-	server.rpc = &rpc
+	strRoutes, err := cache.Get(name, string(jsonRoutes))
+	if err != nil {
+		return nil, err
+	}
 
-	return server, nil
+	err = json.Unmarshal([]byte(strRoutes), &routers)
+	if err != nil {
+		return nil, err
+	}
+
+	return routers, nil
 }
 
-func (s *Server) Mount(host string, port int, service any, packageName string) {
-	tipoStruct := reflect.TypeOf(service)
-	console.Debug("Mounting service", tipoStruct.Name())
-	s.Router.PackageName = packageName
+/**
+* setRoutes
+* @param name string
+* @param routers []*Router
+* @return error
+**/
+func setRoutes(name string, routers []*Router) error {
+	bt, err := json.Marshal(routers)
+	if err != nil {
+		return err
+	}
+
+	err = cache.Set(name, string(bt), 0)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+/**
+* UnMount
+* @return error
+**/
+func UnMount() error {
+	routers, err := getRouters(conn.key)
+	if err != nil {
+		return console.AlertE(err)
+	}
+
+	idx := slices.IndexFunc(routers, func(e *Router) bool { return e.Host == conn.Host && e.Port == conn.Port })
+	if idx != -1 {
+		routers = append(routers[:idx], routers[idx+1:]...)
+	}
+
+	err = setRoutes(conn.key, routers)
+	if err != nil {
+		return console.AlertE(err)
+	}
+
+	return nil
+}
+
+/**
+* Save
+* @return error
+**/
+func (r *Router) Save() error {
+	routers, err := getRouters(r.key)
+	if err != nil {
+		return err
+	}
+
+	idx := slices.IndexFunc(routers, func(e *Router) bool { return e.Host == r.Host && e.Port == r.Port })
+	if idx == -1 {
+		routers = append(routers, r)
+	}
+
+	err = setRoutes(r.key, routers)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+/**
+* Mount
+* @param host string
+* @param port int
+* @param service any
+* @param packageName string
+**/
+func Mount(services any, packageName string) error {
+	tipoStruct := reflect.TypeOf(services)
+	structName := tipoStruct.String()
+	list := strings.Split(structName, ".")
+	structName = list[len(list)-1]
+	conn.PackageName = packageName
 	for i := 0; i < tipoStruct.NumMethod(); i++ {
-		name := tipoStruct.Method(i).Name
-		path := strs.Format(`%s.%s`, tipoStruct.Name(), name)
-		s.Router.Routes[path] = &Route{host, port}
+		metodo := tipoStruct.Method(i)
+		numInputs := metodo.Type.NumIn()
+		numOutputs := metodo.Type.NumOut()
+
+		inputs := []string{}
+		for i := 0; i < numInputs; i++ {
+			inputs = append(inputs, metodo.Type.In(i).String())
+		}
+
+		outputs := []string{}
+		for o := 0; o < numOutputs; o++ {
+			outputs = append(outputs, metodo.Type.Out(o).String())
+		}
+
+		name := metodo.Name
+		path := strs.Format(`%s.%s`, structName, name)
+		conn.Solvers[path] = et.Json{
+			"inputs":  inputs,
+			"outputs": outputs,
+		}
 	}
 
-	rpc.Register(service)
+	rpc.Register(services)
 
-	bt, err := json.Marshal(s.Router)
+	return conn.Save()
+}
+
+/**
+* GetSolver
+* @param method string
+* @return *Solver
+* @return error
+**/
+func GetSolver(method string) (*Router, error) {
+	routers, err := getRouters(conn.key)
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	var data et.Json
-	err = json.Unmarshal(bt, &data)
+	var result *Router
+	for _, router := range routers {
+		if router.Solvers[method] != nil {
+			result = router
+			break
+		}
+	}
+
+	return result, nil
+}
+
+/**
+* GetRouters
+* @return et.Items
+* @return error
+**/
+func GetRouters() (et.Items, error) {
+	var result = et.Items{Result: []et.Json{}}
+	routes, err := getRouters(conn.key)
 	if err != nil {
-		return
+		return et.Items{}, err
 	}
 
-	event.Publish("apigateway/rpc/resolve", data)
-}
+	for _, route := range routes {
+		n := 0
+		_routes := []et.Json{}
+		for k, v := range route.Solvers {
+			n++
+			_routes = append(_routes, et.Json{
+				"method":  k,
+				"inputs":  v["inputs"],
+				"outputs": v["outputs"],
+			})
+		}
 
-func (s *Server) Start() {
-	if s.rpc == nil {
-		return
+		result.Result = append(result.Result, et.Json{
+			"packageName": route.PackageName,
+			"host":        route.Host,
+			"port":        route.Port,
+			"count":       n,
+			"routes":      _routes,
+		})
+		result.Ok = true
+		result.Count++
 	}
 
-	go func() {
-		console.LogKF("RPC", "Running on tcp:localhost:%s", (*s.rpc).Addr().String())
-		http.Serve((*s.rpc), nil)
-	}()
+	return result, nil
 }
 
-func (s *Server) Close() {
-	if s.rpc == nil {
-		return
-	}
-
-	(*s.rpc).Close()
-}
-
-func (s *Server) Call(method string, data et.Json) (et.Item, error) {
+/**
+* Call
+* @param method string
+* @param data et.Json
+* @return et.Item
+* @return error
+**/
+func Call(method string, data et.Json) (et.Item, error) {
+	metric := middleware.NewRpcMetric(method)
 	var result = et.Item{Result: et.Json{}}
-	var args []byte = data.ToByte()
-	var reply *[]byte
+	solver, err := GetSolver(method)
+	if err != nil {
+		return result, err
+	}
 
-	router := s.Router.Routes[method]
-	if router == nil {
+	if solver == nil {
 		return result, console.NewError(ERR_METHOD_NOT_FOUND)
 	}
 
-	client, err := rpc.DialHTTP("tcp", strs.Format(`%s:%d`, router.Host, router.Port))
+	address := strs.Format(`%s:%d`, solver.Host, solver.Port)
+	metric.CallSearchTime()
+	metric.SetAddress(address)
+
+	client, err := rpc.Dial("tcp", address)
 	if err != nil {
 		return et.Item{}, err
 	}
 	defer client.Close()
 
-	err = client.Call(method, args, &reply)
+	err = client.Call(method, data, &result)
 	if err != nil {
 		return et.Item{}, err
 	}
 
-	result = et.Json{}.ToItem(*reply)
+	metric.DoneRpc(result)
 
 	return result, nil
+}
+
+func Close() {
+	if conn != nil {
+		UnMount()
+	}
+
+	console.LogK("Rpc", `Shutting down server...`)
+}
+
+func Load() {
+	host, err := os.Hostname()
+	if err != nil {
+		host = "localhost"
+	}
+
+	port := envar.EnvarInt(4200, "RPC_PORT")
+
+	conn = &Router{
+		key:     "rpc-routes",
+		Host:    host,
+		Port:    port,
+		Solvers: map[string]et.Json{},
+	}
 }

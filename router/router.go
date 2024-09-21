@@ -6,7 +6,6 @@ import (
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/event"
 	"github.com/cgalvisleon/elvis/middleware"
-	"github.com/cgalvisleon/elvis/strs"
 	"github.com/cgalvisleon/elvis/utility"
 	"github.com/go-chi/chi/v5"
 )
@@ -55,15 +54,15 @@ func (t TpHeader) String() string {
 }
 
 /**
-* StrToTpHeader
+* ToTpHeader
 * @param str string
 * @return TpHeader
 **/
-func StrToTpHeader(str string) TpHeader {
-	switch strs.Lowcase(str) {
-	case "join":
+func ToTpHeader(tp int) TpHeader {
+	switch tp {
+	case 1:
 		return TpJoinHeader
-	case "replace":
+	case 2:
 		return TpReplaceHeader
 	default:
 		return TpKeepHeader
