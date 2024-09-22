@@ -5,17 +5,51 @@ import (
 	"time"
 
 	"github.com/cgalvisleon/elvis/et"
-	m "github.com/cgalvisleon/elvis/message"
 	"github.com/cgalvisleon/elvis/utility"
 )
 
+type TpMessage int
+
+const (
+	TpPing TpMessage = iota
+	TpSetFrom
+	TpSubscribe
+	TpUnsubscribe
+	TpQueue
+	TpPublish
+	TpDirect
+	TpConnect
+	TpDisconnect
+)
+
+func (s TpMessage) String() string {
+	switch s {
+	case TpPing:
+		return "Ping"
+	case TpSetFrom:
+		return "Set id and name"
+	case TpSubscribe:
+		return "Subscribe"
+	case TpUnsubscribe:
+		return "Unsubscribe"
+	case TpQueue:
+		return "Queue"
+	case TpPublish:
+		return "Publish"
+	case TpDirect:
+		return "Direct"
+	default:
+		return "Unknown"
+	}
+}
+
 type Message struct {
-	Created_at time.Time `json:"created_at"`
-	Id         string    `json:"id"`
-	From       et.Json   `json:"from"`
-	to         string
+	Created_at time.Time   `json:"created_at"`
+	Id         string      `json:"id"`
+	From       et.Json     `json:"from"`
+	To         string      `json:"to"`
 	Ignored    []string    `json:"ignored"`
-	Tp         m.TpMessage `json:"tp"`
+	Tp         TpMessage   `json:"tp"`
 	Channel    string      `json:"channel"`
 	Queue      string      `json:"queue"`
 	Data       interface{} `json:"data"`
@@ -25,10 +59,10 @@ type Message struct {
 * NewMessage
 * @param et.Json
 * @param interface{}
-* @param m.TpMessage
+* @param TpMessage
 * @return Message
 **/
-func NewMessage(from et.Json, message interface{}, tp m.TpMessage) Message {
+func NewMessage(from et.Json, message interface{}, tp TpMessage) Message {
 	return Message{
 		Created_at: time.Now(),
 		Id:         utility.UUID(),
@@ -40,30 +74,8 @@ func NewMessage(from et.Json, message interface{}, tp m.TpMessage) Message {
 }
 
 /**
-* Type
-* @return m.TpMessage
-**/
-func (e Message) Type() m.TpMessage {
-	return e.Tp
-}
-
-/**
-* ToString
-* @return string
-**/
-func (e Message) ToString() string {
-	j, err := json.Marshal(e)
-	if err != nil {
-		return ""
-	}
-
-	return string(j)
-}
-
-/**
-* Encode
+* Encode return the message as byte array
 * @return []byte
-* @return error
 **/
 func (e Message) Encode() ([]byte, error) {
 	b, err := json.Marshal(e)
@@ -75,13 +87,24 @@ func (e Message) Encode() ([]byte, error) {
 }
 
 /**
-* Json
-* @return et.Json
-* @return error
+* ToString return the message as string
+* @return string
 **/
-func (e Message) Json() (et.Json, error) {
-	result := et.Json{}
-	err := result.Scan(e.Data)
+func (e Message) ToString() string {
+	b, err := e.Encode()
+	if err != nil {
+		return ""
+	}
+
+	return string(b)
+}
+
+/**
+* ToJson return the message as et.Json
+* @return et.Json
+**/
+func (e Message) ToJson() (et.Json, error) {
+	result, err := et.Object(e)
 	if err != nil {
 		return et.Json{}, err
 	}
@@ -93,7 +116,6 @@ func (e Message) Json() (et.Json, error) {
 * DecodeMessage
 * @param []byte
 * @return Message
-* @return error
 **/
 func DecodeMessage(data []byte) (Message, error) {
 	var m Message

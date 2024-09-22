@@ -5,7 +5,6 @@ import (
 
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/logs"
-	m "github.com/cgalvisleon/elvis/message"
 	"github.com/cgalvisleon/elvis/strs"
 	"github.com/gorilla/websocket"
 	"golang.org/x/exp/slices"
@@ -149,116 +148,6 @@ func (c *Client) clear() {
 }
 
 /**
-* listen
-* @param []byte
-**/
-func (c *Client) listen(message []byte) {
-	send := func(ok bool, message string) {
-		msg := NewMessage(c.hub.from(), et.Json{
-			"ok":      ok,
-			"message": message,
-		}, m.TpDirect)
-		c.sendMessage(msg)
-	}
-
-	msg, err := DecodeMessage(message)
-	if err != nil {
-		send(false, err.Error())
-		return
-	}
-
-	tp := msg.Type()
-	switch tp {
-	case m.TpPing:
-		send(true, "pong")
-	case m.TpParams:
-		params, err := msg.Json()
-		if err != nil {
-			send(false, err.Error())
-			return
-		}
-
-		name := params.ValStr("", "name")
-		if name != "" {
-			c.Name = name
-		}
-
-		send(true, PARAMS_UPDATED)
-	case m.TpSubscribe:
-		channel := msg.Channel
-		if channel == "" {
-			send(false, ERR_CHANNEL_EMPTY)
-			return
-		}
-
-		err := c.hub.Subscribe(c.Id, channel)
-		if err != nil {
-			send(false, err.Error())
-			return
-		}
-
-		send(true, "Subscribed to channel "+channel)
-	case m.TpStack:
-		channel := msg.Channel
-		if channel == "" {
-			send(false, ERR_CHANNEL_EMPTY)
-			return
-		}
-
-		queue := msg.Queue
-		if queue == "" {
-			queue = "worker"
-		}
-
-		err := c.hub.Stack(c.Id, channel, queue)
-		if err != nil {
-			send(false, err.Error())
-			return
-		}
-
-		send(true, "Stacked to channel "+channel)
-	case m.TpUnsubscribe:
-		channel := msg.Channel
-		if channel == "" {
-			send(false, ERR_CHANNEL_EMPTY)
-			return
-		}
-
-		err := c.hub.Subscribe(c.Id, channel)
-		if err != nil {
-			send(false, err.Error())
-			return
-		}
-
-		send(true, "Unsubscribed from channel "+channel)
-	case m.TpPublish:
-		channel := msg.Channel
-		if channel == "" {
-			send(false, ERR_CHANNEL_EMPTY)
-			return
-		}
-
-		go c.hub.Publish(channel, msg, []string{c.Id}, c.From())
-		send(true, "Message published to "+channel)
-	case m.TpDirect:
-		clientId := msg.to
-
-		msg.From = c.From()
-		err := c.hub.SendMessage(clientId, msg)
-		if err != nil {
-			send(false, err.Error())
-			return
-		}
-
-		send(true, "Message sent to "+clientId)
-	default:
-		send(false, ERR_MESSAGE_UNFORMATTED)
-	}
-
-	logs.Logf("Websocket", "Client %s message: %s", c.Id, msg.ToString())
-}
-
-/**
 * close
 **/
 func (c *Client) close() {
@@ -276,4 +165,116 @@ func (c *Client) From() et.Json {
 		"id":   c.Id,
 		"name": c.Name,
 	}
+}
+
+/**
+* listen
+* @param []byte
+**/
+func (c *Client) listen(message []byte) {
+	response := func(ok bool, message string) {
+		msg := NewMessage(c.hub.from(), et.Json{
+			"ok":      ok,
+			"message": message,
+		}, TpDirect)
+		c.sendMessage(msg)
+	}
+
+	msg, err := DecodeMessage(message)
+	if err != nil {
+		response(false, err.Error())
+		return
+	}
+
+	tp := msg.Tp
+	switch tp {
+	case TpPing:
+		response(true, "pong")
+	case TpSetFrom:
+		data, err := et.Object(msg.Data)
+		if err != nil {
+			response(false, err.Error())
+			return
+		}
+
+		id := data.ValStr("-1", "id")
+		if id != "-1" {
+			c.Id = id
+		}
+
+		name := data.ValStr("", "name")
+		if name != "" {
+			c.Name = name
+		}
+
+		response(true, PARAMS_UPDATED)
+	case TpSubscribe:
+		channel := msg.Channel
+		if channel == "" {
+			response(false, ERR_CHANNEL_EMPTY)
+			return
+		}
+
+		err := c.hub.Subscribe(c.Id, channel)
+		if err != nil {
+			response(false, err.Error())
+			return
+		}
+
+		response(true, "Subscribed to channel "+channel)
+	case TpUnsubscribe:
+		channel := msg.Channel
+		if channel == "" {
+			response(false, ERR_CHANNEL_EMPTY)
+			return
+		}
+
+		err := c.hub.Unsubscribe(c.Id, channel)
+		if err != nil {
+			response(false, err.Error())
+			return
+		}
+
+		response(true, "Unsubscribed from channel "+channel)
+	case TpQueue:
+		channel := msg.Channel
+		if channel == "" {
+			response(false, ERR_CHANNEL_EMPTY)
+			return
+		}
+
+		queue := msg.Queue
+		if queue == "" {
+			response(false, ERR_QUEUE_EMPTY)
+		}
+
+		err := c.hub.Queue(c.Id, channel, queue)
+		if err != nil {
+			response(false, err.Error())
+			return
+		}
+
+		response(true, "Subscribe to channel "+channel)
+	case TpPublish:
+		channel := msg.Channel
+		if channel == "" {
+			response(false, ERR_CHANNEL_EMPTY)
+			return
+		}
+
+		go c.hub.Publish(channel, msg, []string{c.Id}, c.From())
+	case TpDirect:
+		clientId := msg.To
+
+		msg.From = c.From()
+		err := c.hub.SendMessage(clientId, msg)
+		if err != nil {
+			response(false, err.Error())
+			return
+		}
+	default:
+		response(false, ERR_MESSAGE_UNFORMATTED)
+	}
+
+	logs.Logf("Websocket", "Client %s message: %s", c.Id, msg.ToString())
 }

@@ -12,8 +12,8 @@ import (
 type TpBroadcast int
 
 const (
-	TpAll TpBroadcast = iota
-	TpDirect
+	BroadcastAll TpBroadcast = iota
+	BroadcastDirect
 )
 
 /**
@@ -167,7 +167,7 @@ func (a *RedisAdapter) subscribe(channel string, f func(interface{})) {
 **/
 func (a *RedisAdapter) Broadcast(to string, msg Message, ignored []string, from et.Json) error {
 	mbroadcast := MessageBroadcast{
-		Kind:    TpAll,
+		Kind:    BroadcastAll,
 		To:      to,
 		Msg:     msg,
 		Ignored: ignored,
@@ -185,7 +185,7 @@ func (a *RedisAdapter) Broadcast(to string, msg Message, ignored []string, from 
 **/
 func (a *RedisAdapter) Direct(to string, msg Message) error {
 	mbroadcast := MessageBroadcast{
-		Kind:    TpDirect,
+		Kind:    BroadcastDirect,
 		To:      to,
 		Msg:     msg,
 		Ignored: []string{},
@@ -203,7 +203,7 @@ func (a *RedisAdapter) Direct(to string, msg Message) error {
 **/
 func (a *RedisAdapter) Command(command string, params et.Json) error {
 	mbroadcast := MessageBroadcast{
-		Kind:    TpDirect,
+		Kind:    BroadcastDirect,
 		To:      command,
 		Msg:     Message{},
 		Ignored: []string{},

@@ -13,9 +13,12 @@ const (
 	ERR_CHANNEL_NOT_FOUND       = "Channel not found"
 	ERR_CHANNEL_NOT_SUBSCRIBERS = "Channel not subscribers - %s"
 	ERR_CHANNEL_EMPTY           = "Channel is empty"
+	ERR_QUEUE_EMPTY             = "Queue is empty"
 	ERR_PARAM_NOT_FOUND         = "Param not found"
 	ERR_CLIENT_ID_EMPTY         = "Client id is empty"
 	ERR_MESSAGE_UNFORMATTED     = "Message unformatted"
 	ERR_REDISADAPTER_NOT_FOUND  = "Redis adapter not found"
+	ERR_INVALID_ID              = "Invalid id"
+	ERR_INVALID_NAME            = "Invalid name"
 	PARAMS_UPDATED              = "Params updated"
 )

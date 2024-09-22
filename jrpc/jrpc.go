@@ -54,6 +54,29 @@ func StartServer() {
 }
 
 /**
+* load
+**/
+func Load() {
+	if conn != nil {
+		return
+	}
+
+	host, err := os.Hostname()
+	if err != nil {
+		host = "localhost"
+	}
+
+	port := envar.EnvarInt(4200, "RPC_PORT")
+
+	conn = &Router{
+		key:     "rpc-routes",
+		Host:    host,
+		Port:    port,
+		Solvers: map[string]et.Json{},
+	}
+}
+
+/**
 * getRouters
 * @param name string
 * @return []*Router
@@ -153,6 +176,7 @@ func (r *Router) Save() error {
 * @param packageName string
 **/
 func Mount(services any, packageName string) error {
+	Load()
 	tipoStruct := reflect.TypeOf(services)
 	structName := tipoStruct.String()
 	list := strings.Split(structName, ".")
@@ -292,20 +316,4 @@ func Close() {
 	}
 
 	console.LogK("Rpc", `Shutting down server...`)
-}
-
-func Load() {
-	host, err := os.Hostname()
-	if err != nil {
-		host = "localhost"
-	}
-
-	port := envar.EnvarInt(4200, "RPC_PORT")
-
-	conn = &Router{
-		key:     "rpc-routes",
-		Host:    host,
-		Port:    port,
-		Solvers: map[string]et.Json{},
-	}
 }

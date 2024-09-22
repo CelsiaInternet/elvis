@@ -2,12 +2,13 @@ package ws
 
 import (
 	"net/http"
+	"os"
 	"sync"
 	"time"
 
+	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/logs"
-	m "github.com/cgalvisleon/elvis/message"
 	"github.com/cgalvisleon/elvis/strs"
 	"github.com/cgalvisleon/elvis/utility"
 	"github.com/gorilla/websocket"
@@ -20,15 +21,10 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-type HubParams struct {
-	Id   string
-	Name string
-}
-
 type Hub struct {
 	Id         string
 	Name       string
-	Params     *HubParams
+	Host       string
 	clients    []*Client
 	channels   []*Channel
 	register   chan *Client
@@ -43,16 +39,9 @@ type Hub struct {
 * @return *Hub
 **/
 func NewWs() *Hub {
-	id := utility.UUID()
-	name := "Websocket Hub"
-
 	result := &Hub{
-		Id:   utility.UUID(),
-		Name: name,
-		Params: &HubParams{
-			Id:   id,
-			Name: name,
-		},
+		Id:         utility.UUID(),
+		Name:       "Websocket Hub",
 		clients:    make([]*Client, 0),
 		channels:   make([]*Channel, 0),
 		register:   make(chan *Client),
@@ -68,19 +57,28 @@ func NewWs() *Hub {
 * Start the Websocket Hub
 **/
 func (h *Hub) Start() {
-	go h.start()
+	go h.started()
+}
+
+/**
+* Close
+**/
+func (h *Hub) Close() {
+	h.run = false
 }
 
 /**
 * Run
 **/
-func (h *Hub) start() {
+func (h *Hub) started() {
 	if h.run {
 		return
 	}
 
+	host, _ := os.Hostname()
+	h.Host = envar.EnvarStr(host, "WS_HOST")
 	h.run = true
-	logs.Log("Websocket", "Run websocket hub")
+	logs.Logf("Websocket", "Run server host:%s", host)
 
 	for {
 		select {
@@ -90,13 +88,6 @@ func (h *Hub) start() {
 			h.onDisconnect(client)
 		}
 	}
-}
-
-/**
-* Close
-**/
-func (h *Hub) Close() {
-	h.run = false
 }
 
 /**
@@ -128,7 +119,7 @@ func (h *Hub) onConnect(client *Client) {
 		"ok":      true,
 		"message": "Connected successfully",
 		"client":  client.From(),
-	}, m.TpConnect)
+	}, TpConnect)
 	msg.Channel = "ws/connect"
 
 	h.Mute(msg.Channel, msg, []string{client.Id}, h.from())
@@ -157,7 +148,7 @@ func (h *Hub) onDisconnect(client *Client) {
 		"ok":      true,
 		"message": "Client disconnected",
 		"client":  client.From(),
-	}, m.TpDisconnect)
+	}, TpDisconnect)
 	msg.Channel = "ws/disconnect"
 
 	h.Mute(msg.Channel, msg, []string{client.Id}, h.from())
@@ -238,9 +229,9 @@ func (h *Hub) listend(msg interface{}) {
 	}
 
 	switch m.Kind {
-	case TpAll:
+	case BroadcastAll:
 		h.Publish(m.To, m.Msg, m.Ignored, m.From)
-	case TpDirect:
+	case BroadcastDirect:
 		idx := slices.IndexFunc(h.clients, func(c *Client) bool { return c.Id == m.To })
 		if idx != -1 {
 			client := h.clients[idx]
@@ -316,14 +307,14 @@ func (h *Hub) subscribe(clientId string, channel string) (*Channel, error) {
 }
 
 /**
-* stack
+* queue
 * @param clientId string
 * @param channel string
 * @param queue string
 * @return *Channel
 * @return error
 **/
-func (h *Hub) stack(clientId string, channel, queue string) (*Channel, error) {
+func (h *Hub) queue(clientId string, channel, queue string) (*Channel, error) {
 	idx := slices.IndexFunc(h.clients, func(c *Client) bool { return c.Id == clientId })
 	if idx == -1 {
 		return nil, logs.Alertm(ERR_CLIENT_NOT_FOUND)
@@ -342,7 +333,7 @@ func (h *Hub) stack(clientId string, channel, queue string) (*Channel, error) {
 * @param name string
 **/
 func (h *Hub) SetName(name string) {
-	h.Params.Name = name
+	h.Name = name
 }
 
 /**
@@ -406,13 +397,13 @@ func (h *Hub) Subscribe(clientId string, channel string) error {
 }
 
 /**
-* Stack a client to hub channels
+* Queue a client to hub channels
 * @param clientId string
 * @param channel string
 * @return error
 **/
-func (h *Hub) Stack(clientId string, channel, queue string) error {
-	_, err := h.stack(clientId, channel, queue)
+func (h *Hub) Queue(clientId string, channel, queue string) error {
+	_, err := h.queue(clientId, channel, queue)
 	if err != nil {
 		return err
 	}
