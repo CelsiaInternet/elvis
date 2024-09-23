@@ -25,6 +25,22 @@ type Claim struct {
 }
 
 /**
+* ToJson
+* @return et.Json
+**/
+func (c *Claim) ToJson() et.Json {
+	return et.Json{
+		"id":       c.ID,
+		"app":      c.App,
+		"name":     c.Name,
+		"kind":     c.Kind,
+		"username": c.Username,
+		"device":   c.Device,
+		"duration": c.Duration,
+	}
+}
+
+/**
 * TokenKey
 * @param app string
 * @param device string
@@ -87,20 +103,20 @@ func DeleteToken(app, device, id string) error {
 }
 
 /**
-* DeleteTokeByStrng
-* @param tokenString string
+* DeleteTokeByToken
+* @param token string
 * @return error
 **/
-func DeleteTokeByStrng(tokenString string) error {
+func DeleteTokeByToken(token string) error {
 	secret := envar.GetStr("", "SECRET")
-	token, err := jwt.Parse(tokenString, func(*jwt.Token) (interface{}, error) {
+	jToken, err := jwt.Parse(token, func(*jwt.Token) (interface{}, error) {
 		return []byte(secret), nil
 	})
 	if err != nil {
 		return err
 	}
 
-	claim, ok := token.Claims.(jwt.MapClaims)
+	claim, ok := jToken.Claims.(jwt.MapClaims)
 	if !ok {
 		return nil
 	}
@@ -125,24 +141,24 @@ func DeleteTokeByStrng(tokenString string) error {
 
 /**
 * ParceToken
-* @param tokenString string
+* @param token string
 * @return *Claim
 * @return error
 **/
-func ParceToken(tokenString string) (*Claim, error) {
+func ParceToken(token string) (*Claim, error) {
 	secret := envar.GetStr("", "SECRET")
-	token, err := jwt.Parse(tokenString, func(*jwt.Token) (interface{}, error) {
+	jToken, err := jwt.Parse(token, func(*jwt.Token) (interface{}, error) {
 		return []byte(secret), nil
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	if !token.Valid {
+	if !jToken.Valid {
 		return nil, logs.Nerror(MSG_TOKEN_INVALID)
 	}
 
-	claim, ok := token.Claims.(jwt.MapClaims)
+	claim, ok := jToken.Claims.(jwt.MapClaims)
 	if !ok {
 		return nil, logs.Nerror(MSG_REQUIRED_INVALID)
 	}
@@ -197,12 +213,12 @@ func ParceToken(tokenString string) (*Claim, error) {
 
 /**
 * GetFromToken
-* @param tokenString string
+* @param token string
 * @return *Claim
 * @return error
 **/
-func GetFromToken(tokenString string) (*Claim, error) {
-	result, err := ParceToken(tokenString)
+func GetFromToken(token string) (*Claim, error) {
+	result, err := ParceToken(token)
 	if err != nil {
 		return nil, err
 	}
@@ -213,7 +229,7 @@ func GetFromToken(tokenString string) (*Claim, error) {
 		return nil, logs.Nerror(MSG_TOKEN_INVALID)
 	}
 
-	if c != tokenString {
+	if c != token {
 		return nil, logs.Nerror(MSG_TOKEN_INVALID)
 	}
 
