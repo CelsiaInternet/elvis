@@ -20,17 +20,21 @@ func DevelopToken() string {
 		return ""
 	}
 
-	production := envar.GetBool(false, "PRODUCTION")
-	if !production {
-		if token == "" {
-			token, err = claim.NewToken(device, device, device, "requests", "Default token", device, time.Hour*24*90)
-			if console.AlertE(err) != nil {
-				return ""
-			}
+	if token == "" {
+		token, err = claim.NewToken(device, device, device, "requests", "Default token", device, time.Hour*24*90)
+		if console.AlertE(err) != nil {
+			return ""
 		}
-
-		claim.SetToken(device, device, device, token)
 	}
 
-	return token
+	claim.SetToken(device, device, device, token)
+
+	production := envar.GetBool(false, "PRODUCTION")
+	if !production {
+		return token
+	}
+
+	console.Debug(token)
+
+	return ""
 }

@@ -125,7 +125,7 @@ func (h *Hub) onConnect(client *Client) {
 	h.Mute(msg.Channel, msg, []string{client.Id}, h.from())
 	client.sendMessage(msg)
 
-	logs.Logf("Websocket", MSG_CLIENT_CONNECT, client.Id, h.Id)
+	logs.Logf("Websocket", MSG_CLIENT_CONNECT, client.Id, client.Name, h.Id)
 }
 
 /**

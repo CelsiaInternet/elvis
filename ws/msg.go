@@ -1,7 +1,7 @@
 package ws
 
 const (
-	MSG_CLIENT_CONNECT          = "Client connected %s to Hub:%s"
+	MSG_CLIENT_CONNECT          = "Client connected id:%s name:%s to Hub:%s"
 	MSG_CLIENT_DISCONNECT       = "Client disconnected %s to Hub:%s"
 	ERR_SERVER_NOT_FOUND        = "Server not found"
 	ERR_CLIENT_NOT_FOUND        = "Client not found"
