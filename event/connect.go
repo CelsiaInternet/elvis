@@ -8,7 +8,7 @@ import (
 )
 
 func connect() (*Conn, error) {
-	host := envar.EnvarStr("", "NATS_HOST")
+	host := envar.GetStr("", "NATS_HOST")
 	if host == "" {
 		return nil, logs.Alertf(msg.ERR_ENV_REQUIRED, "NATS_HOST")
 	}

@@ -104,10 +104,10 @@ func InitData() error {
 	InitProfile("-1", "PROFILE.SUPORT", et.Json{})
 
 	// User Admin
-	ADMIN_COUNTRY := envar.EnvarStr("", "ADMIN_COUNTRY")
-	ADMIN_PHONE := envar.EnvarStr("", "ADMIN_PHONE")
-	ADMIN_NAME := envar.EnvarStr("", "ADMIN_NAME")
-	ADMIN_EMAIL := envar.EnvarStr("", "ADMIN_EMAIL")
+	ADMIN_COUNTRY := envar.GetStr("", "ADMIN_COUNTRY")
+	ADMIN_PHONE := envar.GetStr("", "ADMIN_PHONE")
+	ADMIN_NAME := envar.GetStr("", "ADMIN_NAME")
+	ADMIN_EMAIL := envar.GetStr("", "ADMIN_EMAIL")
 	_, err := UpSetAdmin(ADMIN_NAME, ADMIN_COUNTRY, ADMIN_PHONE, ADMIN_EMAIL)
 	if err != nil {
 		return err

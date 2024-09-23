@@ -20,9 +20,18 @@ func (h *Hub) ConnectHttp(w http.ResponseWriter, r *http.Request) (*Client, erro
 		return nil, err
 	}
 
+	clientId := r.URL.Query().Get("clientId")
+	name := r.URL.Query().Get("name")
+	if clientId == "" {
+		clientId = utility.UUID()
+	}
+	if name == "" {
+		name = "Anonimo"
+	}
+
 	ctx := r.Context()
-	clientId := middleware.ClientIDKey.String(ctx, utility.UUID())
-	name := middleware.NameKey.String(ctx, "Anonymous")
+	clientId = middleware.ClientIdKey.String(ctx, clientId)
+	name = middleware.NameKey.String(ctx, name)
 
 	return h.connect(socket, clientId, name)
 }

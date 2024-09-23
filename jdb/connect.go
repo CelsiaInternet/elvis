@@ -46,13 +46,13 @@ func (c *DB) Describe() et.Json {
 }
 
 func connect() (*DB, error) {
-	driver := envar.EnvarStr("", "DB_DRIVE")
-	host := envar.EnvarStr("", "DB_HOST")
-	port := envar.EnvarInt(5432, "DB_PORT")
-	dbname := envar.EnvarStr("", "DB_NAME")
-	user := envar.EnvarStr("", "DB_USER")
-	password := envar.EnvarStr("", "DB_PASSWORD")
-	application_name := envar.EnvarStr("elvis", "DB_APPLICATION_NAME")
+	driver := envar.GetStr("", "DB_DRIVE")
+	host := envar.GetStr("", "DB_HOST")
+	port := envar.GetInt(5432, "DB_PORT")
+	dbname := envar.GetStr("", "DB_NAME")
+	user := envar.GetStr("", "DB_USER")
+	password := envar.GetStr("", "DB_PASSWORD")
+	application_name := envar.GetStr("elvis", "DB_APPLICATION_NAME")
 
 	if driver == "" {
 		return nil, console.PanicF(msg.ERR_ENV_REQUIRED, "DB_DRIVE")

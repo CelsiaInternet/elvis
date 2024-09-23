@@ -415,7 +415,7 @@ func (m *Metrics) println() et.Json {
 	}
 	lg.CW(w, lg.NCyan, fmt.Sprintf(" Size: %v%s", m.ContentLength.Total, "KB"))
 	lg.CW(w, lg.NWhite, " in ")
-	limitLatency := time.Duration(envar.EnvarInt64(500, "LIMIT_LATENCY")) * time.Millisecond
+	limitLatency := time.Duration(envar.GetInt64(500, "LIMIT_LATENCY")) * time.Millisecond
 	if m.Latency < limitLatency {
 		lg.CW(w, lg.NGreen, "Latency:%s", m.Latency)
 	} else if m.Latency < 5*time.Second {

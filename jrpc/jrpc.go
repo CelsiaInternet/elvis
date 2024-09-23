@@ -66,7 +66,7 @@ func Load() {
 		host = "localhost"
 	}
 
-	port := envar.EnvarInt(4200, "RPC_PORT")
+	port := envar.GetInt(4200, "RPC_PORT")
 
 	conn = &Router{
 		key:     "rpc-routes",

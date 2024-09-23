@@ -16,13 +16,13 @@ type WsMessage struct {
 }
 
 type Client struct {
-	Created_at time.Time
+	Created_at time.Time `json:"created_at"`
 	hub        *Hub
-	Id         string
-	Name       string
-	Addr       string
+	Id         string `json:"id"`
+	Name       string `json:"name"`
+	Addr       string `json:"addr"`
 	socket     *websocket.Conn
-	Channels   []string
+	Channels   []string `json:"channels"`
 	outbound   chan []byte
 	closed     bool
 	allowed    bool
@@ -52,6 +52,19 @@ func newClient(hub *Hub, socket *websocket.Conn, id, name string) (*Client, bool
 }
 
 /**
+* Describe
+* @return et.Json
+**/
+func (c *Client) Describe() et.Json {
+	result, err := et.Object(c)
+	if err != nil {
+		return et.Json{}
+	}
+
+	return result
+}
+
+/**
 * read
 **/
 func (c *Client) read() {
@@ -76,16 +89,10 @@ func (c *Client) read() {
 * write
 **/
 func (c *Client) write() {
-	for {
-		select {
-		case message, ok := <-c.outbound:
-			if !ok {
-				c.socket.WriteMessage(websocket.CloseMessage, []byte{})
-				return
-			}
-			c.socket.WriteMessage(websocket.TextMessage, message)
-		}
+	for message := range c.outbound {
+		c.socket.WriteMessage(websocket.TextMessage, message)
 	}
+	c.socket.WriteMessage(websocket.CloseMessage, []byte{})
 }
 
 /**
@@ -195,11 +202,6 @@ func (c *Client) listen(message []byte) {
 		if err != nil {
 			response(false, err.Error())
 			return
-		}
-
-		id := data.ValStr("-1", "id")
-		if id != "-1" {
-			c.Id = id
 		}
 
 		name := data.ValStr("", "name")

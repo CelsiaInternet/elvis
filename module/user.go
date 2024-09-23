@@ -78,7 +78,7 @@ func DefineUsers(db *jdb.DB) error {
 		id := new.Key("_id")
 		fullName := new.Str("full_name")
 		email := new.Str("email")
-		APP := envar.EnvarStr("", "APP")
+		APP := envar.GetStr("", "APP")
 		if id == "USER.ADMIN" {
 			message := strs.Format(msg.MSG_ADMIN_WELCOME, fullName, APP)
 			event.Work("send/email", et.Json{

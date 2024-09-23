@@ -12,24 +12,25 @@ import (
 /**
 * DevelopToken
 **/
-func DevelopToken() {
-	production := envar.EnvarBool(false, "PRODUCTION")
-	if !production {
-		device := "DevelopToken"
-		key := claim.TokenKey(device, device, device)
-		token, err := cache.Get(key, "")
-		if err != nil {
-			return
-		}
+func DevelopToken() string {
+	device := "DevelopToken"
+	key := claim.TokenKey(device, device, device)
+	token, err := cache.Get(key, "")
+	if err != nil {
+		return ""
+	}
 
+	production := envar.GetBool(false, "PRODUCTION")
+	if !production {
 		if token == "" {
 			token, err = claim.NewToken(device, device, device, "requests", "Default token", device, time.Hour*24*90)
 			if console.AlertE(err) != nil {
-				return
+				return ""
 			}
 		}
 
 		claim.SetToken(device, device, device, token)
-		console.LogK(device, token)
 	}
+
+	return token
 }

@@ -24,7 +24,7 @@ func callRequests(tag string) Request {
 		Hour:    cache.More(strs.Format(`%s-%d`, tag, time.Now().Unix()/3600), 3600),
 		Minute:  cache.More(strs.Format(`%s-%d`, tag, time.Now().Unix()/60), 60),
 		Seccond: cache.More(strs.Format(`%s-%d`, tag, time.Now().Unix()/1), 1),
-		Limit:   envar.EnvarInt(400, "REQUESTS_LIMIT"),
+		Limit:   envar.GetInt(400, "REQUESTS_LIMIT"),
 	}
 }
 
@@ -37,7 +37,7 @@ func localRequests(tag string) Request {
 		Hour:    more(strs.Format(`%s-%d`, tag, time.Now().Unix()/3600), 3600),
 		Minute:  more(strs.Format(`%s-%d`, tag, time.Now().Unix()/60), 60),
 		Seccond: more(strs.Format(`%s-%d`, tag, time.Now().Unix()/1), 1),
-		Limit:   envar.EnvarInt(400, "REQUESTS_LIMIT"),
+		Limit:   envar.GetInt(400, "REQUESTS_LIMIT"),
 	}
 }
 

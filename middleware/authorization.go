@@ -27,8 +27,8 @@ func (c contextKey) String(ctx context.Context, def string) string {
 }
 
 const (
-	ServiceIDKey contextKey = "serviceId"
-	ClientIDKey  contextKey = "clientId"
+	ServiceIdKey contextKey = "serviceId"
+	ClientIdKey  contextKey = "clientId"
 	AppKey       contextKey = "app"
 	NameKey      contextKey = "name"
 	KindKey      contextKey = "kind"
@@ -96,8 +96,8 @@ func Authorization(next http.Handler) http.Handler {
 		}
 
 		serviceId := utility.UUID()
-		ctx = context.WithValue(ctx, ServiceIDKey, serviceId)
-		ctx = context.WithValue(ctx, ClientIDKey, c.ID)
+		ctx = context.WithValue(ctx, ServiceIdKey, serviceId)
+		ctx = context.WithValue(ctx, ClientIdKey, c.ID)
 		ctx = context.WithValue(ctx, AppKey, c.App)
 		ctx = context.WithValue(ctx, NameKey, c.Name)
 		ctx = context.WithValue(ctx, KindKey, c.Kind)

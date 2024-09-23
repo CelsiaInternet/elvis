@@ -39,9 +39,11 @@ type Hub struct {
 * @return *Hub
 **/
 func NewWs() *Hub {
+	name := envar.GetStr("Server", "RT_HUB_NAME")
+
 	result := &Hub{
 		Id:         utility.UUID(),
-		Name:       "Websocket Hub",
+		Name:       name,
 		clients:    make([]*Client, 0),
 		channels:   make([]*Channel, 0),
 		register:   make(chan *Client),
@@ -76,7 +78,7 @@ func (h *Hub) started() {
 	}
 
 	host, _ := os.Hostname()
-	h.Host = envar.EnvarStr(host, "WS_HOST")
+	h.Host = envar.GetStr(host, "WS_HOST")
 	h.run = true
 	logs.Logf("Websocket", "Run server host:%s", host)
 
@@ -112,13 +114,11 @@ func (h *Hub) onConnect(client *Client) {
 	h.clients = append(h.clients, client)
 	client.Addr = client.socket.RemoteAddr().String()
 
-	logs.Debug("Client clientId:", client.Id)
-	logs.Debug("Client clientName:", client.Name)
-
 	msg := NewMessage(h.from(), et.Json{
-		"ok":      true,
-		"message": "Connected successfully",
-		"client":  client.From(),
+		"ok":       true,
+		"message":  "Connected successfully",
+		"clientId": client.Id,
+		"name":     client.Name,
 	}, TpConnect)
 	msg.Channel = "ws/connect"
 
@@ -431,6 +431,22 @@ func (h *Hub) Unsubscribe(clientId string, channel string) error {
 	h.pruneChanner(ch)
 
 	return nil
+}
+
+/**
+* GetChannels of the hub
+* @return []*Channel
+**/
+func (h *Hub) GetChannels() []*Channel {
+	return h.channels
+}
+
+/**
+* GetChannels of the hub
+* @return []*Channel
+**/
+func (h *Hub) GetClients() []*Client {
+	return h.clients
 }
 
 /**

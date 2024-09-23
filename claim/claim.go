@@ -51,7 +51,7 @@ func TokenKey(app, device, id string) string {
 * @return err error
 **/
 func NewToken(id, app, name, kind, username, device string, duration time.Duration) (string, error) {
-	secret := envar.EnvarStr("1977", "SECRET")
+	secret := envar.GetStr("1977", "SECRET")
 	c := Claim{}
 	c.ID = id
 	c.App = app
@@ -92,7 +92,7 @@ func DeleteToken(app, device, id string) error {
 * @return error
 **/
 func DeleteTokeByStrng(tokenString string) error {
-	secret := envar.EnvarStr("", "SECRET")
+	secret := envar.GetStr("", "SECRET")
 	token, err := jwt.Parse(tokenString, func(*jwt.Token) (interface{}, error) {
 		return []byte(secret), nil
 	})
@@ -130,7 +130,7 @@ func DeleteTokeByStrng(tokenString string) error {
 * @return error
 **/
 func ParceToken(tokenString string) (*Claim, error) {
-	secret := envar.EnvarStr("", "SECRET")
+	secret := envar.GetStr("", "SECRET")
 	token, err := jwt.Parse(tokenString, func(*jwt.Token) (interface{}, error) {
 		return []byte(secret), nil
 	})

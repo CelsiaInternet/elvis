@@ -8,6 +8,14 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 )
 
+/**
+* MetaSet
+* @param string name
+* @param string _default
+* @param string description
+* @param string _var
+* @return string
+**/
 func MetaSet(name string, _default string, description, _var string) string {
 	for i, arg := range os.Args[1:] {
 		if arg == strs.Format("-%s", name) {
@@ -20,11 +28,27 @@ func MetaSet(name string, _default string, description, _var string) string {
 	return _default
 }
 
-func SetvarStr(name string, _default string, usage, _var string) string {
+/**
+* SetStr
+* @param string name
+* @param string _default
+* @param string usage
+* @param string _var
+* @return string
+**/
+func SetStr(name string, _default string, usage, _var string) string {
 	return MetaSet(name, _default, usage, _var)
 }
 
-func SetvarInt(name string, _default int, usage, _var string) int {
+/**
+* SetInt
+* @param string name
+* @param int _default
+* @param string usage
+* @param string _var
+* @return int
+**/
+func SetInt(name string, _default int, usage, _var string) int {
 	result := MetaSet(name, strconv.Itoa(_default), usage, _var)
 
 	val, err := strconv.Atoi(result)
@@ -35,7 +59,34 @@ func SetvarInt(name string, _default int, usage, _var string) int {
 	return val
 }
 
-func SetvarBool(name string, _default bool, usage, _var string) bool {
+/**
+* SetInt64
+* @param string name
+* @param int64 _default
+* @param string usage
+* @param string _var
+* @return int64
+**/
+func SetIn64(name string, _default int64, usage, _var string) int64 {
+	result := MetaSet(name, strconv.FormatInt(_default, 10), usage, _var)
+
+	val, err := strconv.ParseInt(result, 10, 64)
+	if err != nil {
+		return _default
+	}
+
+	return val
+}
+
+/**
+* SetBool
+* @param string name
+* @param bool _default
+* @param string usage
+* @param string _var
+* @return bool
+**/
+func SetBool(name string, _default bool, usage, _var string) bool {
 	result := MetaSet(name, strconv.FormatBool(_default), usage, _var)
 
 	val, err := strconv.ParseBool(result)
@@ -46,7 +97,13 @@ func SetvarBool(name string, _default bool, usage, _var string) bool {
 	return val
 }
 
-func EnvarStr(_default string, _var string) string {
+/**
+* GetStr
+* @param string _default
+* @param string _var
+* @return string
+**/
+func GetStr(_default string, _var string) string {
 	result := os.Getenv(_var)
 
 	if result == "" {
@@ -56,8 +113,14 @@ func EnvarStr(_default string, _var string) string {
 	return result
 }
 
-func EnvarInt(_default int, _var string) int {
-	result := EnvarStr(strconv.Itoa(_default), _var)
+/**
+* GetInt
+* @param int _default
+* @param string _var
+* @return int
+**/
+func GetInt(_default int, _var string) int {
+	result := GetStr(strconv.Itoa(_default), _var)
 
 	val, err := strconv.Atoi(result)
 	if err != nil {
@@ -67,8 +130,14 @@ func EnvarInt(_default int, _var string) int {
 	return val
 }
 
-func EnvarInt64(_default int64, _var string) int64 {
-	result := EnvarStr(strconv.FormatInt(_default, 10), _var)
+/**
+* GetInt64
+* @param int64 _default
+* @param string _var
+* @return int64
+**/
+func GetInt64(_default int64, _var string) int64 {
+	result := GetStr(strconv.FormatInt(_default, 10), _var)
 
 	val, err := strconv.ParseInt(result, 10, 64)
 	if err != nil {
@@ -78,8 +147,14 @@ func EnvarInt64(_default int64, _var string) int64 {
 	return val
 }
 
-func EnvarBool(_default bool, _var string) bool {
-	result := EnvarStr(strconv.FormatBool(_default), _var)
+/**
+* GetBool
+* @param bool _default
+* @param string _var
+* @return bool
+**/
+func GetBool(_default bool, _var string) bool {
+	result := GetStr(strconv.FormatBool(_default), _var)
 
 	val, err := strconv.ParseBool(result)
 	if err != nil {

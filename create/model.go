@@ -41,13 +41,13 @@ import (
 )
 
 func main() {
-	envar.SetvarInt("port", 3000, "Port server", "PORT")
-	envar.SetvarInt("rpc", 4200, "Port rpc server", "RPC_PORT")
-	envar.SetvarStr("dbhost", "localhost", "Database host", "DB_HOST")
-	envar.SetvarInt("dbport", 5432, "Database port", "DB_PORT")
-	envar.SetvarStr("dbname", "", "Database name", "DB_NAME")
-	envar.SetvarStr("dbuser", "", "Database user", "DB_USER")
-	envar.SetvarStr("dbpass", "", "Database password", "DB_PASSWORD")
+	envar.SetInt("port", 3000, "Port server", "PORT")
+	envar.SetInt("rpc", 4200, "Port rpc server", "RPC_PORT")
+	envar.SetStr("dbhost", "localhost", "Database host", "DB_HOST")
+	envar.SetInt("dbport", 5432, "Database port", "DB_PORT")
+	envar.SetStr("dbname", "", "Database name", "DB_NAME")
+	envar.SetStr("dbuser", "", "Database user", "DB_USER")
+	envar.SetStr("dbpass", "", "Database password", "DB_PASSWORD")
 
 	serv, err := serv.New()
 	if err != nil {
@@ -86,7 +86,7 @@ type Server struct {
 func New() (*Server, error) {	
 	server := Server{}
 
-	port := envar.EnvarInt(3300, "PORT")
+	port := envar.GetInt(3300, "PORT")
 	if port != 0 {
 		r := chi.NewRouter()
 
@@ -345,10 +345,10 @@ func StartRpcServer() {
 }
 
 func (c *Services) Version(require et.Json, response *et.Item) error {
-	company := envar.EnvarStr("", "COMPANY")
-	web := envar.EnvarStr("", "WEB")
-	version := envar.EnvarStr("", "VERSION")
-	help := envar.EnvarStr("", "RPC_HELP")
+	company := envar.GetStr("", "COMPANY")
+	web := envar.GetStr("", "WEB")
+	version := envar.GetStr("", "VERSION")
+	help := envar.GetStr("", "RPC_HELP")
 	response.Ok = true
 	response.Result = et.Json{
 		"methos":  "RPC",
@@ -401,9 +401,9 @@ type Controller struct {
 }
 
 func (c *Controller) Version(ctx context.Context) (et.Json, error) {
-	company := envar.EnvarStr("", "COMPANY")
-	web := envar.EnvarStr("", "WEB")
-	version := envar.EnvarStr("", "VERSION")
+	company := envar.GetStr("", "COMPANY")
+	web := envar.GetStr("", "WEB")
+	version := envar.GetStr("", "VERSION")
   service := et.Json{
 		"version": version,
 		"service": PackageName,
@@ -442,9 +442,9 @@ type Controller struct {
 }
 
 func (c *Controller) Version(ctx context.Context) (et.Json, error) {
-	company := envar.EnvarStr("", "COMPANY")
-	web := envar.EnvarStr("", "WEB")
-	version := envar.EnvarStr("", "VERSION")
+	company := envar.GetStr("", "COMPANY")
+	web := envar.GetStr("", "WEB")
+	version := envar.GetStr("", "VERSION")
   service := et.Json{
 		"version": version,
 		"service": PackageName,
@@ -484,8 +484,8 @@ import (
 
 var PackageName = "$1"
 var PackageTitle = "$1"
-var PackagePath = envar.EnvarStr("/api/$1", "PATH_URL")
-var PackageVersion = envar.EnvarStr("0.0.1", "VERSION")
+var PackagePath = envar.GetStr("/api/$1", "PATH_URL")
+var PackageVersion = envar.GetStr("0.0.1", "VERSION")
 var HostName, _ = os.Hostname()
 
 type Router struct {
@@ -494,7 +494,7 @@ type Router struct {
 
 func (rt *Router) Routes() http.Handler {
 	defaultHost := strs.Format("http://%s", HostName)
-	var host = strs.Format("%s:%d", envar.EnvarStr(defaultHost, "HOST"), envar.EnvarInt(3300, "PORT"))
+	var host = strs.Format("%s:%d", envar.GetStr(defaultHost, "HOST"), envar.GetInt(3300, "PORT"))
 
 	r := chi.NewRouter()
 
@@ -542,8 +542,8 @@ import (
 
 var PackageName = "$1"
 var PackageTitle = "$1"
-var PackagePath = envar.EnvarStr("/api/$1", "PATH_URL")
-var PackageVersion = envar.EnvarStr("0.0.1", "VERSION")
+var PackagePath = envar.GetStr("/api/$1", "PATH_URL")
+var PackageVersion = envar.GetStr("0.0.1", "VERSION")
 var HostName, _ = os.Hostname()
 
 type Router struct {
@@ -551,7 +551,7 @@ type Router struct {
 }
 
 func (rt *Router) Routes() http.Handler {
-	var host = strs.Format("%s:%d", envar.EnvarStr("http://localhost", "HOST"), envar.EnvarInt(3300, "PORT"))
+	var host = strs.Format("%s:%d", envar.GetStr("http://localhost", "HOST"), envar.GetInt(3300, "PORT"))
 
 	r := chi.NewRouter()
 

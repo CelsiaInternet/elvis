@@ -14,7 +14,7 @@ import (
 )
 
 func EncryptMessage(message string) (string, error) {
-	secret := envar.EnvarStr("", "SECRET")
+	secret := envar.GetStr("", "SECRET")
 	key := []byte(secret)
 	byteMsg := []byte(message)
 	block, err := aes.NewCipher(key)
@@ -35,7 +35,7 @@ func EncryptMessage(message string) (string, error) {
 }
 
 func DecryptMessage(message string) (string, error) {
-	secret := envar.EnvarStr("", "SECRET")
+	secret := envar.GetStr("", "SECRET")
 	key := []byte(secret)
 	cipherText, err := base64.StdEncoding.DecodeString(message)
 	if err != nil {

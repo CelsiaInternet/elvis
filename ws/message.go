@@ -43,6 +43,27 @@ func (s TpMessage) String() string {
 	}
 }
 
+func ToTpMessage(s string) TpMessage {
+	switch s {
+	case "Ping":
+		return TpPing
+	case "SetFrom":
+		return TpSetFrom
+	case "Subscribe":
+		return TpSubscribe
+	case "Unsubscribe":
+		return TpUnsubscribe
+	case "Queue":
+		return TpQueue
+	case "Publish":
+		return TpPublish
+	case "Direct":
+		return TpDirect
+	default:
+		return -1
+	}
+}
+
 type Message struct {
 	Created_at time.Time   `json:"created_at"`
 	Id         string      `json:"id"`

@@ -13,12 +13,12 @@ import (
 )
 
 func Send(ctx context.Context, from string, to string, subject string, html string) (bool, error) {
-	port := envar.EnvarInt(4200, "EMAIL_PORT")
+	port := envar.GetInt(4200, "EMAIL_PORT")
 	server := mail.NewSMTPClient()
-	server.Host = envar.EnvarStr("", "EMAIL_HOST")
+	server.Host = envar.GetStr("", "EMAIL_HOST")
 	server.Port = port
-	server.Username = envar.EnvarStr("", "EMAIL")
-	server.Password = envar.EnvarStr("", "EMAIL_PASSWORD")
+	server.Username = envar.GetStr("", "EMAIL")
+	server.Password = envar.GetStr("", "EMAIL_PASSWORD")
 	server.Encryption = mail.EncryptionTLS
 
 	smtpClient, err := server.Connect()
@@ -44,9 +44,9 @@ func Send(ctx context.Context, from string, to string, subject string, html stri
 }
 
 func SendVerify(ctx context.Context, to string, subject string, title string, email string, code string) (bool, error) {
-	company := envar.EnvarStr("", "COMPANY")
-	fromEmail := envar.EnvarStr("", "EMAIL")
-	project := envar.EnvarStr("", "PROJECT")
+	company := envar.GetStr("", "COMPANY")
+	fromEmail := envar.GetStr("", "EMAIL")
+	project := envar.GetStr("", "PROJECT")
 	from := strs.Format("%s account team <%s>", strs.Titlecase(project), fromEmail)
 
 	css, err := os.ReadFile("./assets/template/style.txt")
@@ -64,9 +64,9 @@ func SendVerify(ctx context.Context, to string, subject string, title string, em
 }
 
 func SendAlert(ctx context.Context, to string, subject string, title string, subtitle string, message string, button string, href string, thanks string) (bool, error) {
-	company := envar.EnvarStr("", "COMPANY")
-	fromEmail := envar.EnvarStr("", "EMAIL")
-	project := envar.EnvarStr("", "PROJECT")
+	company := envar.GetStr("", "COMPANY")
+	fromEmail := envar.GetStr("", "EMAIL")
+	project := envar.GetStr("", "PROJECT")
 	from := strs.Format("%s account team <%s>", strs.Titlecase(project), fromEmail)
 
 	css, err := os.ReadFile("./assets/template/style.txt")
@@ -84,9 +84,9 @@ func SendAlert(ctx context.Context, to string, subject string, title string, sub
 }
 
 func SendAction(ctx context.Context, to string, subject string, title string, message string, button string, href string) (bool, error) {
-	company := envar.EnvarStr("", "COMPANY")
-	fromEmail := envar.EnvarStr("", "EMAIL")
-	project := envar.EnvarStr("", "PROJECT")
+	company := envar.GetStr("", "COMPANY")
+	fromEmail := envar.GetStr("", "EMAIL")
+	project := envar.GetStr("", "PROJECT")
 	from := strs.Format("%s account team <%s>", strs.Titlecase(project), fromEmail)
 
 	css, err := os.ReadFile("./assets/template/style.txt")

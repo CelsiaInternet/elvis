@@ -11,9 +11,9 @@ import (
 
 func connect() (*Conn, error) {
 	ctx := context.TODO()
-	host := envar.EnvarStr("", "MONGO_HOST")
-	password := envar.EnvarStr("", "MONGO_PASSWORD")
-	dbname := envar.EnvarStr("data", "MONGO_DB")
+	host := envar.GetStr("", "MONGO_HOST")
+	password := envar.GetStr("", "MONGO_PASSWORD")
+	dbname := envar.GetStr("data", "MONGO_DB")
 
 	if host == "" {
 		return nil, Alertf(msg.ERR_ENV_REQUIRED, "MONGO_HOST")

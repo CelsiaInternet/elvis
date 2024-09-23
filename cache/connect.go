@@ -10,9 +10,9 @@ import (
 )
 
 func connect() (*Conn, error) {
-	host := envar.EnvarStr("", "REDIS_HOST")
-	password := envar.EnvarStr("", "REDIS_PASSWORD")
-	dbname := envar.EnvarInt(0, "REDIS_DB")
+	host := envar.GetStr("", "REDIS_HOST")
+	password := envar.GetStr("", "REDIS_PASSWORD")
+	dbname := envar.GetInt(0, "REDIS_DB")
 
 	if host == "" {
 		return nil, logs.Alertf(msg.ERR_ENV_REQUIRED, "REDIS_HOST")

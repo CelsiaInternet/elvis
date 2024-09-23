@@ -33,8 +33,6 @@ func InitCore(db *DB) error {
 
 	makedCore = true
 
-	DevelopToken()
-
 	console.LogK("CORE", "Init core")
 
 	return nil

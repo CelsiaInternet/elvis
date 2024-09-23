@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/logs"
 	"github.com/cgalvisleon/elvis/strs"
 	"golang.org/x/exp/slices"
@@ -10,9 +11,9 @@ import (
 * Channel
 **/
 type Channel struct {
-	Name        string
-	Group       map[string]int
-	Subscribers []*Client
+	Name        string         `json:"name"`
+	Group       map[string]int `json:"group"`
+	Subscribers []*Client      `json:"subscribers"`
 }
 
 /**
@@ -25,6 +26,19 @@ func newChannel(name string) *Channel {
 		Name:        strs.Lowcase(name),
 		Group:       map[string]int{},
 		Subscribers: []*Client{},
+	}
+
+	return result
+}
+
+/**
+* Describe return the channel name
+* @return et.Json
+**/
+func (ch *Channel) Describe() et.Json {
+	result, err := et.Object(ch)
+	if err != nil {
+		logs.Error(err)
 	}
 
 	return result
