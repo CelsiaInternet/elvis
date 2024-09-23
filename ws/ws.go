@@ -78,7 +78,7 @@ func (h *Hub) started() {
 	}
 
 	host, _ := os.Hostname()
-	h.Host = envar.GetStr(host, "WS_HOST")
+	h.Host = envar.EnvarStr(host, "WS_HOST")
 	h.run = true
 	logs.Logf("Websocket", "Run server host:%s", host)
 
