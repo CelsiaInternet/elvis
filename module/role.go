@@ -55,7 +55,7 @@ func GetRoleById(projectId, moduleId, userId string) (et.Item, error) {
 		First()
 }
 
-func GetUserRoleByIndex(idx int) (et.Item, error) {
+func GetUserRoleByIndex(idx int64) (et.Item, error) {
 	sql := `
 	SELECT
 	D._ID AS PROJECT_ID,
@@ -180,14 +180,12 @@ func CheckRole(projectId, moduleId, profileTp, userId string, chk bool) (et.Item
 
 		now := utility.Now()
 		if current.Ok {
-			index := current.Index()
-			sql := `
-			UPDATE module.ROLES SET
-			DATE_UPDATE=$3,
-			PROFILE_TP=$2
-			WHERE INDEX=$1;`
-
-			item, err := Roles.Command(sql, index, profileTp, now)
+			index := current.Index64()
+			item, err := Roles.Update(et.Json{
+				"date_update": now,
+				"profile_tp":  profileTp,
+			}).Where(Roles.Column("index").Eq(index)).
+				CommandOne()
 			if err != nil {
 				return et.Item{}, err
 			}
@@ -206,14 +204,16 @@ func CheckRole(projectId, moduleId, profileTp, userId string, chk bool) (et.Item
 			}, nil
 		}
 
-		index := jdb.NextSerie(Roles.Db(), "module.ROLES")
-
-		sql := `
-		INSERT INTO module.ROLES(DATE_MAKE, DATE_UPDATE, PROJECT_ID, MODULE_ID, USER_ID, PROFILE_TP, INDEX)
-		VALUES($1, $1, $2, $3, $4, $5, $6)
-		RETURNING INDEX;`
-
-		item, err := Roles.Command(sql, now, projectId, moduleId, userId, profileTp, index)
+		index := Roles.NextSerie("module.ROLES")
+		item, err := Roles.Insert(et.Json{
+			"date_make":   now,
+			"date_update": now,
+			"project_id":  projectId,
+			"module_id":   moduleId,
+			"user_id":     userId,
+			"profile_tp":  profileTp,
+			"index":       index,
+		}).CommandOne()
 		if err != nil {
 			return et.Item{}, err
 		}

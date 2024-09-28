@@ -198,7 +198,8 @@ func (c *Model) Init() error {
 		return nil
 	}
 
-	_, err = c.db.Command(c.Define)
+	id := strs.Format(`definemodel-%s`, c.Low())
+	_, err = c.db.Command(jdb.CommandDefine, id, c.Define)
 	if err != nil {
 		return err
 	}
@@ -250,6 +251,15 @@ func (c *Model) Details(name, description string, _default any, details Details)
 **/
 func (c *Model) NexCode(tag, prefix string) string {
 	return jdb.NextCode(c.db, tag, prefix)
+}
+
+/**
+* NextSerie
+* @param tag string
+* @return int64
+**/
+func (c *Model) NextSerie(tag string) int64 {
+	return jdb.NextSerie(c.db, tag)
 }
 
 /**
@@ -510,6 +520,6 @@ func (c *Model) Source(sourceField, sql string, args ...any) (et.Items, error) {
 	return c.db.Source(sourceField, sql, args...)
 }
 
-func (c *Model) Command(sql string, args ...any) (et.Item, error) {
-	return c.db.Command(sql, args...)
+func (c *Model) Command(opt, id, sql string, args ...any) (et.Item, error) {
+	return c.db.Command(opt, id, sql, args...)
 }

@@ -5,7 +5,7 @@ import (
 )
 
 func defineRecords(db *DB) error {
-	exist, err := ExistTable(db, "core", "REDORDS")
+	exist, err := ExistTable(db, "core", "RECORDS")
 	if err != nil {
 		return console.Panic(err)
 	}
@@ -19,7 +19,7 @@ func defineRecords(db *DB) error {
 	CREATE EXTENSION IF NOT EXISTS pgcrypto;
 	CREATE SCHEMA IF NOT EXISTS core;
 
-  CREATE TABLE IF NOT EXISTS core.REDORDS(
+  CREATE TABLE IF NOT EXISTS core.RECORDS(
     DATE_MAKE TIMESTAMP DEFAULT NOW(),
 		DATE_UPDATE TIMESTAMP DEFAULT NOW(),
     TABLE_SCHEMA VARCHAR(80) DEFAULT '',
@@ -29,13 +29,14 @@ func defineRecords(db *DB) error {
     INDEX SERIAL,
     PRIMARY KEY (TABLE_SCHEMA, TABLE_NAME, _IDT)
   );    
-  CREATE INDEX IF NOT EXISTS REDORDS_TABLE_SCHEMA_IDX ON core.REDORDS(TABLE_SCHEMA);
-  CREATE INDEX IF NOT EXISTS REDORDS_TABLE_NAME_IDX ON core.REDORDS(TABLE_NAME);
-	CREATE INDEX IF NOT EXISTS REDORDS_OPTION_IDX ON core.REDORDS(OPTION);
-  CREATE INDEX IF NOT EXISTS REDORDS__IDT_IDX ON core.REDORDS(_IDT);  
-	CREATE INDEX IF NOT EXISTS REDORDS_INDEX_IDX ON core.REDORDS(INDEX);`
+  CREATE INDEX IF NOT EXISTS RECORDS_TABLE_SCHEMA_IDX ON core.RECORDS(TABLE_SCHEMA);
+  CREATE INDEX IF NOT EXISTS RECORDS_TABLE_NAME_IDX ON core.RECORDS(TABLE_NAME);
+	CREATE INDEX IF NOT EXISTS RECORDS_OPTION_IDX ON core.RECORDS(OPTION);
+  CREATE INDEX IF NOT EXISTS RECORDS__IDT_IDX ON core.RECORDS(_IDT);  
+	CREATE INDEX IF NOT EXISTS RECORDS_INDEX_IDX ON core.RECORDS(INDEX);`
 
-	_, err = db.Command(sql)
+	id := "define-records"
+	_, err = db.Command(CommandDefine, id, sql)
 	if err != nil {
 		return console.Panic(err)
 	}
@@ -45,7 +46,7 @@ func defineRecords(db *DB) error {
 
 func defineRecordsFunction(db *DB) error {
 	sql := `
-	CREATE OR REPLACE FUNCTION core.REDORDS_BEFORE_INSERT()
+	CREATE OR REPLACE FUNCTION core.RECORDS_BEFORE_INSERT()
   RETURNS
     TRIGGER AS $$  
   BEGIN
@@ -66,7 +67,7 @@ func defineRecordsFunction(db *DB) error {
   END;
   $$ LANGUAGE plpgsql;
 
-	CREATE OR REPLACE FUNCTION core.REDORDS_BEFORE_UPDATE()
+	CREATE OR REPLACE FUNCTION core.RECORDS_BEFORE_UPDATE()
   RETURNS
     TRIGGER AS $$  
   BEGIN    
@@ -83,7 +84,7 @@ func defineRecordsFunction(db *DB) error {
   END;
   $$ LANGUAGE plpgsql;
 
-  CREATE OR REPLACE FUNCTION core.REDORDS_BEFORE_DELETE()
+  CREATE OR REPLACE FUNCTION core.RECORDS_BEFORE_DELETE()
   RETURNS
     TRIGGER AS $$  
   BEGIN
@@ -100,11 +101,11 @@ func defineRecordsFunction(db *DB) error {
   END;
   $$ LANGUAGE plpgsql;
 	
-	CREATE OR REPLACE FUNCTION core.REDORDS_AFTER_INSERT()
+	CREATE OR REPLACE FUNCTION core.RECORDS_AFTER_INSERT()
   RETURNS
     TRIGGER AS $$  
   BEGIN
-		INSERT INTO core.REDORDS(TABLE_SCHEMA, TABLE_NAME, OPTION, _IDT)
+		INSERT INTO core.RECORDS(TABLE_SCHEMA, TABLE_NAME, OPTION, _IDT)
 		VALUES (TG_TABLE_SCHEMA, TG_TABLE_NAME, TG_OP, NEW._IDT);
 
 		PERFORM pg_notify(
@@ -120,11 +121,11 @@ func defineRecordsFunction(db *DB) error {
   END;
   $$ LANGUAGE plpgsql;
 
-	CREATE OR REPLACE FUNCTION core.REDORDS_AFTER_UPDATE()
+	CREATE OR REPLACE FUNCTION core.RECORDS_AFTER_UPDATE()
   RETURNS
     TRIGGER AS $$  
   BEGIN
-    UPDATE core.REDORDS SET
+    UPDATE core.RECORDS SET
 		DATE_UPDATE=NOW(),
 		OPTION=TG_OP
 		WHERE _IDT=NEW._IDT;
@@ -142,14 +143,18 @@ func defineRecordsFunction(db *DB) error {
   END;
   $$ LANGUAGE plpgsql;
 
-  CREATE OR REPLACE FUNCTION core.REDORDS_AFTER_DELETE()
+  CREATE OR REPLACE FUNCTION core.RECORDS_AFTER_DELETE()
   RETURNS
     TRIGGER AS $$  
   BEGIN
-    DELETE FROM core.REDORDS
+    DELETE FROM core.RECORDS
     WHERE TABLE_SCHEMA = TG_TABLE_SCHEMA
     AND TABLE_NAME = TG_TABLE_NAME
     AND _IDT = OLD._IDT;
+
+		DELETE FROM core.COMMANDS
+    WHERE OPTION = 'UPDATE'
+    AND _ID = OLD._IDT;
 
 		PERFORM pg_notify(
 		'after',
@@ -164,7 +169,8 @@ func defineRecordsFunction(db *DB) error {
   END;
   $$ LANGUAGE plpgsql;`
 
-	_, err := db.Command(sql)
+	id := "define-records-function"
+	_, err := db.Command(CommandDefine, id, sql)
 	if err != nil {
 		return console.Panic(err)
 	}

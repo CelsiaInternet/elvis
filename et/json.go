@@ -348,6 +348,10 @@ func (s Json) Index() int {
 	return s.ValInt(-1, "index")
 }
 
+func (s Json) Index64() int64 {
+	return s.ValInt64(-1, "index")
+}
+
 func (s Json) Key(atribs ...string) string {
 	return s.ValStr("-1", atribs...)
 }

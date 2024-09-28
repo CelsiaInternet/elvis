@@ -26,7 +26,8 @@ func defineSeries(db *DB) error {
 		PRIMARY KEY(SERIE)
 	);`
 
-	_, err = db.Command(sql)
+	id := "define-series"
+	_, err = db.Command(CommandDefine, id, sql)
 	if err != nil {
 		return console.Panic(err)
 	}
@@ -80,7 +81,8 @@ func defineSeriesFunction(db *DB) error {
 	END;
 	$$ LANGUAGE plpgsql;`
 
-	_, err := db.Command(sql)
+	id := "define-series-function"
+	_, err := db.Command(CommandDefine, id, sql)
 	if err != nil {
 		return console.Panic(err)
 	}
@@ -88,14 +90,32 @@ func defineSeriesFunction(db *DB) error {
 	return nil
 }
 
-func NextSerie(db *DB, tag string) int {
+func NextSerie(db *DB, tag string) int64 {
 	if !db.UseCore {
 		return 0
 	}
 
 	sql := `SELECT core.nextserie($1) AS SERIE;`
 
-	item, err := db.Command(sql, tag)
+	if db.dm != nil {
+		rows, err := db.dm.Query(sql, tag)
+		if err != nil {
+			console.Error(err)
+			return 0
+		}
+		defer rows.Close()
+
+		item := rowsItem(rows)
+		if !item.Ok {
+			return 0
+		}
+
+		result := item.Int64("serie")
+
+		return result
+	}
+
+	item, err := db.QueryOne(sql, tag)
 	if err != nil {
 		console.Error(err)
 		return 0
@@ -104,7 +124,7 @@ func NextSerie(db *DB, tag string) int {
 		return 0
 	}
 
-	result := item.Int("serie")
+	result := item.Int64("serie")
 
 	return result
 }
@@ -122,7 +142,7 @@ func NextCode(db *DB, tag, prefix string) string {
 func SetSerie(db *DB, tag string, val int) (int, error) {
 	sql := `SELECT core.setserie($1, $2);`
 
-	_, err := db.Command(sql, tag, val)
+	_, err := db.QueryOne(sql, tag, val)
 	if err != nil {
 		return 0, err
 	}
@@ -133,7 +153,7 @@ func SetSerie(db *DB, tag string, val int) (int, error) {
 func LastSerie(db *DB, tag string) int {
 	sql := `SELECT core.currserie($1) AS SERIE;`
 
-	item, err := db.Command(sql, tag)
+	item, err := db.QueryOne(sql, tag)
 	if err != nil {
 		return 0
 	}

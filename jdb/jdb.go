@@ -1,6 +1,11 @@
 package jdb
 
-// var conn *DB
+const (
+	CommandDefine = "DEFINE"
+	CommandInsert = "INSERT"
+	CommandUpdate = "UPDATE"
+	CommandDelete = "DELETE"
+)
 
 /**
 * Load

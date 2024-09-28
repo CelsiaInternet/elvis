@@ -23,7 +23,6 @@ type DB struct {
 	UseCore     bool
 	db          *sql.DB
 	dm          *sql.DB
-	lastcomand  int64
 }
 
 func (c *DB) Close() error {

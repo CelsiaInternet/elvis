@@ -6,7 +6,6 @@ import (
 
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/et"
-	"github.com/cgalvisleon/elvis/logs"
 	"github.com/cgalvisleon/elvis/msg"
 	"github.com/cgalvisleon/elvis/strs"
 )
@@ -84,12 +83,12 @@ func query(db *DB, sql string, args ...any) (*sql.Rows, error) {
 	}
 
 	if !isSelect(sql) {
-		return command(db, sql, args...)
+		return nil, console.Alert("Query is not a SELECT statement")
 	}
 
 	rows, err := db.db.Query(sql, args...)
 	if err != nil {
-		return nil, console.ErrorF(msg.ERR_SQL, err.Error(), sql)
+		return nil, console.AlertF(msg.ERR_SQL, err.Error(), sql)
 	}
 
 	return rows, nil
@@ -98,12 +97,13 @@ func query(db *DB, sql string, args ...any) (*sql.Rows, error) {
 /**
 * command
 * @param db *DB
+* @param id string
 * @param sql string
 * @param args ...any
 * @return *sql.Rows
 * @return error
 **/
-func command(db *DB, sql string, args ...any) (*sql.Rows, error) {
+func command(db *DB, opt, id, sql string, args ...any) (*sql.Rows, error) {
 	if db == nil {
 		return nil, console.AlertF(msg.ERR_COMM)
 	}
@@ -114,10 +114,7 @@ func command(db *DB, sql string, args ...any) (*sql.Rows, error) {
 		return nil, console.ErrorF(msg.ERR_SQL, err.Error(), sql)
 	}
 
-	err = db.SetCommand(query)
-	if err != nil {
-		return nil, logs.Alert(err)
-	}
+	go db.SetCommand(opt, id, query)
 
 	return rows, nil
 }
@@ -130,12 +127,12 @@ func command(db *DB, sql string, args ...any) (*sql.Rows, error) {
 * @return et.Items
 * @return error
 **/
-func (d *DB) Command(sql string, args ...any) (et.Item, error) {
+func (d *DB) Command(opt, id, sql string, args ...any) (et.Item, error) {
 	if d.db == nil {
 		return et.Item{}, console.AlertF(msg.ERR_COMM)
 	}
 
-	rows, err := command(d, sql, args...)
+	rows, err := command(d, opt, id, sql, args...)
 	if err != nil {
 		return et.Item{}, err
 	}

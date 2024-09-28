@@ -393,12 +393,9 @@ func DeleteToken(id string) (et.Item, error) {
 		return et.Item{}, nil
 	}
 
-	sql := `
-  DELETE FROM module.TOKENS
-  WHERE _ID=$1
-  RETURNING *;`
-
-	item, err := Tokens.Command(sql, id)
+	item, err := Tokens.Delete().
+		Where(Tokens.Col("_id").Eq(id)).
+		CommandOne()
 	if err != nil {
 		return et.Item{}, err
 	}

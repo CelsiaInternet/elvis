@@ -11,8 +11,8 @@ import (
 **/
 func (c *Model) Consolidate(linq *Linq) *Linq {
 	var col *Column
-	var source et.Json = et.Json{}
-	var new et.Json = et.Json{}
+	var source = et.Json{}
+	var new = et.Json{}
 
 	setValue := func(key string, val interface{}) {
 		new.Set(key, val)
@@ -106,6 +106,9 @@ func (c *Model) Changue(current et.Json, linq *Linq) *Linq {
 func (c *Linq) PrepareInsert() (et.Items, error) {
 	model := c.from[0].model
 	model.Consolidate(c)
+	c.idT = utility.UUID()
+	c.new.Set(IdTFiled, c.idT)
+
 	for _, validate := range c.validates {
 		if err := validate.Col.Valid(validate.Value); err != nil {
 			return et.Items{}, err

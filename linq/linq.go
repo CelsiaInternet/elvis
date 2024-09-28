@@ -108,6 +108,7 @@ type Linq struct {
 	change    bool
 	debug     int
 	sql       string
+	idT       string
 }
 
 /**
@@ -439,12 +440,12 @@ func (c *Linq) queryCount() int {
 	return result.Int("count")
 }
 
-func (c *Linq) command() (et.Item, error) {
+func (c *Linq) command(opt, id string) (et.Item, error) {
 	if c.debug == 1 {
 		console.Log(c.sql)
 	}
 
-	result, err := c.db.Command(c.sql)
+	result, err := c.db.Command(opt, id, c.sql)
 	if err != nil {
 		return et.Item{}, err
 	}

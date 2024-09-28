@@ -120,6 +120,10 @@ func (it *Item) Index() int {
 	return it.Result.Index()
 }
 
+func (it *Item) Index64() int64 {
+	return it.Result.Index64()
+}
+
 func (it *Item) Key(atribs ...string) string {
 	return it.Result.Key(atribs...)
 }

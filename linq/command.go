@@ -2,6 +2,7 @@ package linq
 
 import (
 	"github.com/cgalvisleon/elvis/et"
+	"github.com/cgalvisleon/elvis/jdb"
 )
 
 func (c *Linq) Debug() *Linq {
@@ -208,7 +209,7 @@ func (c *Linq) insert() (et.Item, error) {
 
 	c.SqlInsert()
 
-	item, err := c.command()
+	item, err := c.command(jdb.CommandInsert, c.idT)
 	if err != nil {
 		return et.Item{}, err
 	}
@@ -233,6 +234,7 @@ func (c *Linq) insert() (et.Item, error) {
 
 func (c *Linq) update(current et.Json) (et.Item, error) {
 	model := c.from[0].model
+	c.idT = current.ValStr("-1", IdTFiled)
 
 	for _, trigger := range model.BeforeUpdate {
 		err := trigger(model, &current, c.new, c.data)
@@ -243,7 +245,7 @@ func (c *Linq) update(current et.Json) (et.Item, error) {
 
 	c.SqlUpdate()
 
-	item, err := c.command()
+	item, err := c.command(jdb.CommandUpdate, c.idT)
 	if err != nil {
 		return et.Item{}, err
 	}
@@ -268,6 +270,7 @@ func (c *Linq) update(current et.Json) (et.Item, error) {
 
 func (c *Linq) delete(current et.Json) (et.Item, error) {
 	model := c.from[0].model
+	c.idT = current.ValStr("-1", IdTFiled)
 
 	for _, trigger := range model.BeforeDelete {
 		err := trigger(model, &current, nil, c.data)
@@ -278,7 +281,7 @@ func (c *Linq) delete(current et.Json) (et.Item, error) {
 
 	c.SqlDelete()
 
-	item, err := c.command()
+	item, err := c.command(jdb.CommandDelete, c.idT)
 	if err != nil {
 		return et.Item{}, err
 	}

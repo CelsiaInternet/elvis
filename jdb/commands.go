@@ -4,6 +4,7 @@ import (
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/logs"
+	"github.com/cgalvisleon/elvis/strs"
 	"github.com/cgalvisleon/elvis/utility"
 )
 
@@ -13,7 +14,7 @@ import (
 * @return error
 **/
 func defineCommand(db *DB) error {
-	exist, err := ExistTable(db, "core", "COMMAND")
+	exist, err := ExistTable(db, "core", "COMMANDS")
 	if err != nil {
 		return console.Panic(err)
 	}
@@ -27,14 +28,16 @@ func defineCommand(db *DB) error {
 	CREATE EXTENSION IF NOT EXISTS pgcrypto;
 	CREATE SCHEMA IF NOT EXISTS core;
 
-  CREATE TABLE IF NOT EXISTS core.COMMAND(		
+  CREATE TABLE IF NOT EXISTS core.COMMANDS(
+		OPTION VARCHAR(80) DEFAULT '',
 		_ID VARCHAR(80) DEFAULT '-1',
 		SQL BYTEA,
 		MUTEX INT DEFAULT 0,
 		INDEX BIGINT DEFAULT 0,
-		PRIMARY KEY(_ID)
+		PRIMARY KEY(OPTION, _ID)
 	);
-	CREATE INDEX IF NOT EXISTS COMMAND_INDEX_IDX ON core.COMMAND(INDEX);`
+	CREATE INDEX IF NOT EXISTS COMMANDS_OPTION_IDX ON core.COMMANDS(OPTION);
+	CREATE INDEX IF NOT EXISTS COMMANDS_INDEX_IDX ON core.COMMANDS(INDEX);`
 
 	_, err = db.db.Exec(sql)
 	if err != nil {
@@ -46,7 +49,7 @@ func defineCommand(db *DB) error {
 
 func defineCoreFunction(db *DB) error {
 	sql := `
-	CREATE OR REPLACE FUNCTION core.COMMAND_INSERT()
+	CREATE OR REPLACE FUNCTION core.COMMANDS_INSERT()
   RETURNS
     TRIGGER AS $$  
   BEGIN
@@ -62,11 +65,11 @@ func defineCoreFunction(db *DB) error {
   END;
   $$ LANGUAGE plpgsql;
 
-	DROP TRIGGER IF EXISTS COMMAND_INSERT ON core.COMMAND CASCADE;
-	CREATE TRIGGER COMMAND_INSERT
-	BEFORE INSERT ON core.COMMAND
+	DROP TRIGGER IF EXISTS COMMANDS_INSERT ON core.COMMANDS CASCADE;
+	CREATE TRIGGER COMMANDS_INSERT
+	BEFORE INSERT ON core.COMMANDS
 	FOR EACH ROW
-	EXECUTE PROCEDURE core.COMMAND_INSERT();`
+	EXECUTE PROCEDURE core.COMMANDS_INSERT();`
 
 	_, err := db.db.Exec(sql)
 	if err != nil {
@@ -77,44 +80,13 @@ func defineCoreFunction(db *DB) error {
 }
 
 /**
-* SetCommand
+* insertCommand
 * @params query string
 **/
-func (d *DB) SetCommand(query string) error {
-	sql := `
-	INSERT INTO core.COMMAND (_ID, SQL, MUTEX, INDEX)
-	VALUES ($1, $2, $3, $4);`
-
-	id := utility.UUID()
-	index := utility.UUIndex("commnad")
-	_, err := d.db.Exec(sql, id, []byte(query), 0, index)
-	if err != nil {
-		logs.Debug(et.Json{
-			"_id":   id,
-			"sql":   query,
-			"index": index,
-		}.ToString())
-		return err
-	}
-
-	if d.lastcomand < index {
-		d.lastcomand = index
-	}
-
-	return nil
-}
-
-/**
-* SetMutex
-* @params id string
-* @params query string
-* @params index int64
-* @return error
-**/
-func (d *DB) SetMutex(id, query string, index int64) error {
+func (d *DB) insertCommand(id string, mutex int, query string) error {
 	sql := `
 	SELECT INDEX
-	FROM core.COMMAND
+	FROM core.COMMANDS
 	WHERE _ID = $1;`
 
 	item, err := d.QueryOne(sql, id)
@@ -127,19 +99,135 @@ func (d *DB) SetMutex(id, query string, index int64) error {
 	}
 
 	sql = `
-	INSERT INTO core.COMMAND (_ID, SQL, MUTEX, INDEX)
-	VALUES ($1, $2, $3, $4);`
+	INSERT INTO core.COMMANDS (_ID, OPTION, SQL, MUTEX, INDEX)
+	VALUES ($1, 'INSERT', $2, $3, $4);`
 
-	_, err = d.db.Exec(sql, id, []byte(query), 1, index)
+	id = utility.GenKey(id)
+	index := NextSerie(d, "commnad")
+	_, err = d.db.Exec(sql, id, []byte(query), mutex, index)
+	if err != nil {
+		logs.Alertm(et.Json{
+			"_id":   id,
+			"sql":   query,
+			"index": index,
+		}.ToString())
+		return err
+	}
+
+	return nil
+}
+
+/**
+* upsertCommand
+* @params query string
+**/
+func (d *DB) upsertCommand(old, new, id string, mutex int, query string) error {
+	sql := `
+	SELECT INDEX
+	FROM core.COMMANDS
+	WHERE OPTION = $1
+	AND _ID = $2;`
+
+	item, err := d.QueryOne(sql, old, id)
 	if err != nil {
 		return err
 	}
 
-	if d.lastcomand < index {
-		d.lastcomand = index
+	if item.Ok {
+		index := item.Int64("index")
+		sql = `
+		UPDATE core.COMMANDS SET
+		OPTION = $2,
+		SQL = $3
+		MUTEX = $4
+		WHERE INDEX = $1;`
+
+		_, err = d.db.Exec(sql, index, new, []byte(query), mutex)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	sql = `
+	INSERT INTO core.COMMANDS (_ID, OPTION, SQL, MUTEX, INDEX)
+	VALUES ($1, $2, $3, $4, $5);`
+
+	id = utility.GenKey(id)
+	index := NextSerie(d, "commnad")
+	_, err = d.db.Exec(sql, id, new, []byte(query), mutex, index)
+	if err != nil {
+		logs.Alertm(et.Json{
+			"_id":   id,
+			"sql":   query,
+			"index": index,
+		}.ToString())
+		return err
 	}
 
 	return nil
+}
+
+/**
+* deleteCommand
+* @params query string
+**/
+func (d *DB) deleteCommand(opt, id string) error {
+	sql := `
+	DELETEFROM core.COMMANDS
+	WHERE OPTION = $1
+	AND _ID = $2;`
+
+	_, err := d.db.Exec(sql, opt, id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+/**
+* SetCommand
+* @params query string
+**/
+func (d *DB) SetCommand(opt, id, query string) error {
+	opt = strs.Uppcase(opt)
+	switch opt {
+	case CommandInsert:
+		return d.insertCommand(id, 0, query)
+	case CommandUpdate:
+		return d.upsertCommand(opt, opt, id, 0, query)
+	case CommandDelete:
+		if d.dm != nil {
+			return d.upsertCommand(CommandInsert, opt, id, 0, query)
+		}
+		return d.deleteCommand(CommandInsert, id)
+	default:
+		return d.upsertCommand(opt, opt, id, 0, query)
+	}
+}
+
+/**
+* SetMutex
+* @params id string
+* @params query string
+* @params index int64
+* @return error
+**/
+func (d *DB) SetMutex(opt, id, query string, index int64) error {
+	opt = strs.Uppcase(opt)
+	switch opt {
+	case CommandInsert:
+		return d.insertCommand(id, 1, query)
+	case CommandUpdate:
+		return d.upsertCommand(opt, opt, id, 1, query)
+	case CommandDelete:
+		d.deleteCommand(CommandUpdate, id)
+		return d.upsertCommand(CommandInsert, opt, id, 1, query)
+	default:
+		return d.upsertCommand(opt, opt, id, 1, query)
+	}
 }
 
 /**
@@ -153,7 +241,7 @@ func (d *DB) GetCommand(id string) (et.Item, error) {
 
 	query := `
 	SELECT _ID, SQL, INDEX
-	FROM core.COMMAND
+	FROM core.COMMANDS
 	WHERE _ID = $1 LIMIT 1;`
 
 	rows, err := d.db.Query(query, id)
@@ -189,7 +277,7 @@ func (d *DB) getLastCommand() (int64, error) {
 
 	sql := `
 	SELECT MAX(INDEX) AS result
-	FROM core.COMMAND;`
+	FROM core.COMMANDS;`
 
 	rows, err := d.db.Query(sql)
 	if err != nil {
@@ -230,8 +318,8 @@ func (d *DB) SyncCommand() error {
 
 		offset := (page - 1) * rows
 		sql := `
-		SELECT A._ID, A.SQL, A.INDEX
-		FROM core.COMMAND A
+		SELECT A.OPTION, A._ID, A.SQL, A.INDEX
+		FROM core.COMMANDS A
 		WHERE A.INDEX>=$3
 		ORDER BY A.index
 		LIMIT $1 OFFSET $2;`
@@ -245,11 +333,12 @@ func (d *DB) SyncCommand() error {
 		for rows.Next() {
 			var item et.Item
 			item.ScanRows(rows)
+			opt := item.Str("option")
 			id := item.Str("_id")
 			sql := item.Str("sql")
 			lastIndex = item.Int64("index")
 
-			err = d.SetMutex(id, sql, lastIndex)
+			err = d.SetMutex(opt, id, sql, lastIndex)
 			if err != nil {
 				return err
 			} else {

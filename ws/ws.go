@@ -461,3 +461,19 @@ func (h *Hub) GetSubscribers(channel string) []*Client {
 	ch := h.getChanel(channel)
 	return ch.Subscribers
 }
+
+/**
+* SetAdapter
+* @param params *RedisAdapterParams
+* @return error
+**/
+func (h *Hub) SetAdapter(params *RedisAdapterParams) error {
+	adapter, err := NewRedisAdapter(params)
+	if err != nil {
+		return err
+	}
+
+	h.adapter = adapter
+
+	return nil
+}
