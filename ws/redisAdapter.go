@@ -6,6 +6,7 @@ import (
 
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/et"
+	"github.com/cgalvisleon/elvis/logs"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -104,9 +105,10 @@ func (h *Hub) RedisAdapter(params *RedisAdapterParams) error {
 	if err != nil {
 		return err
 	}
-	adapter.subscribe(adapter.channel, h.listend)
 
 	h.adapter = adapter
+
+	logs.Log("Websocket", "Run adapter")
 
 	return nil
 }
