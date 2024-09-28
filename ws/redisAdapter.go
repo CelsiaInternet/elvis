@@ -105,10 +105,11 @@ func (h *Hub) RedisAdapter(params *RedisAdapterParams) error {
 	if err != nil {
 		return err
 	}
+	adapter.subscribe(adapter.channel, h.listend)
 
 	h.adapter = adapter
 
-	logs.Log("Websocket", "Run adapter")
+	logs.Log("WebSocket", "RedisAdapter is ready")
 
 	return nil
 }
