@@ -13,7 +13,10 @@ func connect() (*Conn, error) {
 		return nil, logs.Alertf(msg.ERR_ENV_REQUIRED, "NATS_HOST")
 	}
 
-	connect, err := nats.Connect(host)
+	user := envar.GetStr("", "NATS_USER")
+	password := envar.GetStr("", "NATS_PASSWORD")
+
+	connect, err := nats.Connect(host, nats.UserInfo(user, password))
 	if err != nil {
 		return nil, err
 	}

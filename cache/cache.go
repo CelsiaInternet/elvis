@@ -31,7 +31,7 @@ func Load() (*Conn, error) {
 }
 
 func Close() {
-	if conn.db != nil {
+	if conn != nil && conn.db != nil {
 		conn.db.Close()
 	}
 

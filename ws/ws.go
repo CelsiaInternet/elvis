@@ -66,7 +66,10 @@ func (h *Hub) Start() {
 * Close
 **/
 func (h *Hub) Close() {
-	h.run = false
+	if h.run {
+		h.run = false
+		logs.Log("Websocket", "Shutting down server...")
+	}
 }
 
 /**
@@ -80,7 +83,7 @@ func (h *Hub) started() {
 	host, _ := os.Hostname()
 	h.Host = envar.GetStr(host, "WS_HOST")
 	h.run = true
-	logs.Logf("Websocket", "Run server host:%s", host)
+	logs.Logf("Websocket", "Run server on %s", h.Host)
 
 	for {
 		select {

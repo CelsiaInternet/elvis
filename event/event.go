@@ -28,7 +28,7 @@ func Load() (*Conn, error) {
 }
 
 func Close() {
-	if conn.conn != nil {
+	if conn != nil && conn.conn != nil {
 		conn.conn.Close()
 	}
 

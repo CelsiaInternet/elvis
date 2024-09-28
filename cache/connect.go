@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"log"
 
 	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/logs"
@@ -27,6 +28,12 @@ func connect() (*Conn, error) {
 		Password: password,
 		DB:       dbname,
 	})
+
+	ctx := context.Background()
+	_, err := client.Ping(ctx).Result()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	logs.Logf("Redis", "Connected host:%s", host)
 

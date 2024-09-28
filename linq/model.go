@@ -243,12 +243,27 @@ func (c *Model) Details(name, description string, _default any, details Details)
 }
 
 /**
-*
+* NextCode
+* @param tag string
+* @param prefix string
+* @return string
+**/
+func (c *Model) NexCode(tag, prefix string) string {
+	return jdb.NextCode(c.db, tag, prefix)
+}
+
+/**
+* Up
+* @return string
 **/
 func (c *Model) Up() string {
 	return strs.Uppcase(c.Table)
 }
 
+/**
+* Low
+* @return string
+**/
 func (c *Model) Low() string {
 	return strs.Lowcase(c.Table)
 }
