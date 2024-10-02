@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/cgalvisleon/elvis/cache"
+	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/logs"
@@ -147,6 +148,7 @@ func DeleteTokeByToken(token string) error {
 **/
 func ParceToken(token string) (*Claim, error) {
 	secret := envar.GetStr("", "SECRET")
+	console.Debug(secret)
 	jToken, err := jwt.Parse(token, func(*jwt.Token) (interface{}, error) {
 		return []byte(secret), nil
 	})
