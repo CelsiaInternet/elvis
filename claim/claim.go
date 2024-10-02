@@ -8,7 +8,6 @@ import (
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/et"
-	"github.com/cgalvisleon/elvis/logs"
 	"github.com/cgalvisleon/elvis/strs"
 	"github.com/cgalvisleon/elvis/utility"
 	"github.com/golang-jwt/jwt/v4"
@@ -148,7 +147,6 @@ func DeleteTokeByToken(token string) error {
 **/
 func ParceToken(token string) (*Claim, error) {
 	secret := envar.GetStr("", "SECRET")
-	console.Debug(secret)
 	jToken, err := jwt.Parse(token, func(*jwt.Token) (interface{}, error) {
 		return []byte(secret), nil
 	})
@@ -157,47 +155,47 @@ func ParceToken(token string) (*Claim, error) {
 	}
 
 	if !jToken.Valid {
-		return nil, logs.Nerror(MSG_TOKEN_INVALID)
+		return nil, console.Alert(MSG_TOKEN_INVALID)
 	}
 
 	claim, ok := jToken.Claims.(jwt.MapClaims)
 	if !ok {
-		return nil, logs.Nerror(MSG_REQUIRED_INVALID)
+		return nil, console.Alert(MSG_REQUIRED_INVALID)
 	}
 
 	app, ok := claim["app"].(string)
 	if !ok {
-		return nil, logs.Nerror(ERR_INVALID_CLAIM)
+		return nil, console.Alert(ERR_INVALID_CLAIM)
 	}
 
 	id, ok := claim["id"].(string)
 	if !ok {
-		return nil, logs.Nerror(ERR_INVALID_CLAIM)
+		return nil, console.Alert(ERR_INVALID_CLAIM)
 	}
 
 	name, ok := claim["name"].(string)
 	if !ok {
-		return nil, logs.Nerror(ERR_INVALID_CLAIM)
+		return nil, console.Alert(ERR_INVALID_CLAIM)
 	}
 
 	kind, ok := claim["kind"].(string)
 	if !ok {
-		return nil, logs.Nerror(ERR_INVALID_CLAIM)
+		return nil, console.Alert(ERR_INVALID_CLAIM)
 	}
 
 	username, ok := claim["username"].(string)
 	if !ok {
-		return nil, logs.Nerror(ERR_INVALID_CLAIM)
+		return nil, console.Alert(ERR_INVALID_CLAIM)
 	}
 
 	device, ok := claim["device"].(string)
 	if !ok {
-		return nil, logs.Nerrorf(MSG_TOKEN_INVALID_ATRIB, "device")
+		return nil, console.AlertF(MSG_TOKEN_INVALID_ATRIB, "device")
 	}
 
 	second, ok := claim["duration"].(float64)
 	if !ok {
-		return nil, logs.Nerrorf(MSG_TOKEN_INVALID_ATRIB, "duration")
+		return nil, console.AlertF(MSG_TOKEN_INVALID_ATRIB, "duration")
 	}
 
 	duration := time.Duration(second)
@@ -228,11 +226,11 @@ func GetFromToken(token string) (*Claim, error) {
 	key := TokenKey(result.App, result.Device, result.ID)
 	c, err := cache.Get(key, "")
 	if err != nil {
-		return nil, logs.Nerror(MSG_TOKEN_INVALID)
+		return nil, console.Alert(MSG_TOKEN_INVALID)
 	}
 
 	if c != token {
-		return nil, logs.Nerror(MSG_TOKEN_INVALID)
+		return nil, console.Alert(MSG_TOKEN_INVALID)
 	}
 
 	err = cache.Set(key, c, result.Duration)

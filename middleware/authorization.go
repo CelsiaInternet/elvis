@@ -44,16 +44,16 @@ const (
 **/
 func tokenFromAuthorization(authorization string) (string, error) {
 	if authorization == "" {
-		return "", console.NewError("Autorization is required")
+		return "", console.Alert("Autorization is required")
 	}
 
 	if !strings.HasPrefix(authorization, "Bearer") {
-		return "", console.NewError("Invalid autorization format")
+		return "", console.Alert("Invalid autorization format")
 	}
 
 	l := strings.Split(authorization, " ")
 	if len(l) != 2 {
-		return "", console.NewError("Invalid autorization format")
+		return "", console.Alert("Invalid autorization format")
 	}
 
 	return l[1], nil
@@ -70,7 +70,7 @@ func GetAuthorization(w http.ResponseWriter, r *http.Request) (string, error) {
 	authorization := r.Header.Get("Authorization")
 	result, err := tokenFromAuthorization(authorization)
 	if err != nil {
-		return "", err
+		return "", console.AlertE(err)
 	}
 
 	return result, nil
@@ -85,14 +85,12 @@ func Authorization(next http.Handler) http.Handler {
 		ctx := r.Context()
 		tokenString, err := GetAuthorization(w, r)
 		if err != nil {
-			console.Debug(err)
 			response.Unauthorized(w, r)
 			return
 		}
 
 		c, err := claim.GetFromToken(tokenString)
 		if err != nil {
-			console.Debug(err)
 			response.Unauthorized(w, r)
 			return
 		}
