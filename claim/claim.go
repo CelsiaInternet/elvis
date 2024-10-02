@@ -108,7 +108,7 @@ func DeleteToken(app, device, id string) error {
 * @return error
 **/
 func DeleteTokeByToken(token string) error {
-	secret := envar.GetStr("", "SECRET")
+	secret := envar.GetStr("1977", "SECRET")
 	jToken, err := jwt.Parse(token, func(*jwt.Token) (interface{}, error) {
 		return []byte(secret), nil
 	})
@@ -146,7 +146,7 @@ func DeleteTokeByToken(token string) error {
 * @return error
 **/
 func ParceToken(token string) (*Claim, error) {
-	secret := envar.GetStr("", "SECRET")
+	secret := envar.GetStr("1977", "SECRET")
 	jToken, err := jwt.Parse(token, func(*jwt.Token) (interface{}, error) {
 		return []byte(secret), nil
 	})
