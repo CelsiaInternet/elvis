@@ -34,7 +34,5 @@ func DevelopToken() string {
 		return token
 	}
 
-	console.Debug(token)
-
 	return ""
 }

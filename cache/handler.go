@@ -287,6 +287,7 @@ func HDelete(key, atr string) error {
 * @params device string
 * @params key string
 * @params val string
+* @params duration time.Duration
 * @return error
 **/
 func SetVerify(device, key, val string, duration time.Duration) error {

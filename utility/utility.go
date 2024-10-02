@@ -65,7 +65,12 @@ func Now() string {
 	return time.Now().UTC().Format("2006-01-02 15:04:05")
 }
 
-func GetCodeVerify(length int) string {
+/**
+* GetOTP return a random number
+* @param length int
+* @return string
+**/
+func GetOTP(length int) string {
 	const charset = "0123456789"
 	var seededRand *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
 
@@ -77,14 +82,27 @@ func GetCodeVerify(length int) string {
 	return string(b)
 }
 
+/**
+* UUID
+* @return string
+**/
 func UUID() string {
 	return uuid.NewString()
 }
 
+/**
+* NewId
+* @return string
+**/
 func NewId() string {
 	return UUID()
 }
 
+/**
+* GenId
+* @param id string
+* @return string
+**/
 func GenId(id string) string {
 	if map[string]bool{"": true, "*": true, "new": true}[id] {
 		return NewId()
@@ -93,6 +111,11 @@ func GenId(id string) string {
 	return id
 }
 
+/**
+* GenKey
+* @param id string
+* @return string
+**/
 func GenKey(id string) string {
 	if map[string]bool{"": true, "-1": true, "*": true, "new": true}[id] {
 		return uuid.NewString()

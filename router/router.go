@@ -37,6 +37,22 @@ const (
 )
 
 /**
+* IntToTpHeader
+* @param tp int
+* @return TpHeader
+**/
+func IntToTpHeader(tp int) TpHeader {
+	switch tp {
+	case 1:
+		return TpJoinHeader
+	case 2:
+		return TpReplaceHeader
+	default:
+		return TpKeepHeader
+	}
+}
+
+/**
 * String
 * @return string
 **/
