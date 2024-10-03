@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"os/exec"
 	"reflect"
 	"regexp"
 	"strings"
@@ -175,14 +176,30 @@ func UUIndex(tag string) int64 {
 	return result
 }
 
+/**
+* Pointer return a string with the format collection/id
+* @param collection string
+* @param id string
+* @return string
+**/
 func Pointer(collection string, id string) string {
 	return strs.Format("%s/%s", collection, id)
 }
 
+/**
+* Contains return true if the value is in the slice
+* @param pointer string
+* @return string
+**/
 func Contains(c []string, v string) bool {
 	return slices.Contains(c, v)
 }
 
+/**
+* ContainsInt return true if the value is in the slice
+* @param pointer string
+* @return string
+**/
 func ContainsInt(c []int, v int) bool {
 	for _, i := range c {
 		if i == v {
@@ -193,18 +210,34 @@ func ContainsInt(c []int, v int) bool {
 	return false
 }
 
+/**
+* InStr return true if the value is in the slice
+* @param pointer string
+* @return string
+**/
 func InStr(val string, in []string) bool {
 	ok := slices.Contains(in, val)
 
 	return ok
 }
 
+/**
+* InInt return true if the value is in the slice
+* @param pointer string
+* @return string
+**/
 func InInt(val string, in []string) bool {
 	ok := slices.Contains(in, val)
 
 	return ok
 }
 
+/**
+* TimeDifference return the difference between two dates
+* @param dateInt any
+* @param dateEnd any
+* @return time.Duration
+**/
 func TimeDifference(dateInt, dateEnd any) time.Duration {
 	var result time.Time
 	layout := "2006-01-02T15:04:05.000Z"
@@ -228,6 +261,10 @@ func TimeDifference(dateInt, dateEnd any) time.Duration {
 	return _dateInt.Sub(_dateEnd)
 }
 
+/**
+* GeneratePortNumber return a random number
+* @return int
+**/
 func GeneratePortNumber() int {
 	rand.New(rand.NewSource(time.Now().UnixNano()))
 	min := 1000
@@ -237,12 +274,23 @@ func GeneratePortNumber() int {
 	return port
 }
 
+/**
+* IsJsonBuild return true if the string is a json
+* @param str string
+* @return bool
+**/
 func IsJsonBuild(str string) bool {
 	result := strings.Contains(str, "[")
 	result = result && strings.Contains(str, "]")
 	return result
 }
 
+/**
+* FindIndex return the index of a value in a slice
+* @param arr []string
+* @param valor string
+* @return int
+**/
 func FindIndex(arr []string, valor string) int {
 	for i, v := range arr {
 		if v == valor {
@@ -252,6 +300,13 @@ func FindIndex(arr []string, valor string) int {
 	return -1
 }
 
+/**
+* OkOrNot return the value of the condition
+* @param condition bool
+* @param ok interface{}
+* @param not interface{}
+* @return interface{}
+**/
 func OkOrNot(condition bool, ok interface{}, not interface{}) interface{} {
 	if condition {
 		return ok
@@ -260,6 +315,11 @@ func OkOrNot(condition bool, ok interface{}, not interface{}) interface{} {
 	}
 }
 
+/**
+* ExtractMencion return the mentions in a string
+* @param str string
+* @return []string
+**/
 func ExtractMencion(str string) []string {
 	patron := `@([a-zA-Z0-9_]+)`
 	expresionRegular := regexp.MustCompile(patron)
@@ -277,6 +337,11 @@ func ExtractMencion(str string) []string {
 	return result
 }
 
+/**
+* Quote return the value in a string format
+* @param val interface{}
+* @return any
+**/
 func Quote(val interface{}) any {
 	switch v := val.(type) {
 	case string:
@@ -338,6 +403,12 @@ func Quote(val interface{}) any {
 	}
 }
 
+/**
+* Params return the value in a string format
+* @param str string
+* @param args ...any
+* @return string
+**/
 func Params(str string, args ...any) string {
 	var result string = str
 	for i, v := range args {
@@ -349,6 +420,12 @@ func Params(str string, args ...any) string {
 	return result
 }
 
+/**
+* ParamQuote return the value in a string format
+* @param str string
+* @param args ...any
+* @return string
+**/
 func ParamQuote(str string, args ...any) string {
 	for i, arg := range args {
 		old := strs.Format(`$%d`, i+1)
@@ -359,14 +436,33 @@ func ParamQuote(str string, args ...any) string {
 	return str
 }
 
+/**
+* Address return the value in a string format
+* @param host string
+* @param port int
+* @return string
+**/
 func Address(host string, port int) string {
 	return strs.Format("%s:%d", host, port)
 }
 
+/**
+* BannerTitle return the value in a string format
+* @param name string
+* @param version string
+* @param size int
+* @return string
+**/
 func BannerTitle(name, version string, size int) string {
 	return strs.Format(`{{ .Title "%s V%s" "" %d }}`, name, version, size)
 }
 
+/**
+* GoMod return the value in a string format
+* @param atrib string
+* @return string
+* @return error
+**/
 func GoMod(atrib string) (string, error) {
 	var result string
 	rutaArchivoGoMod := "./go.mod"
@@ -390,11 +486,28 @@ func GoMod(atrib string) (string, error) {
 	return result, nil
 }
 
+/**
+* StartTime
+**/
 func StartTime() {
 	start = time.Now()
 }
 
+/**
+* Duration
+**/
 func Duration() {
 	duration := time.Since(start) // Calcula la duración
 	console.DebugF("La función tardó %v en ejecutarse\n", duration)
+}
+
+func GitVersion(idx int) string {
+	result := "v0.0.0"
+	attr := strs.Format("--abbrev=%d", idx)
+	out, err := exec.Command("git", "describe", "--tags", attr).Output()
+	if err == nil {
+		result = string(out)
+	}
+
+	return result
 }

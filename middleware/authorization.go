@@ -85,14 +85,12 @@ func Authorization(next http.Handler) http.Handler {
 		ctx := r.Context()
 		tokenString, err := GetAuthorization(w, r)
 		if err != nil {
-			console.Debug("GetAuthorization:", err)
 			response.Unauthorized(w, r)
 			return
 		}
 
 		c, err := claim.GetFromToken(tokenString)
 		if err != nil {
-			console.Debug("GetFromToken:", err)
 			response.Unauthorized(w, r)
 			return
 		}

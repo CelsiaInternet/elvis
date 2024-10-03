@@ -108,35 +108,12 @@ func DeleteToken(app, device, id string) error {
 * @return error
 **/
 func DeleteTokeByToken(token string) error {
-	secret := envar.GetStr("1977", "SECRET")
-	jToken, err := jwt.Parse(token, func(*jwt.Token) (interface{}, error) {
-		return []byte(secret), nil
-	})
+	claim, err := ParceToken(token)
 	if err != nil {
 		return err
 	}
 
-	claim, ok := jToken.Claims.(jwt.MapClaims)
-	if !ok {
-		return nil
-	}
-
-	app, ok := claim["app"].(string)
-	if !ok {
-		return nil
-	}
-
-	id, ok := claim["id"].(string)
-	if !ok {
-		return nil
-	}
-
-	device, ok := claim["device"].(string)
-	if !ok {
-		return nil
-	}
-
-	return DeleteToken(app, device, id)
+	return DeleteToken(claim.App, claim.Device, claim.ID)
 }
 
 /**
@@ -151,7 +128,7 @@ func ParceToken(token string) (*Claim, error) {
 		return []byte(secret), nil
 	})
 	if err != nil {
-		return nil, console.AlertE(err)
+		return nil, console.Error(err)
 	}
 
 	if !jToken.Valid {
