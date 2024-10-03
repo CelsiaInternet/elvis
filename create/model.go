@@ -482,13 +482,14 @@ import (
 	"github.com/cgalvisleon/elvis/response"
 	er "github.com/cgalvisleon/elvis/router"
 	"github.com/cgalvisleon/elvis/strs"
+	"github.com/cgalvisleon/elvis/utility"
 	"github.com/go-chi/chi/v5"
 )
 
 var PackageName = "$1"
 var PackageTitle = "$1"
 var PackagePath = envar.GetStr("/api/$1", "PATH_URL")
-var PackageVersion = envar.GetStr("0.0.1", "VERSION")
+var PackageVersion = utility.GitVersion(0)
 var HostName, _ = os.Hostname()
 
 type Router struct {
@@ -540,13 +541,14 @@ import (
 	"github.com/cgalvisleon/elvis/response"
 	er "github.com/cgalvisleon/elvis/router"
 	"github.com/cgalvisleon/elvis/strs"
+	"github.com/cgalvisleon/elvis/utility"
 	"github.com/go-chi/chi/v5"
 )
 
 var PackageName = "$1"
 var PackageTitle = "$1"
 var PackagePath = envar.GetStr("/api/$1", "PATH_URL")
-var PackageVersion = envar.GetStr("0.0.1", "VERSION")
+var PackageVersion = utility.GitVersion(0)
 var HostName, _ = os.Hostname()
 
 type Router struct {
