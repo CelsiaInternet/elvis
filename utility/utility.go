@@ -501,6 +501,11 @@ func Duration() {
 	console.DebugF("La función tardó %v en ejecutarse\n", duration)
 }
 
+/**
+* GitVersion
+* @param idx int
+* @return string
+**/
 func GitVersion(idx int) string {
 	result := "v0.0.0"
 	attr := strs.Format("--abbrev=%d", idx)
