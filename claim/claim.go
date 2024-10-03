@@ -151,7 +151,7 @@ func ParceToken(token string) (*Claim, error) {
 		return []byte(secret), nil
 	})
 	if err != nil {
-		return nil, err
+		return nil, console.AlertE(err)
 	}
 
 	if !jToken.Valid {
@@ -235,7 +235,7 @@ func GetFromToken(token string) (*Claim, error) {
 
 	err = cache.Set(key, c, result.Duration)
 	if err != nil {
-		return nil, err
+		return nil, console.AlertE(err)
 	}
 
 	return result, nil
