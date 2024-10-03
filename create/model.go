@@ -329,6 +329,7 @@ import (
 	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/jrpc"
+	"github.com/cgalvisleon/elvis/utility"
 )
 
 type Services struct{}
@@ -347,7 +348,7 @@ func StartRpcServer() {
 func (c *Services) Version(require et.Json, response *et.Item) error {
 	company := envar.GetStr("", "COMPANY")
 	web := envar.GetStr("", "WEB")
-	version := envar.GetStr("", "VERSION")
+	version := utility.GitVersion(1)
 	help := envar.GetStr("", "RPC_HELP")
 	response.Ok = true
 	response.Result = et.Json{
@@ -394,6 +395,7 @@ import (
 	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/jdb"
 	"github.com/cgalvisleon/elvis/et"
+	"github.com/cgalvisleon/elvis/utility"
 )
 
 type Controller struct {
@@ -403,7 +405,7 @@ type Controller struct {
 func (c *Controller) Version(ctx context.Context) (et.Json, error) {
 	company := envar.GetStr("", "COMPANY")
 	web := envar.GetStr("", "WEB")
-	version := envar.GetStr("", "VERSION")
+	version := utility.GitVersion(1)
   service := et.Json{
 		"version": version,
 		"service": PackageName,
@@ -435,6 +437,7 @@ import (
 	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/jdb"
 	"github.com/cgalvisleon/elvis/et"
+	"github.com/cgalvisleon/elvis/utility"
 )
 
 type Controller struct {
@@ -444,7 +447,7 @@ type Controller struct {
 func (c *Controller) Version(ctx context.Context) (et.Json, error) {
 	company := envar.GetStr("", "COMPANY")
 	web := envar.GetStr("", "WEB")
-	version := envar.GetStr("", "VERSION")
+	version := utility.GitVersion(1)
   service := et.Json{
 		"version": version,
 		"service": PackageName,
