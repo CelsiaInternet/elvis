@@ -66,6 +66,7 @@ func Load() {
 		host = "localhost"
 	}
 
+	host = envar.GetStr(host, "RPC_HOST")
 	port := envar.GetInt(4200, "RPC_PORT")
 
 	conn = &Router{
