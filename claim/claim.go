@@ -14,6 +14,7 @@ import (
 )
 
 type Claim struct {
+	Salt     string        `json:"salt"`
 	ID       string        `json:"id"`
 	App      string        `json:"app"`
 	Name     string        `json:"name"`
@@ -50,7 +51,8 @@ func (c *Claim) ToJson() et.Json {
 func TokenKey(app, device, id string) string {
 	str := strs.Append(app, device, "-")
 	str = strs.Append(str, id, "-")
-	return strs.Format(`token:%s`, str)
+	str = strs.Format(`token:%s`, str)
+	return utility.ToBase64(str)
 }
 
 /**
@@ -69,6 +71,7 @@ func TokenKey(app, device, id string) string {
 func NewToken(id, app, name, kind, username, device string, duration time.Duration) (string, error) {
 	secret := envar.GetStr("1977", "SECRET")
 	c := Claim{}
+	c.Salt = utility.GetOTP(6)
 	c.ID = id
 	c.App = app
 	c.Name = name

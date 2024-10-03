@@ -97,7 +97,7 @@ func Authorization(next http.Handler) http.Handler {
 
 		serviceId := utility.UUID()
 		ctx = context.WithValue(ctx, ServiceIdKey, serviceId)
-		ctx = context.WithValue(ctx, ClientIdKey, c.ID)
+		ctx = context.WithValue(ctx, ClientIdKey, c.Id)
 		ctx = context.WithValue(ctx, AppKey, c.App)
 		ctx = context.WithValue(ctx, NameKey, c.Name)
 		ctx = context.WithValue(ctx, KindKey, c.Kind)
@@ -108,7 +108,7 @@ func Authorization(next http.Handler) http.Handler {
 		hostName, _ := os.Hostname()
 		data := et.Json{
 			"serviceId": serviceId,
-			"clientId":  c.ID,
+			"clientId":  c.Id,
 			"last_use":  now,
 			"host_name": hostName,
 			"token":     tokenString,

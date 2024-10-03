@@ -1,6 +1,7 @@
 package utility
 
 import (
+	"encoding/base64"
 	"fmt"
 	"math/rand"
 	"os"
@@ -12,6 +13,7 @@ import (
 	"time"
 
 	"github.com/cgalvisleon/elvis/console"
+	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/logs"
 	"github.com/cgalvisleon/elvis/strs"
 	"github.com/google/uuid"
@@ -515,4 +517,53 @@ func GitVersion(idx int) string {
 	}
 
 	return result
+}
+
+/**
+* ToBase64
+* @param data string
+* @return string
+**/
+func ToBase64(data string) string {
+	return base64.StdEncoding.EncodeToString([]byte(data))
+}
+
+/**
+* FromBase64
+* @param data string
+* @return string
+**/
+func FromBase64(data string) string {
+	result, err := base64.StdEncoding.DecodeString(data)
+	if err != nil {
+		return ""
+	}
+
+	return string(result)
+}
+
+/**
+* PayloadEncoded
+* @param data et.Json
+* @return string
+**/
+func PayloadEncoded(data et.Json) string {
+	result := ToBase64(data.ToString())
+
+	return result
+}
+
+/**
+* PayloadDecoded
+* @param token string
+* @return et.Json
+**/
+func PayloadDecoded(token string) (et.Json, error) {
+	data := FromBase64(token)
+	result, err := et.Object(data)
+	if err != nil {
+		return et.Json{}, err
+	}
+
+	return result, nil
 }
