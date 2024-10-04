@@ -63,7 +63,7 @@ func (t TpHeader) String() string {
 	case TpJoinHeader:
 		return "Join request header with the resolve header"
 	case TpReplaceHeader:
-		return "Replace resolve header with replace header"
+		return "Replace resolve header with request header"
 	default:
 		return "Unknown"
 	}
