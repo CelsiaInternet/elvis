@@ -96,15 +96,15 @@ func ToTpHeader(tp int) TpHeader {
 **/
 func PushApiGateway(method, path, resolve, host, packageName string, private bool) {
 	event.Work("apigateway/http/resolve", et.Json{
-		"kind":        HTTP,
-		"method":      method,
-		"path":        path,
-		"resolve":     resolve,
-		"package":     packageName,
-		"tpHeader":    TpReplaceHeader,
-		"private":     private,
-		"packageName": packageName,
-		"_id":         utility.UUID(),
+		"kind":         HTTP,
+		"method":       method,
+		"path":         path,
+		"resolve":      resolve,
+		"package":      packageName,
+		"tpHeader":     TpReplaceHeader,
+		"private":      private,
+		"package_name": packageName,
+		"_id":          utility.UUID(),
 	})
 }
 
