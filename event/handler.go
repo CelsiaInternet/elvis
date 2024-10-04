@@ -184,10 +184,22 @@ func Work(event string, data et.Json) et.Json {
 **/
 func WorkState(work_id string, status WorkStatus, data et.Json) {
 	work := et.Json{
-		"created_at": time.Now(),
-		"_id":        work_id,
-		"status":     status.String(),
-		"data":       data,
+		"update_at": time.Now(),
+		"_id":       work_id,
+		"status":    status.String(),
+		"data":      data,
+	}
+	switch status {
+	case WorkStatusPending:
+		work["pending_at"] = utility.Now()
+	case WorkStatusAccepted:
+		work["accepted_at"] = utility.Now()
+	case WorkStatusProcessing:
+		work["processing_at"] = utility.Now()
+	case WorkStatusCompleted:
+		work["completed_at"] = utility.Now()
+	case WorkStatusFailed:
+		work["failed_at"] = utility.Now()
 	}
 
 	go Publish("event/worker/state", work)

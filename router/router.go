@@ -85,11 +85,17 @@ func ToTpHeader(tp int) TpHeader {
 	}
 }
 
-func pushApiGateway(method, path, packagePath, host, packageName string, private bool) {
-	path = packagePath + path
-	resolve := host + path
-
-	event.Publish("apigateway/http/resolve", et.Json{
+/**
+* PushApiGateway
+* @param method string
+* @param path string
+* @param resolve string
+* @param host string
+* @param packageName string
+* @param private bool
+**/
+func PushApiGateway(method, path, resolve, host, packageName string, private bool) {
+	event.Work("apigateway/http/resolve", et.Json{
 		"kind":        HTTP,
 		"method":      method,
 		"path":        path,
@@ -100,6 +106,32 @@ func pushApiGateway(method, path, packagePath, host, packageName string, private
 		"packageName": packageName,
 		"_id":         utility.UUID(),
 	})
+}
+
+/**
+* PopApiGatewayById
+* @param id string
+**/
+func PopApiGatewayById(id string) {
+	event.Work("apigateway/http/pop", et.Json{
+		"_id": id,
+	})
+}
+
+/**
+* PushApiGateway
+* @param method string
+* @param path string
+* @param packagePath string
+* @param host string
+* @param packageName string
+* @param private bool
+**/
+func pushApiGateway(method, path, packagePath, host, packageName string, private bool) {
+	path = packagePath + path
+	resolve := host + path
+
+	PushApiGateway(method, path, resolve, host, packageName, private)
 }
 
 func PublicRoute(r *chi.Mux, method, path string, h http.HandlerFunc, packageName, packagePath, host string) *chi.Mux {
