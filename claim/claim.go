@@ -86,7 +86,7 @@ func NewToken(id, app, name, kind, username, device string, duration time.Durati
 	}
 
 	key := TokenKey(c.App, c.Device, c.ID)
-	err = cache.Set(key, c, c.Duration)
+	err = cache.Set(key, token, c.Duration)
 	if err != nil {
 		return "", err
 	}
@@ -212,16 +212,16 @@ func GetFromToken(token string) (*Claim, error) {
 	key := TokenKey(result.App, result.Device, result.ID)
 	c, err := cache.Get(key, "")
 	if err != nil {
-		return nil, console.Alert(MSG_TOKEN_INVALID)
+		return nil, err
 	}
 
 	if c != token {
-		return nil, console.Alert(MSG_TOKEN_INVALID)
+		return nil, err
 	}
 
 	err = cache.Set(key, c, result.Duration)
 	if err != nil {
-		return nil, console.AlertE(err)
+		return nil, err
 	}
 
 	return result, nil
