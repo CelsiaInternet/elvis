@@ -1,6 +1,7 @@
 package timezone
 
 import (
+	"fmt"
 	"os"
 	"time"
 )
@@ -12,9 +13,7 @@ var loc *time.Location
 * @return time.Time
 **/
 func NowTime() time.Time {
-	if loc == nil {
-		loc = loadLocation()
-	}
+	loadLocation()
 
 	return time.Now().In(loc)
 }
@@ -33,6 +32,8 @@ func loadLocation() *time.Location {
 		timeZona = "America/Bogota"
 	}
 
+	fmt.Printf(`Time Zone: %s`, timeZona)
+
 	var err error
 	loc, err = time.LoadLocation(timeZona)
 	if err != nil {
@@ -48,8 +49,4 @@ func loadLocation() *time.Location {
 **/
 func Now() string {
 	return NowTime().Format("2006/01/02 15:04:05")
-}
-
-func init() {
-	loadLocation()
 }
