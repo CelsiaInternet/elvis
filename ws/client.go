@@ -181,7 +181,7 @@ func (c *Client) From() et.Json {
 **/
 func (c *Client) listen(message []byte) {
 	response := func(ok bool, message string) {
-		msg := NewMessage(c.hub.from(), et.Json{
+		msg := NewMessage(c.hub.From(), et.Json{
 			"ok":      ok,
 			"message": message,
 		}, TpDirect)

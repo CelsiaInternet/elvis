@@ -259,6 +259,22 @@ func TokenLastUse(data et.Json) {
 }
 
 /**
+* RealTime
+* @param data et.Json
+**/
+func RealTime(channel string, from et.Json, message interface{}) {
+	data := et.Json{
+		"created_at": timezone.Now(),
+		"_id":        utility.UUID(),
+		"channel":    channel,
+		"from":       from,
+		"message":    message,
+	}
+
+	go Publish("realtime", data)
+}
+
+/**
 * Test event, testing message broker
 * @param w http.ResponseWriter
 * @param r *http.Request

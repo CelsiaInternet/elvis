@@ -99,7 +99,7 @@ func (h *Hub) started() {
 * Identify the hub
 * @return et.Json
 **/
-func (h *Hub) from() et.Json {
+func (h *Hub) From() et.Json {
 	return et.Json{
 		"id":   h.Id,
 		"name": h.Name,
@@ -117,7 +117,7 @@ func (h *Hub) onConnect(client *Client) {
 	h.clients = append(h.clients, client)
 	client.Addr = client.socket.RemoteAddr().String()
 
-	msg := NewMessage(h.from(), et.Json{
+	msg := NewMessage(h.From(), et.Json{
 		"ok":       true,
 		"message":  "Connected successfully",
 		"clientId": client.Id,
@@ -125,7 +125,7 @@ func (h *Hub) onConnect(client *Client) {
 	}, TpConnect)
 	msg.Channel = "ws/connect"
 
-	h.Mute(msg.Channel, msg, []string{client.Id}, h.from())
+	h.Mute(msg.Channel, msg, []string{client.Id}, h.From())
 	client.sendMessage(msg)
 
 	logs.Logf("Websocket", MSG_CLIENT_CONNECT, client.Id, client.Name, h.Id)
@@ -147,14 +147,14 @@ func (h *Hub) onDisconnect(client *Client) {
 	h.clients[len(h.clients)-1] = nil
 	h.clients = h.clients[:len(h.clients)-1]
 
-	msg := NewMessage(h.from(), et.Json{
+	msg := NewMessage(h.From(), et.Json{
 		"ok":      true,
 		"message": "Client disconnected",
 		"client":  client.From(),
 	}, TpDisconnect)
 	msg.Channel = "ws/disconnect"
 
-	h.Mute(msg.Channel, msg, []string{client.Id}, h.from())
+	h.Mute(msg.Channel, msg, []string{client.Id}, h.From())
 
 	logs.Logf("Websocket", MSG_CLIENT_DISCONNECT, client.Id, h.Id)
 }
