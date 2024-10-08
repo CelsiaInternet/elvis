@@ -10,7 +10,7 @@ import (
 * Remember to this function use ZONEINFO variable
 **/
 func NowTime() time.Time {
-	return time.Now()
+	return time.Now().Local()
 }
 
 /**
