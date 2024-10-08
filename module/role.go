@@ -44,17 +44,30 @@ func DefineRoles(db *jdb.DB) error {
 }
 
 /**
-* Role
-*	Handler for CRUD data
+* GetRoleById
+* @param projectId string
+* @param moduleId string
+* @param userId string
+* @return et.Item, error
 **/
 func GetRoleById(projectId, moduleId, userId string) (et.Item, error) {
-	return Roles.Data().
+	result, err := Roles.Data().
 		Where(Roles.Column("project_id").Eq(projectId)).
 		And(Roles.Column("module_id").Eq(moduleId)).
 		And(Roles.Column("user_id").Eq(userId)).
 		First()
+	if err != nil {
+		return et.Item{}, err
+	}
+
+	return result, nil
 }
 
+/**
+* GetUserRoleByIndex
+* @param idx int64
+* @return et.Item, error
+**/
 func GetUserRoleByIndex(idx int64) (et.Item, error) {
 	sql := `
 	SELECT
@@ -81,6 +94,11 @@ func GetUserRoleByIndex(idx int64) (et.Item, error) {
 	return item, nil
 }
 
+/**
+* GetUserProjects
+* @param userId string
+* @return []et.Json, error
+**/
 func GetUserProjects(userId string) ([]et.Json, error) {
 	sql := `
 	SELECT
@@ -101,6 +119,11 @@ func GetUserProjects(userId string) ([]et.Json, error) {
 	return modules.Result, nil
 }
 
+/**
+* GetUserModules
+* @param userId string
+* @return []et.Json, error
+**/
 func GetUserModules(userId string) ([]et.Json, error) {
 	sql := `
 	SELECT
@@ -128,6 +151,15 @@ func GetUserModules(userId string) ([]et.Json, error) {
 	return modules.Result, nil
 }
 
+/**
+* CheckRole
+* @param projectId string
+* @param moduleId string
+* @param profileTp string
+* @param userId string
+* @param chk bool
+* @return et.Item, error
+**/
 func CheckRole(projectId, moduleId, profileTp, userId string, chk bool) (et.Item, error) {
 	if !utility.ValidId(projectId) {
 		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "project_id")

@@ -10,7 +10,16 @@ import (
 )
 
 var Profiles *linq.Model
-var ProfileFolders *linq.Model
+
+var PROFILE_ADMIN = "PROFILE.ADMIN"
+var PROFILE_DEV = "PROFILE.DEV"
+var PROFILE_SUPORT = "PROFILE.SUPORT"
+
+var profileDefault = map[string]bool{
+	PROFILE_ADMIN:  true,
+	PROFILE_DEV:    true,
+	PROFILE_SUPORT: true,
+}
 
 func DefineProfiles(db *jdb.DB) error {
 	if err := DefineSchemaModule(db); err != nil {
@@ -43,36 +52,6 @@ func DefineProfiles(db *jdb.DB) error {
 	return nil
 }
 
-func DefineProfileFolders(db *jdb.DB) error {
-	if err := DefineSchemaModule(db); err != nil {
-		return console.Panic(err)
-	}
-
-	if ProfileFolders != nil {
-		return nil
-	}
-
-	ProfileFolders = linq.NewModel(SchemaModule, "PROFILE_FOLDERS", "Tabla de carpetas por perfil", 1)
-	ProfileFolders.DefineColum("date_make", "", "TIMESTAMP", "NOW()")
-	ProfileFolders.DefineColum("module_id", "", "VARCHAR(80)", "-1")
-	ProfileFolders.DefineColum("profile_tp", "", "VARCHAR(80)", "-1")
-	ProfileFolders.DefineColum("folder_id", "", "VARCHAR(80)", "-1")
-	ProfileFolders.DefineColum("index", "", "INTEGER", 0)
-	ProfileFolders.DefinePrimaryKey([]string{"module_id", "profile_tp", "folder_id"})
-	ProfileFolders.DefineIndex([]string{
-		"date_make",
-		"index",
-	})
-	ProfileFolders.DefineForeignKey("module_id", Modules.Column("_id"))
-	ProfileFolders.DefineForeignKey("folder_id", Folders.Column("_id"))
-
-	if err := ProfileFolders.Init(); err != nil {
-		return console.Panic(err)
-	}
-
-	return nil
-}
-
 /**
 * Profile
 *	Handler for CRUD data
@@ -84,6 +63,13 @@ func GetProfileById(moduleId, profileTp string) (et.Item, error) {
 		First()
 }
 
+/**
+* InitProfile
+* @param moduleId string
+* @param profileTp string
+* @param data et.Json
+* @return et.Item, error
+**/
 func InitProfile(moduleId, profileTp string, data et.Json) (et.Item, error) {
 	if !utility.ValidId(moduleId) {
 		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "moduleId")
@@ -185,65 +171,6 @@ func DeleteProfile(moduleId, profileTp string) (et.Item, error) {
 		Where(Profiles.Column("module_id").Eq(moduleId)).
 		And(Profiles.Column("profile_tp").Eq(profileTp)).
 		CommandOne()
-}
-
-/**
-* Profile Folder
-**/
-func GetProfileFolderByIdT(_idt string) (et.Item, error) {
-	return ProfileFolders.Data().
-		Where(ProfileFolders.Column("_idt").Eq(_idt)).
-		First()
-}
-
-func GetProfileFolderById(moduleId, profileTp, folderId string) (et.Item, error) {
-	return ProfileFolders.Data().
-		Where(ProfileFolders.Column("module_id").Eq(moduleId)).
-		And(ProfileFolders.Column("profile_tp").Eq(profileTp)).
-		And(ProfileFolders.Column("folder_id").Eq(folderId)).
-		First()
-}
-
-func CheckProfileFolder(moduleId, profileTp, folderId string, chk bool) (et.Item, error) {
-	if !utility.ValidId(moduleId) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "module_id")
-	}
-
-	if !utility.ValidId(profileTp) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "profile_tp")
-	}
-
-	if !utility.ValidId(folderId) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "folder_id")
-	}
-
-	profile, err := GetTypeById(profileTp)
-	if err != nil {
-		return et.Item{}, err
-	}
-
-	if !profile.Ok {
-		return et.Item{}, console.AlertF(msg.PROFILE_NOT_FOUND, profileTp, moduleId)
-	}
-
-	data := et.Json{}
-	data.Set("module_id", moduleId)
-	data.Set("profile_tp", profileTp)
-	data.Set("folder_id", folderId)
-	if chk {
-		return ProfileFolders.Insert(data).
-			Where(ProfileFolders.Column("module_id").Eq(moduleId)).
-			And(ProfileFolders.Column("profile_tp").Eq(profileTp)).
-			And(ProfileFolders.Column("folder_id").Eq(folderId)).
-			Returns(ProfileFolders.Column("index")).
-			CommandOne()
-	} else {
-		return ProfileFolders.Delete().
-			Where(ProfileFolders.Column("module_id").Eq(moduleId)).
-			And(ProfileFolders.Column("profile_tp").Eq(profileTp)).
-			And(ProfileFolders.Column("folder_id").Eq(folderId)).
-			CommandOne()
-	}
 }
 
 func getProfileFolders(userId, projectId, mainId string) []et.Json {

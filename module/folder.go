@@ -42,21 +42,6 @@ func DefineFolders(db *jdb.DB) error {
 		"name",
 		"index",
 	})
-	Folders.Trigger(linq.AfterUpdate, func(model *linq.Model, old, new *et.Json, data et.Json) error {
-		event.Log("folder/update", *new)
-		oldState := old.Key("_state")
-		newState := old.Key("_state")
-		if oldState != newState {
-			event.Log("folder/state", *new)
-		}
-
-		return nil
-	})
-	Folders.Trigger(linq.AfterDelete, func(model *linq.Model, old, new *et.Json, data et.Json) error {
-		event.Log("folder/delete", *old)
-
-		return nil
-	})
 
 	if err := Folders.Init(); err != nil {
 		return console.Panic(err)
@@ -203,7 +188,7 @@ func UpSetFolder(moduleId, mainId, id, name, description string, data et.Json) (
 		return et.Item{}, console.AlertF(msg.RECORD_NOT_ACTIVE, current.State())
 	}
 
-	data["module_id"] = moduleId
+	delete(data, "module_id")
 	data["main_id"] = mainId
 	data["_id"] = id
 	data["name"] = name
@@ -245,12 +230,21 @@ func StateFolder(id, state string) (et.Item, error) {
 		return et.Item{}, console.Alert(msg.RECORD_NOT_CHANGE)
 	}
 
-	return Folders.Update(et.Json{
+	result, err := Folders.Update(et.Json{
 		"_state": state,
 	}).
 		Where(Folders.Column("_id").Eq(id)).
 		And(Folders.Column("_state").Neg(state)).
 		CommandOne()
+	if err != nil {
+		return et.Item{}, err
+	}
+
+	if result.Ok {
+		event.Work("folder/state", result.Result)
+	}
+
+	return result, nil
 }
 
 /**

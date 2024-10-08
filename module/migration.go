@@ -8,10 +8,7 @@ import (
 	"github.com/cgalvisleon/elvis/utility"
 )
 
-// Remove the redeclaration of Modules
-// var Modules *linq.Model
 var Migration *linq.Model
-var MigrationFolders *linq.Model
 
 func DefineMigration(db *jdb.DB) error {
 	if err := DefineSchemaModule(db); err != nil {
@@ -42,6 +39,12 @@ func DefineMigration(db *jdb.DB) error {
 	return nil
 }
 
+/**
+* IdMigration
+* @param old_id string
+* @param tag string
+* @return string, error
+**/
 func IdMigration(old_id string, tag string) (string, error) {
 	if !utility.ValidId(old_id) {
 		return old_id,
@@ -83,6 +86,13 @@ func IdMigration(old_id string, tag string) (string, error) {
 	return old_id, nil
 }
 
+/**
+* SetMigration
+* @param old_id string
+* @param id string
+* @param tag string
+* @return et.Item, error
+**/
 func SetMigration(old_id string, id string, tag string) (et.Item, error) {
 	if !utility.ValidId(old_id) {
 		return et.Item{},

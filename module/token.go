@@ -188,7 +188,6 @@ func UpSetToken(projeectId, id, app, device, name, userId string) (et.Item, erro
 			Ok: item.Ok,
 			Result: et.OkOrNotJson(item.Ok, item.Result, et.Json{
 				"message": msg.RECORD_NOT_UPDATE,
-				"_id":     id,
 			}),
 		}, nil
 	}
@@ -206,7 +205,6 @@ func UpSetToken(projeectId, id, app, device, name, userId string) (et.Item, erro
 	data.Set("device", device)
 	data.Set("name", name)
 	data.Set("token", token)
-
 	item, err := Tokens.Insert(data).
 		CommandOne()
 	if err != nil {
@@ -231,7 +229,6 @@ func UpSetToken(projeectId, id, app, device, name, userId string) (et.Item, erro
 		Ok: item.Ok,
 		Result: et.OkOrNotJson(item.Ok, item.Result, et.Json{
 			"message": msg.RECORD_NOT_CREATE,
-			"_id":     id,
 		}),
 	}, nil
 }
