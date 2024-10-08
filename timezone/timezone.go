@@ -4,13 +4,23 @@ import (
 	"time"
 )
 
+var loc *time.Location
+
 /**
 * NowTime
 * @return time.Time
 * Remember to this function use ZONEINFO variable
 **/
 func NowTime() time.Time {
-	return time.Now().Local()
+	if loc != nil {
+		var err error
+		loc, err = time.LoadLocation("America/Bogota")
+		if err != nil {
+			loc = time.Local
+		}
+	}
+
+	return time.Now().In(loc)
 }
 
 /**
