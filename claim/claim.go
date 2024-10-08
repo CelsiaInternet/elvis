@@ -210,16 +210,16 @@ func GetFromToken(token string) (*Claim, error) {
 	}
 
 	key := TokenKey(result.App, result.Device, result.ID)
-	c, err := cache.Get(key, "")
+	val, err := cache.Get(key, "")
 	if err != nil {
 		return nil, err
 	}
 
-	if c != token {
+	if val != token {
 		return nil, err
 	}
 
-	err = cache.Set(key, c, result.Duration)
+	err = cache.Set(key, token, result.Duration)
 	if err != nil {
 		return nil, err
 	}

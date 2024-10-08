@@ -94,6 +94,11 @@ func Authorization(next http.Handler) http.Handler {
 			return
 		}
 
+		if c == nil {
+			response.Unauthorized(w, r)
+			return
+		}
+
 		serviceId := utility.UUID()
 		ctx = context.WithValue(ctx, ServiceIdKey, serviceId)
 		ctx = context.WithValue(ctx, ClientIdKey, c.Id)
