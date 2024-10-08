@@ -1,9 +1,8 @@
 package timezone
 
 import (
+	"os"
 	"time"
-
-	"github.com/cgalvisleon/elvis/envar"
 )
 
 var loc *time.Location
@@ -25,6 +24,10 @@ func Now() string {
 }
 
 func init() {
-	timeZona := envar.GetStr("America/Bogota", "TIME_ZONE")
+	timeZona := os.Getenv("TIME_ZONE")
+	if timeZona == "" {
+		timeZona = "America/Bogota"
+	}
+
 	loc, _ = time.LoadLocation(timeZona)
 }
