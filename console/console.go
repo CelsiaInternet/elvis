@@ -6,7 +6,6 @@ import (
 	"os"
 	"runtime"
 	"strings"
-	"time"
 
 	"github.com/cgalvisleon/elvis/strs"
 	"github.com/cgalvisleon/elvis/timezone"
@@ -22,7 +21,6 @@ var Cyan = "\033[36m"
 var Gray = "\033[37m"
 var White = "\033[97m"
 var useColor = true
-var loc *time.Location
 
 func init() {
 	if runtime.GOOS == "windows" {
@@ -221,13 +219,4 @@ func Ping() {
 
 func Pong() {
 	Log("PING")
-}
-
-func init() {
-	timeZona := os.Getenv("TIME_ZONE")
-	if timeZona == "" {
-		timeZona = "America/Bogota"
-	}
-
-	loc, _ = time.LoadLocation(timeZona)
 }
