@@ -74,7 +74,7 @@ func SQLParse(sql string, args ...any) string {
 **/
 func query(db *DB, sql string, args ...any) (*sql.Rows, error) {
 	if db == nil {
-		return nil, console.AlertF(msg.ERR_COMM)
+		return nil, console.AlertF(msg.NOT_CONNECT_DB)
 	}
 
 	isSelect := func(query string) bool {
@@ -105,7 +105,7 @@ func query(db *DB, sql string, args ...any) (*sql.Rows, error) {
 **/
 func command(db *DB, opt, id, sql string, args ...any) (*sql.Rows, error) {
 	if db == nil {
-		return nil, console.AlertF(msg.ERR_COMM)
+		return nil, console.AlertF(msg.NOT_CONNECT_DB)
 	}
 
 	query := SQLParse(sql, args...)
@@ -129,7 +129,7 @@ func command(db *DB, opt, id, sql string, args ...any) (*sql.Rows, error) {
 **/
 func (d *DB) Command(opt, id, sql string, args ...any) (et.Item, error) {
 	if d.db == nil {
-		return et.Item{}, console.AlertF(msg.ERR_COMM)
+		return et.Item{}, console.AlertF(msg.NOT_CONNECT_DB)
 	}
 
 	rows, err := command(d, opt, id, sql, args...)
@@ -153,7 +153,7 @@ func (d *DB) Command(opt, id, sql string, args ...any) (et.Item, error) {
 **/
 func (d *DB) Query(sql string, args ...any) (et.Items, error) {
 	if d.db == nil {
-		return et.Items{}, console.AlertF(msg.ERR_COMM)
+		return et.Items{}, console.AlertF(msg.NOT_CONNECT_DB)
 	}
 
 	rows, err := query(d, sql, args...)
@@ -177,7 +177,7 @@ func (d *DB) Query(sql string, args ...any) (et.Items, error) {
 **/
 func (d *DB) QueryOne(sql string, args ...any) (et.Item, error) {
 	if d.db == nil {
-		return et.Item{}, console.AlertF(msg.ERR_COMM)
+		return et.Item{}, console.AlertF(msg.NOT_CONNECT_DB)
 	}
 
 	items, err := query(d, sql, args...)
@@ -201,7 +201,7 @@ func (d *DB) QueryOne(sql string, args ...any) (et.Item, error) {
 **/
 func (d *DB) Source(sourceField string, sql string, args ...any) (et.Items, error) {
 	if d.db == nil {
-		return et.Items{}, console.AlertF(msg.ERR_COMM)
+		return et.Items{}, console.AlertF(msg.NOT_CONNECT_DB)
 	}
 
 	rows, err := d.db.Query(sql, args...)
@@ -226,7 +226,7 @@ func (d *DB) Source(sourceField string, sql string, args ...any) (et.Items, erro
 **/
 func (d *DB) SourceOne(sourceField string, sql string, args ...any) (et.Item, error) {
 	if d.db == nil {
-		return et.Item{}, console.AlertF(msg.ERR_COMM)
+		return et.Item{}, console.AlertF(msg.NOT_CONNECT_DB)
 	}
 
 	rows, err := d.db.Query(sql, args...)
