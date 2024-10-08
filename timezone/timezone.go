@@ -13,14 +13,12 @@ var loc *time.Location
 **/
 func NowTime() time.Time {
 	if loc != nil {
-		var err error
-		loc, err = time.LoadLocation("America/Bogota")
-		if err != nil {
-			loc = time.Local
-		}
+		loc = time.FixedZone("America/Bogota", -5*60*60)
 	}
 
-	return time.Now().In(loc)
+	now := time.Now().UTC()
+
+	return now.In(loc)
 }
 
 /**
