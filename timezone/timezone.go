@@ -12,7 +12,7 @@ var loc *time.Location
 * Remember to this function use ZONEINFO variable
 **/
 func NowTime() time.Time {
-	if loc != nil {
+	if loc == nil {
 		loc = time.FixedZone("America/Bogota", -5*60*60)
 	}
 
