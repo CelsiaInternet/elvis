@@ -1,46 +1,16 @@
 package timezone
 
 import (
-	"fmt"
-	"os"
 	"time"
 )
-
-var loc *time.Location
 
 /**
 * NowTime
 * @return time.Time
+* Remember to this function use ZONEINFO variable
 **/
 func NowTime() time.Time {
-	loadLocation()
-
-	return time.Now().In(loc)
-}
-
-/**
-* loadLocation
-* @return *time.Location
-**/
-func loadLocation() *time.Location {
-	if loc != nil {
-		return loc
-	}
-
-	timeZona := os.Getenv("TIME_ZONE")
-	if timeZona == "" {
-		timeZona = "America/Bogota"
-	}
-
-	fmt.Printf(`Time Zone: %s`, timeZona)
-
-	var err error
-	loc, err = time.LoadLocation(timeZona)
-	if err != nil {
-		loc = time.UTC
-	}
-
-	return loc
+	return time.Now()
 }
 
 /**
