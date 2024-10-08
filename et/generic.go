@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"strconv"
 	"time"
+
+	"github.com/cgalvisleon/elvis/timezone"
 )
 
 type Any struct {
@@ -141,7 +143,7 @@ func (an *Any) Bool() bool {
 }
 
 func (an *Any) Time() time.Time {
-	_default := time.Now()
+	_default := timezone.NowTime()
 	switch v := an.value.(type) {
 	case int:
 		return _default

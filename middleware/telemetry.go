@@ -13,6 +13,7 @@ import (
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/event"
 	"github.com/cgalvisleon/elvis/strs"
+	"github.com/cgalvisleon/elvis/timezone"
 	"github.com/cgalvisleon/elvis/utility"
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/mem"
@@ -172,7 +173,7 @@ func NewMetric(r *http.Request) *Metrics {
 	}
 
 	result := &Metrics{
-		TimeBegin:        time.Now(),
+		TimeBegin:        timezone.NowTime(),
 		ReqID:            utility.UUID(),
 		EndPoint:         endPoint,
 		Method:           r.Method,
@@ -199,7 +200,7 @@ func NewRpcMetric(method string) *Metrics {
 	scheme := "rpc"
 
 	result := &Metrics{
-		TimeBegin:        time.Now(),
+		TimeBegin:        timezone.NowTime(),
 		ReqID:            utility.UUID(),
 		EndPoint:         endPoint,
 		Method:           "RPC",
@@ -258,7 +259,7 @@ func (m *Metrics) CallMemoryUsage() {
 **/
 func (m *Metrics) CallSearchTime() {
 	m.SearchTime = time.Since(m.TimeBegin)
-	m.TimeExec = time.Now()
+	m.TimeExec = timezone.NowTime()
 }
 
 /**
@@ -268,7 +269,7 @@ func (m *Metrics) CallSearchTime() {
 * @return et.Json
 **/
 func (m *Metrics) DoneFn(rw *ResponseWriterWrapper) et.Json {
-	m.TimeEnd = time.Now()
+	m.TimeEnd = timezone.NowTime()
 	m.ResponseTime = time.Since(m.TimeExec)
 	m.Latency = time.Since(m.TimeBegin)
 	m.Downtime = m.Latency - m.ResponseTime
@@ -295,7 +296,7 @@ func (m *Metrics) DoneRpc(r interface{}) et.Json {
 		size = size / 1024
 	}
 
-	m.TimeEnd = time.Now()
+	m.TimeEnd = timezone.NowTime()
 	m.ResponseTime = time.Since(m.TimeExec)
 	m.Latency = time.Since(m.TimeBegin)
 	m.Downtime = m.Latency - m.ResponseTime

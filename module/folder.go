@@ -42,18 +42,6 @@ func DefineFolders(db *jdb.DB) error {
 		"name",
 		"index",
 	})
-	Folders.Trigger(linq.AfterInsert, func(model *linq.Model, old, new *et.Json, data et.Json) error {
-		id := new.Id()
-		if id != "-1" {
-			moduleId := new.Key("module_id")
-			CheckProfileFolder(moduleId, "PROFILE.ADMIN", id, true)
-			CheckProfileFolder(moduleId, "PROFILE.DEV", id, true)
-			CheckProfileFolder(moduleId, "PROFILE.SUPORT", id, true)
-			CheckModuleFolder(moduleId, id, true)
-		}
-
-		return nil
-	})
 	Folders.Trigger(linq.AfterUpdate, func(model *linq.Model, old, new *et.Json, data et.Json) error {
 		event.Log("folder/update", *new)
 		oldState := old.Key("_state")
@@ -78,10 +66,23 @@ func DefineFolders(db *jdb.DB) error {
 }
 
 /**
-*	Folder
-*	Handler for CRUD data
+* GetFolderById
+* @param id string
+* @return et.Item, error
 **/
+func GetFolderById(id string) (et.Item, error) {
+	return Folders.Data().
+		Where(Folders.Column("_id").Eq(id)).
+		First()
+}
 
+/**
+* GetFolderByName
+* @param moduleId string
+* @param mainId string
+* @param name string
+* @return et.Item, error
+**/
 func GetFolderByName(moduleId, mainId, name string) (et.Item, error) {
 	return Folders.Data().
 		Where(Folders.Column("module_id").Eq(moduleId)).
@@ -90,6 +91,16 @@ func GetFolderByName(moduleId, mainId, name string) (et.Item, error) {
 		First()
 }
 
+/**
+* InitFolder
+* @param moduleId string
+* @param mainId string
+* @param id string
+* @param name string
+* @param description string
+* @param data et.Json
+* @return et.Item, error
+**/
 func InitFolder(moduleId, mainId, id, name, description string, data et.Json) (et.Item, error) {
 	if !utility.ValidId(moduleId) {
 		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "module_id")
@@ -103,50 +114,47 @@ func InitFolder(moduleId, mainId, id, name, description string, data et.Json) (e
 		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "name")
 	}
 
-	module, err := GetModuleById(moduleId)
+	id = utility.GenKey(id)
+	current, err := GetFolderById(id)
 	if err != nil {
 		return et.Item{}, err
 	}
 
-	if !module.Ok {
-		return et.Item{}, console.ErrorM(msg.MODULE_NOT_FOUND)
+	if !current.Ok {
+		data["module_id"] = moduleId
+		data["main_id"] = mainId
+		data["_id"] = id
+		data["name"] = name
+		data["description"] = description
+		item, err := Folders.Insert(data).
+			CommandOne()
+		if err != nil {
+			return et.Item{}, err
+		}
+
+		if item.Ok {
+			CheckProfileFolder(moduleId, "PROFILE.ADMIN", id, true)
+			CheckProfileFolder(moduleId, "PROFILE.DEV", id, true)
+			CheckProfileFolder(moduleId, "PROFILE.SUPORT", id, true)
+			CheckModuleFolder(moduleId, id, true)
+		}
+
+		return item, nil
 	}
 
-	current, err := GetFolderByName(moduleId, mainId, name)
-	if err != nil {
-		return et.Item{}, err
-	}
-
-	if current.Ok && current.Id() != id {
-		return et.Item{
-			Ok: current.Ok,
-			Result: et.Json{
-				"message": msg.RECORD_FOUND,
-				"_id":     id,
-			},
-		}, nil
-	}
-
-	id = utility.GenId(id)
-	data["module_id"] = moduleId
-	data["main_id"] = mainId
-	data["_id"] = id
-	data["name"] = name
-	data["description"] = description
-	item, err := Folders.Upsert(data).
-		Where(Folders.Column("_id").Eq(id)).
-		And(Folders.Column("_state").Eq(utility.ACTIVE)).
-		CommandOne()
-	if err != nil {
-		return et.Item{}, err
-	}
-
-	CheckModuleFolder(moduleId, id, true)
-
-	return item, nil
+	return current, nil
 }
 
-func UpSetFolder(moduleId, mainId, name, description string, data et.Json) (et.Item, error) {
+/**
+* UpSetFolder
+* @param moduleId string
+* @param mainId string
+* @param name string
+* @param description string
+* @param data et.Json
+* @return et.Item, error
+**/
+func UpSetFolder(moduleId, mainId, id, name, description string, data et.Json) (et.Item, error) {
 	if !utility.ValidId(moduleId) {
 		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "module_id")
 	}
@@ -159,77 +167,109 @@ func UpSetFolder(moduleId, mainId, name, description string, data et.Json) (et.I
 		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "name")
 	}
 
-	module, err := GetModuleById(moduleId)
+	id = utility.GenKey(id)
+	current, err := GetFolderById(id)
 	if err != nil {
 		return et.Item{}, err
 	}
 
-	if !module.Ok {
-		return et.Item{}, console.ErrorM(msg.MODULE_NOT_FOUND)
+	if !current.Ok {
+		data["module_id"] = moduleId
+		data["main_id"] = mainId
+		data["_id"] = id
+		data["name"] = name
+		data["description"] = description
+		item, err := Folders.Insert(data).
+			CommandOne()
+		if err != nil {
+			return et.Item{}, err
+		}
+
+		if item.Ok {
+			CheckProfileFolder(moduleId, "PROFILE.ADMIN", id, true)
+			CheckProfileFolder(moduleId, "PROFILE.DEV", id, true)
+			CheckProfileFolder(moduleId, "PROFILE.SUPORT", id, true)
+			CheckModuleFolder(moduleId, id, true)
+		}
+
+		return item, nil
 	}
 
-	current, err := Folders.Data(Folders.Column("_id")).
-		Where(Folders.Column("module_id").Eq(moduleId)).
-		And(Folders.Column("main_id").Eq(mainId)).
-		And(Folders.Column("name").Eq(name)).
-		First()
-	if err != nil {
-		return et.Item{}, err
+	if current.State() == utility.OF_SYSTEM {
+		return et.Item{}, console.Alert(msg.RECORD_IS_SYSTEM)
+	} else if current.State() == utility.FOR_DELETE {
+		return et.Item{}, console.Alert(msg.RECORD_DELETE)
+	} else if current.State() != utility.ACTIVE {
+		return et.Item{}, console.AlertF(msg.RECORD_NOT_ACTIVE, current.State())
 	}
 
-	id := current.Id()
-	id = utility.GenId(id)
 	data["module_id"] = moduleId
 	data["main_id"] = mainId
 	data["_id"] = id
 	data["name"] = name
 	data["description"] = description
-	item, err := Folders.Upsert(data).
+	return Folders.Update(data).
 		Where(Folders.Column("_id").Eq(id)).
-		And(Folders.Column("_state").Eq(utility.ACTIVE)).
 		CommandOne()
+}
+
+/**
+* StateFolder
+* @param id string
+* @param state string
+* @return et.Item, error
+**/
+func StateFolder(id, state string) (et.Item, error) {
+	if !utility.ValidId(id) {
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "id")
+	}
+
+	if !utility.ValidStr(state, 0, []string{""}) {
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "state")
+	}
+
+	current, err := GetFolderById(id)
 	if err != nil {
 		return et.Item{}, err
 	}
 
-	return item, nil
-}
-
-func GetFolderById(id string) (et.Item, error) {
-	return Folders.Data().
-		Where(Folders.Column("_id").Eq(id)).
-		First()
-}
-
-func StateFolder(id, state string) (et.Item, error) {
-	if !utility.ValidId(state) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "state")
+	if !current.Ok {
+		return et.Item{}, console.Alert(msg.RECORD_NOT_FOUND)
 	}
 
-	item, err := Folders.Update(et.Json{
+	if current.State() == utility.OF_SYSTEM {
+		return et.Item{}, console.Alert(msg.RECORD_IS_SYSTEM)
+	} else if current.State() == utility.FOR_DELETE {
+		return et.Item{}, console.Alert(msg.RECORD_DELETE)
+	} else if current.State() == state {
+		return et.Item{}, console.Alert(msg.RECORD_NOT_CHANGE)
+	}
+
+	return Folders.Update(et.Json{
 		"_state": state,
 	}).
 		Where(Folders.Column("_id").Eq(id)).
 		And(Folders.Column("_state").Neg(state)).
 		CommandOne()
-	if err != nil {
-		return et.Item{}, err
-	}
-
-	return item, nil
 }
 
+/**
+* DeleteFolder
+* @param id string
+* @return et.Item, error
+**/
 func DeleteFolder(id string) (et.Item, error) {
-	item, err := Folders.Delete().
-		Where(Folders.Column("_id").Eq(id)).
-		CommandOne()
-	if err != nil {
-		return et.Item{}, err
-	}
-
-	return item, nil
+	return StateFolder(id, utility.FOR_DELETE)
 }
 
+/**
+* AllFolders
+* @param state string
+* @param search string
+* @param page int
+* @param rows int
+* @return et.List, error
+**/
 func AllFolders(state, search string, page, rows int) (et.List, error) {
 	if state == "" {
 		state = utility.ACTIVE
@@ -263,10 +303,10 @@ func AllFolders(state, search string, page, rows int) (et.List, error) {
 }
 
 /**
-* Default folders
+* DefaultFolderUsers
+* @param moduleId string
+* @return error
 **/
-
-// Create or asignes Usuarios folder to module
 func DefaultFolderUsers(moduleId string) error {
 	_, err := InitFolder(moduleId, "-1", "FOLDER.USERS", "Usuarios", "", et.Json{
 		"icon":   "users",

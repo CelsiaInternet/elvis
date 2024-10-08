@@ -8,7 +8,8 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"time"
+
+	"github.com/cgalvisleon/elvis/timezone"
 )
 
 var (
@@ -66,7 +67,7 @@ func CW(w io.Writer, color []byte, s string, args ...interface{}) {
 
 func Color(color []byte, s string, args ...interface{}) *bytes.Buffer {
 	var w *bytes.Buffer = new(bytes.Buffer)
-	now := time.Now().Format("2006/01/02 15:04:05")
+	now := timezone.Now()
 	CW(w, NWhite, now)
 	CW(w, color, s, args...)
 

@@ -116,6 +116,10 @@ func (it *Item) IdT() string {
 	return it.Result.IdT()
 }
 
+func (it *Item) State() string {
+	return it.Result.State()
+}
+
 func (it *Item) Index() int {
 	return it.Result.Index()
 }

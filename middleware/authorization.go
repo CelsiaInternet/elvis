@@ -3,7 +3,6 @@ package middleware
 import (
 	"context"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/cgalvisleon/elvis/claim"
@@ -105,7 +104,6 @@ func Authorization(next http.Handler) http.Handler {
 		ctx = context.WithValue(ctx, TokenKey, tokenString)
 
 		now := utility.Now()
-		hostName, _ := os.Hostname()
 		data := et.Json{
 			"serviceId": serviceId,
 			"clientId":  c.Id,

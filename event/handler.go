@@ -2,11 +2,11 @@ package event
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/response"
+	"github.com/cgalvisleon/elvis/timezone"
 	"github.com/cgalvisleon/elvis/utility"
 	"github.com/nats-io/nats.go"
 )
@@ -164,7 +164,7 @@ func Stack(channel string, f func(EvenMessage)) error {
 **/
 func Work(event string, data et.Json) et.Json {
 	work := et.Json{
-		"created_at": time.Now(),
+		"created_at": timezone.Now(),
 		"_id":        utility.UUID(),
 		"event":      event,
 		"data":       data,
@@ -184,7 +184,7 @@ func Work(event string, data et.Json) et.Json {
 **/
 func WorkState(work_id string, status WorkStatus, data et.Json) {
 	work := et.Json{
-		"update_at": time.Now(),
+		"update_at": timezone.Now(),
 		"_id":       work_id,
 		"status":    status.String(),
 		"data":      data,

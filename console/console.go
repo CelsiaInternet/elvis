@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/cgalvisleon/elvis/strs"
+	"github.com/cgalvisleon/elvis/timezone"
 )
 
 var Reset = "\033[0m"
@@ -21,6 +22,7 @@ var Cyan = "\033[36m"
 var Gray = "\033[37m"
 var White = "\033[97m"
 var useColor = true
+var loc *time.Location
 
 func init() {
 	if runtime.GOOS == "windows" {
@@ -40,7 +42,7 @@ func init() {
 func Printl(kind string, color string, args ...any) string {
 	kind = strings.ToUpper(kind)
 	message := fmt.Sprint(args...)
-	now := time.Now().Format("2006/01/02 15:04:05")
+	now := timezone.Now()
 	var result string
 
 	switch color {
@@ -219,4 +221,13 @@ func Ping() {
 
 func Pong() {
 	Log("PING")
+}
+
+func init() {
+	timeZona := os.Getenv("TIME_ZONE")
+	if timeZona == "" {
+		timeZona = "America/Bogota"
+	}
+
+	loc, _ = time.LoadLocation(timeZona)
 }

@@ -16,6 +16,7 @@ import (
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/logs"
 	"github.com/cgalvisleon/elvis/strs"
+	"github.com/cgalvisleon/elvis/timezone"
 	"github.com/google/uuid"
 	"golang.org/x/exp/slices"
 )
@@ -49,23 +50,41 @@ const AFTER_DELETE = "AFTER_DELETE"
 const VALUE_NOT_BOOL = "Value is not bolean"
 const ROWS = 30
 
-var start = time.Now()
+var start = timezone.NowTime()
 var ping = 0
 var locks = make(map[string]*sync.RWMutex)
 var count = make(map[string]int64)
 
+/**
+* Ping
+**/
 func Ping() {
 	ping++
 	console.InfoF(`PING %d`, ping)
 }
 
+/**
+* Pong
+**/
 func Pong() {
 	console.Info("PONG")
 	ping = 0
 }
 
+/**
+* NowTime
+* @return time.Time
+**/
+func NowTime() time.Time {
+	return timezone.NowTime()
+}
+
+/**
+* Now return the current date
+* @return string
+**/
 func Now() string {
-	return time.Now().UTC().Format("2006-01-02 15:04:05")
+	return timezone.Now()
 }
 
 /**
@@ -75,7 +94,7 @@ func Now() string {
 **/
 func GetOTP(length int) string {
 	const charset = "0123456789"
-	var seededRand *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
+	var seededRand *rand.Rand = rand.New(rand.NewSource(timezone.NowTime().UnixNano()))
 
 	b := make([]byte, length)
 	for i := range b {
@@ -169,7 +188,7 @@ func More(tag string, expiration time.Duration) int64 {
 * @return int64
 **/
 func UUIndex(tag string) int64 {
-	now := time.Now()
+	now := timezone.NowTime()
 	result := now.UnixMilli() * 10000
 	key := fmt.Sprintf("%s:%d", tag, result)
 	n := More(key, 1*time.Second)
@@ -268,7 +287,7 @@ func TimeDifference(dateInt, dateEnd any) time.Duration {
 * @return int
 **/
 func GeneratePortNumber() int {
-	rand.New(rand.NewSource(time.Now().UnixNano()))
+	rand.New(rand.NewSource(timezone.NowTime().UnixNano()))
 	min := 1000
 	max := 99999
 	port := rand.Intn(max-min+1) + min
@@ -492,7 +511,7 @@ func GoMod(atrib string) (string, error) {
 * StartTime
 **/
 func StartTime() {
-	start = time.Now()
+	start = timezone.NowTime()
 }
 
 /**

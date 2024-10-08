@@ -61,18 +61,38 @@ func GetTypeByName(kind, name string) (et.Item, error) {
 		First()
 }
 
+/**
+* GetTypeById
+* @param string id
+* @return et.Item, error
+**/
 func GetTypeById(id string) (et.Item, error) {
 	return Types.Data().
 		Where(Types.Column("_id").Eq(id)).
 		First()
 }
 
+/**
+* GetTypeByIndex
+* @param int idx
+* @return et.Item, error
+**/
 func GetTypeByIndex(idx int) (et.Item, error) {
 	return Types.Data().
 		Where(Types.Column("index").Eq(idx)).
 		First()
 }
 
+/**
+* InitType
+* @param string projectId
+* @param string id
+* @param string state
+* @param string kind
+* @param string name
+* @param string description
+* @return et.Item, error
+**/
 func InitType(projectId, id, state, kind, name, description string) (et.Item, error) {
 	if !utility.ValidId(kind) {
 		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "kind")
@@ -87,27 +107,36 @@ func InitType(projectId, id, state, kind, name, description string) (et.Item, er
 		return et.Item{}, err
 	}
 
-	if current.Ok && current.Id() != id {
-		return et.Item{
-			Ok: current.Ok,
-			Result: et.Json{
-				"message": msg.RECORD_FOUND,
-			},
-		}, nil
+	id = utility.GenId(id)
+	if !current.Ok {
+		data := et.Json{}
+		data["project_id"] = projectId
+		data["_state"] = state
+		data["_id"] = id
+		data["kind"] = kind
+		data["name"] = name
+		data["description"] = description
+		result, err := Types.Insert(data).
+			CommandOne()
+		if err != nil {
+			return et.Item{}, err
+		}
+
+		return result, nil
 	}
 
-	id = utility.GenId(id)
-	data := et.Json{}
-	data["project_id"] = projectId
-	data["_id"] = id
-	data["kind"] = kind
-	data["name"] = name
-	data["description"] = description
-	return Types.Upsert(data).
-		Where(Types.Column("_id").Eq(id)).
-		CommandOne()
+	return current, nil
 }
 
+/**
+* UpSetType
+* @param string projectId
+* @param string id
+* @param string kind
+* @param string name
+* @param string description
+* @return et.Item, error
+**/
 func UpSetType(projectId, id, kind, name, description string) (et.Item, error) {
 	if !utility.ValidId(id) {
 		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "_id")
@@ -126,32 +155,73 @@ func UpSetType(projectId, id, kind, name, description string) (et.Item, error) {
 		return et.Item{}, err
 	}
 
-	if current.Ok && current.Id() != id {
-		return et.Item{
-			Ok: current.Ok,
-			Result: et.Json{
-				"message": msg.RECORD_FOUND,
-				"_id":     id,
-				"index":   current.Index(),
-			},
-		}, nil
+	id = utility.GenKey(id)
+	if !current.Ok {
+		data := et.Json{}
+		data["project_id"] = projectId
+		data["_state"] = utility.ACTIVE
+		data["_id"] = id
+		data["kind"] = kind
+		data["name"] = name
+		data["description"] = description
+		return Types.Insert(data).
+			CommandOne()
 	}
 
-	id = utility.GenId(id)
+	if current.Id() != id {
+		return et.Item{}, console.Alert(msg.RECORD_FOUND)
+	}
+
+	if current.State() == utility.OF_SYSTEM {
+		return et.Item{}, console.Alert(msg.RECORD_IS_SYSTEM)
+	} else if current.State() == utility.FOR_DELETE {
+		return et.Item{}, console.Alert(msg.RECORD_DELETE)
+	} else if current.State() != utility.ACTIVE {
+		return et.Item{}, console.AlertF(msg.RECORD_NOT_ACTIVE, current.State())
+	}
+
 	data := et.Json{}
 	data["project_id"] = projectId
 	data["_id"] = id
 	data["kind"] = kind
 	data["name"] = name
 	data["description"] = description
-	return Types.Upsert(data).
+	return Types.Update(data).
 		Where(Types.Column("_id").Eq(id)).
+		And(Types.Column("_state").Eq(utility.ACTIVE)).
 		CommandOne()
 }
 
+/**
+* StateType
+* @param string id
+* @param string state
+* @return et.Item, error
+**/
 func StateType(id, state string) (et.Item, error) {
-	if !utility.ValidId(state) {
+	if !utility.ValidId(id) {
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "id")
+	}
+
+	if !utility.ValidStr(state, 0, []string{""}) {
 		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "state")
+	}
+
+	current, err := GetTypeById(id)
+	if err != nil {
+		return et.Item{}, err
+	}
+
+	if !current.Ok {
+		return et.Item{}, console.Alert(msg.RECORD_NOT_FOUND)
+	}
+
+	if current.State() == utility.OF_SYSTEM {
+		return et.Item{}, console.Alert(msg.RECORD_IS_SYSTEM)
+	} else if current.State() == utility.FOR_DELETE {
+		return et.Item{}, console.Alert(msg.RECORD_DELETE)
+	} else if current.State() == state {
+		return et.Item{}, console.Alert(msg.RECORD_NOT_CHANGE)
 	}
 
 	return Types.Update(et.Json{

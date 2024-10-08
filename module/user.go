@@ -3,13 +3,10 @@ package module
 import (
 	"github.com/cgalvisleon/elvis/cache"
 	"github.com/cgalvisleon/elvis/console"
-	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/et"
-	"github.com/cgalvisleon/elvis/event"
 	"github.com/cgalvisleon/elvis/jdb"
 	"github.com/cgalvisleon/elvis/linq"
 	"github.com/cgalvisleon/elvis/msg"
-	"github.com/cgalvisleon/elvis/strs"
 	"github.com/cgalvisleon/elvis/utility"
 )
 
@@ -74,26 +71,6 @@ func DefineUsers(db *jdb.DB) error {
 
 		data.Set(col.Low(), modules)
 	})
-	Users.Trigger(linq.AfterInsert, func(model *linq.Model, old, new *et.Json, data et.Json) error {
-		id := new.Key("_id")
-		fullName := new.Str("full_name")
-		email := new.Str("email")
-		APP := envar.GetStr("", "APP")
-		if id == "USER.ADMIN" {
-			message := strs.Format(msg.MSG_ADMIN_WELCOME, fullName, APP)
-			event.Work("send/email", et.Json{
-				"project_id": "-1",
-				"to": et.Json{
-					"email": email,
-					"name":  fullName,
-				},
-				"subject":      "Bienvenido a " + APP,
-				"template":     "singup",
-				"html_content": message,
-			})
-		}
-		return nil
-	})
 
 	if err := Users.Init(); err != nil {
 		return console.Panic(err)
@@ -154,49 +131,8 @@ func GetUserById(id string) (et.Item, error) {
 }
 
 /**
-* UpSetAdmin
-* @param fullName string
-* @param country string
-* @param phone string
-* @param email string
-* @return et.Item
-* @return error
-**/
-func UpSetAdmin(fullName, country, phone, email string) (et.Item, error) {
-	if !utility.ValidStr(country, 0, []string{""}) {
-		return et.Item{}, console.NewErrorF(msg.MSG_ATRIB_REQUIRED, "country")
-	}
-
-	if !utility.ValidStr(phone, 9, []string{""}) {
-		return et.Item{}, console.NewErrorF(msg.MSG_ATRIB_REQUIRED, "phone")
-	}
-
-	if !utility.ValidStr(fullName, 0, []string{""}) {
-		return et.Item{}, console.NewErrorF(msg.MSG_ATRIB_REQUIRED, "full_name")
-	}
-
-	id := "USER.ADMIN"
-	name := country + phone
-	data := et.Json{}
-	data["_id"] = id
-	data["name"] = name
-	data["full_name"] = fullName
-	data["country"] = country
-	data["phone"] = phone
-	data["email"] = email
-	data["avatar"] = ""
-	item, err := Users.Upsert(data).
-		Where(Users.Column("_id").Eq(id)).
-		CommandOne()
-	if err != nil {
-		return et.Item{}, err
-	}
-
-	return item, nil
-}
-
-/**
 * InsertUser
+* @param id string
 * @param fullName string
 * @param country string
 * @param phone string
@@ -205,22 +141,36 @@ func UpSetAdmin(fullName, country, phone, email string) (et.Item, error) {
 * @return et.Item
 * @return error
 **/
-func InsertUser(fullName, country, phone, email, password string) (et.Item, error) {
+func InsertUser(id, fullName, country, phone, email, password string) (et.Item, error) {
 	if !utility.ValidStr(country, 0, []string{""}) {
-		return et.Item{}, console.NewErrorF(msg.MSG_ATRIB_REQUIRED, "country")
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "country")
 	}
 
 	if !utility.ValidStr(phone, 9, []string{""}) {
-		return et.Item{}, console.NewErrorF(msg.MSG_ATRIB_REQUIRED, "phone")
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "phone")
 	}
 
 	if !utility.ValidStr(fullName, 0, []string{""}) {
-		return et.Item{}, console.NewErrorF(msg.MSG_ATRIB_REQUIRED, "full_name")
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "full_name")
 	}
 
-	id := utility.NewId()
-	data := et.Json{}
 	name := country + phone
+	current, err := GetUserByName(name)
+	if err != nil {
+		return et.Item{}, err
+	}
+
+	if current.Ok {
+		return current, console.AlertF(msg.RECORD_FOUND)
+	}
+
+	password, err = utility.PasswordHash(password)
+	if err != nil {
+		return et.Item{}, err
+	}
+
+	id = utility.GenKey(id)
+	data := et.Json{}
 	data["_id"] = id
 	data["_state"] = utility.ACTIVE
 	data["name"] = name
@@ -230,7 +180,7 @@ func InsertUser(fullName, country, phone, email, password string) (et.Item, erro
 	data["email"] = email
 	data["password"] = password
 	data["avatar"] = ""
-	_, err := Users.Insert(data).
+	_, err = Users.Insert(data).
 		CommandOne()
 	if err != nil {
 		return et.Item{}, err
@@ -245,53 +195,16 @@ func InsertUser(fullName, country, phone, email, password string) (et.Item, erro
 }
 
 /**
-* SetUser
-* @param fullName string
-* @param country string
-* @param phone string
-* @param email string
-* @param password string
+* UpdateUser
+* @param id string
+* @param data et.Json
 * @return et.Item
 * @return error
 **/
-func SetUser(fullName, country, phone, email, password string) (et.Item, error) {
-	if !utility.ValidStr(country, 0, []string{""}) {
-		return et.Item{}, console.NewErrorF(msg.MSG_ATRIB_REQUIRED, "country")
-	}
-
-	if !utility.ValidStr(phone, 9, []string{""}) {
-		return et.Item{}, console.NewErrorF(msg.MSG_ATRIB_REQUIRED, "phone")
-	}
-
-	if !utility.ValidStr(fullName, 0, []string{""}) {
-		return et.Item{}, console.NewErrorF(msg.MSG_ATRIB_REQUIRED, "full_name")
-	}
-
-	name := country + phone
-	current, err := GetUserByName(name)
-	if err != nil {
-		return et.Item{}, err
-	}
-
-	if current.Ok {
-		return et.Item{}, console.NewErrorF(msg.RECORD_FOUND)
-	}
-
-	result, err := InsertUser(fullName, country, phone, email, password)
-	if err != nil {
-		return et.Item{}, err
-	}
-
-	return result, nil
-}
-
-func UpdateUser(id, fullName, phone, email string, data et.Json) (et.Item, error) {
+func UpdateUser(id string, data et.Json) (et.Item, error) {
+	fullName := data.ValStr("", "full_name")
 	if !utility.ValidStr(fullName, 3, []string{""}) {
-		return et.Item{}, console.NewErrorF(msg.MSG_ATRIB_REQUIRED, "full_name")
-	}
-
-	if !utility.ValidStr(phone, 3, []string{""}) {
-		return et.Item{}, console.NewErrorF(msg.MSG_ATRIB_REQUIRED, "phone")
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "full_name")
 	}
 
 	current, err := GetUserById(id)
@@ -300,16 +213,26 @@ func UpdateUser(id, fullName, phone, email string, data et.Json) (et.Item, error
 	}
 
 	if !current.Ok {
-		return et.Item{}, console.ErrorM(msg.RECORD_NOT_FOUND)
+		return et.Item{}, console.Alert(msg.RECORD_NOT_FOUND)
 	}
 
-	name := strs.Format(`+57%s`, phone)
+	if current.State() == utility.OF_SYSTEM {
+		return et.Item{}, console.Alert(msg.RECORD_IS_SYSTEM)
+	} else if current.State() == utility.FOR_DELETE {
+		return et.Item{}, console.Alert(msg.RECORD_DELETE)
+	} else if current.State() != utility.ACTIVE {
+		return et.Item{}, console.AlertF(msg.RECORD_NOT_ACTIVE, current.State())
+	}
+
+	now := utility.Now()
+	delete(data, "country")
+	delete(data, "phone")
+	delete(data, "name")
+	delete(data, "email")
+	delete(data, "password")
+	data["date_update"] = now
 	data["_id"] = id
-	data["full_name"] = fullName
-	data["name"] = name
-	data["phone"] = phone
-	data["email"] = email
-	data["avatar"] = ""
+	data["_state"] = utility.ACTIVE
 	_, err = Users.Insert(data).
 		Where(Users.Column("_id").Eq(id)).
 		And(Users.Column("_state").Eq(utility.ACTIVE)).
@@ -334,16 +257,46 @@ func UpdateUser(id, fullName, phone, email string, data et.Json) (et.Item, error
 * @return error
 **/
 func StateUser(id, state string) (et.Item, error) {
-	if !utility.ValidId(state) {
-		return et.Item{}, console.NewErrorF(msg.MSG_ATRIB_REQUIRED, "state")
+	if !utility.ValidId(id) {
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "id")
 	}
 
-	return Users.Update(et.Json{
+	if !utility.ValidStr(state, 0, []string{""}) {
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "state")
+	}
+
+	current, err := GetUserById(id)
+	if err != nil {
+		return et.Item{}, err
+	}
+
+	if !current.Ok {
+		return et.Item{}, console.Alert(msg.RECORD_NOT_FOUND)
+	}
+
+	if current.State() == utility.OF_SYSTEM {
+		return et.Item{}, console.Alert(msg.RECORD_IS_SYSTEM)
+	} else if current.State() == utility.FOR_DELETE {
+		return et.Item{}, console.Alert(msg.RECORD_DELETE)
+	} else if current.State() == state {
+		return et.Item{}, console.Alert(msg.RECORD_NOT_CHANGE)
+	}
+
+	result, err := Users.Update(et.Json{
 		"_state": state,
 	}).
 		Where(Users.Column("_id").Eq(id)).
-		And(Users.Column("_state").Neg(state)).
 		CommandOne()
+	if err != nil {
+		return et.Item{}, err
+	}
+
+	return et.Item{
+		Ok: result.Ok,
+		Result: et.Json{
+			"message": msg.RECORD_UPDATE,
+		},
+	}, nil
 }
 
 /**
@@ -353,7 +306,17 @@ func StateUser(id, state string) (et.Item, error) {
 * @return error
 **/
 func DeleteUser(id string) (et.Item, error) {
-	return StateUser(id, utility.FOR_DELETE)
+	result, err := StateUser(id, utility.FOR_DELETE)
+	if err != nil {
+		return et.Item{}, err
+	}
+
+	return et.Item{
+		Ok: result.Ok,
+		Result: et.Json{
+			"message": msg.RECORD_DELETE,
+		},
+	}, nil
 }
 
 /**

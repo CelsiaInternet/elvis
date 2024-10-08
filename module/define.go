@@ -108,10 +108,7 @@ func InitData() error {
 	ADMIN_PHONE := envar.GetStr("", "ADMIN_PHONE")
 	ADMIN_NAME := envar.GetStr("", "ADMIN_NAME")
 	ADMIN_EMAIL := envar.GetStr("", "ADMIN_EMAIL")
-	_, err := UpSetAdmin(ADMIN_NAME, ADMIN_COUNTRY, ADMIN_PHONE, ADMIN_EMAIL)
-	if err != nil {
-		return err
-	}
+	InsertUser("USER_ADMIN", ADMIN_NAME, ADMIN_COUNTRY, ADMIN_PHONE, ADMIN_EMAIL, "")
 
 	if _, err := Folders.Upsert(et.Json{
 		"_id": "-1",

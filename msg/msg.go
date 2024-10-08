@@ -41,6 +41,7 @@ const (
 	RECORD_IN_PROCESS       = "Record in process"
 	RECORD_BATCH_LOAD       = "Record batch loaded"
 	RECORD_DUPLICATE        = "Record duplicate"
+	RECORD_IS_SYSTEM        = "Record is a system"
 	ERR_WHERE_NOT_DEFINED   = "Condition where not defined"
 	ERR_DB_NOT_EXISTS       = "Conection to database not exist"
 	ERR_DB_INDEX_NOT_EXISTS = "Database not exist index:(%d)"

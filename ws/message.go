@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/cgalvisleon/elvis/et"
+	"github.com/cgalvisleon/elvis/timezone"
 	"github.com/cgalvisleon/elvis/utility"
 )
 
@@ -85,7 +86,7 @@ type Message struct {
 **/
 func NewMessage(from et.Json, message interface{}, tp TpMessage) Message {
 	return Message{
-		Created_at: time.Now(),
+		Created_at: timezone.NowTime(),
 		Id:         utility.UUID(),
 		From:       from,
 		Data:       message,

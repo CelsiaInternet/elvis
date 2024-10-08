@@ -6,6 +6,7 @@ import (
 	"github.com/cgalvisleon/elvis/et"
 	"github.com/cgalvisleon/elvis/logs"
 	"github.com/cgalvisleon/elvis/strs"
+	"github.com/cgalvisleon/elvis/timezone"
 	"github.com/gorilla/websocket"
 	"golang.org/x/exp/slices"
 )
@@ -39,7 +40,7 @@ type Client struct {
 **/
 func newClient(hub *Hub, socket *websocket.Conn, id, name string) (*Client, bool) {
 	return &Client{
-		Created_at: time.Now(),
+		Created_at: timezone.NowTime(),
 		hub:        hub,
 		Id:         id,
 		Name:       name,

@@ -6,6 +6,7 @@ import (
 	"github.com/cgalvisleon/elvis/cache"
 	"github.com/cgalvisleon/elvis/envar"
 	"github.com/cgalvisleon/elvis/strs"
+	"github.com/cgalvisleon/elvis/timezone"
 )
 
 type Request struct {
@@ -18,12 +19,13 @@ type Request struct {
 }
 
 func callRequests(tag string) Request {
+	now := timezone.NowTime().Unix()
 	return Request{
 		Tag:     tag,
-		Day:     cache.More(strs.Format(`%s-%d`, tag, time.Now().Unix()/86400), 86400),
-		Hour:    cache.More(strs.Format(`%s-%d`, tag, time.Now().Unix()/3600), 3600),
-		Minute:  cache.More(strs.Format(`%s-%d`, tag, time.Now().Unix()/60), 60),
-		Seccond: cache.More(strs.Format(`%s-%d`, tag, time.Now().Unix()/1), 1),
+		Day:     cache.More(strs.Format(`%s-%d`, tag, now/86400), 86400),
+		Hour:    cache.More(strs.Format(`%s-%d`, tag, now/3600), 3600),
+		Minute:  cache.More(strs.Format(`%s-%d`, tag, now/60), 60),
+		Seccond: cache.More(strs.Format(`%s-%d`, tag, now/1), 1),
 		Limit:   envar.GetInt(400, "REQUESTS_LIMIT"),
 	}
 }
@@ -31,12 +33,13 @@ func callRequests(tag string) Request {
 var items map[string]int = make(map[string]int)
 
 func localRequests(tag string) Request {
+	now := timezone.NowTime().Unix()
 	return Request{
 		Tag:     tag,
-		Day:     more(strs.Format(`%s-%d`, tag, time.Now().Unix()/86400), 86400),
-		Hour:    more(strs.Format(`%s-%d`, tag, time.Now().Unix()/3600), 3600),
-		Minute:  more(strs.Format(`%s-%d`, tag, time.Now().Unix()/60), 60),
-		Seccond: more(strs.Format(`%s-%d`, tag, time.Now().Unix()/1), 1),
+		Day:     more(strs.Format(`%s-%d`, tag, now/86400), 86400),
+		Hour:    more(strs.Format(`%s-%d`, tag, now/3600), 3600),
+		Minute:  more(strs.Format(`%s-%d`, tag, now/60), 60),
+		Seccond: more(strs.Format(`%s-%d`, tag, now/1), 1),
 		Limit:   envar.GetInt(400, "REQUESTS_LIMIT"),
 	}
 }

@@ -10,7 +10,6 @@ import (
 )
 
 var Modules *linq.Model
-var ModelFolders *linq.Model
 
 func DefineModules(db *jdb.DB) error {
 	if err := DefineSchemaModule(db); err != nil {
@@ -38,16 +37,6 @@ func DefineModules(db *jdb.DB) error {
 		"name",
 		"index",
 	})
-	Modules.Trigger(linq.AfterInsert, func(model *linq.Model, old, new *et.Json, data et.Json) error {
-		id := new.Id()
-		InitProfile(id, "PROFILE.ADMIN", et.Json{})
-		InitProfile(id, "PROFILE.DEV", et.Json{})
-		InitProfile(id, "PROFILE.SUPORT", et.Json{})
-		CheckProjectModule("-1", id, true)
-		CheckRole("-1", id, "PROFILE.ADMIN", "USER.ADMIN", true)
-
-		return nil
-	})
 
 	if err := Modules.Init(); err != nil {
 		return console.Panic(err)
@@ -56,38 +45,10 @@ func DefineModules(db *jdb.DB) error {
 	return nil
 }
 
-func DefineModuleFolders(db *jdb.DB) error {
-	if err := DefineSchemaModule(db); err != nil {
-		return console.Panic(err)
-	}
-
-	if ModelFolders != nil {
-		return nil
-	}
-
-	ModelFolders = linq.NewModel(SchemaModule, "MODULE_FOLDERS", "Tabla de folders por modulo", 1)
-	ModelFolders.DefineColum("date_make", "", "TIMESTAMP", "NOW()")
-	ModelFolders.DefineColum("module_id", "", "VARCHAR(80)", "-1")
-	ModelFolders.DefineColum("folder_id", "", "VARCHAR(80)", "-1")
-	ModelFolders.DefineColum("index", "", "INTEGER", 0)
-	ModelFolders.DefinePrimaryKey([]string{"module_id", "folder_id"})
-	ModelFolders.DefineForeignKey("module_id", Modules.Col("_id"))
-	ModelFolders.DefineForeignKey("folder_id", Folders.Col("_id"))
-	Modules.DefineIndex([]string{
-		"date_make",
-		"index",
-	})
-
-	if err := ModelFolders.Init(); err != nil {
-		return console.Panic(err)
-	}
-
-	return nil
-}
-
 /**
-* Module
-*	Handler for CRUD data
+* GetModuleByName
+* @param name string
+* @return et.Item, error
 **/
 func GetModuleByName(name string) (et.Item, error) {
 	return Modules.Data().
@@ -95,24 +56,25 @@ func GetModuleByName(name string) (et.Item, error) {
 		First()
 }
 
+/**
+* GetModuleById
+* @param id string
+* @return et.Item, error
+**/
 func GetModuleById(id string) (et.Item, error) {
 	return Modules.Data().
 		Where(Modules.Column("_id").Eq(id)).
 		First()
 }
 
-func IsInit() (et.Item, error) {
-	count := Users.Data().
-		Count()
-
-	return et.Item{
-		Ok: count > 0,
-		Result: et.Json{
-			"message": utility.OkOrNot(count > 0, msg.SYSTEM_HAVE_ADMIN, msg.SYSTEM_NOT_HAVE_ADMIN),
-		},
-	}, nil
-}
-
+/**
+* InitModule
+* @param id string
+* @param name string
+* @param description string
+* @param data et.Json
+* @return et.Item, error
+**/
 func InitModule(id, name, description string, data et.Json) (et.Item, error) {
 	if !utility.ValidStr(name, 0, []string{""}) {
 		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "name")
@@ -123,29 +85,26 @@ func InitModule(id, name, description string, data et.Json) (et.Item, error) {
 		return et.Item{}, err
 	}
 
-	if current.Ok && current.Id() != id {
-		return et.Item{
-			Ok: current.Ok,
-			Result: et.Json{
-				"message": msg.RECORD_FOUND,
-			},
-		}, nil
+	if !current.Ok {
+		id = utility.GenId(id)
+		data.Set("_id", id)
+		data.Set("name", name)
+		data.Set("description", description)
+		return Modules.Insert(data).
+			CommandOne()
 	}
 
-	id = utility.GenId(id)
-	data.Set("_id", id)
-	data.Set("name", name)
-	data.Set("description", description)
-	item, err := Modules.Upsert(data).
-		Where(Modules.Column("_id").Eq(id)).
-		CommandOne()
-	if err != nil {
-		return et.Item{}, err
-	}
-
-	return item, nil
+	return current, nil
 }
 
+/**
+* UpSetModule
+* @param id string
+* @param name string
+* @param description string
+* @param data et.Json
+* @return et.Item, error
+**/
 func UpSetModule(id, name, description string, data et.Json) (et.Item, error) {
 	if !utility.ValidStr(name, 0, []string{""}) {
 		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "name")
@@ -156,34 +115,79 @@ func UpSetModule(id, name, description string, data et.Json) (et.Item, error) {
 		return et.Item{}, err
 	}
 
-	if current.Ok && current.Id() != id {
-		return et.Item{
-			Ok: current.Ok,
-			Result: et.Json{
-				"message": msg.RECORD_FOUND,
-				"_id":     current.Id(),
-				"index":   current.Index(),
-			},
-		}, nil
+	id = utility.GenId(id)
+	if !current.Ok {
+		data.Set("_id", id)
+		data.Set("name", name)
+		data.Set("description", description)
+		item, err := Modules.Insert(data).
+			CommandOne()
+		if err != nil {
+			return et.Item{}, err
+		}
+
+		if item.Ok {
+			InitProfile(id, "PROFILE.ADMIN", et.Json{})
+			InitProfile(id, "PROFILE.DEV", et.Json{})
+			InitProfile(id, "PROFILE.SUPORT", et.Json{})
+			CheckProjectModule("-1", id, true)
+			CheckRole("-1", id, "PROFILE.ADMIN", "USER.ADMIN", true)
+		}
+
+		return item, nil
 	}
 
-	id = utility.GenId(id)
+	if current.Id() != id {
+		return et.Item{}, console.Alert(msg.RECORD_FOUND)
+	}
+
+	if current.State() == utility.OF_SYSTEM {
+		return et.Item{}, console.Alert(msg.RECORD_IS_SYSTEM)
+	} else if current.State() == utility.FOR_DELETE {
+		return et.Item{}, console.Alert(msg.RECORD_DELETE)
+	} else if current.State() != utility.ACTIVE {
+		return et.Item{}, console.AlertF(msg.RECORD_NOT_ACTIVE, current.State())
+	}
+
 	data.Set("_id", id)
 	data.Set("name", name)
 	data.Set("description", description)
-	item, err := Modules.Upsert(data).
+	return Modules.Update(data).
 		Where(Modules.Column("_id").Eq(id)).
+		And(Modules.Column("_state").Eq(utility.ACTIVE)).
 		CommandOne()
+}
+
+/**
+* StateModule
+* @param id string
+* @param state string
+* @return et.Item, error
+**/
+func StateModule(id, state string) (et.Item, error) {
+	if !utility.ValidId(id) {
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "id")
+	}
+
+	if !utility.ValidStr(state, 0, []string{""}) {
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "state")
+	}
+
+	current, err := GetModuleById(id)
 	if err != nil {
 		return et.Item{}, err
 	}
 
-	return item, nil
-}
+	if !current.Ok {
+		return et.Item{}, console.Alert(msg.RECORD_NOT_FOUND)
+	}
 
-func StateModule(id, state string) (et.Item, error) {
-	if !utility.ValidId(state) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "state")
+	if current.State() == utility.OF_SYSTEM {
+		return et.Item{}, console.Alert(msg.RECORD_IS_SYSTEM)
+	} else if current.State() == utility.FOR_DELETE {
+		return et.Item{}, console.Alert(msg.RECORD_DELETE)
+	} else if current.State() == state {
+		return et.Item{}, console.Alert(msg.RECORD_NOT_CHANGE)
 	}
 
 	return Modules.Update(et.Json{
@@ -194,10 +198,24 @@ func StateModule(id, state string) (et.Item, error) {
 		CommandOne()
 }
 
+/**
+* DeleteModule
+* @param id string
+* @return et.Item, error
+**/
 func DeleteModule(id string) (et.Item, error) {
 	return StateModule(id, utility.FOR_DELETE)
 }
 
+/**
+* AllModules
+* @param state string
+* @param search string
+* @param page int
+* @param rows int
+* @param _select string
+* @return et.List, error
+**/
 func AllModules(state, search string, page, rows int, _select string) (et.List, error) {
 	if state == "" {
 		state = utility.ACTIVE
@@ -227,58 +245,5 @@ func AllModules(state, search string, page, rows int, _select string) (et.List, 
 			Where(Modules.Column("_state").Eq(state)).
 			OrderBy(Modules.Column("name"), true).
 			List(page, rows)
-	}
-}
-
-// Module Folder
-func GetModuleFolderByIdT(_idt string) (et.Item, error) {
-	return ModelFolders.Data().
-		Where(ModelFolders.Column("_idt").Eq(_idt)).
-		First()
-}
-
-func GetModuleFolderById(module_id, folder_id string) (et.Item, error) {
-	return ModelFolders.Data().
-		Where(ModelFolders.Column("module_id").Eq(module_id)).
-		And(ModelFolders.Column("folder_id").Eq(folder_id)).
-		First()
-}
-
-// Check folder that module
-func CheckModuleFolder(module_id, folder_id string, chk bool) (et.Item, error) {
-	if !utility.ValidId(module_id) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "module_id")
-	}
-
-	if !utility.ValidId(folder_id) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "folder_id")
-	}
-
-	data := et.Json{}
-	data.Set("module_id", module_id)
-	data.Set("folder_id", folder_id)
-	if chk {
-		current, err := GetModuleFolderById(module_id, folder_id)
-		if err != nil {
-			return et.Item{}, err
-		}
-
-		if current.Ok {
-			return et.Item{
-				Ok: current.Ok,
-				Result: et.Json{
-					"message": msg.RECORD_NOT_UPDATE,
-					"index":   current.Index(),
-				},
-			}, nil
-		}
-
-		return ModelFolders.Insert(data).
-			CommandOne()
-	} else {
-		return ModelFolders.Delete().
-			Where(ModelFolders.Column("module_id").Eq(module_id)).
-			And(ModelFolders.Column("folder_id").Eq(folder_id)).
-			CommandOne()
 	}
 }

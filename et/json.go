@@ -11,6 +11,7 @@ import (
 
 	"github.com/cgalvisleon/elvis/console"
 	"github.com/cgalvisleon/elvis/strs"
+	"github.com/cgalvisleon/elvis/timezone"
 )
 
 const TpObject = 1
@@ -344,6 +345,10 @@ func (s Json) IdT() string {
 	return s.ValStr("-1", "_idT")
 }
 
+func (s Json) State() string {
+	return s.ValStr("-1", "_state")
+}
+
 func (s Json) Index() int {
 	return s.ValInt(-1, "index")
 }
@@ -377,7 +382,8 @@ func (s Json) Bool(atribs ...string) bool {
 }
 
 func (s Json) Time(atribs ...string) time.Time {
-	return s.ValTime(time.Now(), atribs...)
+	_default := timezone.NowTime()
+	return s.ValTime(_default, atribs...)
 }
 
 func (s Json) Data(atrib ...string) JsonD {

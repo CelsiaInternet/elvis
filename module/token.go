@@ -106,7 +106,7 @@ func DefineTokens(db *jdb.DB) error {
 * @return error
 **/
 func loadToken(token *Token) error {
-	err := claim.SetToken(token.App, token.Device, token.Id, token.Token)
+	err := claim.SetToken(token.App, token.Device, token.Id, token.Token, 0)
 	if err != nil {
 		return err
 	}

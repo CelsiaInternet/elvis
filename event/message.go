@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/cgalvisleon/elvis/et"
+	"github.com/cgalvisleon/elvis/timezone"
 	"github.com/cgalvisleon/elvis/utility"
 )
 
@@ -27,7 +28,7 @@ type EvenMessage struct {
 **/
 func NewEvenMessage(channel string, data et.Json) EvenMessage {
 	return EvenMessage{
-		Created_at: time.Now().UTC(),
+		Created_at: timezone.NowTime(),
 		Id:         utility.UUID(),
 		Channel:    channel,
 		Data:       data,

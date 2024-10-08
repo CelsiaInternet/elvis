@@ -37,22 +37,6 @@ const (
 )
 
 /**
-* IntToTpHeader
-* @param tp int
-* @return TpHeader
-**/
-func IntToTpHeader(tp int) TpHeader {
-	switch tp {
-	case 1:
-		return TpJoinHeader
-	case 2:
-		return TpReplaceHeader
-	default:
-		return TpKeepHeader
-	}
-}
-
-/**
 * String
 * @return string
 **/
@@ -66,6 +50,22 @@ func (t TpHeader) String() string {
 		return "Replace resolve header with request header"
 	default:
 		return "Unknown"
+	}
+}
+
+/**
+* IntToTpHeader
+* @param tp int
+* @return TpHeader
+**/
+func IntToTpHeader(tp int) TpHeader {
+	switch tp {
+	case 1:
+		return TpJoinHeader
+	case 2:
+		return TpReplaceHeader
+	default:
+		return TpKeepHeader
 	}
 }
 
