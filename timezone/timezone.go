@@ -12,7 +12,34 @@ var loc *time.Location
 * @return time.Time
 **/
 func NowTime() time.Time {
+	if loc == nil {
+		loc = loadLocation()
+	}
+
 	return time.Now().In(loc)
+}
+
+/**
+* loadLocation
+* @return *time.Location
+**/
+func loadLocation() *time.Location {
+	if loc != nil {
+		return loc
+	}
+
+	timeZona := os.Getenv("TIME_ZONE")
+	if timeZona == "" {
+		timeZona = "America/Bogota"
+	}
+
+	var err error
+	loc, err = time.LoadLocation(timeZona)
+	if err != nil {
+		loc = time.UTC
+	}
+
+	return loc
 }
 
 /**
@@ -24,10 +51,5 @@ func Now() string {
 }
 
 func init() {
-	timeZona := os.Getenv("TIME_ZONE")
-	if timeZona == "" {
-		timeZona = "America/Bogota"
-	}
-
-	loc, _ = time.LoadLocation(timeZona)
+	loadLocation()
 }
