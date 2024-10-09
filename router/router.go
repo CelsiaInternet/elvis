@@ -90,21 +90,22 @@ func ToTpHeader(tp int) TpHeader {
 * @param method string
 * @param path string
 * @param resolve string
-* @param host string
-* @param packageName string
+* @params header et.Json
+* @param tpHeader TpHeader
 * @param private bool
+* @param packageName string
 **/
-func PushApiGateway(method, path, resolve, host, packageName string, private bool) {
+func PushApiGateway(id, method, path, resolve string, header et.Json, tpHeader TpHeader, private bool, packageName string) {
 	event.Work("apigateway/http/resolve", et.Json{
+		"_id":          id,
 		"kind":         HTTP,
 		"method":       method,
 		"path":         path,
 		"resolve":      resolve,
-		"package":      packageName,
-		"tpHeader":     TpReplaceHeader,
+		"header":       header,
+		"tpHeader":     tpHeader,
 		"private":      private,
 		"package_name": packageName,
-		"_id":          utility.UUID(),
 	})
 }
 
@@ -130,10 +131,22 @@ func PopApiGatewayById(id string) {
 func pushApiGateway(method, path, packagePath, host, packageName string, private bool) {
 	path = packagePath + path
 	resolve := host + path
+	id := utility.UUID()
 
-	PushApiGateway(method, path, resolve, host, packageName, private)
+	PushApiGateway(id, method, path, resolve, et.Json{}, TpReplaceHeader, private, packageName)
 }
 
+/**
+* PublicRoute
+* @param r *chi.Mux
+* @param method string
+* @param path string
+* @param h http.HandlerFunc
+* @param packageName string
+* @param packagePath string
+* @param host string
+* @return *chi.Mux
+**/
 func PublicRoute(r *chi.Mux, method, path string, h http.HandlerFunc, packageName, packagePath, host string) *chi.Mux {
 	switch method {
 	case "GET":
@@ -159,6 +172,17 @@ func PublicRoute(r *chi.Mux, method, path string, h http.HandlerFunc, packageNam
 	return r
 }
 
+/**
+* ProtectRoute
+* @param r *chi.Mux
+* @param method string
+* @param path string
+* @param h http.HandlerFunc
+* @param packageName string
+* @param packagePath string
+* @param host string
+* @return *chi.Mux
+**/
 func ProtectRoute(r *chi.Mux, method, path string, h http.HandlerFunc, packageName, packagePath, host string) *chi.Mux {
 	switch method {
 	case "GET":

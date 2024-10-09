@@ -18,7 +18,9 @@ func (c *Linq) Dev() *Linq {
 }
 
 /**
-* Executors
+* Command
+* @return et.Items
+* @return error
 **/
 func (c *Linq) Command() (et.Items, error) {
 	if c.Act == ActInsert {
@@ -40,6 +42,11 @@ func (c *Linq) Command() (et.Items, error) {
 	return et.Items{}, nil
 }
 
+/**
+* CommandOne
+* @return et.Item
+* @return error
+**/
 func (c *Linq) CommandOne() (et.Item, error) {
 	result, err := c.Command()
 	if err != nil {
@@ -54,6 +61,15 @@ func (c *Linq) CommandOne() (et.Item, error) {
 		Ok:     true,
 		Result: result.Result[0],
 	}, nil
+}
+
+/**
+* Go
+* @return et.Item
+* @return error
+**/
+func (c *Linq) Go() (et.Item, error) {
+	return c.CommandOne()
 }
 
 /**
