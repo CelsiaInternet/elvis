@@ -166,19 +166,21 @@ func NewMetric(r *http.Request) *Metrics {
 	if remoteAddr != "" {
 		remoteAddr = strs.Split(remoteAddr, ",")[0]
 	}
-	endPoint := r.URL.Path
 	scheme := "http"
 	if r.TLS != nil {
 		scheme = "https"
 	}
+	host := envar.GetStr(hostName, "HOST")
+	endPoint := strs.Format(`%s/%s`, host, r.URL.Path)
 
 	result := &Metrics{
 		TimeBegin:        timezone.NowTime(),
 		ReqID:            utility.UUID(),
-		EndPoint:         endPoint,
+		EndPoint:         r.URL.Path,
 		Method:           r.Method,
 		Proto:            r.Proto,
 		RemoteAddr:       remoteAddr,
+		Host:             host,
 		HostName:         hostName,
 		RequestsHost:     callRequests(hostName),
 		RequestsEndpoint: callRequests(endPoint),
@@ -281,7 +283,6 @@ func (m *Metrics) DoneFn(rw *ResponseWriterWrapper) et.Json {
 		Total:  rw.SizeTotal,
 	}
 	m.Header = rw.Header()
-	m.Host = rw.Host
 
 	return m.println()
 }
