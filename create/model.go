@@ -1069,20 +1069,34 @@ go mod init github.com/$1/api
 
 ### Dependencias
 
-go get -u github.com/joho/godotenv/autoload &&
-go get -u github.com/redis/go-redis/v9 &&
-go get -u github.com/google/uuid &&
-go get -u github.com/nats-io/nats.go &&
-go get -u golang.org/x/crypto/bcrypt &&
-go get -u golang.org/x/exp/slices &&
-go get -u github.com/manifoldco/promptui &&
-go get -u github.com/schollz/progressbar/v3 &&
-go get -u github.com/spf13/cobra &&
-go get -u github.com/cgalvisleon/elvis
+go get github.com/cgalvisleon/elvis@v1.0.54
+go get github.com/joho/godotenv/autoload
+go get go.mongodb.org/mongo-driver/mongo
+go get go.mongodb.org/mongo-driver/mongo/options
+go get github.com/google/uuid
+go get golang.org/x/crypto/bcrypt
+go get golang.org/x/exp/slices
+go get github.com/manifoldco/promptui
+go get github.com/schollz/progressbar/v3
+go get github.com/spf13/cobra
+go get github.com/go-chi/chi/v5
+go get github.com/redis/go-redis/v9
+go get github.com/golang-jwt/jwt/v4
+go get github.com/nats-io/nats.go
+go get github.com/shirou/gopsutil/cpu
+go get github.com/shirou/gopsutil/mem
+go get github.com/lib/pq
+go get github.com/dimiro1/banner
+go get github.com/mattn/go-colorable
+go get github.com/rs/cors
 
 ### Crear projecto, microservicios, modelos
 
 go run github.com/cgalvisleon/elvis/cmd/create-go create
+
+### Run project
+
+gofmt -w . && go run ./cmd/$1 -port 3400 -rpc 4400
 `
 
 const modelEnvar = `APP=
@@ -1101,6 +1115,7 @@ DB_PORT=5432
 DB_NAME=test
 DB_USER=test
 DB_PASSWORD=test
+DB_APPLICATION_NAME=test
 
 # REDIS
 REDIS_HOST=localhost:6379
@@ -1113,11 +1128,6 @@ NATS_HOST=localhost:4222
 # CALM
 SECRET=test
 
-# AWS
-AWS_REGION=
-AWS_ACCESS_KEY_ID=
-AWS_SECRET_ACCESS_KEY=
-AWS_SESSION_TOKEN=
 `
 
 const modelDeploy = `version: "3"
