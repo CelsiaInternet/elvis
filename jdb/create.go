@@ -1,8 +1,8 @@
 package jdb
 
 import (
-	"github.com/cgalvisleon/elvis/strs"
-	"github.com/cgalvisleon/elvis/utility"
+	"github.com/celsiainternet/elvis/strs"
+	"github.com/celsiainternet/elvis/utility"
 )
 
 /**

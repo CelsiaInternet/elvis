@@ -1,7 +1,7 @@
 package linq
 
 import (
-	"github.com/cgalvisleon/elvis/strs"
+	"github.com/celsiainternet/elvis/strs"
 )
 
 func From(model *Model, as ...string) *Linq {

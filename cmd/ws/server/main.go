@@ -4,8 +4,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/cgalvisleon/elvis/response"
-	"github.com/cgalvisleon/elvis/ws"
+	"github.com/celsiainternet/elvis/response"
+	"github.com/celsiainternet/elvis/ws"
 )
 
 var conn *ws.Hub

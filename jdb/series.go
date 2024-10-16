@@ -1,8 +1,8 @@
 package jdb
 
 import (
-	"github.com/cgalvisleon/elvis/console"
-	"github.com/cgalvisleon/elvis/strs"
+	"github.com/celsiainternet/elvis/console"
+	"github.com/celsiainternet/elvis/strs"
 )
 
 func defineSeries(db *DB) error {

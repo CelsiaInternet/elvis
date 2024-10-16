@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cgalvisleon/elvis/console"
-	"github.com/cgalvisleon/elvis/strs"
+	"github.com/celsiainternet/elvis/console"
+	"github.com/celsiainternet/elvis/strs"
 )
 
 type Item struct {

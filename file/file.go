@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/cgalvisleon/elvis/strs"
+	"github.com/celsiainternet/elvis/strs"
 )
 
 func params(str string, args ...any) string {

@@ -4,12 +4,12 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/cgalvisleon/elvis/cache"
-	"github.com/cgalvisleon/elvis/console"
-	"github.com/cgalvisleon/elvis/envar"
-	"github.com/cgalvisleon/elvis/et"
-	"github.com/cgalvisleon/elvis/strs"
-	"github.com/cgalvisleon/elvis/utility"
+	"github.com/celsiainternet/elvis/cache"
+	"github.com/celsiainternet/elvis/console"
+	"github.com/celsiainternet/elvis/envar"
+	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/strs"
+	"github.com/celsiainternet/elvis/utility"
 	"github.com/golang-jwt/jwt/v4"
 )
 

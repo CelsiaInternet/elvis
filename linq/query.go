@@ -1,8 +1,8 @@
 package linq
 
 import (
-	"github.com/cgalvisleon/elvis/et"
-	"github.com/cgalvisleon/elvis/strs"
+	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/strs"
 )
 
 func (c *Linq) Sql() string {

@@ -1,6 +1,6 @@
 package create
 
-import "github.com/cgalvisleon/elvis/file"
+import "github.com/celsiainternet/elvis/file"
 
 func MakeInternal(packageName, name, schema string) error {
 	_, err := file.MakeFolder("internal", "data")

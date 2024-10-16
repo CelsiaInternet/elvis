@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/cgalvisleon/elvis/et"
+	"github.com/celsiainternet/elvis/et"
 	"github.com/go-chi/chi/v5"
 )
 

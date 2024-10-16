@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/rpc"
 
-	"github.com/cgalvisleon/elvis/et"
+	"github.com/celsiainternet/elvis/et"
 )
 
 func main() {

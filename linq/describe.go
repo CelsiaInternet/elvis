@@ -1,7 +1,7 @@
 package linq
 
 import (
-	"github.com/cgalvisleon/elvis/et"
+	"github.com/celsiainternet/elvis/et"
 )
 
 func Describe(schema, model, filter string) et.Json {

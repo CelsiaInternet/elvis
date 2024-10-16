@@ -1,7 +1,7 @@
 package event
 
 import (
-	"github.com/cgalvisleon/elvis/console"
+	"github.com/celsiainternet/elvis/console"
 	"github.com/nats-io/nats.go"
 )
 

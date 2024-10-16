@@ -7,8 +7,8 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/cgalvisleon/elvis/strs"
-	"github.com/cgalvisleon/elvis/timezone"
+	"github.com/celsiainternet/elvis/strs"
+	"github.com/celsiainternet/elvis/timezone"
 )
 
 var Reset = "\033[0m"

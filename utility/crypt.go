@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/cgalvisleon/elvis/envar"
+	"github.com/celsiainternet/elvis/envar"
 )
 
 func EncryptMessage(message string) (string, error) {

@@ -1,8 +1,8 @@
 package module
 
 import (
-	"github.com/cgalvisleon/elvis/jdb"
-	"github.com/cgalvisleon/elvis/linq"
+	"github.com/celsiainternet/elvis/jdb"
+	"github.com/celsiainternet/elvis/linq"
 )
 
 var SchemaModule *linq.Schema

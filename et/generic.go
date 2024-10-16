@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/cgalvisleon/elvis/timezone"
+	"github.com/celsiainternet/elvis/timezone"
 )
 
 type Any struct {

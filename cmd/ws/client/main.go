@@ -1,6 +1,6 @@
 package main
 
-import "github.com/cgalvisleon/elvis/rt"
+import "github.com/celsiainternet/elvis/rt"
 
 func main() {
 

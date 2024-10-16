@@ -12,7 +12,7 @@ import (
 	"strings"
 	"sync/atomic"
 
-	"github.com/cgalvisleon/elvis/strs"
+	"github.com/celsiainternet/elvis/strs"
 )
 
 // Key to use when setting the request ID.

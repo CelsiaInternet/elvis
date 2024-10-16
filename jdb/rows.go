@@ -3,8 +3,8 @@ package jdb
 import (
 	"database/sql"
 
-	"github.com/cgalvisleon/elvis/et"
-	"github.com/cgalvisleon/elvis/strs"
+	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/strs"
 )
 
 func rowsItems(rows *sql.Rows) et.Items {

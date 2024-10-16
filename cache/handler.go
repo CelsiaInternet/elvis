@@ -6,11 +6,11 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/cgalvisleon/elvis/et"
-	"github.com/cgalvisleon/elvis/logs"
-	"github.com/cgalvisleon/elvis/msg"
-	"github.com/cgalvisleon/elvis/response"
-	"github.com/cgalvisleon/elvis/strs"
+	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/logs"
+	"github.com/celsiainternet/elvis/msg"
+	"github.com/celsiainternet/elvis/response"
+	"github.com/celsiainternet/elvis/strs"
 	"github.com/redis/go-redis/v9"
 )
 

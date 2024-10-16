@@ -3,10 +3,10 @@ package router
 import (
 	"net/http"
 
-	"github.com/cgalvisleon/elvis/et"
-	"github.com/cgalvisleon/elvis/event"
-	"github.com/cgalvisleon/elvis/middleware"
-	"github.com/cgalvisleon/elvis/utility"
+	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/event"
+	"github.com/celsiainternet/elvis/middleware"
+	"github.com/celsiainternet/elvis/utility"
 	"github.com/go-chi/chi/v5"
 )
 

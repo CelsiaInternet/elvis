@@ -9,7 +9,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/cgalvisleon/elvis/timezone"
+	"github.com/celsiainternet/elvis/timezone"
 )
 
 var (

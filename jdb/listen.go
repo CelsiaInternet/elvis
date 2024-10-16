@@ -4,8 +4,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/cgalvisleon/elvis/et"
-	"github.com/cgalvisleon/elvis/logs"
+	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/logs"
 	"github.com/lib/pq"
 )
 

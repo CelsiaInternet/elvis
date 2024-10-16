@@ -1,6 +1,6 @@
 package create
 
-import "github.com/cgalvisleon/elvis/file"
+import "github.com/celsiainternet/elvis/file"
 
 func MakeGitignore(packageName string) error {
 	_, _ = file.MakeFile(".", ".gitignore", modelGitignore)

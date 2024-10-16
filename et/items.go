@@ -5,8 +5,8 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/cgalvisleon/elvis/console"
-	"github.com/cgalvisleon/elvis/strs"
+	"github.com/celsiainternet/elvis/console"
+	"github.com/celsiainternet/elvis/strs"
 )
 
 type Items struct {

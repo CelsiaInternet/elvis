@@ -4,9 +4,9 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/cgalvisleon/elvis/console"
-	"github.com/cgalvisleon/elvis/et"
-	"github.com/cgalvisleon/elvis/strs"
+	"github.com/celsiainternet/elvis/console"
+	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/strs"
 )
 
 func (s *Linq) strToCols(str string) []*Column {

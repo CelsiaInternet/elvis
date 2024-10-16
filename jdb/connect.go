@@ -3,11 +3,11 @@ package jdb
 import (
 	"database/sql"
 
-	"github.com/cgalvisleon/elvis/console"
-	"github.com/cgalvisleon/elvis/envar"
-	"github.com/cgalvisleon/elvis/et"
-	"github.com/cgalvisleon/elvis/msg"
-	"github.com/cgalvisleon/elvis/strs"
+	"github.com/celsiainternet/elvis/console"
+	"github.com/celsiainternet/elvis/envar"
+	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/msg"
+	"github.com/celsiainternet/elvis/strs"
 	_ "github.com/lib/pq"
 )
 

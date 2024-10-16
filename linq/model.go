@@ -1,10 +1,10 @@
 package linq
 
 import (
-	"github.com/cgalvisleon/elvis/et"
-	"github.com/cgalvisleon/elvis/jdb"
-	"github.com/cgalvisleon/elvis/strs"
-	"github.com/cgalvisleon/elvis/utility"
+	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/jdb"
+	"github.com/celsiainternet/elvis/strs"
+	"github.com/celsiainternet/elvis/utility"
 )
 
 const BeforeInsert = 1

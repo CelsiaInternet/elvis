@@ -3,9 +3,9 @@ package linq
 import (
 	"strings"
 
-	"github.com/cgalvisleon/elvis/et"
-	"github.com/cgalvisleon/elvis/msg"
-	"github.com/cgalvisleon/elvis/strs"
+	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/msg"
+	"github.com/celsiainternet/elvis/strs"
 )
 
 func (c *Model) DefineColum(name, description, _type string, _default any) *Model {

@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/cgalvisleon/elvis/logs"
+	"github.com/celsiainternet/elvis/logs"
 )
 
 var app = contextKey("app")

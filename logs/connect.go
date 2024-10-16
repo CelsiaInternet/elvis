@@ -3,8 +3,8 @@ package logs
 import (
 	"context"
 
-	"github.com/cgalvisleon/elvis/envar"
-	"github.com/cgalvisleon/elvis/msg"
+	"github.com/celsiainternet/elvis/envar"
+	"github.com/celsiainternet/elvis/msg"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )

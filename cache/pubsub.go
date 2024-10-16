@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cgalvisleon/elvis/logs"
-	"github.com/cgalvisleon/elvis/msg"
+	"github.com/celsiainternet/elvis/logs"
+	"github.com/celsiainternet/elvis/msg"
 )
 
 func pubCtx(ctx context.Context, channel string, message interface{}) error {

@@ -4,9 +4,9 @@ import (
 	"context"
 	"log"
 
-	"github.com/cgalvisleon/elvis/envar"
-	"github.com/cgalvisleon/elvis/logs"
-	"github.com/cgalvisleon/elvis/msg"
+	"github.com/celsiainternet/elvis/envar"
+	"github.com/celsiainternet/elvis/logs"
+	"github.com/celsiainternet/elvis/msg"
 	"github.com/redis/go-redis/v9"
 )
 

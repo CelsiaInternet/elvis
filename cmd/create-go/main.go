@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/cgalvisleon/elvis/create"
+	"github.com/celsiainternet/elvis/create"
 	"github.com/spf13/cobra"
 )
 

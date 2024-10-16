@@ -4,7 +4,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/cgalvisleon/elvis/strs"
+	"github.com/celsiainternet/elvis/strs"
 	_ "github.com/joho/godotenv/autoload"
 )
 

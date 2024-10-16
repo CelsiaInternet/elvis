@@ -3,7 +3,7 @@ package cache
 import (
 	"context"
 
-	"github.com/cgalvisleon/elvis/console"
+	"github.com/celsiainternet/elvis/console"
 	"github.com/redis/go-redis/v9"
 )
 

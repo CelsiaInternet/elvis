@@ -13,14 +13,14 @@ git push origin --tags
 
 go build ./cmd/create-go
 gofmt -w . && go run ./cmd/create-go
-gofmt -w . && go run github.com/cgalvisleon/elvis/cmd/create-go create
+gofmt -w . && go run github.com/celsiainternet/elvis/cmd/create-go create
 gofmt -w . && go run ./cmd/rpc/server
 gofmt -w . && go run ./cmd/rpc/client
 
 gofmt -w . && go run ./cmd/gateway -port 3300 -rpc 4200
 
-go run github.com/cgalvisleon/elvis/cmd/create-go create
-go run github.com/cgalvisleon/elvis/cmd/apigateway
+go run github.com/celsiainternet/elvis/cmd/create-go create
+go run github.com/celsiainternet/elvis/cmd/apigateway
 
 go build ./cmd/apigateway
 

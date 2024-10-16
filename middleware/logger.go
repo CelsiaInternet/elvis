@@ -9,7 +9,7 @@ import (
 	"runtime"
 	"time"
 
-	lg "github.com/cgalvisleon/elvis/console"
+	lg "github.com/celsiainternet/elvis/console"
 )
 
 var (

@@ -3,8 +3,8 @@ package ws
 import (
 	"net/http"
 
-	"github.com/cgalvisleon/elvis/middleware"
-	"github.com/cgalvisleon/elvis/utility"
+	"github.com/celsiainternet/elvis/middleware"
+	"github.com/celsiainternet/elvis/utility"
 )
 
 /**

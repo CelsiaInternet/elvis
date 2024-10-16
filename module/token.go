@@ -3,15 +3,15 @@ package module
 import (
 	"time"
 
-	"github.com/cgalvisleon/elvis/cache"
-	"github.com/cgalvisleon/elvis/claim"
-	"github.com/cgalvisleon/elvis/console"
-	"github.com/cgalvisleon/elvis/et"
-	"github.com/cgalvisleon/elvis/jdb"
-	"github.com/cgalvisleon/elvis/linq"
-	"github.com/cgalvisleon/elvis/msg"
-	"github.com/cgalvisleon/elvis/strs"
-	"github.com/cgalvisleon/elvis/utility"
+	"github.com/celsiainternet/elvis/cache"
+	"github.com/celsiainternet/elvis/claim"
+	"github.com/celsiainternet/elvis/console"
+	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/jdb"
+	"github.com/celsiainternet/elvis/linq"
+	"github.com/celsiainternet/elvis/msg"
+	"github.com/celsiainternet/elvis/strs"
+	"github.com/celsiainternet/elvis/utility"
 )
 
 type Token struct {

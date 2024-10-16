@@ -3,11 +3,11 @@ package event
 import (
 	"net/http"
 
-	"github.com/cgalvisleon/elvis/console"
-	"github.com/cgalvisleon/elvis/et"
-	"github.com/cgalvisleon/elvis/response"
-	"github.com/cgalvisleon/elvis/timezone"
-	"github.com/cgalvisleon/elvis/utility"
+	"github.com/celsiainternet/elvis/console"
+	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/response"
+	"github.com/celsiainternet/elvis/timezone"
+	"github.com/celsiainternet/elvis/utility"
 	"github.com/nats-io/nats.go"
 )
 

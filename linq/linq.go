@@ -3,10 +3,10 @@ package linq
 import (
 	"strings"
 
-	"github.com/cgalvisleon/elvis/console"
-	"github.com/cgalvisleon/elvis/et"
-	"github.com/cgalvisleon/elvis/jdb"
-	"github.com/cgalvisleon/elvis/strs"
+	"github.com/celsiainternet/elvis/console"
+	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/jdb"
+	"github.com/celsiainternet/elvis/strs"
 )
 
 const TpRow = 1

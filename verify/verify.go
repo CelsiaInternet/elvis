@@ -1,6 +1,6 @@
 package verify
 
-import "github.com/cgalvisleon/elvis/et"
+import "github.com/celsiainternet/elvis/et"
 
 func VerifyMobille(app string, device string, country string, phoneNumber string) error {
 

@@ -12,11 +12,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cgalvisleon/elvis/console"
-	"github.com/cgalvisleon/elvis/et"
-	"github.com/cgalvisleon/elvis/logs"
-	"github.com/cgalvisleon/elvis/strs"
-	"github.com/cgalvisleon/elvis/timezone"
+	"github.com/celsiainternet/elvis/console"
+	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/logs"
+	"github.com/celsiainternet/elvis/strs"
+	"github.com/celsiainternet/elvis/timezone"
 	"github.com/google/uuid"
 	"golang.org/x/exp/slices"
 )

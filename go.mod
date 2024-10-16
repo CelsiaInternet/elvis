@@ -1,4 +1,4 @@
-module github.com/cgalvisleon/elvis
+module github.com/celsiainternet/elvis
 
 go 1.18
 
@@ -11,7 +11,7 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/manifoldco/promptui v0.9.0
 	github.com/nats-io/nats.go v1.28.0
-	github.com/redis/go-redis/v9 v9.1.0
+	github.com/redis/go-redis/v9 v9.6.2
 	github.com/schollz/progressbar/v3 v3.14.6
 	golang.org/x/crypto v0.22.0
 	golang.org/x/exp v0.0.0-20230817173708-d852ddb80c63

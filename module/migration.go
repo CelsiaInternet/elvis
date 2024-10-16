@@ -1,11 +1,11 @@
 package module
 
 import (
-	"github.com/cgalvisleon/elvis/console"
-	"github.com/cgalvisleon/elvis/et"
-	"github.com/cgalvisleon/elvis/jdb"
-	"github.com/cgalvisleon/elvis/linq"
-	"github.com/cgalvisleon/elvis/utility"
+	"github.com/celsiainternet/elvis/console"
+	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/jdb"
+	"github.com/celsiainternet/elvis/linq"
+	"github.com/celsiainternet/elvis/utility"
 )
 
 var Migration *linq.Model

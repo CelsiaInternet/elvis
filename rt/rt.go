@@ -4,11 +4,11 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/cgalvisleon/elvis/envar"
-	"github.com/cgalvisleon/elvis/logs"
-	"github.com/cgalvisleon/elvis/strs"
-	"github.com/cgalvisleon/elvis/utility"
-	"github.com/cgalvisleon/elvis/ws"
+	"github.com/celsiainternet/elvis/envar"
+	"github.com/celsiainternet/elvis/logs"
+	"github.com/celsiainternet/elvis/strs"
+	"github.com/celsiainternet/elvis/utility"
+	"github.com/celsiainternet/elvis/ws"
 	"github.com/gorilla/websocket"
 )
 

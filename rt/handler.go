@@ -1,10 +1,10 @@
 package rt
 
 import (
-	"github.com/cgalvisleon/elvis/et"
-	"github.com/cgalvisleon/elvis/logs"
-	"github.com/cgalvisleon/elvis/utility"
-	"github.com/cgalvisleon/elvis/ws"
+	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/logs"
+	"github.com/celsiainternet/elvis/utility"
+	"github.com/celsiainternet/elvis/ws"
 	"github.com/gorilla/websocket"
 )
 

@@ -3,8 +3,8 @@ package create
 import (
 	"fmt"
 
-	"github.com/cgalvisleon/elvis/strs"
-	"github.com/cgalvisleon/elvis/utility"
+	"github.com/celsiainternet/elvis/strs"
+	"github.com/celsiainternet/elvis/utility"
 	"github.com/spf13/cobra"
 )
 

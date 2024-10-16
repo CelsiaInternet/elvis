@@ -1,7 +1,7 @@
 package jdb
 
 import (
-	"github.com/cgalvisleon/elvis/console"
+	"github.com/celsiainternet/elvis/console"
 )
 
 func defineRecords(db *DB) error {

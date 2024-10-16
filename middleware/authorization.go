@@ -5,12 +5,12 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/cgalvisleon/elvis/claim"
-	"github.com/cgalvisleon/elvis/console"
-	"github.com/cgalvisleon/elvis/et"
-	"github.com/cgalvisleon/elvis/event"
-	"github.com/cgalvisleon/elvis/response"
-	"github.com/cgalvisleon/elvis/utility"
+	"github.com/celsiainternet/elvis/claim"
+	"github.com/celsiainternet/elvis/console"
+	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/event"
+	"github.com/celsiainternet/elvis/response"
+	"github.com/celsiainternet/elvis/utility"
 )
 
 type contextKey string

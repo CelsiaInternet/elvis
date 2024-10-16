@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/cgalvisleon/elvis/et"
+	"github.com/celsiainternet/elvis/et"
 )
 
 type Status struct {

@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cgalvisleon/elvis/console"
-	"github.com/cgalvisleon/elvis/strs"
-	"github.com/cgalvisleon/elvis/timezone"
+	"github.com/celsiainternet/elvis/console"
+	"github.com/celsiainternet/elvis/strs"
+	"github.com/celsiainternet/elvis/timezone"
 )
 
 const TpObject = 1

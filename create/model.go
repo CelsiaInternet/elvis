@@ -36,8 +36,8 @@ import (
 	"os/signal"
 
 	serv "$1/internal/service/$2"
-	"github.com/cgalvisleon/elvis/console"
-	"github.com/cgalvisleon/elvis/envar"
+	"github.com/celsiainternet/elvis/console"
+	"github.com/celsiainternet/elvis/envar"
 )
 
 func main() {
@@ -69,11 +69,11 @@ const modelService = `package module
 import (
 	"net/http"
 
-	"github.com/cgalvisleon/elvis/console"
-	"github.com/cgalvisleon/elvis/envar"
-	"github.com/cgalvisleon/elvis/middleware"
-	"github.com/cgalvisleon/elvis/response"
-	"github.com/cgalvisleon/elvis/strs"
+	"github.com/celsiainternet/elvis/console"
+	"github.com/celsiainternet/elvis/envar"
+	"github.com/celsiainternet/elvis/middleware"
+	"github.com/celsiainternet/elvis/response"
+	"github.com/celsiainternet/elvis/strs"
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/cors"
 	v1 "$1/internal/service/$2/v1"
@@ -147,11 +147,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/cgalvisleon/elvis/cache"
-	"github.com/cgalvisleon/elvis/event"
-	"github.com/cgalvisleon/elvis/jdb"
-	"github.com/cgalvisleon/elvis/jrpc"
-	"github.com/cgalvisleon/elvis/utility"
+	"github.com/celsiainternet/elvis/cache"
+	"github.com/celsiainternet/elvis/event"
+	"github.com/celsiainternet/elvis/jdb"
+	"github.com/celsiainternet/elvis/jrpc"
+	"github.com/celsiainternet/elvis/utility"
 	"github.com/dimiro1/banner"
 	"github.com/go-chi/chi/v5"
 	"github.com/mattn/go-colorable"
@@ -210,10 +210,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/cgalvisleon/elvis/cache"
-	"github.com/cgalvisleon/elvis/event"
-	"github.com/cgalvisleon/elvis/jdb"
-	"github.com/cgalvisleon/elvis/utility"
+	"github.com/celsiainternet/elvis/cache"
+	"github.com/celsiainternet/elvis/event"
+	"github.com/celsiainternet/elvis/jdb"
+	"github.com/celsiainternet/elvis/utility"
 	"github.com/dimiro1/banner"
 	"github.com/go-chi/chi/v5"
 	"github.com/mattn/go-colorable"
@@ -265,9 +265,9 @@ func Banner() {
 const modelEvent = `package $1
 
 import (
-	"github.com/cgalvisleon/elvis/console"
-	"github.com/cgalvisleon/elvis/event"
-	"github.com/cgalvisleon/elvis/et"
+	"github.com/celsiainternet/elvis/console"
+	"github.com/celsiainternet/elvis/event"
+	"github.com/celsiainternet/elvis/et"
 )
 
 func initEvents() {
@@ -291,8 +291,8 @@ func eventAction(m event.EvenMessage) {
 const modelModel = `package $1
 
 import (
-	"github.com/cgalvisleon/elvis/console"
-	"github.com/cgalvisleon/elvis/jdb"
+	"github.com/celsiainternet/elvis/console"
+	"github.com/celsiainternet/elvis/jdb"
 )
 
 func initModels(db *jdb.DB) error {
@@ -307,8 +307,8 @@ func initModels(db *jdb.DB) error {
 const modelSchema = `package $1
 
 import (
-	"github.com/cgalvisleon/elvis/jdb"
-	"github.com/cgalvisleon/elvis/linq"	
+	"github.com/celsiainternet/elvis/jdb"
+	"github.com/celsiainternet/elvis/linq"	
 )
 
 var $2 *linq.Schema
@@ -325,11 +325,11 @@ func defineSchema(db *jdb.DB) error {
 const modelhRpc = `package $1
 
 import (
-	"github.com/cgalvisleon/elvis/console"
-	"github.com/cgalvisleon/elvis/envar"
-	"github.com/cgalvisleon/elvis/et"
-	"github.com/cgalvisleon/elvis/jrpc"
-	"github.com/cgalvisleon/elvis/utility"
+	"github.com/celsiainternet/elvis/console"
+	"github.com/celsiainternet/elvis/envar"
+	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/jrpc"
+	"github.com/celsiainternet/elvis/utility"
 )
 
 type Services struct{}
@@ -392,10 +392,10 @@ const modelDbController = `package $1
 import (
 	"context"
 
-	"github.com/cgalvisleon/elvis/envar"
-	"github.com/cgalvisleon/elvis/jdb"
-	"github.com/cgalvisleon/elvis/et"
-	"github.com/cgalvisleon/elvis/utility"
+	"github.com/celsiainternet/elvis/envar"
+	"github.com/celsiainternet/elvis/jdb"
+	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/utility"
 )
 
 type Controller struct {
@@ -434,10 +434,10 @@ const modelController = `package $1
 import (
 	"context"
 
-	"github.com/cgalvisleon/elvis/envar"
-	"github.com/cgalvisleon/elvis/jdb"
-	"github.com/cgalvisleon/elvis/et"
-	"github.com/cgalvisleon/elvis/utility"
+	"github.com/celsiainternet/elvis/envar"
+	"github.com/celsiainternet/elvis/jdb"
+	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/utility"
 )
 
 type Controller struct {
@@ -477,12 +477,12 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/cgalvisleon/elvis/console"
-	"github.com/cgalvisleon/elvis/envar"
-	"github.com/cgalvisleon/elvis/response"
-	er "github.com/cgalvisleon/elvis/router"
-	"github.com/cgalvisleon/elvis/strs"
-	"github.com/cgalvisleon/elvis/utility"
+	"github.com/celsiainternet/elvis/console"
+	"github.com/celsiainternet/elvis/envar"
+	"github.com/celsiainternet/elvis/response"
+	er "github.com/celsiainternet/elvis/router"
+	"github.com/celsiainternet/elvis/strs"
+	"github.com/celsiainternet/elvis/utility"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -536,12 +536,12 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/cgalvisleon/elvis/console"
-	"github.com/cgalvisleon/elvis/envar"
-	"github.com/cgalvisleon/elvis/response"
-	er "github.com/cgalvisleon/elvis/router"
-	"github.com/cgalvisleon/elvis/strs"
-	"github.com/cgalvisleon/elvis/utility"
+	"github.com/celsiainternet/elvis/console"
+	"github.com/celsiainternet/elvis/envar"
+	"github.com/celsiainternet/elvis/response"
+	er "github.com/celsiainternet/elvis/router"
+	"github.com/celsiainternet/elvis/strs"
+	"github.com/celsiainternet/elvis/utility"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -607,13 +607,13 @@ const modelDbHandler = `package $1
 import (
 	"net/http"
 
-	"github.com/cgalvisleon/elvis/console"
-	"github.com/cgalvisleon/elvis/et"
-	"github.com/cgalvisleon/elvis/jdb"
-	"github.com/cgalvisleon/elvis/linq"
-	"github.com/cgalvisleon/elvis/msg"
-	"github.com/cgalvisleon/elvis/response"
-	"github.com/cgalvisleon/elvis/utility"
+	"github.com/celsiainternet/elvis/console"
+	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/jdb"
+	"github.com/celsiainternet/elvis/linq"
+	"github.com/celsiainternet/elvis/msg"
+	"github.com/celsiainternet/elvis/response"
+	"github.com/celsiainternet/elvis/utility"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -1027,8 +1027,8 @@ const modelHandler = `package $1
 import (
 	"net/http"
 
-	"github.com/cgalvisleon/elvis/et"
-	"github.com/cgalvisleon/elvis/response"
+	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/response"
 )
 
 func $2(project_id, id string, params et.Json) (et.Item, error) {
@@ -1092,7 +1092,7 @@ go get github.com/rs/cors
 
 ### Crear projecto, microservicios, modelos
 
-go run github.com/cgalvisleon/elvis/cmd/create-go create
+go run github.com/celsiainternet/elvis/cmd/create-go create
 
 ### Run project
 

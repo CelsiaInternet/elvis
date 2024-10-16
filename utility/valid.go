@@ -3,7 +3,7 @@ package utility
 import (
 	"regexp"
 
-	"github.com/cgalvisleon/elvis/strs"
+	"github.com/celsiainternet/elvis/strs"
 	"golang.org/x/exp/slices"
 )
 

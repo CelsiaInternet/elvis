@@ -3,10 +3,10 @@ package ws
 import (
 	"time"
 
-	"github.com/cgalvisleon/elvis/et"
-	"github.com/cgalvisleon/elvis/logs"
-	"github.com/cgalvisleon/elvis/strs"
-	"github.com/cgalvisleon/elvis/timezone"
+	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/logs"
+	"github.com/celsiainternet/elvis/strs"
+	"github.com/celsiainternet/elvis/timezone"
 	"github.com/gorilla/websocket"
 	"golang.org/x/exp/slices"
 )

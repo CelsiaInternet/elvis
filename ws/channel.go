@@ -1,9 +1,9 @@
 package ws
 
 import (
-	"github.com/cgalvisleon/elvis/et"
-	"github.com/cgalvisleon/elvis/logs"
-	"github.com/cgalvisleon/elvis/strs"
+	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/logs"
+	"github.com/celsiainternet/elvis/strs"
 	"golang.org/x/exp/slices"
 )
 
