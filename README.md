@@ -6,7 +6,7 @@
 go mod tidy &&
 gofmt -w . &&
 git update &&
-git tag v1.0.55 &&
+git tag v1.0.56 &&
 git tags
 
 git push origin --tags
@@ -24,8 +24,8 @@ go run github.com/celsiainternet/elvis/cmd/apigateway
 
 go build ./cmd/apigateway
 
-go get -u github.com/cgalvisleon/elvis@v1.0.54
-go get github.com/cgalvisleon/elvis@v1.0.54
+go get -u github.com/celsiainternet/elvis@v1.0.56
+go get github.com/celsiainternet/elvis@v1.0.56
 ```
 
 # Build
@@ -34,7 +34,7 @@ go get github.com/cgalvisleon/elvis@v1.0.54
 docker system prune -a --volumes -f
 
 docker build --no-cache -t apigateway -f ./cmd/apigateway/Dockerfile .
-docker scout quickview local://apigateway:latest --org cgalvisleon
+docker scout quickview local://apigateway:latest --org celsiainternet
 
 docker-compose -p apigateway -f ./cmd/apigateway/docker-compose.yml up -d
 docker-compose -p apigateway -f ./cmd/apigateway/docker-compose.yml down

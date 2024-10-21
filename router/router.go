@@ -96,7 +96,7 @@ func ToTpHeader(tp int) TpHeader {
 * @param packageName string
 **/
 func PushApiGateway(id, method, path, resolve string, header et.Json, tpHeader TpHeader, private bool, packageName string) {
-	event.Work("apigateway/http/resolve", et.Json{
+	event.Work("apigateway/set/resolve", et.Json{
 		"_id":          id,
 		"kind":         HTTP,
 		"method":       method,
@@ -114,7 +114,7 @@ func PushApiGateway(id, method, path, resolve string, header et.Json, tpHeader T
 * @param id string
 **/
 func PopApiGatewayById(id string) {
-	event.Work("apigateway/http/pop", et.Json{
+	event.Work("apigateway/delete/resolve", et.Json{
 		"_id": id,
 	})
 }
