@@ -287,6 +287,11 @@ func (m *Metrics) DoneFn(rw *ResponseWriterWrapper) et.Json {
 	return m.println()
 }
 
+/**
+* DoneRpc
+* @params r interface{}
+* @return et.Json
+**/
 func (m *Metrics) DoneRpc(r interface{}) et.Json {
 	var size int
 	jsonData, err := json.Marshal(r)
