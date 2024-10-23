@@ -201,6 +201,12 @@ func (c *Model) Init() error {
 	}
 
 	if exists {
+		id := strs.Format(`definefunciones-%s`, c.Low())
+		_, err = c.db.Command(jdb.CommandDefine, id, c.Functions)
+		if err != nil {
+			return err
+		}
+
 		return nil
 	}
 
