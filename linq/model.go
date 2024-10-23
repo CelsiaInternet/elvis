@@ -1,7 +1,6 @@
 package linq
 
 import (
-	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/jdb"
 	"github.com/celsiainternet/elvis/strs"
@@ -192,8 +191,6 @@ func (c *Model) Db() *jdb.DB {
 func (c *Model) Init() error {
 	c.Define = c.DDL()
 	c.Functions = c.DDLFunction()
-
-	console.Debug(c.Functions)
 
 	exists, err := jdb.ExistTable(c.db, c.Schema.Name, c.Name)
 	if err != nil {
