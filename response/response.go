@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/request"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -35,12 +36,16 @@ func ScanJson(value map[string]interface{}) (et.Json, error) {
 }
 
 func GetBody(r *http.Request) (et.Json, error) {
-	var result et.Json
-	err := json.NewDecoder(r.Body).Decode(&result)
+	body, err := request.ReadBody(r.Body)
 	if err != nil {
 		return et.Json{}, err
 	}
-	defer r.Body.Close()
+
+	var result et.Json
+	result, err = body.ToJson()
+	if err != nil {
+		return et.Json{}, err
+	}
 
 	return result, nil
 }
