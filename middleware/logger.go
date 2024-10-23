@@ -51,7 +51,7 @@ func RequestLogger(f LogFormatter) func(next http.Handler) http.Handler {
 			metric := NewMetric(r)
 			metric.CallSearchTime()
 			w.Header().Set("Reqid", metric.ReqID)
-			rww := &ResponseWriterWrapper{ResponseWriter: w, StatusCode: http.StatusOK, Host: r.Host}
+			rww := &ResponseWriterWrapper{ResponseWriter: w, StatusCode: http.StatusOK}
 			ww := NewWrapResponseWriter(rww, r.ProtoMajor)
 			entry := f.NewLogEntry(r)
 			rw := WithLogEntry(r, entry)

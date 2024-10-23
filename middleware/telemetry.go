@@ -34,30 +34,9 @@ type ContentLength struct {
 
 type ResponseWriterWrapper struct {
 	http.ResponseWriter
+	BodySize   int
+	HeaderSize int
 	StatusCode int
-	SizeHeader int
-	SizeBody   int
-	SizeTotal  int
-	Host       string
-}
-
-/**
-* WriteHeader
-* @params statusCode int
-**/
-func (rw *ResponseWriterWrapper) WriteHeader(statusCode int) {
-	rw.StatusCode = statusCode
-	rw.ResponseWriter.WriteHeader(statusCode)
-	totalHeader := 0
-	for key, values := range rw.Header() {
-		totalHeader += len(key)
-		for _, value := range values {
-			totalHeader += len(value) + len(": ") + len("\r\n")
-		}
-	}
-	totalHeader += len("\r\n") * len(rw.Header())
-	rw.SizeHeader = totalHeader
-	rw.SizeTotal = rw.SizeHeader + rw.SizeBody
 }
 
 /**
@@ -66,64 +45,34 @@ func (rw *ResponseWriterWrapper) WriteHeader(statusCode int) {
 **/
 func (rw *ResponseWriterWrapper) Write(b []byte) (int, error) {
 	size, err := rw.ResponseWriter.Write(b)
-	rw.SizeBody += size
-	rw.SizeTotal = rw.SizeHeader + rw.SizeBody
+	rw.BodySize += size
 	return size, err
 }
 
 /**
-* ContentLength
-* @return ContentLength
+* WriteHeader
+* @params statusCode int
 **/
-func (rw *ResponseWriterWrapper) ContentLength() ContentLength {
-	totalHeader := 0
-	for key, values := range rw.Header() {
-		totalHeader += len(key)
-		for _, value := range values {
-			totalHeader += len(value) + len(": ") + len("\r\n")
+func (rw *ResponseWriterWrapper) WriteHeader(statusCode int) {
+	if rw.StatusCode == 0 {
+		rw.StatusCode = statusCode
+		headers := rw.Header()
+		for key, values := range headers {
+			rw.HeaderSize += len(key)
+			for _, value := range values {
+				rw.HeaderSize += len(value) + len(": ") + len("\r\n")
+			}
 		}
-	}
-	totalHeader += len("\r\n") * len(rw.Header())
-	rw.SizeHeader = totalHeader
-	rw.SizeTotal = rw.SizeHeader + rw.SizeBody
-	return ContentLength{
-		Header: rw.SizeHeader,
-		Body:   rw.SizeBody,
-		Total:  rw.SizeTotal,
+		rw.ResponseWriter.WriteHeader(statusCode)
 	}
 }
 
 /**
-* headerLength
-* @params res *http.Response
+* SizeTotal
 * @return int
 **/
-func headerLength(res *http.Response) int {
-	result := 0
-	for key, values := range res.Header {
-		result += len(key)
-		for _, value := range values {
-			result += len(value) + len(": ") + len("\r\n")
-		}
-	}
-	result += len("\r\n") * len(res.Header)
-
-	return result
-}
-
-/**
-* contentLength
-* @params res *http.Response
-* @return int
-**/
-func contentLength(res *http.Response) ContentLength {
-	result := headerLength(res)
-
-	return ContentLength{
-		Header: result,
-		Body:   int(res.ContentLength),
-		Total:  result + int(res.ContentLength),
-	}
+func (rw *ResponseWriterWrapper) SizeTotal() int {
+	return rw.BodySize + rw.HeaderSize
 }
 
 type Metrics struct {
@@ -278,9 +227,9 @@ func (m *Metrics) DoneFn(rw *ResponseWriterWrapper) et.Json {
 	m.StatusCode = rw.StatusCode
 	m.Status = http.StatusText(m.StatusCode)
 	m.ContentLength = ContentLength{
-		Header: rw.SizeHeader,
-		Body:   rw.SizeBody,
-		Total:  rw.SizeTotal,
+		Header: rw.HeaderSize,
+		Body:   rw.BodySize,
+		Total:  rw.SizeTotal(),
 	}
 	m.Header = rw.Header()
 
@@ -318,7 +267,7 @@ func (m *Metrics) DoneRpc(r interface{}) et.Json {
 }
 
 func (m *Metrics) WriteResponse(w http.ResponseWriter, r *http.Request, statusCode int, e []byte) error {
-	rw := &ResponseWriterWrapper{ResponseWriter: w, StatusCode: statusCode, Host: r.Host}
+	rw := &ResponseWriterWrapper{ResponseWriter: w, StatusCode: statusCode}
 
 	rw.Header().Set("Content-Type", "application/json; charset=utf-8")
 	rw.WriteHeader(statusCode)
