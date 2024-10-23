@@ -70,7 +70,21 @@ func defineRecyclingFunction(db *DB) error {
 
   RETURN NEW;
   END;
-  $$ LANGUAGE plpgsql;`
+  $$ LANGUAGE plpgsql;
+  
+  CREATE OR REPLACE FUNCTION core.RECYCLING_DELETE()
+  RETURNS
+    TRIGGER AS $$  
+  BEGIN
+    DELETE FROM core.RECYCLING
+    WHERE TABLE_SCHEMA = TG_TABLE_SCHEMA
+    AND TABLE_NAME = TG_TABLE_NAME
+    AND _IDT = OLD._IDT;
+
+  RETURN NEW;
+  END;
+  $$ LANGUAGE plpgsql;
+  `
 
 	id := "define-recycling-function"
 	_, err := db.Command(CommandDefine, id, sql)

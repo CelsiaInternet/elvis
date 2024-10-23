@@ -123,7 +123,13 @@ func ddlSetRecyclig(model *Model) string {
 	CREATE TRIGGER RECYCLING
 	AFTER UPDATE ON $1
 	FOR EACH ROW WHEN (OLD._STATE!=NEW._STATE)
-	EXECUTE PROCEDURE core.RECYCLING_UPDATE();`, model.Table)
+	EXECUTE PROCEDURE core.RECYCLING_UPDATE();
+
+	DROP TRIGGER IF EXISTS RECYCLING_DELETE ON $1 CASCADE;
+	CREATE TRIGGER RECYCLING_DELETE
+	AFTER DELETE ON $1
+	FOR EACH ROW
+	EXECUTE PROCEDURE core.RECYCLING_DELETE();`, model.Table)
 
 	result = strs.Replace(result, "\t", "")
 
@@ -183,6 +189,51 @@ func ddlTable(model *Model) string {
 	model.Ddl = result
 
 	return model.Ddl
+}
+
+func ddlFunctions(model *Model) string {
+	NewColumn(model, IdTFiled, "UUId", "VARCHAR(80)", "-1")
+
+	var result string
+	var indexs string
+	var uniqueKeys string
+
+	appendIndex := func(def string) {
+		indexs = strs.Append(indexs, def, "\n")
+	}
+
+	appendUniqueKey := func(def string) {
+		uniqueKeys = strs.Append(uniqueKeys, def, ", ")
+	}
+
+	for _, column := range model.Definition {
+		if column.Tp == TpColumn {
+			if column.Indexed {
+				if column.Unique {
+					def := column.DDLUniqueIndex()
+					appendUniqueKey(def)
+				} else {
+					def := column.DDLIndex()
+					appendIndex(def)
+				}
+			}
+		}
+	}
+
+	result = strs.Append(result, uniqueKeys, "\n")
+	result = strs.Append(result, indexs, "\n\n")
+	foreign := ddlForeignKeys(model)
+	result = strs.Append(result, foreign, "\n\n")
+	sync := ddlSetSync(model)
+	result = strs.Append(result, sync, "\n\n")
+	if model.UseState {
+		recicle := ddlSetRecyclig(model)
+		result = strs.Append(result, recicle, "\n\n")
+	}
+
+	model.DdlFunction = result
+
+	return model.DdlFunction
 }
 
 func dllMigration(model *Model) string {

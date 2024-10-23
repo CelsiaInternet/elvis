@@ -1,6 +1,7 @@
 package linq
 
 import (
+	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/jdb"
 	"github.com/celsiainternet/elvis/strs"
@@ -23,6 +24,7 @@ type Model struct {
 	Name               string
 	Description        string
 	Define             string
+	Functions          string
 	Schema             *Schema
 	Table              string
 	Definition         []*Column
@@ -38,6 +40,7 @@ type Model struct {
 	StateField         *Column
 	IdTFiled           *Column
 	Ddl                string
+	DdlFunction        string
 	integrityAtrib     bool
 	integrityReference bool
 	indexeSource       bool
@@ -188,6 +191,9 @@ func (c *Model) Db() *jdb.DB {
 **/
 func (c *Model) Init() error {
 	c.Define = c.DDL()
+	c.Functions = c.DDLFunction()
+
+	console.Debug(c.Functions)
 
 	exists, err := jdb.ExistTable(c.db, c.Schema.Name, c.Name)
 	if err != nil {
@@ -209,6 +215,10 @@ func (c *Model) Init() error {
 
 func (c *Model) DDL() string {
 	return ddlTable(c)
+}
+
+func (c *Model) DDLFunction() string {
+	return ddlFunctions(c)
 }
 
 func (c *Model) DDLMigration() string {
