@@ -462,9 +462,9 @@ func init() {
 	for _, v := range []string{
 		"Content-Security-Policy",
 		"Content-Length",
-		"Content-Length",
+		"Cache-Control",
 		"Set-Cookie",
 	} {
-		commonHeader[v] = false
+		commonHeader[v] = true
 	}
 }
