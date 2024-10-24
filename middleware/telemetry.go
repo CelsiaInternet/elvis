@@ -54,14 +54,25 @@ func (rw *ResponseWriterWrapper) Write(b []byte) (int, error) {
 * WriteHeader
 * @params statusCode int
 **/
+func (rw *ResponseWriterWrapper) SetHeader(header http.Header) {
+	for key := range header {
+		value := header.Get(key)
+		if commonHeader[key] {
+			rw.Header().Set(key, value)
+		}
+	}
+}
+
+/**
+* WriteHeader
+* @params statusCode int
+**/
 func (rw *ResponseWriterWrapper) WriteHeader(statusCode int) {
 	rw.StatusCode = statusCode
 	headers := rw.Header()
 	for key := range headers {
-		if commonHeader[key] {
-			value := headers.Get(key)
-			rw.HeaderSize += len(key) + len(value) + len(": ") + len("\r\n")
-		}
+		value := headers.Get(key)
+		rw.HeaderSize += len(key) + len(value) + len(": ") + len("\r\n")
 	}
 	rw.ResponseWriter.WriteHeader(statusCode)
 }
