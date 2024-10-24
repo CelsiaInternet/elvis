@@ -20,6 +20,7 @@ import (
 )
 
 var hostName, _ = os.Hostname()
+var commonHeader = make(map[string]bool)
 
 type Result struct {
 	Ok     bool        `json:"ok"`
@@ -54,17 +55,17 @@ func (rw *ResponseWriterWrapper) Write(b []byte) (int, error) {
 * @params statusCode int
 **/
 func (rw *ResponseWriterWrapper) WriteHeader(statusCode int) {
-	if rw.StatusCode == 0 {
-		rw.StatusCode = statusCode
-		headers := rw.Header()
-		for key, values := range headers {
-			rw.HeaderSize += len(key)
-			for _, value := range values {
-				rw.HeaderSize += len(value) + len(": ") + len("\r\n")
-			}
+	rw.StatusCode = statusCode
+	headers := rw.Header()
+	for key := range headers {
+		if commonHeader[key] {
+			value := headers.Get(key)
+			rw.HeaderSize += len(value) + len(": ") + len("\r\n")
+			rw.Header().Set(key, value)
 		}
-		rw.ResponseWriter.WriteHeader(statusCode)
+
 	}
+	rw.ResponseWriter.WriteHeader(statusCode)
 }
 
 /**
@@ -443,4 +444,50 @@ func (m *Metrics) println() et.Json {
 	}
 
 	return result
+}
+
+func init() {
+	for _, v := range []string{
+		"Accept",
+		"Accept-Charset",
+		"Accept-Encoding",
+		"Accept-Language",
+		"Accept-Ranges",
+		"Cache-Control",
+		"Cc",
+		"Connection",
+		"Content-Id",
+		"Content-Language",
+		"Content-Length",
+		"Content-Transfer-Encoding",
+		"Content-Type",
+		"Cookie",
+		"Date",
+		"Dkim-Signature",
+		"Etag",
+		"Expires",
+		"From",
+		"Host",
+		"If-Modified-Since",
+		"If-None-Match",
+		"In-Reply-To",
+		"Last-Modified",
+		"Location",
+		"Message-Id",
+		"Mime-Version",
+		"Pragma",
+		"Received",
+		"Return-Path",
+		"Server",
+		"Set-Cookie",
+		"Subject",
+		"To",
+		"User-Agent",
+		"Via",
+		"X-Forwarded-For",
+		"X-Imforwards",
+		"X-Powered-By",
+	} {
+		commonHeader[v] = true
+	}
 }
