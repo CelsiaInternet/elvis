@@ -57,7 +57,7 @@ func (rw *ResponseWriterWrapper) Write(b []byte) (int, error) {
 func (rw *ResponseWriterWrapper) SetHeader(header http.Header) {
 	for key := range header {
 		value := header.Get(key)
-		if !commonHeader[key] {
+		if commonHeader[key] {
 			continue
 		} else if len(value) > 255 {
 			continue
