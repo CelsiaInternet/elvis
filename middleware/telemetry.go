@@ -60,10 +60,8 @@ func (rw *ResponseWriterWrapper) WriteHeader(statusCode int) {
 	for key := range headers {
 		if commonHeader[key] {
 			value := headers.Get(key)
-			rw.HeaderSize += len(value) + len(": ") + len("\r\n")
-			rw.Header().Set(key, value)
+			rw.HeaderSize += len(key) + len(value) + len(": ") + len("\r\n")
 		}
-
 	}
 	rw.ResponseWriter.WriteHeader(statusCode)
 }
