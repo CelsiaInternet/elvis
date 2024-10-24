@@ -461,6 +461,9 @@ func (m *Metrics) println() et.Json {
 func init() {
 	for _, v := range []string{
 		"Content-Security-Policy",
+		"Content-Length",
+		"Content-Length",
+		"Set-Cookie",
 	} {
 		commonHeader[v] = false
 	}
