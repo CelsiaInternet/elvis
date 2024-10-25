@@ -6,6 +6,7 @@ import (
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/event"
 	"github.com/celsiainternet/elvis/middleware"
+	"github.com/celsiainternet/elvis/strs"
 	"github.com/celsiainternet/elvis/utility"
 	"github.com/go-chi/chi/v5"
 )
@@ -35,6 +36,8 @@ const (
 	TpJoinHeader
 	TpReplaceHeader
 )
+
+var router = make(map[string]et.Json)
 
 /**
 * String
@@ -96,7 +99,7 @@ func ToTpHeader(tp int) TpHeader {
 * @param packageName string
 **/
 func PushApiGateway(id, method, path, resolve string, header et.Json, tpHeader TpHeader, private bool, packageName string) {
-	event.Work("apigateway/set/resolve", et.Json{
+	router[id] = et.Json{
 		"_id":          id,
 		"kind":         HTTP,
 		"method":       method,
@@ -106,14 +109,16 @@ func PushApiGateway(id, method, path, resolve string, header et.Json, tpHeader T
 		"tpHeader":     tpHeader,
 		"private":      private,
 		"package_name": packageName,
-	})
+	}
+	event.Work("apigateway/set/resolve", router[id])
 }
 
 /**
-* PopApiGatewayById
+* DeleteApiGatewayById
 * @param id string
 **/
-func PopApiGatewayById(id string) {
+func DeleteApiGatewayById(id string) {
+	delete(router, id)
 	event.Work("apigateway/delete/resolve", et.Json{
 		"_id": id,
 	})
@@ -131,7 +136,8 @@ func PopApiGatewayById(id string) {
 func pushApiGateway(method, path, packagePath, host, packageName string, private bool) {
 	path = packagePath + path
 	resolve := host + path
-	id := utility.UUID()
+	url := strs.Format("%s:%s", method, path)
+	id := utility.ToBase64(url)
 
 	PushApiGateway(id, method, path, resolve, et.Json{}, TpReplaceHeader, private, packageName)
 }

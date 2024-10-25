@@ -16,6 +16,11 @@ type Result struct {
 	Result interface{} `json:"result"`
 }
 
+/**
+* ScanBody
+* @param r io.Reader
+* @return et.Json, error
+**/
 func ScanBody(r io.Reader) (et.Json, error) {
 	var result et.Json
 	err := json.NewDecoder(r).Decode(&result)
@@ -26,23 +31,37 @@ func ScanBody(r io.Reader) (et.Json, error) {
 	return result, nil
 }
 
+/**
+* ScanStr
+* @param value string
+* @return et.Json, error
+**/
 func ScanStr(value string) (et.Json, error) {
 	return ScanBody(strings.NewReader(value))
 }
 
+/**
+* ScanJson
+* @param value map[string]interface{}
+* @return et.Json, error
+**/
 func ScanJson(value map[string]interface{}) (et.Json, error) {
 	var result et.Json = value
 	return result, nil
 }
 
+/**
+* GetBody
+* @param r *http.Request
+* @return et.Json, error
+**/
 func GetBody(r *http.Request) (et.Json, error) {
 	body, err := request.ReadBody(r.Body)
 	if err != nil {
 		return et.Json{}, err
 	}
 
-	var result et.Json
-	result, err = body.ToJson()
+	result, err := body.ToJson()
 	if err != nil {
 		return et.Json{}, err
 	}
@@ -50,6 +69,30 @@ func GetBody(r *http.Request) (et.Json, error) {
 	return result, nil
 }
 
+/**
+* GetArray
+* @param r *http.Request
+* @return []et.Json, error
+**/
+func GetArray(r *http.Request) ([]et.Json, error) {
+	body, err := request.ReadBody(r.Body)
+	if err != nil {
+		return []et.Json{}, err
+	}
+
+	result, err := body.ToArrayJson()
+	if err != nil {
+		return []et.Json{}, err
+	}
+
+	return result, nil
+}
+
+/**
+* GetQuery
+* @param r *http.Request
+* @return et.Json
+**/
 func GetQuery(r *http.Request) et.Json {
 	var result et.Json = et.Json{}
 	values := r.URL.Query()
@@ -62,6 +105,12 @@ func GetQuery(r *http.Request) et.Json {
 	return result
 }
 
+/**
+* GetParam
+* @param r *http.Request
+* @param key string
+* @return *et.Any
+**/
 func GetParam(r *http.Request, key string) *et.Any {
 	val := chi.URLParam(r, key)
 	result := et.NewAny(val)
@@ -69,6 +118,13 @@ func GetParam(r *http.Request, key string) *et.Any {
 	return result
 }
 
+/**
+* WriteResponse
+* @param w http.ResponseWriter
+* @param statusCode int
+* @param e []byte
+* @return error
+**/
 func WriteResponse(w http.ResponseWriter, statusCode int, e []byte) error {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(statusCode)
@@ -77,6 +133,14 @@ func WriteResponse(w http.ResponseWriter, statusCode int, e []byte) error {
 	return nil
 }
 
+/**
+* JSON
+* @param w http.ResponseWriter
+* @param r *http.Request
+* @param statusCode int
+* @param dt interface{}
+* @return error
+**/
 func JSON(w http.ResponseWriter, r *http.Request, statusCode int, dt interface{}) error {
 	if dt == nil {
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -97,6 +161,14 @@ func JSON(w http.ResponseWriter, r *http.Request, statusCode int, dt interface{}
 	return WriteResponse(w, statusCode, e)
 }
 
+/**
+* ITEM
+* @param w http.ResponseWriter
+* @param r *http.Request
+* @param statusCode int
+* @param dt et.Item
+* @return error
+**/
 func ITEM(w http.ResponseWriter, r *http.Request, statusCode int, dt et.Item) error {
 	if &dt == (&et.Item{}) {
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -116,6 +188,14 @@ func ITEM(w http.ResponseWriter, r *http.Request, statusCode int, dt et.Item) er
 	return WriteResponse(w, statusCode, e)
 }
 
+/**
+* ITEMS
+* @param w http.ResponseWriter
+* @param r *http.Request
+* @param statusCode int
+* @param dt et.Items
+* @return error
+**/
 func ITEMS(w http.ResponseWriter, r *http.Request, statusCode int, dt et.Items) error {
 	if &dt == (&et.Items{}) {
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -135,6 +215,14 @@ func ITEMS(w http.ResponseWriter, r *http.Request, statusCode int, dt et.Items) 
 	return WriteResponse(w, statusCode, e)
 }
 
+/**
+* HTTPError
+* @param w http.ResponseWriter
+* @param r *http.Request
+* @param statusCode int
+* @param message string
+* @return error
+**/
 func HTTPError(w http.ResponseWriter, r *http.Request, statusCode int, message string) error {
 	msg := et.Json{
 		"message": message,
@@ -151,6 +239,14 @@ func Unauthorized(w http.ResponseWriter, r *http.Request) {
 	HTTPError(w, r, http.StatusUnauthorized, "401 Unauthorized")
 }
 
+/**
+* Stream
+* @param w http.ResponseWriter
+* @param r *http.Request
+* @param statusCode int
+* @param dt interface{}
+* @return error
+**/
 func Stream(w http.ResponseWriter, r *http.Request, statusCode int, dt interface{}) error {
 	if dt == nil {
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -171,6 +267,12 @@ func Stream(w http.ResponseWriter, r *http.Request, statusCode int, dt interface
 	return nil
 }
 
+/**
+* HTTPApp
+* @param r chi.Router
+* @param path string
+* @param root http.FileSystem
+**/
 func HTTPApp(r chi.Router, path string, root http.FileSystem) {
 	if strings.ContainsAny(path, "{}*") {
 		panic("FileServer does not permit any URL parameters.")

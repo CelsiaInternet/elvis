@@ -52,6 +52,14 @@ func (it *Items) First() Item {
 	}
 }
 
+func (it *Items) Add(item Json) *Items {
+	it.Result = append(it.Result, item)
+	it.Count = len(it.Result)
+	it.Ok = it.Count > 0
+
+	return it
+}
+
 func (it *Items) ValAny(idx int, _default any, atribs ...string) any {
 	if it.Result[idx] == nil {
 		return _default
