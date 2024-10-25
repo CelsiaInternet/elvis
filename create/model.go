@@ -267,6 +267,7 @@ const modelEvent = `package $1
 import (
 	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/event"
+	"github.com/celsiainternet/elvis/router"
 	"github.com/celsiainternet/elvis/et"
 )
 
