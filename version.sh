@@ -5,8 +5,8 @@ set -e                                                  # Detener la ejecución 
 MAYOR=false
 MINOR=false
 INDEX=2
-REBUILD=false
 VERSION=$(git describe --tags --abbrev=0)               # Valor para reemplazar $VERSION obtenido de Git
+readme_file="README.md"                                 # Nombre del archivo a modificar
 
 # Parsear opciones
 while [[ "$#" -gt 0 ]]; do
@@ -34,11 +34,7 @@ else
   # Divide la etiqueta en componentes usando el punto como delimitador
   IFS='.' read -r -a version_parts <<< "${latest_tag#v}"
 
-  if [ "$REBUILD" == true ]; then
-    git tag -d "$VERSION"
-    git push origin --delete "$VERSION"
-    new_version="$VERSION"
-  elif [ "$MAYOR" == true ]; then
+  if [ "$MAYOR" == true ]; then
     # Si se proporciona la opción --major, incrementa el valor de la posición 0
     version_parts[0]=$((version_parts[0] + 1))
     version_parts[1]=0
@@ -59,6 +55,8 @@ else
     new_version="v${version_parts[0]}.${version_parts[1]}.${version_parts[2]}"
   fi  
 fi
+
+sed -i '' "s/$VERSION/$new_version/g" "$readme_file"
 
 # Muestra la nueva versión
 echo "La nueva versión es: $new_version"
