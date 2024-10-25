@@ -7,6 +7,10 @@ import (
 	"github.com/celsiainternet/elvis/utility"
 )
 
+const (
+	APIMANAGER_LOADED = "apimanager/loaded"
+)
+
 func EventLoad(m event.EvenMessage) {
 	for _, item := range router {
 		id := item.Key("_id")
