@@ -1,14 +1,19 @@
 #!/bin/bash
 
+set -e                                                  # Detener la ejecución en caso de error
+
 MAYOR=false
 MINOR=false
 INDEX=2
+REBUILD=false
+VERSION=$(git describe --tags --abbrev=0)               # Valor para reemplazar $VERSION obtenido de Git
 
 # Parsear opciones
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         --m | --major) MAYOR=true ;;                    # Activar la bandera si se proporciona --major
         --n | --minor) MINOR=true ;;                    # Activar la bandera si se proporciona --minor
+        --r | --rebuild) REBUILD=true ;;                # Activar la bandera si se proporciona --rebuild
         *) echo "Opción desconocida: $1"; exit 1 ;;
     esac
     shift
@@ -29,7 +34,11 @@ else
   # Divide la etiqueta en componentes usando el punto como delimitador
   IFS='.' read -r -a version_parts <<< "${latest_tag#v}"
 
-  if [ "$MAYOR" == true ]; then
+  if [ "$REBUILD" == true ]; then
+    git tag -d "$VERSION"
+    git push origin --delete "$VERSION"
+    new_version="$VERSION"
+  elif [ "$MAYOR" == true ]; then
     # Si se proporciona la opción --major, incrementa el valor de la posición 0
     version_parts[0]=$((version_parts[0] + 1))
     version_parts[1]=0
