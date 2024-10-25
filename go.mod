@@ -13,7 +13,7 @@ require (
 	github.com/nats-io/nats.go v1.28.0
 	github.com/redis/go-redis/v9 v9.6.2
 	github.com/schollz/progressbar/v3 v3.14.6
-	golang.org/x/crypto v0.22.0
+	golang.org/x/crypto v0.28.0
 	golang.org/x/exp v0.0.0-20230817173708-d852ddb80c63
 )
 
@@ -34,8 +34,8 @@ require (
 	github.com/xdg-go/stringprep v1.0.4 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20181117223130-1be2e3e5546d // indirect
 	github.com/yusufpapurcu/wmi v1.2.3 // indirect
-	golang.org/x/sync v0.7.0 // indirect
-	golang.org/x/term v0.22.0 // indirect
+	golang.org/x/sync v0.8.0 // indirect
+	golang.org/x/term v0.25.0 // indirect
 )
 
 require (
@@ -44,12 +44,12 @@ require (
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/klauspost/compress v1.16.7 // indirect
 	github.com/nats-io/nats-server/v2 v2.9.21 // indirect
-	github.com/nats-io/nkeys v0.4.4 // indirect
+	github.com/nats-io/nkeys v0.4.7 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/shirou/gopsutil v3.21.11+incompatible
 	github.com/spf13/cobra v1.7.0
 	go.mongodb.org/mongo-driver v1.16.1
-	golang.org/x/sys v0.22.0 // indirect
-	golang.org/x/text v0.14.0 // indirect
+	golang.org/x/sys v0.26.0 // indirect
+	golang.org/x/text v0.19.0 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 )
