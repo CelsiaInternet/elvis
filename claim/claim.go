@@ -246,11 +246,11 @@ func SetToken(app, device, id, token string, duration time.Duration) error {
 }
 
 /**
-* GetClient
+* GetUser
 * @param r *http.Request
 * @return et.Json
 **/
-func GetClient(r *http.Request) et.Json {
+func GetUser(r *http.Request) et.Json {
 	now := utility.Now()
 	ctx := r.Context()
 
