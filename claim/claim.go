@@ -255,9 +255,7 @@ func GetClient(r *http.Request) et.Json {
 	ctx := r.Context()
 
 	return et.Json{
-		"date_of":   now,
-		"client_id": et.NewAny(ctx.Value("clientId")).Str(),
-		"username":  et.NewAny(ctx.Value("username")).Str(),
-		"name":      et.NewAny(ctx.Value("name")).Str(),
+		"date_of":  now,
+		"username": et.NewAny(ctx.Value("username")).Str(),
 	}
 }
