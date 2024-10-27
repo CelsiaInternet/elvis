@@ -271,17 +271,13 @@ import (
 	"github.com/celsiainternet/elvis/et"
 )
 
-const (
-	EVENT_LOADED = "apimanager/load"
-)
-
 func initEvents() {
-	err := event.Stack(EVENT_LOADED, router.EventLoad)
+	err := event.Stack(router.APIMANAGER_LOADED, router.EventLoad)
 	if err != nil {
 		console.Error(err)
 	}
 
-	err := event.Stack("<channel>", eventAction)
+	err = event.Stack("<channel>", eventAction)
 	if err != nil {
 		console.Error(err)
 	}
