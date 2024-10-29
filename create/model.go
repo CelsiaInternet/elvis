@@ -1,32 +1,53 @@
 package create
 
-const modelDockerfile = `ARG GO_VERSION=1.21.3
+const modelDockerfile = `# Versión de Go como argumento
+ARG GO_VERSION=1.23
 
-FROM golang:${GO_VERSION}-alpine AS builder
+# Stage 1: Compilación (builder)
+FROM --platform=$BUILDPLATFORM golang:${GO_VERSION}-alpine AS builder
 
-RUN apk update && apk add --no-cache ca-certificates openssl git tzdata
-RUN update-ca-certificates
+# Argumentos para el sistema operativo y la arquitectura
+ARG TARGETOS
+ARG TARGETARCH
 
+# Instalación de dependencias necesarias
+RUN apk update && apk add --no-cache ca-certificates openssl git tzdata \
+    && update-ca-certificates
+
+# Configuración de las variables de entorno para la build
 ENV GO111MODULE=on \
     CGO_ENABLED=0 \
-    GOOS=linux \
-    GOARCH=amd64
+    GOOS=${TARGETOS} \
+    GOARCH=${TARGETARCH}
 
+# Directorio de trabajo
 WORKDIR /src
 
+# Descargar dependencias
 COPY go.mod go.sum ./
 RUN go mod download
+
+# Copiar el código fuente
 COPY . .
 
-RUN gofmt -w . && go build -v -o /$1 ./cmd/$1
+# Formatear el código Go
+RUN gofmt -w .
 
+# Compilar el binario
+RUN go build -v -o /$1 ./cmd/$1
+
+# Cambiar permisos del binario
 RUN chmod +x /$1
 
+# Stage 2: Imagen final mínima
 FROM scratch
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --from=builder /src/$1 ./$1
 
-ENTRYPOINT ["./$1"]
+# Copiar certificados y binario
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /$1 /$1
+
+# Establecer el binario como punto de entrada
+ENTRYPOINT ["/$1"]
 `
 
 const modelMain = `package main
@@ -83,10 +104,10 @@ type Server struct {
 	http *http.Server
 }
 
-func New() (*Server, error) {	
+func New() (*Server, error) {
 	server := Server{}
 
-	port := envar.GetInt(3300, "PORT")
+	port := envar.EnvarInt(3300, "PORT")
 	if port != 0 {
 		r := chi.NewRouter()
 
@@ -111,7 +132,7 @@ func New() (*Server, error) {
 
 		server.http = serv
 	}
-	
+
 	return &server, nil
 }
 
