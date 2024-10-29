@@ -61,10 +61,11 @@ func Load() {
 		return
 	}
 
-	host, err := os.Hostname()
+	defaultHost, err := os.Hostname()
 	if err != nil {
-		host = "localhost"
+		defaultHost = "localhost"
 	}
+	host := envar.EnvarStr(defaultHost, "HOST")
 
 	host = envar.GetStr(host, "RPC_HOST")
 	port := envar.GetInt(4200, "RPC_PORT")
