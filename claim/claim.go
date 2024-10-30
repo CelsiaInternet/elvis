@@ -16,8 +16,8 @@ import (
 type AuthType string
 
 const (
-	BasicAuth   AuthType = "Basic Auth"
-	BearerToken AuthType = "Bearer Token"
+	BasicAuth   AuthType = "BasicAuth"
+	BearerToken AuthType = "BearerToken"
 )
 
 type Claim struct {

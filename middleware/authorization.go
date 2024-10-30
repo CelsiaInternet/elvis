@@ -70,9 +70,10 @@ func GetAuthorization(w http.ResponseWriter, r *http.Request) (string, error) {
 	if err == nil {
 		return cookie.Value, nil
 	}
+
 	authorization := r.Header.Get("Authorization")
 	result, err := tokenFromAuthorization(authorization)
-	if err == nil {
+	if err != nil {
 		return "", console.AlertE(err)
 	}
 
@@ -85,13 +86,13 @@ func GetAuthorization(w http.ResponseWriter, r *http.Request) (string, error) {
 **/
 func Authorization(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		tokenString, err := GetAuthorization(w, r)
+		token, err := GetAuthorization(w, r)
 		if err != nil {
 			response.Unauthorized(w, r)
 			return
 		}
 
-		c, err := claim.GetFromToken(tokenString)
+		c, err := claim.GetFromToken(token)
 		if err != nil {
 			response.Unauthorized(w, r)
 			return
@@ -110,7 +111,7 @@ func Authorization(next http.Handler) http.Handler {
 		ctx = context.WithValue(ctx, NameKey, c.Name)
 		ctx = context.WithValue(ctx, KindKey, c.Kind)
 		ctx = context.WithValue(ctx, UsernameKey, c.Username)
-		ctx = context.WithValue(ctx, TokenKey, tokenString)
+		ctx = context.WithValue(ctx, TokenKey, token)
 
 		now := utility.Now()
 		data := et.Json{
@@ -118,7 +119,7 @@ func Authorization(next http.Handler) http.Handler {
 			"clientId":  c.Id,
 			"last_use":  now,
 			"host_name": hostName,
-			"token":     tokenString,
+			"token":     token,
 		}
 
 		go event.TokenLastUse(data)
