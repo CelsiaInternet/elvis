@@ -516,7 +516,7 @@ import (
 var PackageName = "$1"
 var PackageTitle = "$1"
 var PackagePath = envar.GetStr("/api/$1", "PATH_URL")
-var PackageVersion = utility.GitVersion(0)
+var PackageVersion = envar.EnvarStr("0.0.1", "VERSION")
 var HostName, _ = os.Hostname()
 
 type Router struct {
@@ -575,7 +575,7 @@ import (
 var PackageName = "$1"
 var PackageTitle = "$1"
 var PackagePath = envar.GetStr("/api/$1", "PATH_URL")
-var PackageVersion = utility.GitVersion(0)
+var PackageVersion = envar.EnvarStr("0.0.1", "VERSION")
 var HostName, _ = os.Hostname()
 
 type Router struct {

@@ -13,6 +13,13 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
+type AuthType string
+
+const (
+	BasicAuth   AuthType = "Basic Auth"
+	BearerToken AuthType = "Bearer Token"
+)
+
 type Claim struct {
 	Salt     string        `json:"salt"`
 	ID       string        `json:"id"`
@@ -60,7 +67,7 @@ func TokenKey(app, device, id string) string {
 * @param id string
 * @param app string
 * @param name string
-* @param kind string
+* @param kind AuthType
 * @param username string
 * @param device string
 * @param duration time.Duration
@@ -68,14 +75,14 @@ func TokenKey(app, device, id string) string {
 * @return key string
 * @return err error
 **/
-func NewToken(id, app, name, kind, username, device string, duration time.Duration) (string, error) {
+func NewToken(id, app, name string, kind AuthType, username, device string, duration time.Duration) (string, error) {
 	secret := envar.GetStr("1977", "SECRET")
 	c := Claim{}
 	c.Salt = utility.GetOTP(6)
 	c.ID = id
 	c.App = app
 	c.Name = name
-	c.Kind = kind
+	c.Kind = string(kind)
 	c.Username = username
 	c.Device = device
 	c.Duration = duration

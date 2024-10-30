@@ -222,8 +222,6 @@ func ddlFunctions(model *Model) string {
 
 	result = strs.Append(result, uniqueKeys, "\n")
 	result = strs.Append(result, indexs, "\n\n")
-	foreign := ddlForeignKeys(model)
-	result = strs.Append(result, foreign, "\n\n")
 	sync := ddlSetSync(model)
 	result = strs.Append(result, sync, "\n\n")
 	if model.UseState {
@@ -231,9 +229,9 @@ func ddlFunctions(model *Model) string {
 		result = strs.Append(result, recicle, "\n\n")
 	}
 
-	model.DdlFunction = result
+	model.DdlIndex = result
 
-	return model.DdlFunction
+	return model.DdlIndex
 }
 
 func dllMigration(model *Model) string {

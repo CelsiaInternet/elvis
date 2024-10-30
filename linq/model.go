@@ -39,7 +39,7 @@ type Model struct {
 	StateField         *Column
 	IdTFiled           *Column
 	Ddl                string
-	DdlFunction        string
+	DdlIndex           string
 	integrityAtrib     bool
 	integrityReference bool
 	indexeSource       bool

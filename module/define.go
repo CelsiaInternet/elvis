@@ -36,9 +36,6 @@ func InitDefine(db *jdb.DB) error {
 	if err := DefineRoles(db); err != nil {
 		return console.Panic(err)
 	}
-	if err := DefinePermisions(db); err != nil {
-		return console.Panic(err)
-	}
 	if err := DefineTokens(db); err != nil {
 		return console.Panic(err)
 	}
@@ -57,6 +54,11 @@ func InitDefine(db *jdb.DB) error {
 	if err := DefineProfileFolders(db); err != nil {
 		return console.Panic(err)
 	}
+	/**
+	if err := DefinePermisions(db); err != nil {
+		return console.Panic(err)
+	}
+	*/
 
 	console.LogK("Module", "Define models")
 

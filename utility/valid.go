@@ -64,7 +64,7 @@ func ValidEmail(val string) bool {
 }
 
 func ValidPhone(val string) bool {
-	regex := `^\d{10}$`
+	regex := `^\d{12}$`
 	pattern := regexp.MustCompile(regex)
 	return pattern.MatchString(val)
 }

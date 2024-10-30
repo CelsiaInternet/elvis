@@ -66,9 +66,13 @@ func tokenFromAuthorization(authorization string) (string, error) {
 * @return error
 **/
 func GetAuthorization(w http.ResponseWriter, r *http.Request) (string, error) {
+	cookie, err := r.Cookie("auth_token")
+	if err == nil {
+		return cookie.Value, nil
+	}
 	authorization := r.Header.Get("Authorization")
 	result, err := tokenFromAuthorization(authorization)
-	if err != nil {
+	if err == nil {
 		return "", console.AlertE(err)
 	}
 
@@ -81,7 +85,6 @@ func GetAuthorization(w http.ResponseWriter, r *http.Request) (string, error) {
 **/
 func Authorization(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
 		tokenString, err := GetAuthorization(w, r)
 		if err != nil {
 			response.Unauthorized(w, r)
@@ -100,6 +103,7 @@ func Authorization(next http.Handler) http.Handler {
 		}
 
 		serviceId := utility.UUID()
+		ctx := r.Context()
 		ctx = context.WithValue(ctx, ServiceIdKey, serviceId)
 		ctx = context.WithValue(ctx, ClientIdKey, c.Id)
 		ctx = context.WithValue(ctx, AppKey, c.App)

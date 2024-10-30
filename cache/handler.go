@@ -11,6 +11,7 @@ import (
 	"github.com/celsiainternet/elvis/msg"
 	"github.com/celsiainternet/elvis/response"
 	"github.com/celsiainternet/elvis/strs"
+	"github.com/celsiainternet/elvis/utility"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -292,6 +293,7 @@ func HDelete(key, atr string) error {
 **/
 func SetVerify(device, key, val string, duration time.Duration) error {
 	key = strs.Format(`verify:%s:%s`, device, key)
+	key = utility.ToBase64(key)
 	return Set(key, val, duration)
 }
 
@@ -303,6 +305,7 @@ func SetVerify(device, key, val string, duration time.Duration) error {
 **/
 func GetVerify(device string, key string) (string, error) {
 	key = strs.Format(`verify:%s:%s`, device, key)
+	key = utility.ToBase64(key)
 	return Get(key, "")
 }
 
@@ -314,6 +317,7 @@ func GetVerify(device string, key string) (string, error) {
 **/
 func DeleteVerify(device string, key string) (int64, error) {
 	key = strs.Format(`verify:%s:%s`, device, key)
+	key = utility.ToBase64(key)
 	return Delete(key)
 }
 
