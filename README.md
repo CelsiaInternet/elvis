@@ -6,7 +6,7 @@
 go mod tidy &&
 gofmt -w . &&
 git update &&
-git tag v1.0.79 &&
+git tag v1.0.80 &&
 git tags
 
 git push origin --tags
@@ -24,8 +24,8 @@ go run github.com/celsiainternet/elvis/cmd/apigateway
 
 go build ./cmd/apigateway
 
-go get -u github.com/celsiainternet/elvis@v1.0.79
-go get github.com/celsiainternet/elvis@v1.0.79
+go get -u github.com/celsiainternet/elvis@v1.0.80
+go get github.com/celsiainternet/elvis@v1.0.80
 ```
 
 # Build
