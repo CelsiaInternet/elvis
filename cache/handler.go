@@ -306,7 +306,14 @@ func SetVerify(device, key, val string, duration time.Duration) error {
 func GetVerify(device string, key string) (string, error) {
 	key = strs.Format(`verify:%s:%s`, device, key)
 	key = utility.ToBase64(key)
-	return Get(key, "")
+	result, err := Get(key, "")
+	if err != nil {
+		return "", err
+	}
+
+	Delete(key)
+
+	return result, nil
 }
 
 /**
