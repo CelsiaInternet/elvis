@@ -249,7 +249,7 @@ func GetFromToken(token string) (*Claim, error) {
 	}
 
 	if val != token {
-		return nil, err
+		return nil, console.Alert(MSG_TOKEN_INVALID)
 	}
 
 	err = cache.Set(key, token, result.Duration)
