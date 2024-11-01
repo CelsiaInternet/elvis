@@ -239,6 +239,14 @@ func Unauthorized(w http.ResponseWriter, r *http.Request) {
 	HTTPError(w, r, http.StatusUnauthorized, "401 Unauthorized")
 }
 
+func InternalServerError(w http.ResponseWriter, r *http.Request) {
+	HTTPError(w, r, http.StatusInternalServerError, "500 Internal Server Error")
+}
+
+func Forbidden(w http.ResponseWriter, r *http.Request) {
+	HTTPError(w, r, http.StatusForbidden, "403 Forbidden")
+}
+
 /**
 * Stream
 * @param w http.ResponseWriter

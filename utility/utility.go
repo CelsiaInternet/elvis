@@ -469,12 +469,11 @@ func Address(host string, port int) string {
 /**
 * BannerTitle return the value in a string format
 * @param name string
-* @param version string
 * @param size int
 * @return string
 **/
-func BannerTitle(name, version string, size int) string {
-	return strs.Format(`{{ .Title "%s V%s" "" %d }}`, name, version, size)
+func BannerTitle(name string, size int) string {
+	return strs.Format(`{{ .Title "%s" "" %d }}`, name, size)
 }
 
 /**

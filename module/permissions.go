@@ -1,19 +1,77 @@
 package module
 
 import (
+	"encoding/json"
+	"net/http"
+
+	"github.com/celsiainternet/elvis/cache"
+	"github.com/celsiainternet/elvis/claim"
 	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/jdb"
 	"github.com/celsiainternet/elvis/linq"
-	"github.com/celsiainternet/elvis/msg"
-	"github.com/celsiainternet/elvis/utility"
+	"github.com/celsiainternet/elvis/response"
+	"github.com/celsiainternet/elvis/strs"
 )
+
+type Permission map[string]bool
+
+/**
+* ToString
+* @return string, error
+**/
+func (p Permission) ToString() (string, error) {
+	jsonString, err := json.Marshal(p)
+	if err != nil {
+		return "", err
+	}
+
+	return string(jsonString), nil
+}
+
+func (p Permission) Method(r *http.Request) bool {
+	method := r.Method
+	switch method {
+	case "GET":
+		return p[PERMISION_READ]
+	case "POST":
+		return p[PERMISION_WRITE]
+	case "PUT":
+		return p[PERMISION_UPDATE]
+	case "DELETE":
+		return p[PERMISION_DELETE]
+	case "PATCH":
+		return p[PERMISION_EXECUTE]
+	default:
+		return false
+	}
+}
+
+/**
+* NewPermision
+* @param data string
+* @return Permission, error
+**/
+func NewPermision(data string) (Permission, error) {
+	var result = make(Permission)
+	if data == "" {
+		return result, nil
+	}
+
+	err := json.Unmarshal([]byte(data), &result)
+	if err != nil {
+		return result, err
+	}
+
+	return result, nil
+}
 
 var Permissions *linq.Model
 
 var PERMISION_READ = "PERMISION.READ"
 var PERMISION_WRITE = "PERMISION.WRITE"
 var PERMISION_DELETE = "PERMISION.DELETE"
+var PERMISION_UPDATE = "PERMISION.UPDATE"
 var PERMISION_EXECUTE = "PERMISION.EXECUTE"
 
 func DefinePermisions(db *jdb.DB) error {
@@ -28,8 +86,8 @@ func DefinePermisions(db *jdb.DB) error {
 	Permissions = linq.NewModel(SchemaModule, "Permissions", "Tabla de permisos", 1)
 	Permissions.DefineColum("date_make", "", "TIMESTAMP", "NOW()")
 	Permissions.DefineColum("project_id", "", "VARCHAR(80)", "-1")
-	Permissions.DefineColum("model", "", "VARCHAR(80)", "")
 	Permissions.DefineColum("profile_tp", "", "VARCHAR(80)", "-1")
+	Permissions.DefineColum("model", "", "VARCHAR(80)", "")
 	Permissions.DefineColum("permission_tp", "", "VARCHAR(80)", "-1")
 	Permissions.DefineColum("index", "", "INTEGER", 0)
 	Permissions.DefinePrimaryKey([]string{"project_id", "model", "profile_tp", "permission_tp"})
@@ -50,129 +108,179 @@ func DefinePermisions(db *jdb.DB) error {
 }
 
 /**
-* GetPermission
+* ResetPermissions
 * @param projectId string
-* @param model string
 * @param profileTp string
-* @param permissionTp string
-* @return et.Item, error
+* @param model string
+* @return Permission, error
 **/
-func GetPermission(projectId, model, profileTp, permissionTp string) (et.Item, error) {
-	return Permissions.Data().
+func ResetPermissions(projectId, profileTp, model string) (Permission, error) {
+	var result = make(Permission)
+	items, err := Permissions.Select().
 		Where(Permissions.Column("project_id").Eq(projectId)).
 		And(Permissions.Column("model").Eq(model)).
 		And(Permissions.Column("profile_tp").Eq(profileTp)).
-		And(Permissions.Column("permission_tp").Eq(permissionTp)).
-		First()
+		OrderBy(Permissions.Col("index"), true).
+		All()
+	if err != nil {
+		return result, err
+	}
+
+	if items.Ok {
+		for _, item := range items.Result {
+			permision := item.ValStr("-1", "permission_tp")
+			if permision != "-1" {
+				result[permision] = true
+			}
+		}
+	}
+
+	var key = strs.Format("%v-%v-%v", projectId, profileTp, model)
+	value, _ := result.ToString()
+	cache.SetM(key, value)
+
+	return result, nil
 }
 
 /**
 * GetPermissions
 * @param projectId string
-* @param model string
 * @param profileTp string
-* @return et.Items, error
+* @param model string
+* @return et.Item, error
 **/
-func GetPermissions(projectId, model, profileTp string) (map[string]bool, error) {
-	result, err := Permissions.Data().
+func GetPermissions(projectId, profileTp, model string) (Permission, error) {
+	var key = strs.Format("%v-%v-%v", projectId, profileTp, model)
+	value, err := cache.Get(key, "")
+	if err != nil {
+		return Permission{}, err
+	}
+
+	if value != "" {
+		result, err := NewPermision(value)
+		if err == nil {
+			return result, nil
+		}
+	}
+
+	var result = make(Permission)
+	items, err := Permissions.Select().
 		Where(Permissions.Column("project_id").Eq(projectId)).
+		And(Permissions.Column("model").Eq(model)).
 		And(Permissions.Column("profile_tp").Eq(profileTp)).
+		OrderBy(Permissions.Col("index"), true).
 		All()
 	if err != nil {
-		return nil, err
+		return result, err
 	}
 
-	if !result.Ok {
-		return map[string]bool{
-			PERMISION_READ:    true,
-			PERMISION_WRITE:   true,
-			PERMISION_DELETE:  true,
-			PERMISION_EXECUTE: true,
-		}, nil
+	if items.Ok {
+		for _, item := range items.Result {
+			permision := item.ValStr("-1", "permission_tp")
+			if permision != "-1" {
+				result[permision] = true
+			}
+		}
+
+		value, _ := result.ToString()
+		cache.SetM(key, value)
+
+		return result, nil
 	}
 
-	permissions := map[string]bool{}
-	for _, item := range result.Result {
-		permission_tp := item.ValStr("", "permission_tp")
-		permissions[permission_tp] = true
+	result, err = GetPermissions("-1", profileTp, model)
+	if err != nil {
+		return result, err
 	}
 
-	return permissions, nil
+	return result, nil
 }
 
 /**
-* CheckPermission
+* CheckPermissions
 * @param projectId string
-* @param model string
 * @param profileTp string
+* @param model string
 * @param permissionTp string
-* @return et.Item, error
+* @param chk bool
+* @return error
 **/
-func CheckPermission(projectId, model, profileTp, permissionTp string, chk bool) (et.Item, error) {
-	if !utility.ValidId(projectId) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "projectId")
-	}
-
-	if !utility.ValidStr(model, 0, []string{"", "*"}) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "model")
-	}
-
-	if !utility.ValidId(profileTp) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "profileTp")
-	}
-
-	if !utility.ValidId(permissionTp) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "permissionTp")
-	}
-
-	if !chk {
-		result, err := Permissions.Delete().
+func CheckPermissions(projectId, profileTp, model, permissionTp string, chk bool) error {
+	if chk {
+		current, err := Permissions.Select().
 			Where(Permissions.Column("project_id").Eq(projectId)).
 			And(Permissions.Column("model").Eq(model)).
 			And(Permissions.Column("profile_tp").Eq(profileTp)).
 			And(Permissions.Column("permission_tp").Eq(permissionTp)).
-			CommandOne()
+			First()
 		if err != nil {
-			return et.Item{}, err
+			return err
 		}
 
-		return et.Item{
-			Ok: result.Ok,
-			Result: et.Json{
-				"message": utility.OkOrNot(result.Ok, msg.RECORD_DELETE, msg.RECORD_NOT_DELETE),
-			},
-		}, nil
+		if !current.Ok {
+			data := et.Json{
+				"project_id":    projectId,
+				"profile_tp":    profileTp,
+				"model":         model,
+				"permission_tp": permissionTp,
+			}
+
+			_, err := Permissions.Insert(data).
+				CommandOne()
+			if err != nil {
+				return err
+			}
+
+			_, err = ResetPermissions(projectId, profileTp, model)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
 	}
 
-	current, err := GetPermission(projectId, model, profileTp, permissionTp)
+	_, err := Permissions.Delete().
+		Where(Permissions.Column("project_id").Eq(projectId)).
+		And(Permissions.Column("model").Eq(model)).
+		And(Permissions.Column("profile_tp").Eq(profileTp)).
+		And(Permissions.Column("permission_tp").Eq(permissionTp)).
+		CommandOne()
 	if err != nil {
-		return et.Item{}, err
+		return err
 	}
 
-	if !current.Ok {
-		data := et.Json{}
-		data.Set("project_id", projectId)
-		data.Set("model", model)
-		data.Set("profile_tp", profileTp)
-		data.Set("permission_tp", permissionTp)
-		result, err := Permissions.Insert(data).
-			CommandOne()
+	_, err = ResetPermissions(projectId, profileTp, model)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+/**
+* PermissionsMiddleware
+* @param next http.Handler
+* @return http.Handler
+**/
+func PermissionsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		project_id := claim.ProjectIdKey.String(ctx, "")
+		profile_tp := claim.ProfileTpKey.String(ctx, "")
+		model := claim.ModelKey.String(ctx, "")
+		permisions, err := GetPermissions(project_id, profile_tp, model)
 		if err != nil {
-			return et.Item{}, err
+			response.InternalServerError(w, r)
+			return
 		}
 
-		return et.Item{
-			Ok: result.Ok,
-			Result: et.Json{
-				"message": utility.OkOrNot(result.Ok, msg.RECORD_CREATE, msg.RECORD_NOT_CREATE),
-			},
-		}, nil
-	}
+		ok := permisions.Method(r)
+		if !ok {
+			response.Forbidden(w, r)
+			return
+		}
 
-	return et.Item{
-		Ok: true,
-		Result: et.Json{
-			"message": msg.RECORD_FOUND,
-		},
-	}, nil
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }

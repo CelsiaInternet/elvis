@@ -13,28 +13,6 @@ import (
 	"github.com/celsiainternet/elvis/utility"
 )
 
-type contextKey string
-
-func (c contextKey) String(ctx context.Context, def string) string {
-	val := ctx.Value(c)
-	result, ok := val.(string)
-	if !ok {
-		return def
-	}
-
-	return result
-}
-
-const (
-	ServiceIdKey contextKey = "serviceId"
-	ClientIdKey  contextKey = "clientId"
-	AppKey       contextKey = "app"
-	NameKey      contextKey = "name"
-	KindKey      contextKey = "kind"
-	UsernameKey  contextKey = "username"
-	TokenKey     contextKey = "token"
-)
-
 /**
 * tokenFromAuthorization
 * @param authorization string
@@ -105,13 +83,13 @@ func Authorization(next http.Handler) http.Handler {
 
 		serviceId := utility.UUID()
 		ctx := r.Context()
-		ctx = context.WithValue(ctx, ServiceIdKey, serviceId)
-		ctx = context.WithValue(ctx, ClientIdKey, c.Id)
-		ctx = context.WithValue(ctx, AppKey, c.App)
-		ctx = context.WithValue(ctx, NameKey, c.Name)
-		ctx = context.WithValue(ctx, KindKey, c.Kind)
-		ctx = context.WithValue(ctx, UsernameKey, c.Username)
-		ctx = context.WithValue(ctx, TokenKey, token)
+		ctx = context.WithValue(ctx, claim.ServiceIdKey, serviceId)
+		ctx = context.WithValue(ctx, claim.ClientIdKey, c.Id)
+		ctx = context.WithValue(ctx, claim.AppKey, c.App)
+		ctx = context.WithValue(ctx, claim.NameKey, c.Name)
+		ctx = context.WithValue(ctx, claim.KindKey, c.Kind)
+		ctx = context.WithValue(ctx, claim.UsernameKey, c.Username)
+		ctx = context.WithValue(ctx, claim.TokenKey, token)
 
 		now := utility.Now()
 		data := et.Json{

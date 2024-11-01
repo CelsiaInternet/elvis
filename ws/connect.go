@@ -3,7 +3,7 @@ package ws
 import (
 	"net/http"
 
-	"github.com/celsiainternet/elvis/middleware"
+	"github.com/celsiainternet/elvis/claim"
 	"github.com/celsiainternet/elvis/utility"
 )
 
@@ -30,8 +30,8 @@ func (h *Hub) ConnectHttp(w http.ResponseWriter, r *http.Request) (*Client, erro
 	}
 
 	ctx := r.Context()
-	clientId = middleware.ClientIdKey.String(ctx, clientId)
-	name = middleware.NameKey.String(ctx, name)
+	clientId = claim.ClientIdKey.String(ctx, clientId)
+	name = claim.NameKey.String(ctx, name)
 
 	return h.connect(socket, clientId, name)
 }

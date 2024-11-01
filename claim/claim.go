@@ -1,6 +1,7 @@
 package claim
 
 import (
+	"context"
 	"net/http"
 	"time"
 
@@ -11,6 +12,31 @@ import (
 	"github.com/celsiainternet/elvis/strs"
 	"github.com/celsiainternet/elvis/utility"
 	"github.com/golang-jwt/jwt/v4"
+)
+
+type ContextKey string
+
+func (c ContextKey) String(ctx context.Context, def string) string {
+	val := ctx.Value(c)
+	result, ok := val.(string)
+	if !ok {
+		return def
+	}
+
+	return result
+}
+
+const (
+	ServiceIdKey ContextKey = "serviceId"
+	ClientIdKey  ContextKey = "clientId"
+	AppKey       ContextKey = "app"
+	NameKey      ContextKey = "name"
+	KindKey      ContextKey = "kind"
+	UsernameKey  ContextKey = "username"
+	TokenKey     ContextKey = "token"
+	ProjectIdKey ContextKey = "projectId"
+	ProfileTpKey ContextKey = "profileTp"
+	ModelKey     ContextKey = "model"
 )
 
 type AuthType string
@@ -49,13 +75,13 @@ func (c *Claim) ToJson() et.Json {
 }
 
 /**
-* TokenKey
+* GetTokenKey
 * @param app string
 * @param device string
 * @param id string
 * @return string
 **/
-func TokenKey(app, device, id string) string {
+func GetTokenKey(app, device, id string) string {
 	str := strs.Append(app, device, "-")
 	str = strs.Append(str, id, "-")
 	str = strs.Format(`token:%s`, str)
@@ -92,7 +118,7 @@ func NewToken(id, app, name string, kind AuthType, username, device string, dura
 		return "", err
 	}
 
-	key := TokenKey(c.App, c.Device, c.ID)
+	key := GetTokenKey(c.App, c.Device, c.ID)
 	err = cache.Set(key, token, c.Duration)
 	if err != nil {
 		return "", err
@@ -109,7 +135,7 @@ func NewToken(id, app, name string, kind AuthType, username, device string, dura
 * @return error
 **/
 func DeleteToken(app, device, id string) error {
-	key := TokenKey(app, device, id)
+	key := GetTokenKey(app, device, id)
 	_, err := cache.Delete(key)
 	if err != nil {
 		return err
@@ -216,7 +242,7 @@ func GetFromToken(token string) (*Claim, error) {
 		return nil, err
 	}
 
-	key := TokenKey(result.App, result.Device, result.ID)
+	key := GetTokenKey(result.App, result.Device, result.ID)
 	val, err := cache.Get(key, "")
 	if err != nil {
 		return nil, err
@@ -243,7 +269,7 @@ func GetFromToken(token string) (*Claim, error) {
 * @return error
 **/
 func SetToken(app, device, id, token string, duration time.Duration) error {
-	key := TokenKey(app, device, id)
+	key := GetTokenKey(app, device, id)
 	err := cache.Set(key, token, duration)
 	if err != nil {
 		return err
@@ -260,9 +286,10 @@ func SetToken(app, device, id, token string, duration time.Duration) error {
 func GetUser(r *http.Request) et.Json {
 	now := utility.Now()
 	ctx := r.Context()
+	username := UsernameKey.String(ctx, "Anonimo")
 
 	return et.Json{
 		"date_of":  now,
-		"username": et.NewAny(ctx.Value("username")).Str(),
+		"username": username,
 	}
 }
