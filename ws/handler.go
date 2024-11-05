@@ -4,6 +4,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/logs"
@@ -36,10 +37,6 @@ func (h *Hub) Close() {
 		channel.close()
 	}
 	h.channels = nil
-
-	if h.adapter != nil {
-		h.adapter.Close()
-	}
 }
 
 /**
@@ -128,6 +125,35 @@ func (h *Hub) NewChannel(name string, duration time.Duration) *Channel {
 }
 
 /**
+* NewQueue
+* @param name string
+* @param duration time.Duration
+* @return *Queue
+**/
+func (h *Hub) NewQueue(name string, duration time.Duration) *Queue {
+	idx := h.indexChannel(name)
+	if idx != -1 {
+		return h.queues[idx]
+	}
+
+	h.mutex.Lock() // Bloquear el mutex para evitar condiciones de carrera
+	defer h.mutex.Unlock()
+
+	result := newQueue(name)
+	h.queues = append(h.queues, result)
+
+	clean := func() {
+		result.close()
+	}
+
+	if duration > 0 {
+		go time.AfterFunc(duration, clean)
+	}
+
+	return result
+}
+
+/**
 * Subscribe
 * @param clientId string
 * @param channel string
@@ -140,8 +166,8 @@ func (h *Hub) Subscribe(clientId string, channel string) error {
 	}
 
 	client := h.clients[idxCl]
-	_channel := h.NewChannel(channel, 0)
-	_channel.subscribe(client, "")
+	ch := h.NewChannel(channel, 0)
+	ch.subscribe(client)
 
 	return nil
 }
@@ -160,8 +186,8 @@ func (h *Hub) QueueSubscribe(clientId string, channel, queue string) error {
 	}
 
 	client := h.clients[idxCl]
-	_channel := h.NewChannel(channel, 0)
-	_channel.subscribe(client, queue)
+	ch := h.NewQueue(channel, 0)
+	ch.subscribe(client, queue)
 
 	return nil
 }
@@ -173,7 +199,7 @@ func (h *Hub) QueueSubscribe(clientId string, channel, queue string) error {
 * @return error
 **/
 func (h *Hub) Stack(clientId string, channel string) error {
-	return h.QueueSubscribe(clientId, channel, "stack")
+	return h.QueueSubscribe(clientId, channel, QUEUE_STACK)
 }
 
 /**
@@ -183,19 +209,24 @@ func (h *Hub) Stack(clientId string, channel string) error {
 * @return error
 **/
 func (h *Hub) Unsubscribe(clientId string, channel string) error {
-	idxCh := h.indexChannel(channel)
-	if idxCh == -1 {
-		return nil
-	}
-
 	idxCl := h.indexClient(clientId)
 	if idxCl == -1 {
 		return nil
 	}
 
 	client := h.clients[idxCl]
-	_channel := h.channels[idxCh]
-	_channel.unsubscribe(client)
+
+	idxCh := h.indexChannel(channel)
+	if idxCh != -1 {
+		ch := h.channels[idxCh]
+		ch.unsubscribe(client)
+	}
+
+	idxCh = h.indexQueue(channel)
+	if idxCh != -1 {
+		ch := h.queues[idxCh]
+		ch.unsubscribe(client)
+	}
 
 	return nil
 }
@@ -209,13 +240,7 @@ func (h *Hub) Unsubscribe(clientId string, channel string) error {
 * @return error
 **/
 func (h *Hub) Publish(channel string, msg Message, ignored []string, from et.Json) error {
-	idx := h.indexChannel(channel)
-	if idx == -1 {
-		return logs.NewErrorF(ERR_CHANNEL_NOT_FOUND, channel)
-	}
-
-	ch := h.channels[idx]
-	err := h.broadcast(ch, msg, ignored, from)
+	err := h.broadcast(channel, msg, ignored, from)
 	if err != nil {
 		return err
 	}
@@ -232,7 +257,7 @@ func (h *Hub) Publish(channel string, msg Message, ignored []string, from et.Jso
 func (h *Hub) SendMessage(clientId string, msg Message) error {
 	idx := h.indexClient(clientId)
 	if idx == -1 {
-		return logs.NewErrorF(ERR_CLIENT_NOT_FOUND, clientId)
+		return console.NewErrorF(ERR_CLIENT_NOT_FOUND)
 	}
 
 	if idx != -1 {
@@ -240,9 +265,7 @@ func (h *Hub) SendMessage(clientId string, msg Message) error {
 		return client.sendMessage(msg)
 	}
 
-	if h.adapter != nil {
-		h.adapter.Direct(clientId, msg)
-	}
+	return nil
 }
 
 /**
@@ -301,12 +324,16 @@ func (h *Hub) GetClients(key string) et.Items {
 **/
 func (h *Hub) DrainChannel(channel string) error {
 	idx := h.indexChannel(channel)
-	if idx == -1 {
-		return logs.NewErrorF(ERR_CHANNEL_NOT_FOUND, channel)
+	if idx != -1 {
+		ch := h.channels[idx]
+		ch.drain()
 	}
 
-	ch := h.channels[idx]
-	ch.drain()
+	idx = h.indexQueue(channel)
+	if idx != -1 {
+		ch := h.queues[idx]
+		ch.drain()
+	}
 
 	return nil
 }

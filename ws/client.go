@@ -23,6 +23,7 @@ type Client struct {
 	Name       string              `json:"name"`
 	Addr       string              `json:"addr"`
 	Channels   map[string]*Channel `json:"channels"`
+	Queue      map[string]*Queue   `json:"queue"`
 	socket     *websocket.Conn
 	outbound   chan []byte
 	closed     bool
@@ -47,7 +48,8 @@ func newClient(hub *Hub, socket *websocket.Conn, id, name string) (*Client, bool
 		Id:         id,
 		Name:       name,
 		Addr:       socket.RemoteAddr().String(),
-		Channels:   map[string]*Channel{},
+		Channels:   make(map[string]*Channel),
+		Queue:      make(map[string]*Queue),
 		socket:     socket,
 		outbound:   make(chan []byte),
 		closed:     false,
@@ -81,6 +83,10 @@ func (c *Client) close() {
 	c.closed = true
 	for _, channel := range c.Channels {
 		channel.unsubscribe(c)
+	}
+
+	for _, queue := range c.Queue {
+		queue.unsubscribe(c)
 	}
 
 	c.socket.Close()

@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/logs"
@@ -25,10 +26,11 @@ type Hub struct {
 	Host       string
 	clients    []*Client
 	channels   []*Channel
+	queues     []*Queue
 	mutex      *sync.Mutex
 	register   chan *Client
 	unregister chan *Client
-	adapter    *RedisAdapter
+	main       *websocket.Conn
 	run        bool
 }
 
@@ -36,7 +38,7 @@ type Hub struct {
 * NewWs
 * @return *Hub
 **/
-func NewWs() *Hub {
+func NewHub() *Hub {
 	name := envar.GetStr("Websocket", "RT_HUB_NAME")
 
 	result := &Hub{
@@ -59,7 +61,16 @@ func NewWs() *Hub {
 * @return int
 **/
 func (h *Hub) indexChannel(name string) int {
-	return slices.IndexFunc(h.channels, func(c *Channel) bool { return c.Low() == strs.Lowcase(name) })
+	return slices.IndexFunc(h.channels, func(c *Channel) bool { return c.Name == strs.Lowcase(name) })
+}
+
+/**
+* indexQueue
+* @param name string
+* @return int
+**/
+func (h *Hub) indexQueue(name string) int {
+	return slices.IndexFunc(h.queues, func(c *Queue) bool { return c.Name == strs.Lowcase(name) })
 }
 
 /**
@@ -155,35 +166,52 @@ func (h *Hub) connect(socket *websocket.Conn, clientId, name string) (*Client, e
 
 /**
 * broadcast
-* @param channel *Channel
+* @param channel string
 * @param msg Message
 * @param ignored []string
 * @param from et.Json
 * @return error
 **/
-func (h *Hub) broadcast(channel *Channel, msg Message, ignored []string, from et.Json) error {
-	logs.Log("Broadcast", msg)
-	msg.Channel = channel.Low()
+func (h *Hub) broadcast(channel string, msg Message, ignored []string, from et.Json) error {
+	h.mutex.Lock()
+	defer h.mutex.Unlock()
+
 	msg.From = from
 	msg.Ignored = ignored
-	if len(channel.Queue) > 0 {
-		for queue := range channel.Queue {
-			client := channel.nextTurn(queue)
-			if client != nil {
-				return client.sendMessage(msg)
-			}
-		}
-	} else {
-		for _, client := range channel.Subscribers {
+
+	n := 0
+	idx := h.indexChannel(channel)
+	if idx != -1 {
+		_channel := h.channels[idx]
+		msg.Channel = _channel.Name
+		for _, client := range _channel.Subscribers {
 			if !slices.Contains(ignored, client.Id) {
-				client.sendMessage(msg)
+				err := client.sendMessage(msg)
+				if err != nil {
+					console.AlertE(err)
+				} else {
+					n++
+				}
 			}
 		}
 	}
 
-	if h.adapter != nil {
-		h.adapter.Broadcast(channel.Name, msg, ignored, from)
+	idx = h.indexQueue(channel)
+	if idx != -1 {
+		_channel := h.queues[idx]
+		msg.Channel = _channel.Name
+		client := _channel.nextTurn(QUEUE_STACK)
+		if client != nil {
+			err := client.sendMessage(msg)
+			if err != nil {
+				console.AlertE(err)
+			} else {
+				n++
+			}
+		}
 	}
+
+	console.LogF("Broadcast channel:%s sent:%d", channel, n)
 
 	return nil
 }
@@ -192,21 +220,6 @@ func (h *Hub) broadcast(channel *Channel, msg Message, ignored []string, from et
 * listend
 * @param msg interface{}
 **/
-func (h *Hub) listend(msg interface{}) {
-	m, err := decodeMessageBroadcat([]byte(msg.(string)))
-	if err != nil {
-		logs.Alert(err)
-		return
-	}
+func (h *Hub) listend(message []byte) {
 
-	switch m.Kind {
-	case BroadcastAll:
-		h.Publish(m.To, m.Msg, m.Ignored, m.From)
-	case BroadcastDirect:
-		idx := h.indexClient(m.To)
-		if idx != -1 {
-			client := h.clients[idx]
-			client.sendMessage(m.Msg)
-		}
-	}
 }
