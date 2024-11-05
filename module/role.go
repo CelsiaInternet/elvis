@@ -271,7 +271,7 @@ func CheckRole(projectId, moduleId, profileTp, userId string, chk bool) (et.Item
 		AND USER_ID=$4
 		RETURNING INDEX;`
 
-		item, err := Roles.Command(sql, projectId, moduleId, profileTp, userId)
+		item, err := Roles.Query(sql, projectId, moduleId, profileTp, userId)
 		if err != nil {
 			return et.Item{}, err
 		}
@@ -280,7 +280,6 @@ func CheckRole(projectId, moduleId, profileTp, userId string, chk bool) (et.Item
 			Ok: item.Ok,
 			Result: et.Json{
 				"message": utility.OkOrNot(item.Ok, msg.RECORD_DELETE, msg.RECORD_NOT_DELETE),
-				"index":   item.Index(),
 			},
 		}, nil
 	}

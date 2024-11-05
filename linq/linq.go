@@ -439,25 +439,3 @@ func (c *Linq) queryCount() int {
 
 	return result.Int("count")
 }
-
-func (c *Linq) command(opt, id string) (et.Item, error) {
-	if c.debug == 1 {
-		console.Log(c.sql)
-	}
-
-	result, err := c.db.Command(opt, id, c.sql)
-	if err != nil {
-		return et.Item{}, err
-	}
-
-	if c.Tp == TpData {
-		sourceField := strs.Lowcase(SourceField)
-
-		return et.Item{
-			Ok:     result.Ok,
-			Result: result.Json(sourceField),
-		}, nil
-	}
-
-	return result, nil
-}

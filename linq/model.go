@@ -199,7 +199,7 @@ func (c *Model) Init() error {
 
 	if exists {
 		id := strs.Format(`definefunciones-%s`, c.Low())
-		_, err = c.db.Command(jdb.CommandDefine, id, c.Functions)
+		err = c.db.Exec(id, c.Functions)
 		if err != nil {
 			return err
 		}
@@ -208,7 +208,7 @@ func (c *Model) Init() error {
 	}
 
 	id := strs.Format(`definemodel-%s`, c.Low())
-	_, err = c.db.Command(jdb.CommandDefine, id, c.Define)
+	err = c.db.Exec(id, c.Define)
 	if err != nil {
 		return err
 	}
@@ -533,6 +533,6 @@ func (c *Model) Source(sourceField, sql string, args ...any) (et.Items, error) {
 	return c.db.Source(sourceField, sql, args...)
 }
 
-func (c *Model) Command(opt, id, sql string, args ...any) (et.Item, error) {
-	return c.db.Command(opt, id, sql, args...)
+func (c *Model) Exec(id, sql string, args ...any) error {
+	return c.db.Exec(id, sql, args...)
 }

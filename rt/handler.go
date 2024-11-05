@@ -131,7 +131,7 @@ func Subscribe(channel string, reciveFn func(ws.Message)) {
 func Queue(channel, queue string, reciveFn func(ws.Message)) {
 	conn.channels[channel] = reciveFn
 
-	msg := ws.NewMessage(From(), et.Json{}, ws.TpQueue)
+	msg := ws.NewMessage(From(), et.Json{}, ws.TpStack)
 	msg.Channel = channel
 	msg.Queue = queue
 

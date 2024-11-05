@@ -2,7 +2,6 @@ package linq
 
 import (
 	"github.com/celsiainternet/elvis/et"
-	"github.com/celsiainternet/elvis/jdb"
 )
 
 func (c *Linq) Debug() *Linq {
@@ -225,7 +224,7 @@ func (c *Linq) insert() (et.Item, error) {
 
 	c.SqlInsert()
 
-	item, err := c.command(jdb.CommandInsert, c.idT)
+	item, err := c.queryOne()
 	if err != nil {
 		return et.Item{}, err
 	}
@@ -261,7 +260,7 @@ func (c *Linq) update(current et.Json) (et.Item, error) {
 
 	c.SqlUpdate()
 
-	item, err := c.command(jdb.CommandUpdate, c.idT)
+	item, err := c.queryOne()
 	if err != nil {
 		return et.Item{}, err
 	}
@@ -297,7 +296,7 @@ func (c *Linq) delete(current et.Json) (et.Item, error) {
 
 	c.SqlDelete()
 
-	item, err := c.command(jdb.CommandDelete, c.idT)
+	item, err := c.queryOne()
 	if err != nil {
 		return et.Item{}, err
 	}

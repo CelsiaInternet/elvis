@@ -70,7 +70,7 @@ func (c *Schema) Describe() et.Json {
 func (c *Schema) Init() error {
 	c.Define = strs.Format(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"; CREATE SCHEMA IF NOT EXISTS "%s";`, c.Name)
 	id := strs.Format(`create-schema-%s`, c.Name)
-	_, err := c.db.Command(jdb.CommandDefine, id, c.Define)
+	err := c.db.Exec(id, c.Define)
 	if err != nil {
 		return err
 	}
