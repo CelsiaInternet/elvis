@@ -1,6 +1,8 @@
 package ws
 
 import (
+	"sync"
+
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/strs"
@@ -12,8 +14,9 @@ import (
 **/
 type Channel struct {
 	Name        string         `json:"name"`
-	Group       map[string]int `json:"group"`
+	Queue       map[string]int `json:"queue"`
 	Subscribers []*Client      `json:"subscribers"`
+	mutex       *sync.RWMutex
 }
 
 /**
@@ -24,19 +27,52 @@ type Channel struct {
 func newChannel(name string) *Channel {
 	result := &Channel{
 		Name:        strs.Lowcase(name),
-		Group:       map[string]int{},
+		Queue:       map[string]int{},
 		Subscribers: []*Client{},
+		mutex:       &sync.RWMutex{},
 	}
 
 	return result
 }
 
 /**
-* Describe return the channel name
+* drain
+**/
+func (c *Channel) drain() {
+	for _, client := range c.Subscribers {
+		if client == nil {
+			continue
+		}
+
+		delete(client.Channels, c.Name)
+	}
+	c.Subscribers = []*Client{}
+}
+
+/**
+* close
+**/
+func (c *Channel) close() {
+	c.mutex.Lock()         // Bloquea la escritura en Subscribers y Queue
+	defer c.mutex.Unlock() // Asegura el desbloqueo al final de la función
+
+	for _, client := range c.Subscribers {
+		if client == nil {
+			continue
+		}
+
+		delete(client.Channels, c.Name)
+	}
+	c.Subscribers = nil
+	c.Queue = nil
+}
+
+/**
+* describe return the channel name
 * @return et.Json
 **/
-func (ch *Channel) Describe() et.Json {
-	result, err := et.Object(ch)
+func (c *Channel) describe() et.Json {
+	result, err := et.Object(c)
 	if err != nil {
 		logs.Error(err)
 	}
@@ -48,99 +84,93 @@ func (ch *Channel) Describe() et.Json {
 * Up return the channel name in uppercase
 * @return string
 **/
-func (ch *Channel) Up() string {
-	return strs.Uppcase(ch.Name)
+func (c *Channel) Up() string {
+	return strs.Uppcase(c.Name)
 }
 
 /**
 * Low return the channel name in lowercase
 * @return string
 **/
-func (ch *Channel) Low() string {
-	return strs.Lowcase(ch.Name)
+func (c *Channel) Low() string {
+	return strs.Lowcase(c.Name)
 }
 
 /**
 * Count return the number of subscribers
 * @return int
 **/
-func (ch *Channel) Count() int {
-	return len(ch.Subscribers)
+func (c *Channel) Count() int {
+	return len(c.Subscribers)
 }
 
 /**
-* NextTurn return the next subscriber
+* nextTurn return the next subscriber
 * @return *Client
 **/
-func (ch *Channel) NextTurn(queue string) *Client {
-	n := ch.Count()
+func (c *Channel) nextTurn(queue string) *Client {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	n := c.Count()
 	if n == 0 {
 		return nil
 	}
 
-	_, exist := ch.Group[queue]
+	_, exist := c.Queue[queue]
 	if !exist {
-		ch.Group[queue] = 0
+		c.Queue[queue] = 0
 	}
 
-	turn := ch.Group[queue]
+	turn := c.Queue[queue]
 	if turn >= n {
 		turn = 0
-		ch.Group[queue] = turn
+		c.Queue[queue] = turn
 	}
 
-	result := ch.Subscribers[turn]
-	ch.Group[queue]++
+	result := c.Subscribers[turn]
+	c.Queue[queue]++
 
 	return result
 }
 
 /**
-* Subscribe a client to channel
+* queueSubscribe a client to channel
 * @param client *Client
 **/
-func (ch *Channel) Subscribe(client *Client) {
-	idx := slices.IndexFunc(ch.Subscribers, func(e *Client) bool { return e.Id == client.Id })
-	if idx == -1 {
-		ch.Subscribers = append(ch.Subscribers, client)
+func (c *Channel) subscribe(client *Client, queue string) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	if queue != "" {
+		_, exist := c.Queue[queue]
+		if !exist {
+			c.Queue[queue] = 0
+		}
 	}
+
+	idx := slices.IndexFunc(c.Subscribers, func(e *Client) bool { return e.Id == client.Id })
+	if idx != -1 {
+		return
+	}
+
+	c.Subscribers = append(c.Subscribers, client)
+	client.Channels[c.Name] = c
 }
 
 /**
-* QueueSubscribe a client to channel
-* @param client *Client
-**/
-func (ch *Channel) QueueSubscribe(client *Client, queue string) {
-	_, exist := ch.Group[queue]
-	if !exist {
-		ch.Group[queue] = 0
-	}
-
-	ch.Subscribe(client)
-}
-
-/**
-* Broadcast a message to all subscribers
-* @param message []byte
-**/
-func (ch *Channel) Broadcast(message []byte) {
-	for _, client := range ch.Subscribers {
-		client.outbound <- message
-	}
-}
-
-/**
-* Unsubcribe a client from channel
+* unsubscribe
 * @param clientId string
-* @return error
 **/
-func (ch *Channel) Unsubcribe(clientId string) error {
-	idx := slices.IndexFunc(ch.Subscribers, func(e *Client) bool { return e.Id == clientId })
+func (c *Channel) unsubscribe(client *Client) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	idx := slices.IndexFunc(c.Subscribers, func(e *Client) bool { return e.Id == client.Id })
 	if idx == -1 {
-		return logs.Alertm(ERR_CLIENT_NOT_FOUND)
+		return
 	}
 
-	ch.Subscribers = append(ch.Subscribers[:idx], ch.Subscribers[idx+1:]...)
-
-	return nil
+	c.Subscribers = append(c.Subscribers[:idx], c.Subscribers[idx+1:]...)
+	delete(client.Channels, c.Name)
 }

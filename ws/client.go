@@ -1,14 +1,14 @@
 package ws
 
 import (
+	"sync"
 	"time"
 
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/logs"
-	"github.com/celsiainternet/elvis/strs"
 	"github.com/celsiainternet/elvis/timezone"
+	"github.com/celsiainternet/elvis/utility"
 	"github.com/gorilla/websocket"
-	"golang.org/x/exp/slices"
 )
 
 type WsMessage struct {
@@ -19,14 +19,15 @@ type WsMessage struct {
 type Client struct {
 	Created_at time.Time `json:"created_at"`
 	hub        *Hub
-	Id         string `json:"id"`
-	Name       string `json:"name"`
-	Addr       string `json:"addr"`
+	Id         string              `json:"id"`
+	Name       string              `json:"name"`
+	Addr       string              `json:"addr"`
+	Channels   map[string]*Channel `json:"channels"`
 	socket     *websocket.Conn
-	Channels   []string `json:"channels"`
 	outbound   chan []byte
 	closed     bool
 	allowed    bool
+	mutex      sync.RWMutex
 }
 
 /**
@@ -39,16 +40,17 @@ type Client struct {
 * @return bool
 **/
 func newClient(hub *Hub, socket *websocket.Conn, id, name string) (*Client, bool) {
+	id = utility.GenKey(id)
 	return &Client{
 		Created_at: timezone.NowTime(),
 		hub:        hub,
 		Id:         id,
 		Name:       name,
+		Addr:       socket.RemoteAddr().String(),
+		Channels:   map[string]*Channel{},
 		socket:     socket,
-		Channels:   make([]string, 0),
 		outbound:   make(chan []byte),
 		closed:     false,
-		allowed:    true,
 	}, true
 }
 
@@ -56,13 +58,44 @@ func newClient(hub *Hub, socket *websocket.Conn, id, name string) (*Client, bool
 * Describe
 * @return et.Json
 **/
-func (c *Client) Describe() et.Json {
+func (c *Client) describe() et.Json {
 	result, err := et.Object(c)
 	if err != nil {
 		return et.Json{}
 	}
 
 	return result
+}
+
+/**
+* close
+**/
+func (c *Client) close() {
+	if c.closed {
+		return
+	}
+
+	c.mutex.Lock() // Bloquear el mutex para evitar condiciones de carrera
+	defer c.mutex.Unlock()
+
+	c.closed = true
+	for _, channel := range c.Channels {
+		channel.unsubscribe(c)
+	}
+
+	c.socket.Close()
+	close(c.outbound)
+}
+
+/**
+* From
+* @return et.Json
+**/
+func (c *Client) From() et.Json {
+	return et.Json{
+		"id":   c.Id,
+		"name": c.Name,
+	}
 }
 
 /**
@@ -97,32 +130,8 @@ func (c *Client) write() {
 }
 
 /**
-* subscribe a client to a channel
-**/
-func (c *Client) subscribe(channels []string) {
-	for _, channel := range channels {
-		idx := slices.IndexFunc(c.Channels, func(e string) bool { return e == strs.Lowcase(channel) })
-		if idx == -1 {
-			c.Channels = append(c.Channels, strs.Lowcase(channel))
-		}
-	}
-}
-
-/**
-* unsubscribe a client from a channel
-**/
-func (c *Client) unsubscribe(channels []string) {
-	for _, channel := range channels {
-		idx := slices.IndexFunc(c.Channels, func(e string) bool { return e == strs.Lowcase(channel) })
-		if idx != -1 {
-			c.Channels = append(c.Channels[:idx], c.Channels[idx+1:]...)
-		}
-	}
-}
-
-/**
 * sendMessage
-* @param Message
+* @param message Message
 * @return error
 **/
 func (c *Client) sendMessage(message Message) error {
@@ -149,35 +158,8 @@ func (c *Client) sendMessage(message Message) error {
 }
 
 /**
-* clear
-**/
-func (c *Client) clear() {
-	c.unsubscribe(c.Channels)
-}
-
-/**
-* close
-**/
-func (c *Client) close() {
-	c.closed = true
-	c.socket.Close()
-	close(c.outbound)
-}
-
-/**
-* From
-* @return et.Json
-**/
-func (c *Client) From() et.Json {
-	return et.Json{
-		"id":   c.Id,
-		"name": c.Name,
-	}
-}
-
-/**
 * listen
-* @param []byte
+* @param message []byte
 **/
 func (c *Client) listen(message []byte) {
 	response := func(ok bool, message string) {
@@ -206,8 +188,8 @@ func (c *Client) listen(message []byte) {
 		}
 
 		name := data.ValStr("", "name")
-		if name != "" {
-			c.Name = name
+		if name == "" {
+			c.Name = utility.GetOTP(6)
 		}
 
 		response(true, PARAMS_UPDATED)
@@ -225,6 +207,39 @@ func (c *Client) listen(message []byte) {
 		}
 
 		response(true, "Subscribed to channel "+channel)
+	case TpQueueSubscribe:
+		channel := msg.Channel
+		if channel == "" {
+			response(false, ERR_CHANNEL_EMPTY)
+			return
+		}
+
+		queue := msg.Queue
+		if queue == "" {
+			response(false, ERR_QUEUE_EMPTY)
+		}
+
+		err := c.hub.QueueSubscribe(c.Id, channel, queue)
+		if err != nil {
+			response(false, err.Error())
+			return
+		}
+
+		response(true, "Subscribe to channel "+channel)
+	case TpStack:
+		channel := msg.Channel
+		if channel == "" {
+			response(false, ERR_CHANNEL_EMPTY)
+			return
+		}
+
+		err := c.hub.Stack(c.Id, channel)
+		if err != nil {
+			response(false, err.Error())
+			return
+		}
+
+		response(true, "Subscribe to channel "+channel)
 	case TpUnsubscribe:
 		channel := msg.Channel
 		if channel == "" {
@@ -239,25 +254,6 @@ func (c *Client) listen(message []byte) {
 		}
 
 		response(true, "Unsubscribed from channel "+channel)
-	case TpQueue:
-		channel := msg.Channel
-		if channel == "" {
-			response(false, ERR_CHANNEL_EMPTY)
-			return
-		}
-
-		queue := msg.Queue
-		if queue == "" {
-			response(false, ERR_QUEUE_EMPTY)
-		}
-
-		err := c.hub.Queue(c.Id, channel, queue)
-		if err != nil {
-			response(false, err.Error())
-			return
-		}
-
-		response(true, "Subscribe to channel "+channel)
 	case TpPublish:
 		channel := msg.Channel
 		if channel == "" {

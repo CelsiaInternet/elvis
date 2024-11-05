@@ -15,8 +15,9 @@ const (
 	TpPing TpMessage = iota
 	TpSetFrom
 	TpSubscribe
+	TpQueueSubscribe
+	TpStack
 	TpUnsubscribe
-	TpQueue
 	TpPublish
 	TpDirect
 	TpConnect
@@ -31,10 +32,12 @@ func (s TpMessage) String() string {
 		return "Set id and name"
 	case TpSubscribe:
 		return "Subscribe"
+	case TpQueueSubscribe:
+		return "Queue"
+	case TpStack:
+		return "Stack"
 	case TpUnsubscribe:
 		return "Unsubscribe"
-	case TpQueue:
-		return "Queue"
 	case TpPublish:
 		return "Publish"
 	case TpDirect:
@@ -52,10 +55,12 @@ func ToTpMessage(s string) TpMessage {
 		return TpSetFrom
 	case "Subscribe":
 		return TpSubscribe
+	case "Queue":
+		return TpQueueSubscribe
+	case "Stack":
+		return TpStack
 	case "Unsubscribe":
 		return TpUnsubscribe
-	case "Queue":
-		return TpQueue
 	case "Publish":
 		return TpPublish
 	case "Direct":

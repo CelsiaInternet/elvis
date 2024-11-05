@@ -90,7 +90,7 @@ func NewRedisAdapter(params *RedisAdapterParams) (*RedisAdapter, error) {
 	return &RedisAdapter{
 		db:      db,
 		ctx:     context.Background(),
-		channel: "broadcast",
+		channel: "broadcast/adapter",
 	}, nil
 }
 
