@@ -15,10 +15,6 @@ func InitCore(db *DB) error {
 		return console.PanicM("Database not found")
 	}
 
-	if err := defineCommand(db); err != nil {
-		return err
-	}
-
 	if err := defineRecords(db); err != nil {
 		return err
 	}
@@ -28,6 +24,10 @@ func InitCore(db *DB) error {
 	}
 
 	if err := defineRecycling(db); err != nil {
+		return err
+	}
+
+	if err := defineCAOD(db); err != nil {
 		return err
 	}
 

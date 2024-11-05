@@ -1,12 +1,5 @@
 package jdb
 
-const (
-	CommandDefine = "DEFINE"
-	CommandInsert = "INSERT"
-	CommandUpdate = "UPDATE"
-	CommandDelete = "DELETE"
-)
-
 /**
 * Load
 * @return *Conn, error

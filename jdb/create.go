@@ -21,7 +21,7 @@ func CreateDatabase(db *DB, name string) error {
 		sql := strs.Format(`CREATE DATABASE %s;`, name)
 
 		id := strs.Format(`create-db-%s`, name)
-		_, err := db.Command(CommandDefine, id, sql)
+		err := db.Exec(id, sql)
 		if err != nil {
 			return err
 		}
@@ -35,7 +35,7 @@ func CreateSchema(db *DB, name string) error {
 	sql := strs.Format(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"; CREATE SCHEMA IF NOT EXISTS "%s";`, name)
 
 	id := strs.Format(`create-schema-%s`, name)
-	_, err := db.Command(CommandDefine, id, sql)
+	err := db.Exec(id, sql)
 	if err != nil {
 		return err
 	}
@@ -58,7 +58,7 @@ func CreateColumn(db *DB, schema, table, name, kind, defaultValue string) error 
 	$$;`, tableName, strs.Uppcase(name), strs.Uppcase(kind), defaultValue)
 
 	id := strs.Format(`create-column-%s-%s-%s`, schema, table, name)
-	_, err := db.Command(CommandDefine, id, sql)
+	err := db.Exec(id, sql)
 	if err != nil {
 		return err
 	}
@@ -73,7 +73,7 @@ func CreateIndex(db *DB, schema, table, field string) error {
 		strs.Uppcase(schema), strs.Uppcase(table), strs.Uppcase(field))
 
 	id := strs.Format(`create-index-%s-%s-%s`, schema, table, field)
-	_, err := db.Command(CommandDefine, id, sql)
+	err := db.Exec(id, sql)
 	if err != nil {
 		return err
 	}
@@ -92,7 +92,7 @@ func CreateTrigger(db *DB, schema, table, name, when, event, function string) er
 		strs.Uppcase(schema), strs.Uppcase(table), strs.Uppcase(name), when, event, function)
 
 	id := strs.Format(`create-trigger-%s-%s-%s`, schema, table, name)
-	_, err := db.Command(CommandDefine, id, sql)
+	err := db.Exec(id, sql)
 	if err != nil {
 		return err
 	}
@@ -105,7 +105,7 @@ func CreateSequence(db *DB, schema, tag string) error {
 	sql := strs.Format(`CREATE SEQUENCE IF NOT EXISTS %s START 1;`, tag)
 
 	id := strs.Format(`create-sequence-%s-%s`, schema, tag)
-	_, err := db.Command(CommandDefine, id, sql)
+	err := db.Exec(id, sql)
 	if err != nil {
 		return err
 	}
@@ -123,7 +123,7 @@ func CreateUser(db *DB, name, password string) error {
 	sql := strs.Format(`CREATE USER %s WITH PASSWORD '%s';`, name, passwordHash)
 
 	id := strs.Format(`create-user-%s`, name)
-	_, err = db.Command(CommandDefine, id, sql)
+	err = db.Exec(id, sql)
 	if err != nil {
 		return err
 	}
@@ -141,7 +141,7 @@ func ChangePassword(db *DB, name, password string) error {
 	sql := strs.Format(`ALTER USER %s WITH PASSWORD '%s';`, name, passwordHash)
 
 	id := strs.Format(`change-password-%s`, name)
-	_, err = db.Command(CommandDefine, id, sql)
+	err = db.Exec(id, sql)
 	if err != nil {
 		return err
 	}

@@ -14,7 +14,7 @@ func DropDatabase(db *DB, name string) error {
 	sql := strs.Format(`DROP DATABASE %s;`, name)
 
 	id := strs.Format(`drop-db-%s`, name)
-	_, err := db.Command(CommandDefine, id, sql)
+	err := db.Exec(id, sql)
 	if err != nil {
 		return err
 	}
@@ -28,7 +28,7 @@ func DropSchema(db *DB, name string) error {
 	sql := strs.Format(`DROP SCHEMA %s CASCADE;`, name)
 
 	id := strs.Format(`drop-schema-%s`, name)
-	_, err := db.Command(CommandDefine, id, sql)
+	err := db.Exec(id, sql)
 	if err != nil {
 		return err
 	}
@@ -41,7 +41,7 @@ func DropTable(db *DB, schema, name string) error {
 	sql := strs.Format(`DROP TABLE %s.%s CASCADE;`, schema, name)
 
 	id := strs.Format(`drop-table-%s-%s`, schema, name)
-	_, err := db.Command(CommandDefine, id, sql)
+	err := db.Exec(id, sql)
 	if err != nil {
 		return err
 	}
@@ -54,7 +54,7 @@ func DropColumn(db *DB, schema, table, name string) error {
 	sql := strs.Format(`ALTER TABLE %s.%s DROP COLUMN %s;`, schema, table, name)
 
 	id := strs.Format(`drop-column-%s-%s-%s`, schema, table, name)
-	_, err := db.Command(CommandDefine, id, sql)
+	err := db.Exec(id, sql)
 	if err != nil {
 		return err
 	}
@@ -68,7 +68,7 @@ func DropIndex(db *DB, schema, table, field string) error {
 	sql := strs.Format(`DROP INDEX %s.%s CASCADE;`, schema, indexName)
 
 	id := strs.Format(`drop-index-%s-%s-%s`, schema, table, field)
-	_, err := db.Command(CommandDefine, id, sql)
+	err := db.Exec(id, sql)
 	if err != nil {
 		return err
 	}
@@ -81,7 +81,7 @@ func DropTrigger(db *DB, schema, table, name string) error {
 	sql := strs.Format(`DROP TRIGGER %s.%s CASCADE;`, schema, name)
 
 	id := strs.Format(`drop-trigger-%s-%s-%s`, schema, table, name)
-	_, err := db.Command(CommandDefine, id, sql)
+	err := db.Exec(id, sql)
 	if err != nil {
 		return err
 	}
@@ -94,7 +94,7 @@ func DropSerie(db *DB, schema, name string) error {
 	sql := strs.Format(`DROP SEQUENCE %s.%s CASCADE;`, schema, name)
 
 	id := strs.Format(`drop-sequence-%s-%s`, schema, name)
-	_, err := db.Command(CommandDefine, id, sql)
+	err := db.Exec(id, sql)
 	if err != nil {
 		return err
 	}
@@ -108,7 +108,7 @@ func DropUser(db *DB, name string) error {
 	sql := strs.Format(`DROP USER %s;`, name)
 
 	id := strs.Format(`drop-user-%s`, name)
-	_, err := db.Command(CommandDefine, id, sql)
+	err := db.Exec(id, sql)
 	if err != nil {
 		return err
 	}

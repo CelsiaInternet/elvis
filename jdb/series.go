@@ -26,8 +26,7 @@ func defineSeries(db *DB) error {
 		PRIMARY KEY(SERIE)
 	);`
 
-	id := "define-series"
-	_, err = db.Command(CommandDefine, id, sql)
+	_, err = db.db.Exec(sql)
 	if err != nil {
 		return console.Panic(err)
 	}
@@ -81,8 +80,7 @@ func defineSeriesFunction(db *DB) error {
 	END;
 	$$ LANGUAGE plpgsql;`
 
-	id := "define-series-function"
-	_, err := db.Command(CommandDefine, id, sql)
+	_, err := db.db.Exec(sql)
 	if err != nil {
 		return console.Panic(err)
 	}

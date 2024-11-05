@@ -37,8 +37,7 @@ func defineRecords(db *DB) error {
   CREATE INDEX IF NOT EXISTS RECORDS__IDT_IDX ON core.RECORDS(_IDT);  
 	CREATE INDEX IF NOT EXISTS RECORDS_INDEX_IDX ON core.RECORDS(INDEX);`
 
-	id := "define-records"
-	_, err = db.Command(CommandDefine, id, sql)
+	_, err = db.db.Exec(sql)
 	if err != nil {
 		return console.Panic(err)
 	}
@@ -137,8 +136,7 @@ func defineRecordsFunction(db *DB) error {
   $$ LANGUAGE plpgsql;
 	`
 
-	id := "define-records-function"
-	_, err := db.Command(CommandDefine, id, sql)
+	_, err := db.db.Exec(sql)
 	if err != nil {
 		return console.Panic(err)
 	}

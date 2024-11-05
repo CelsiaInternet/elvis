@@ -77,15 +77,6 @@ func query(db *DB, sql string, args ...any) (*sql.Rows, error) {
 		return nil, console.AlertF(msg.NOT_CONNECT_DB)
 	}
 
-	isSelect := func(query string) bool {
-		query = strings.TrimSpace(query)
-		return strings.HasPrefix(strings.ToLower(query), "select")
-	}
-
-	if !isSelect(sql) {
-		return nil, console.Alert("Query is not a SELECT statement")
-	}
-
 	rows, err := db.db.Query(sql, args...)
 	if err != nil {
 		return nil, console.AlertF(msg.ERR_SQL, err.Error(), sql)
@@ -95,52 +86,44 @@ func query(db *DB, sql string, args ...any) (*sql.Rows, error) {
 }
 
 /**
-* command
+* exec
 * @param db *DB
 * @param id string
 * @param sql string
 * @param args ...any
-* @return *sql.Rows
 * @return error
 **/
-func command(db *DB, opt, id, sql string, args ...any) (*sql.Rows, error) {
+func exec(db *DB, id, sql string, args ...any) error {
 	if db == nil {
-		return nil, console.AlertF(msg.NOT_CONNECT_DB)
+		return console.AlertF(msg.NOT_CONNECT_DB)
 	}
 
 	query := SQLParse(sql, args...)
-	rows, err := db.db.Query(query)
+	_, err := db.db.Exec(query)
 	if err != nil {
-		return nil, console.ErrorF(msg.ERR_SQL, err.Error(), sql)
+		return console.ErrorF(msg.ERR_SQL, err.Error(), sql)
 	}
 
-	go db.SetCommand(opt, id, query)
+	go db.upsertCAOD(id, query)
 
-	return rows, nil
+	return nil
 }
 
 /**
-* Command
-* @param db *DB
+* Exec
+* @param id string
 * @param sql string
 * @param args ...any
 * @return et.Items
 * @return error
 **/
-func (d *DB) Command(opt, id, sql string, args ...any) (et.Item, error) {
-	if d.db == nil {
-		return et.Item{}, console.AlertF(msg.NOT_CONNECT_DB)
-	}
-
-	rows, err := command(d, opt, id, sql, args...)
+func (d *DB) Exec(id, sql string, args ...any) error {
+	err := exec(d, id, sql, args...)
 	if err != nil {
-		return et.Item{}, err
+		return err
 	}
-	defer rows.Close()
 
-	result := rowsItem(rows)
-
-	return result, nil
+	return nil
 }
 
 /**
@@ -152,10 +135,6 @@ func (d *DB) Command(opt, id, sql string, args ...any) (et.Item, error) {
 * @return error
 **/
 func (d *DB) Query(sql string, args ...any) (et.Items, error) {
-	if d.db == nil {
-		return et.Items{}, console.AlertF(msg.NOT_CONNECT_DB)
-	}
-
 	rows, err := query(d, sql, args...)
 	if err != nil {
 		return et.Items{}, err
@@ -176,10 +155,6 @@ func (d *DB) Query(sql string, args ...any) (et.Items, error) {
 * @return error
 **/
 func (d *DB) QueryOne(sql string, args ...any) (et.Item, error) {
-	if d.db == nil {
-		return et.Item{}, console.AlertF(msg.NOT_CONNECT_DB)
-	}
-
 	items, err := query(d, sql, args...)
 	if err != nil {
 		return et.Item{}, err

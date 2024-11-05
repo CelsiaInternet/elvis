@@ -32,8 +32,7 @@ func defineRecycling(db *DB) error {
   CREATE INDEX IF NOT EXISTS RECYCLING__IDT_IDX ON core.RECYCLING(_IDT);
 	CREATE INDEX IF NOT EXISTS RECYCLING_INDEX_IDX ON core.RECYCLING(INDEX);`
 
-	id := "define-recycling"
-	_, err = db.Command(CommandDefine, id, sql)
+	_, err = db.db.Exec(sql)
 	if err != nil {
 		return console.Panic(err)
 	}
@@ -86,8 +85,7 @@ func defineRecyclingFunction(db *DB) error {
   $$ LANGUAGE plpgsql;
   `
 
-	id := "define-recycling-function"
-	_, err := db.Command(CommandDefine, id, sql)
+	_, err := db.db.Exec(sql)
 	if err != nil {
 		return console.Panic(err)
 	}
