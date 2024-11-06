@@ -24,13 +24,13 @@ type Hub struct {
 	Id         string
 	Name       string
 	Host       string
-	clients    []*Client
+	clients    []*Subscriber
 	channels   []*Channel
 	queues     []*Queue
 	mutex      *sync.Mutex
-	register   chan *Client
-	unregister chan *Client
-	main       *websocket.Conn
+	register   chan *Subscriber
+	unregister chan *Subscriber
+	main       *ClientWS
 	run        bool
 }
 
@@ -44,10 +44,10 @@ func NewHub() *Hub {
 	result := &Hub{
 		Id:         utility.UUID(),
 		Name:       name,
-		clients:    make([]*Client, 0),
+		clients:    make([]*Subscriber, 0),
 		channels:   make([]*Channel, 0),
-		register:   make(chan *Client),
-		unregister: make(chan *Client),
+		register:   make(chan *Subscriber),
+		unregister: make(chan *Subscriber),
 		mutex:      &sync.Mutex{},
 		run:        false,
 	}
@@ -99,17 +99,17 @@ func (h *Hub) indexClient(id string) int {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
 
-	return slices.IndexFunc(h.clients, func(c *Client) bool { return c.Id == id })
+	return slices.IndexFunc(h.clients, func(c *Subscriber) bool { return c.Id == id })
 }
 
-func (h *Hub) addClient(client *Client) {
+func (h *Hub) addClient(client *Subscriber) {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
 
 	h.clients = append(h.clients, client)
 }
 
-func (h *Hub) removeClient(client *Client) {
+func (h *Hub) removeClient(client *Subscriber) {
 	idx := h.indexClient(client.Id)
 	if idx == -1 {
 		return
@@ -127,9 +127,9 @@ func (h *Hub) removeClient(client *Client) {
 
 /**
 * onConnect
-* @param client *Client
+* @param client *Subscriber
 **/
-func (h *Hub) onConnect(client *Client) {
+func (h *Hub) onConnect(client *Subscriber) {
 	h.addClient(client)
 
 	msg := NewMessage(h.From(), et.Json{
@@ -148,16 +148,16 @@ func (h *Hub) onConnect(client *Client) {
 
 /**
 * onDisconnect
-* @param client *Client
+* @param client *Subscriber
 **/
-func (h *Hub) onDisconnect(client *Client) {
+func (h *Hub) onDisconnect(client *Subscriber) {
 	clientId := client.Id
 	name := client.Name
 	h.removeClient(client)
 
 	msg := NewMessage(h.From(), et.Json{
 		"ok":      true,
-		"message": "Client disconnected",
+		"message": "Subscriber disconnected",
 		"client":  client.From(),
 	}, TpDisconnect)
 	msg.Channel = "ws/disconnect"
@@ -172,10 +172,10 @@ func (h *Hub) onDisconnect(client *Client) {
 * @param socket *websocket.Conn
 * @param clientId string
 * @param name string
-* @return *Client
+* @return *Subscriber
 * @return error
 **/
-func (h *Hub) connect(socket *websocket.Conn, clientId, name string) (*Client, error) {
+func (h *Hub) connect(socket *websocket.Conn, clientId, name string) (*Subscriber, error) {
 	idxC := h.indexClient(clientId)
 	if idxC != -1 {
 		return h.clients[idxC], nil
@@ -242,9 +242,8 @@ func (h *Hub) broadcast(channel string, msg Message, ignored []string, from et.J
 }
 
 /**
-* listend
-* @param msg interface{}
+* LoadMain
 **/
-func (h *Hub) listend(message []byte) {
+func (h *Hub) LoadMain() {
 
 }

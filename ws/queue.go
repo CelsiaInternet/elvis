@@ -14,7 +14,7 @@ const QUEUE_STACK = "stack"
 type Queue struct {
 	Name        string         `json:"name"`
 	Queue       map[string]int `json:"queue"`
-	Subscribers []*Client      `json:"subscribers"`
+	Subscribers []*Subscriber  `json:"subscribers"`
 	mutex       *sync.RWMutex
 }
 
@@ -27,7 +27,7 @@ func newQueue(name string) *Queue {
 	result := &Queue{
 		Name:        strs.Lowcase(name),
 		Queue:       map[string]int{},
-		Subscribers: []*Client{},
+		Subscribers: []*Subscriber{},
 		mutex:       &sync.RWMutex{},
 	}
 
@@ -45,7 +45,7 @@ func (c *Queue) drain() {
 
 		delete(client.Channels, c.Name)
 	}
-	c.Subscribers = []*Client{}
+	c.Subscribers = []*Subscriber{}
 }
 
 /**
@@ -89,9 +89,9 @@ func (c *Queue) Count() int {
 
 /**
 * nextTurn return the next subscriber
-* @return *Client
+* @return *Subscriber
 **/
-func (c *Queue) nextTurn(queue string) *Client {
+func (c *Queue) nextTurn(queue string) *Subscriber {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
@@ -119,9 +119,9 @@ func (c *Queue) nextTurn(queue string) *Client {
 
 /**
 * queueSubscribe a client to channel
-* @param client *Client
+* @param client *Subscriber
 **/
-func (c *Queue) subscribe(client *Client, queue string) {
+func (c *Queue) subscribe(client *Subscriber, queue string) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
@@ -134,7 +134,7 @@ func (c *Queue) subscribe(client *Client, queue string) {
 		c.Queue[queue] = 0
 	}
 
-	idx := slices.IndexFunc(c.Subscribers, func(e *Client) bool { return e.Id == client.Id })
+	idx := slices.IndexFunc(c.Subscribers, func(e *Subscriber) bool { return e.Id == client.Id })
 	if idx != -1 {
 		return
 	}
@@ -147,11 +147,11 @@ func (c *Queue) subscribe(client *Client, queue string) {
 * unsubscribe
 * @param clientId string
 **/
-func (c *Queue) unsubscribe(client *Client) {
+func (c *Queue) unsubscribe(client *Subscriber) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
-	idx := slices.IndexFunc(c.Subscribers, func(e *Client) bool { return e.Id == client.Id })
+	idx := slices.IndexFunc(c.Subscribers, func(e *Subscriber) bool { return e.Id == client.Id })
 	if idx == -1 {
 		return
 	}

@@ -1,68 +1,31 @@
 package rt
 
 import (
-	"net/http"
-	"net/url"
-
 	"github.com/celsiainternet/elvis/envar"
-	"github.com/celsiainternet/elvis/logs"
-	"github.com/celsiainternet/elvis/strs"
 	"github.com/celsiainternet/elvis/utility"
 	"github.com/celsiainternet/elvis/ws"
-	"github.com/gorilla/websocket"
 )
 
-var conn *ClientWS
-
-type ClientWS struct {
-	socket    *websocket.Conn
-	Host      string
-	ClientId  string
-	Name      string
-	channels  map[string]func(ws.Message)
-	connected bool
-}
+var conn *ws.ClientWS
 
 /**
-* ConnectWs connect to the server using the websocket
-* @param host string
-* @param scheme string
-* @param clientId string
-* @param name string
-* @return *websocket.Conn
-* @return error
+* LoadFrom
+* @return erro
 **/
 func Load() error {
 	if conn != nil {
 		return nil
 	}
 
+	var err error
 	name := envar.GetStr("Real Time", "RT_NAME")
 	host := envar.GetStr("localhost", "RT_HOST")
-	scheme := envar.GetStr("ws", "RT_SCHEME")
-
-	path := strs.Format("/%s", scheme)
-	u := url.URL{Scheme: scheme, Host: host, Path: path}
-	header := http.Header{}
-	wsocket, _, err := websocket.DefaultDialer.Dial(u.String(), header)
+	schema := envar.GetStr("ws", "RT_SCHEME")
+	path := envar.GetStr("/ws", "RT_PATH")
+	conn, err = ws.NewClientWS(utility.UUID(), name, schema, host, path)
 	if err != nil {
 		return err
 	}
-
-	conn = &ClientWS{
-		socket:    wsocket,
-		Host:      host,
-		ClientId:  utility.UUID(),
-		Name:      name,
-		channels:  make(map[string]func(ws.Message)),
-		connected: true,
-	}
-
-	go conn.read()
-
-	SetFrom(name)
-
-	logs.Logf("Real time", "Connected host:%s", u.String())
 
 	return nil
 }
@@ -71,7 +34,5 @@ func Load() error {
 * Close
 **/
 func Close() {
-	if conn != nil {
-		conn.socket.Close()
-	}
+	conn.Close()
 }

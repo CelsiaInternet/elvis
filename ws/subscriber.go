@@ -4,7 +4,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/timezone"
@@ -17,7 +16,7 @@ type WsMessage struct {
 	Payload interface{} `json:"payload"`
 }
 
-type Client struct {
+type Subscriber struct {
 	Created_at time.Time `json:"created_at"`
 	hub        *Hub
 	Id         string              `json:"id"`
@@ -38,12 +37,12 @@ type Client struct {
 * @param *websocket.Conn
 * @param string
 * @param string
-* @return *Client
+* @return *Subscriber
 * @return bool
 **/
-func newClient(hub *Hub, socket *websocket.Conn, id, name string) (*Client, bool) {
+func newClient(hub *Hub, socket *websocket.Conn, id, name string) (*Subscriber, bool) {
 	id = utility.GenKey(id)
-	return &Client{
+	return &Subscriber{
 		Created_at: timezone.NowTime(),
 		hub:        hub,
 		Id:         id,
@@ -61,7 +60,7 @@ func newClient(hub *Hub, socket *websocket.Conn, id, name string) (*Client, bool
 * Describe
 * @return et.Json
 **/
-func (c *Client) describe() et.Json {
+func (c *Subscriber) describe() et.Json {
 	result, err := et.Object(c)
 	if err != nil {
 		return et.Json{}
@@ -73,7 +72,7 @@ func (c *Client) describe() et.Json {
 /**
 * close
 **/
-func (c *Client) close() {
+func (c *Subscriber) close() {
 	if c.closed {
 		return
 	}
@@ -98,7 +97,7 @@ func (c *Client) close() {
 * From
 * @return et.Json
 **/
-func (c *Client) From() et.Json {
+func (c *Subscriber) From() et.Json {
 	return et.Json{
 		"id":   c.Id,
 		"name": c.Name,
@@ -108,7 +107,7 @@ func (c *Client) From() et.Json {
 /**
 * read
 **/
-func (c *Client) read() {
+func (c *Subscriber) read() {
 	defer func() {
 		if c.hub != nil {
 			c.hub.unregister <- c
@@ -129,7 +128,7 @@ func (c *Client) read() {
 /**
 * write
 **/
-func (c *Client) write() {
+func (c *Subscriber) write() {
 	for message := range c.outbound {
 		c.socket.WriteMessage(websocket.TextMessage, message)
 	}
@@ -142,7 +141,8 @@ func (c *Client) write() {
 * @param message Message
 * @return error
 **/
-func (c *Client) sendMessage(message Message) error {
+func (c *Subscriber) sendMessage(message Message) error {
+	message.To = c.Id
 	msg, err := message.Encode()
 	if err != nil {
 		return err
@@ -169,16 +169,15 @@ func (c *Client) sendMessage(message Message) error {
 * listen
 * @param message []byte
 **/
-func (c *Client) listen(message []byte) {
+func (c *Subscriber) listen(message []byte) {
 	response := func(ok bool, message string) {
 		msg := NewMessage(c.hub.From(), et.Json{
 			"ok":      ok,
 			"message": message,
 		}, TpDirect)
+
 		c.sendMessage(msg)
 	}
-
-	console.Ping()
 
 	msg, err := DecodeMessage(message)
 	if err != nil {
@@ -186,8 +185,8 @@ func (c *Client) listen(message []byte) {
 		return
 	}
 
-	tp := msg.Tp
-	switch tp {
+	msg.From = c.From()
+	switch msg.Tp {
 	case TpPing:
 		response(true, "pong")
 	case TpSetFrom:
@@ -285,5 +284,5 @@ func (c *Client) listen(message []byte) {
 		response(false, ERR_MESSAGE_UNFORMATTED)
 	}
 
-	logs.Logf("Websocket", "Client %s message: %s", c.Id, msg.ToString())
+	logs.Logf("Websocket", "Subscriber %s message: %s", c.Id, msg.ToString())
 }

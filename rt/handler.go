@@ -1,97 +1,32 @@
 package rt
 
 import (
+	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
-	"github.com/celsiainternet/elvis/logs"
-	"github.com/celsiainternet/elvis/utility"
 	"github.com/celsiainternet/elvis/ws"
-	"github.com/gorilla/websocket"
 )
-
-/**
-* read
-**/
-func (c *ClientWS) read() {
-	done := make(chan struct{})
-
-	go func() {
-		defer close(done)
-
-		for {
-			_, data, err := c.socket.ReadMessage()
-			if err != nil {
-				logs.Alert(err)
-				c.connected = false
-				return
-			}
-
-			msg, err := ws.DecodeMessage(data)
-			if err != nil {
-				logs.Alert(err)
-				return
-			}
-
-			f, ok := c.channels[msg.Channel]
-			if ok {
-				f(msg)
-			}
-		}
-	}()
-}
-
-/**
-* send
-* @param message ws.ws.Message
-* @return error
-**/
-func (c *ClientWS) send(message ws.Message) error {
-	if c.socket == nil {
-		return logs.Alertm(ERR_NOT_CONNECT_WS)
-	}
-
-	msg, err := message.Encode()
-	if err != nil {
-		return err
-	}
-
-	err = conn.socket.WriteMessage(websocket.TextMessage, msg)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-/**
-* IsConnected
-* @return bool
-**/
-func IsConnected() bool {
-	if conn == nil {
-		return false
-	}
-
-	return conn.connected
-}
 
 /**
 * From
 * @return et.Json
 **/
 func From() et.Json {
-	return et.Json{
-		"id":   conn.ClientId,
-		"name": conn.Name,
+	if conn == nil {
+		return et.Json{}
 	}
+
+	return conn.From()
 }
 
 /**
 * Ping
 **/
 func Ping() {
-	msg := ws.NewMessage(From(), et.Json{}, ws.TpPing)
+	if conn == nil {
+		return
+	}
 
-	conn.send(msg)
+	conn.Ping()
 }
 
 /**
@@ -100,13 +35,11 @@ func Ping() {
 * @return error
 **/
 func SetFrom(name string) error {
-	if !utility.ValidName(name) {
-		return logs.Alertm(ERR_INVALID_NAME)
+	if conn == nil {
+		return console.NewError(ERR_NOT_CONNECT_WS)
 	}
 
-	conn.Name = name
-	msg := ws.NewMessage(From(), From(), ws.TpSetFrom)
-	return conn.send(msg)
+	return conn.SetFrom(name)
 }
 
 /**
@@ -115,12 +48,11 @@ func SetFrom(name string) error {
 * @param reciveFn func(message.ws.Message)
 **/
 func Subscribe(channel string, reciveFn func(ws.Message)) {
-	conn.channels[channel] = reciveFn
+	if conn == nil {
+		return
+	}
 
-	msg := ws.NewMessage(From(), et.Json{}, ws.TpSubscribe)
-	msg.Channel = channel
-
-	conn.send(msg)
+	conn.Subscribe(channel, reciveFn)
 }
 
 /**
@@ -129,13 +61,11 @@ func Subscribe(channel string, reciveFn func(ws.Message)) {
 * @param reciveFn func(message.ws.Message)
 **/
 func Queue(channel, queue string, reciveFn func(ws.Message)) {
-	conn.channels[channel] = reciveFn
+	if conn == nil {
+		return
+	}
 
-	msg := ws.NewMessage(From(), et.Json{}, ws.TpStack)
-	msg.Channel = channel
-	msg.Queue = queue
-
-	conn.send(msg)
+	conn.Queue(channel, queue, reciveFn)
 }
 
 /**
@@ -143,12 +73,11 @@ func Queue(channel, queue string, reciveFn func(ws.Message)) {
 * @param channel string
 **/
 func Unsubscribe(channel string) {
-	delete(conn.channels, channel)
+	if conn == nil {
+		return
+	}
 
-	msg := ws.NewMessage(From(), et.Json{}, ws.TpUnsubscribe)
-	msg.Channel = channel
-
-	conn.send(msg)
+	conn.Unsubscribe(channel)
 }
 
 /**
@@ -157,11 +86,11 @@ func Unsubscribe(channel string) {
 * @param message interface{}
 **/
 func Publish(channel string, message interface{}) {
-	msg := ws.NewMessage(From(), message, ws.TpPublish)
-	msg.Ignored = []string{conn.ClientId}
-	msg.Channel = channel
+	if conn == nil {
+		return
+	}
 
-	conn.send(msg)
+	conn.Publish(channel, message)
 }
 
 /**
@@ -171,9 +100,9 @@ func Publish(channel string, message interface{}) {
 * @return error
 **/
 func SendMessage(clientId string, message interface{}) error {
-	msg := ws.NewMessage(From(), message, ws.TpDirect)
-	msg.Ignored = []string{conn.ClientId}
-	msg.To = clientId
+	if conn == nil {
+		return console.NewError(ERR_NOT_CONNECT_WS)
+	}
 
-	return conn.send(msg)
+	return conn.SendMessage(clientId, message)
 }

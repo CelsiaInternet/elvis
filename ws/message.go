@@ -12,16 +12,16 @@ import (
 type TpMessage int
 
 const (
-	TpPing TpMessage = iota
-	TpSetFrom
-	TpSubscribe
-	TpQueueSubscribe
-	TpStack
-	TpUnsubscribe
-	TpPublish
-	TpDirect
-	TpConnect
-	TpDisconnect
+	TpPing           TpMessage = iota // 0
+	TpSetFrom                         // 1
+	TpSubscribe                       // 2
+	TpQueueSubscribe                  // 3
+	TpStack                           // 4
+	TpUnsubscribe                     // 5
+	TpPublish                         // 6
+	TpDirect                          // 7
+	TpConnect                         // 8
+	TpDisconnect                      // 9
 )
 
 func (s TpMessage) String() string {
@@ -130,13 +130,13 @@ func (e Message) ToString() string {
 * ToJson return the message as et.Json
 * @return et.Json
 **/
-func (e Message) ToJson() (et.Json, error) {
+func (e Message) ToJson() et.Json {
 	result, err := et.Object(e)
 	if err != nil {
-		return et.Json{}, err
+		return et.Json{}
 	}
 
-	return result, nil
+	return result
 }
 
 /**

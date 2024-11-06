@@ -13,8 +13,8 @@ import (
 * Channel
 **/
 type Channel struct {
-	Name        string    `json:"name"`
-	Subscribers []*Client `json:"subscribers"`
+	Name        string        `json:"name"`
+	Subscribers []*Subscriber `json:"subscribers"`
 	mutex       *sync.RWMutex
 }
 
@@ -26,7 +26,7 @@ type Channel struct {
 func newChannel(name string) *Channel {
 	result := &Channel{
 		Name:        strs.Lowcase(name),
-		Subscribers: []*Client{},
+		Subscribers: []*Subscriber{},
 		mutex:       &sync.RWMutex{},
 	}
 
@@ -44,7 +44,7 @@ func (c *Channel) drain() {
 
 		delete(client.Channels, c.Name)
 	}
-	c.Subscribers = []*Client{}
+	c.Subscribers = []*Subscriber{}
 }
 
 /**
@@ -88,13 +88,13 @@ func (c *Channel) Count() int {
 
 /**
 * queueSubscribe a client to channel
-* @param client *Client
+* @param client *Subscriber
 **/
-func (c *Channel) subscribe(client *Client) {
+func (c *Channel) subscribe(client *Subscriber) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
-	idx := slices.IndexFunc(c.Subscribers, func(e *Client) bool { return e.Id == client.Id })
+	idx := slices.IndexFunc(c.Subscribers, func(e *Subscriber) bool { return e.Id == client.Id })
 	if idx != -1 {
 		return
 	}
@@ -107,11 +107,11 @@ func (c *Channel) subscribe(client *Client) {
 * unsubscribe
 * @param clientId string
 **/
-func (c *Channel) unsubscribe(client *Client) {
+func (c *Channel) unsubscribe(client *Subscriber) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
-	idx := slices.IndexFunc(c.Subscribers, func(e *Client) bool { return e.Id == client.Id })
+	idx := slices.IndexFunc(c.Subscribers, func(e *Subscriber) bool { return e.Id == client.Id })
 	if idx == -1 {
 		return
 	}

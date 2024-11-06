@@ -12,10 +12,10 @@ import (
 * ConnectHttp connect to the server using the http
 * @param w http.ResponseWriter
 * @param r *http.Request
-* @return *Client
+* @return *Subscriber
 * @return error
 **/
-func (h *Hub) ConnectHttp(w http.ResponseWriter, r *http.Request) (*Client, error) {
+func (h *Hub) ConnectHttp(w http.ResponseWriter, r *http.Request) (*Subscriber, error) {
 	socket, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		return nil, err
