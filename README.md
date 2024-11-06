@@ -28,6 +28,30 @@ go get -u github.com/celsiainternet/elvis@v1.0.82
 go get github.com/celsiainternet/elvis@v1.0.82
 ```
 
+## Create project
+
+go mod init github.com/apimanager/api
+
+## Dependencias
+
+```
+go get github.com/celsiainternet/elvis@v1.0.83
+```
+
+## Crear projecto, microservicios, modelos
+
+```
+go run github.com/celsiainternet/elvis/cmd/create-go create
+```
+
+## Run
+
+```
+gofmt -w . && go run ./cmd/ws -port 3300 -rpc 4200
+gofmt -w . && go run ./cmd/ws -port 3500 -rpc 4500
+gofmt -w . && go run --race ./cmd/ws -port 3500 -rpc 4500
+```
+
 # Build
 
 ```

@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/celsiainternet/elvis/claim"
+	"github.com/celsiainternet/elvis/response"
 	"github.com/celsiainternet/elvis/utility"
 )
 
@@ -21,10 +22,11 @@ func (h *Hub) ConnectHttp(w http.ResponseWriter, r *http.Request) (*Client, erro
 	}
 
 	clientId := r.URL.Query().Get("clientId")
-	name := r.URL.Query().Get("name")
 	if clientId == "" {
 		clientId = utility.UUID()
 	}
+
+	name := r.URL.Query().Get("name")
 	if name == "" {
 		name = "Anonimo"
 	}
@@ -34,4 +36,28 @@ func (h *Hub) ConnectHttp(w http.ResponseWriter, r *http.Request) (*Client, erro
 	name = claim.NameKey.String(ctx, name)
 
 	return h.connect(socket, clientId, name)
+}
+
+/**
+* HttpGetChannels
+* @param w http.ResponseWriter
+* @param r *http.Request
+**/
+func (h *Hub) HttpGetChannels(w http.ResponseWriter, r *http.Request) {
+	key := r.URL.Query().Get("key")
+	items := h.GetChannels(key)
+
+	response.ITEMS(w, r, http.StatusOK, items)
+}
+
+/**
+* HttpGetClients
+* @param w http.ResponseWriter
+* @param r *http.Request
+**/
+func (h *Hub) HttpGetClients(w http.ResponseWriter, r *http.Request) {
+	key := r.URL.Query().Get("key")
+	items := h.GetClients(key)
+
+	response.ITEMS(w, r, http.StatusOK, items)
 }

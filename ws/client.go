@@ -4,6 +4,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/timezone"
@@ -77,7 +78,7 @@ func (c *Client) close() {
 		return
 	}
 
-	c.mutex.Lock() // Bloquear el mutex para evitar condiciones de carrera
+	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
 	c.closed = true
@@ -132,6 +133,7 @@ func (c *Client) write() {
 	for message := range c.outbound {
 		c.socket.WriteMessage(websocket.TextMessage, message)
 	}
+
 	c.socket.WriteMessage(websocket.CloseMessage, []byte{})
 }
 
@@ -175,6 +177,8 @@ func (c *Client) listen(message []byte) {
 		}, TpDirect)
 		c.sendMessage(msg)
 	}
+
+	console.Ping()
 
 	msg, err := DecodeMessage(message)
 	if err != nil {

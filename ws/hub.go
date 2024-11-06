@@ -55,12 +55,26 @@ func NewHub() *Hub {
 	return result
 }
 
+func (h *Hub) start() {
+	for {
+		select {
+		case client := <-h.register:
+			h.onConnect(client)
+		case client := <-h.unregister:
+			h.onDisconnect(client)
+		}
+	}
+}
+
 /**
 * indexChannel
 * @param name string
 * @return int
 **/
 func (h *Hub) indexChannel(name string) int {
+	h.mutex.Lock()
+	defer h.mutex.Unlock()
+
 	return slices.IndexFunc(h.channels, func(c *Channel) bool { return c.Name == strs.Lowcase(name) })
 }
 
@@ -70,6 +84,9 @@ func (h *Hub) indexChannel(name string) int {
 * @return int
 **/
 func (h *Hub) indexQueue(name string) int {
+	h.mutex.Lock()
+	defer h.mutex.Unlock()
+
 	return slices.IndexFunc(h.queues, func(c *Queue) bool { return c.Name == strs.Lowcase(name) })
 }
 
@@ -79,7 +96,33 @@ func (h *Hub) indexQueue(name string) int {
 * @return int
 **/
 func (h *Hub) indexClient(id string) int {
+	h.mutex.Lock()
+	defer h.mutex.Unlock()
+
 	return slices.IndexFunc(h.clients, func(c *Client) bool { return c.Id == id })
+}
+
+func (h *Hub) addClient(client *Client) {
+	h.mutex.Lock()
+	defer h.mutex.Unlock()
+
+	h.clients = append(h.clients, client)
+}
+
+func (h *Hub) removeClient(client *Client) {
+	idx := h.indexClient(client.Id)
+	if idx == -1 {
+		return
+	}
+
+	client.close()
+
+	h.mutex.Lock()
+	defer h.mutex.Unlock()
+
+	copy(h.clients[idx:], h.clients[idx+1:])
+	h.clients[len(h.clients)-1] = nil
+	h.clients = h.clients[:len(h.clients)-1]
 }
 
 /**
@@ -87,10 +130,7 @@ func (h *Hub) indexClient(id string) int {
 * @param client *Client
 **/
 func (h *Hub) onConnect(client *Client) {
-	h.mutex.Lock()
-	defer h.mutex.Unlock()
-
-	h.clients = append(h.clients, client)
+	h.addClient(client)
 
 	msg := NewMessage(h.From(), et.Json{
 		"ok":       true,
@@ -111,18 +151,9 @@ func (h *Hub) onConnect(client *Client) {
 * @param client *Client
 **/
 func (h *Hub) onDisconnect(client *Client) {
-	h.mutex.Lock()
-	defer h.mutex.Unlock()
-
-	client.close()
-	idx := h.indexClient(client.Id)
-	if idx == -1 {
-		return
-	}
-
-	copy(h.clients[idx:], h.clients[idx+1:])
-	h.clients[len(h.clients)-1] = nil
-	h.clients = h.clients[:len(h.clients)-1]
+	clientId := client.Id
+	name := client.Name
+	h.removeClient(client)
 
 	msg := NewMessage(h.From(), et.Json{
 		"ok":      true,
@@ -131,9 +162,9 @@ func (h *Hub) onDisconnect(client *Client) {
 	}, TpDisconnect)
 	msg.Channel = "ws/disconnect"
 
-	h.Publish(msg.Channel, msg, []string{client.Id}, h.From())
+	h.Publish(msg.Channel, msg, []string{clientId}, h.From())
 
-	logs.Logf("Websocket", MSG_CLIENT_DISCONNECT, client.Id, h.Id)
+	logs.Logf("Websocket", MSG_CLIENT_DISCONNECT, clientId, name, h.Id)
 }
 
 /**
@@ -145,9 +176,6 @@ func (h *Hub) onDisconnect(client *Client) {
 * @return error
 **/
 func (h *Hub) connect(socket *websocket.Conn, clientId, name string) (*Client, error) {
-	h.mutex.Lock()
-	defer h.mutex.Unlock()
-
 	idxC := h.indexClient(clientId)
 	if idxC != -1 {
 		return h.clients[idxC], nil
@@ -173,9 +201,6 @@ func (h *Hub) connect(socket *websocket.Conn, clientId, name string) (*Client, e
 * @return error
 **/
 func (h *Hub) broadcast(channel string, msg Message, ignored []string, from et.Json) error {
-	h.mutex.Lock()
-	defer h.mutex.Unlock()
-
 	msg.From = from
 	msg.Ignored = ignored
 

@@ -50,16 +50,10 @@ func (h *Hub) Start() {
 	host, _ := os.Hostname()
 	h.Host = envar.GetStr(host, "WS_HOST")
 	h.run = true
-	logs.Logf("Websocket", "Run server on %s", h.Host)
 
-	for {
-		select {
-		case client := <-h.register:
-			h.onConnect(client)
-		case client := <-h.unregister:
-			h.onDisconnect(client)
-		}
-	}
+	go h.start()
+
+	console.LogKF("Websocket", "Run server on %s", h.Host)
 }
 
 /**
@@ -107,7 +101,7 @@ func (h *Hub) NewChannel(name string, duration time.Duration) *Channel {
 		return h.channels[idx]
 	}
 
-	h.mutex.Lock() // Bloquear el mutex para evitar condiciones de carrera
+	h.mutex.Lock()
 	defer h.mutex.Unlock()
 
 	result := newChannel(name)
@@ -136,7 +130,7 @@ func (h *Hub) NewQueue(name string, duration time.Duration) *Queue {
 		return h.queues[idx]
 	}
 
-	h.mutex.Lock() // Bloquear el mutex para evitar condiciones de carrera
+	h.mutex.Lock()
 	defer h.mutex.Unlock()
 
 	result := newQueue(name)
@@ -216,15 +210,15 @@ func (h *Hub) Unsubscribe(clientId string, channel string) error {
 
 	client := h.clients[idxCl]
 
-	idxCh := h.indexChannel(channel)
-	if idxCh != -1 {
-		ch := h.channels[idxCh]
+	idx := h.indexChannel(channel)
+	if idx != -1 {
+		ch := h.channels[idx]
 		ch.unsubscribe(client)
 	}
 
-	idxCh = h.indexQueue(channel)
-	if idxCh != -1 {
-		ch := h.queues[idxCh]
+	idx = h.indexQueue(channel)
+	if idx != -1 {
+		ch := h.queues[idx]
 		ch.unsubscribe(client)
 	}
 

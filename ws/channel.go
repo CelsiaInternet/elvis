@@ -51,8 +51,8 @@ func (c *Channel) drain() {
 * close
 **/
 func (c *Channel) close() {
-	c.mutex.Lock()         // Bloquea la escritura en Subscribers y Queue
-	defer c.mutex.Unlock() // Asegura el desbloqueo al final de la función
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
 
 	for _, client := range c.Subscribers {
 		if client == nil {
@@ -61,6 +61,7 @@ func (c *Channel) close() {
 
 		delete(client.Channels, c.Name)
 	}
+
 	c.Subscribers = nil
 }
 
