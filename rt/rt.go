@@ -6,7 +6,7 @@ import (
 	"github.com/celsiainternet/elvis/ws"
 )
 
-var conn *ws.ClientWS
+var conn *ws.Client
 
 /**
 * LoadFrom
@@ -18,11 +18,14 @@ func Load() error {
 	}
 
 	var err error
-	name := envar.GetStr("Real Time", "RT_NAME")
-	host := envar.GetStr("localhost", "RT_HOST")
-	schema := envar.GetStr("ws", "RT_SCHEME")
-	path := envar.GetStr("/ws", "RT_PATH")
-	conn, err = ws.NewClientWS(utility.UUID(), name, schema, host, path)
+	params := &ws.ClientConfig{
+		ClientId: utility.UUID(),
+		Name:     envar.GetStr("Real Time", "RT_NAME"),
+		Schema:   envar.GetStr("ws", "RT_SCHEME"),
+		Host:     envar.GetStr("localhost", "RT_HOST"),
+		Path:     envar.GetStr("/ws", "RT_PATH"),
+	}
+	conn, err = ws.NewClient(params)
 	if err != nil {
 		return err
 	}

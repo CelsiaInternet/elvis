@@ -4,8 +4,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/logs"
+	"github.com/celsiainternet/elvis/strs"
 	"github.com/celsiainternet/elvis/timezone"
 	"github.com/celsiainternet/elvis/utility"
 	"github.com/gorilla/websocket"
@@ -17,8 +19,8 @@ type WsMessage struct {
 }
 
 type Subscriber struct {
-	Created_at time.Time `json:"created_at"`
 	hub        *Hub
+	Created_at time.Time           `json:"created_at"`
 	Id         string              `json:"id"`
 	Name       string              `json:"name"`
 	Addr       string              `json:"addr"`
@@ -26,13 +28,11 @@ type Subscriber struct {
 	Queue      map[string]*Queue   `json:"queue"`
 	socket     *websocket.Conn
 	outbound   chan []byte
-	closed     bool
-	allowed    bool
 	mutex      sync.RWMutex
 }
 
 /**
-* NewClient
+* newSubscriber
 * @param *Hub
 * @param *websocket.Conn
 * @param string
@@ -40,11 +40,11 @@ type Subscriber struct {
 * @return *Subscriber
 * @return bool
 **/
-func newClient(hub *Hub, socket *websocket.Conn, id, name string) (*Subscriber, bool) {
+func newSubscriber(hub *Hub, socket *websocket.Conn, id, name string) (*Subscriber, bool) {
 	id = utility.GenKey(id)
 	return &Subscriber{
-		Created_at: timezone.NowTime(),
 		hub:        hub,
+		Created_at: timezone.NowTime(),
 		Id:         id,
 		Name:       name,
 		Addr:       socket.RemoteAddr().String(),
@@ -52,7 +52,6 @@ func newClient(hub *Hub, socket *websocket.Conn, id, name string) (*Subscriber, 
 		Queue:      make(map[string]*Queue),
 		socket:     socket,
 		outbound:   make(chan []byte),
-		closed:     false,
 	}, true
 }
 
@@ -61,26 +60,33 @@ func newClient(hub *Hub, socket *websocket.Conn, id, name string) (*Subscriber, 
 * @return et.Json
 **/
 func (c *Subscriber) describe() et.Json {
-	result, err := et.Object(c)
-	if err != nil {
-		return et.Json{}
+	channels := []et.Json{}
+	for _, ch := range c.Channels {
+		channels = append(channels, ch.describe(1))
 	}
 
-	return result
+	queues := []et.Json{}
+	for _, q := range c.Queue {
+		queues = append(queues, q.describe(1))
+	}
+
+	return et.Json{
+		"created_at": strs.FormatDateTime("02/01/2006 03:04:05 PM", c.Created_at),
+		"id":         c.Id,
+		"name":       c.Name,
+		"addr":       c.Addr,
+		"channels":   channels,
+		"queue":      queues,
+	}
 }
 
 /**
 * close
 **/
 func (c *Subscriber) close() {
-	if c.closed {
-		return
-	}
-
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
-	c.closed = true
 	for _, channel := range c.Channels {
 		channel.unsubscribe(c)
 	}
@@ -121,7 +127,7 @@ func (c *Subscriber) read() {
 			break
 		}
 
-		c.listen(message)
+		c.listener(message)
 	}
 }
 
@@ -148,10 +154,6 @@ func (c *Subscriber) sendMessage(message Message) error {
 		return err
 	}
 
-	if c.closed {
-		return logs.Alertm(ERR_CLIENT_IS_CLOSED)
-	}
-
 	if c.socket == nil {
 		return logs.Alertm(ERR_NOT_WS_SERVICE)
 	}
@@ -166,10 +168,10 @@ func (c *Subscriber) sendMessage(message Message) error {
 }
 
 /**
-* listen
+* listener
 * @param message []byte
 **/
-func (c *Subscriber) listen(message []byte) {
+func (c *Subscriber) listener(message []byte) {
 	response := func(ok bool, message string) {
 		msg := NewMessage(c.hub.From(), et.Json{
 			"ok":      ok,
@@ -203,6 +205,7 @@ func (c *Subscriber) listen(message []byte) {
 
 		response(true, PARAMS_UPDATED)
 	case TpSubscribe:
+		console.Ping()
 		channel := msg.Channel
 		if channel == "" {
 			response(false, ERR_CHANNEL_EMPTY)
@@ -223,9 +226,14 @@ func (c *Subscriber) listen(message []byte) {
 			return
 		}
 
-		queue := msg.Queue
+		queue, ok := msg.Data.(string)
+		if !ok {
+			response(false, ERR_QUEUE_EMPTY)
+			return
+		}
 		if queue == "" {
 			response(false, ERR_QUEUE_EMPTY)
+			return
 		}
 
 		err := c.hub.QueueSubscribe(c.Id, channel, queue)
@@ -284,5 +292,5 @@ func (c *Subscriber) listen(message []byte) {
 		response(false, ERR_MESSAGE_UNFORMATTED)
 	}
 
-	logs.Logf("Websocket", "Subscriber %s message: %s", c.Id, msg.ToString())
+	logs.Logf(ServiceName, "Subscriber %s message: %s", c.Id, msg.ToString())
 }

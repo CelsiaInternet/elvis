@@ -49,6 +49,7 @@ const BEFORE_DELETE = "BEFORE_DELETE"
 const AFTER_DELETE = "AFTER_DELETE"
 const VALUE_NOT_BOOL = "Value is not bolean"
 const ROWS = 30
+const QUEUE_STACK = "stack"
 
 var ping = 0
 var locks = make(map[string]*sync.RWMutex)

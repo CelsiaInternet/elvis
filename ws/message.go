@@ -76,10 +76,9 @@ type Message struct {
 	From       et.Json     `json:"from"`
 	To         string      `json:"to"`
 	Ignored    []string    `json:"ignored"`
-	Tp         TpMessage   `json:"tp"`
 	Channel    string      `json:"channel"`
-	Queue      string      `json:"queue"`
 	Data       interface{} `json:"data"`
+	Tp         TpMessage   `json:"tp"`
 }
 
 /**
@@ -94,9 +93,9 @@ func NewMessage(from et.Json, message interface{}, tp TpMessage) Message {
 		Created_at: timezone.NowTime(),
 		Id:         utility.UUID(),
 		From:       from,
+		Ignored:    []string{},
 		Data:       message,
 		Tp:         tp,
-		Ignored:    []string{},
 	}
 }
 

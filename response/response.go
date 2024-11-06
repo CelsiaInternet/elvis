@@ -181,10 +181,6 @@ func ITEM(w http.ResponseWriter, r *http.Request, statusCode int, dt et.Item) er
 		return err
 	}
 
-	if !dt.Ok {
-		statusCode = http.StatusNotFound
-	}
-
 	return WriteResponse(w, statusCode, e)
 }
 
@@ -206,10 +202,6 @@ func ITEMS(w http.ResponseWriter, r *http.Request, statusCode int, dt et.Items) 
 	e, err := json.Marshal(dt)
 	if err != nil {
 		return err
-	}
-
-	if !dt.Ok {
-		statusCode = http.StatusNotFound
 	}
 
 	return WriteResponse(w, statusCode, e)

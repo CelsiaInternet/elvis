@@ -11,59 +11,6 @@ import (
 	"github.com/nats-io/nats.go"
 )
 
-type WorkStatus int
-
-const (
-	WorkStatusPending WorkStatus = iota
-	WorkStatusAccepted
-	WorkStatusProcessing
-	WorkStatusCompleted
-	WorkStatusFailed
-)
-
-/**
-* String
-* @return string
-**/
-func (s WorkStatus) String() string {
-	switch s {
-	case WorkStatusPending:
-		return "Pending"
-	case WorkStatusAccepted:
-		return "Accepted"
-	case WorkStatusProcessing:
-		return "Processing"
-	case WorkStatusCompleted:
-		return "Completed"
-	case WorkStatusFailed:
-		return "Failed"
-	default:
-		return "Unknown"
-	}
-}
-
-/**
-* ToWorkStatus
-* @param int n
-* @return WorkStatus
-**/
-func ToWorkStatus(n int) WorkStatus {
-	switch n {
-	case 0:
-		return WorkStatusPending
-	case 1:
-		return WorkStatusAccepted
-	case 2:
-		return WorkStatusProcessing
-	case 3:
-		return WorkStatusCompleted
-	case 4:
-		return WorkStatusFailed
-	default:
-		return WorkStatusPending
-	}
-}
-
 /**
 * Publish
 * @param channel string
@@ -154,7 +101,7 @@ func Queue(channel, queue string, f func(EvenMessage)) (err error) {
 * @return error
 **/
 func Stack(channel string, f func(EvenMessage)) error {
-	return Queue(channel, "stack", f)
+	return Queue(channel, utility.QUEUE_STACK, f)
 }
 
 /**
@@ -182,7 +129,7 @@ func Work(event string, data et.Json) et.Json {
 * @param status WorkStatus
 * @param data et.Json
 **/
-func WorkState(work_id string, status WorkStatus, data et.Json) {
+func WorkState(work_id string, status utility.WorkStatus, data et.Json) {
 	work := et.Json{
 		"update_at": timezone.Now(),
 		"_id":       work_id,
@@ -190,15 +137,15 @@ func WorkState(work_id string, status WorkStatus, data et.Json) {
 		"data":      data,
 	}
 	switch status {
-	case WorkStatusPending:
+	case utility.WorkStatusPending:
 		work["pending_at"] = utility.Now()
-	case WorkStatusAccepted:
+	case utility.WorkStatusAccepted:
 		work["accepted_at"] = utility.Now()
-	case WorkStatusProcessing:
+	case utility.WorkStatusProcessing:
 		work["processing_at"] = utility.Now()
-	case WorkStatusCompleted:
+	case utility.WorkStatusCompleted:
 		work["completed_at"] = utility.Now()
-	case WorkStatusFailed:
+	case utility.WorkStatusFailed:
 		work["failed_at"] = utility.Now()
 	}
 
@@ -259,31 +206,14 @@ func TokenLastUse(data et.Json) {
 }
 
 /**
-* RealTime
-* @param data et.Json
-**/
-func RealTime(channel string, from et.Json, message interface{}) {
-	data := et.Json{
-		"created_at": timezone.Now(),
-		"_id":        utility.UUID(),
-		"channel":    channel,
-		"from":       from,
-		"message":    message,
-	}
-
-	go Publish("realtime", data)
-}
-
-/**
-* Test event, testing message broker
+* HttpEventWork
 * @param w http.ResponseWriter
 * @param r *http.Request
 **/
-func Test(w http.ResponseWriter, r *http.Request) {
+func HttpEventWork(w http.ResponseWriter, r *http.Request) {
 	body, _ := response.GetBody(r)
 	event := body.Str("event")
 	data := body.Json("data")
-
 	work := Work(event, data)
 
 	response.JSON(w, r, http.StatusOK, work)

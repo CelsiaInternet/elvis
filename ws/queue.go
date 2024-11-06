@@ -4,12 +4,8 @@ import (
 	"sync"
 
 	"github.com/celsiainternet/elvis/et"
-	"github.com/celsiainternet/elvis/logs"
-	"github.com/celsiainternet/elvis/strs"
 	"golang.org/x/exp/slices"
 )
-
-const QUEUE_STACK = "stack"
 
 type Queue struct {
 	Name        string         `json:"name"`
@@ -25,13 +21,35 @@ type Queue struct {
 **/
 func newQueue(name string) *Queue {
 	result := &Queue{
-		Name:        strs.Lowcase(name),
+		Name:        name,
 		Queue:       map[string]int{},
 		Subscribers: []*Subscriber{},
 		mutex:       &sync.RWMutex{},
 	}
 
 	return result
+}
+
+func (c *Queue) setQueue(key string, val int) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	c.Queue[key] = val
+}
+
+func (c *Queue) getQueue(key string) (int, bool) {
+	c.mutex.RLock()
+	defer c.mutex.RUnlock()
+
+	result, ok := c.Queue[key]
+	return result, ok
+}
+
+func (c *Queue) deleteQueue(key string) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	delete(c.Queue, key)
 }
 
 /**
@@ -62,6 +80,7 @@ func (c *Queue) close() {
 
 		delete(client.Channels, c.Name)
 	}
+
 	c.Subscribers = nil
 	c.Queue = nil
 }
@@ -70,13 +89,22 @@ func (c *Queue) close() {
 * describe return the channel name
 * @return et.Json
 **/
-func (c *Queue) describe() et.Json {
-	result, err := et.Object(c)
-	if err != nil {
-		logs.Error(err)
+func (c *Queue) describe(mode int) et.Json {
+	if mode == 0 {
+		subscribers := []et.Json{}
+		for _, subscriber := range c.Subscribers {
+			subscribers = append(subscribers, subscriber.From())
+		}
+
+		return et.Json{
+			"name":        c.Name,
+			"subscribers": subscribers,
+		}
 	}
 
-	return result
+	return et.Json{
+		"name": c.Name,
+	}
 }
 
 /**
@@ -100,19 +128,20 @@ func (c *Queue) nextTurn(queue string) *Subscriber {
 		return nil
 	}
 
-	_, exist := c.Queue[queue]
+	turn, exist := c.getQueue(queue)
 	if !exist {
-		c.Queue[queue] = 0
+		turn = 0
+		c.setQueue(queue, turn)
 	}
 
-	turn := c.Queue[queue]
 	if turn >= n {
 		turn = 0
-		c.Queue[queue] = turn
+		c.setQueue(queue, turn)
 	}
 
 	result := c.Subscribers[turn]
-	c.Queue[queue]++
+	turn++
+	c.setQueue(queue, turn)
 
 	return result
 }
@@ -129,9 +158,9 @@ func (c *Queue) subscribe(client *Subscriber, queue string) {
 		return
 	}
 
-	_, exist := c.Queue[queue]
+	_, exist := c.getQueue(queue)
 	if !exist {
-		c.Queue[queue] = 0
+		c.setQueue(queue, 0)
 	}
 
 	idx := slices.IndexFunc(c.Subscribers, func(e *Subscriber) bool { return e.Id == client.Id })

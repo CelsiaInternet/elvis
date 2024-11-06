@@ -4,15 +4,15 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/logs"
-	"github.com/celsiainternet/elvis/strs"
 	"github.com/celsiainternet/elvis/utility"
 	"github.com/gorilla/websocket"
 	"golang.org/x/exp/slices"
 )
+
+const ServiceName = "Websocket"
 
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
@@ -30,7 +30,7 @@ type Hub struct {
 	mutex      *sync.Mutex
 	register   chan *Subscriber
 	unregister chan *Subscriber
-	main       *ClientWS
+	main       *Client
 	run        bool
 }
 
@@ -39,7 +39,7 @@ type Hub struct {
 * @return *Hub
 **/
 func NewHub() *Hub {
-	name := envar.GetStr("Websocket", "RT_HUB_NAME")
+	name := envar.GetStr(ServiceName, "RT_HUB_NAME")
 
 	result := &Hub{
 		Id:         utility.UUID(),
@@ -75,7 +75,7 @@ func (h *Hub) indexChannel(name string) int {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
 
-	return slices.IndexFunc(h.channels, func(c *Channel) bool { return c.Name == strs.Lowcase(name) })
+	return slices.IndexFunc(h.channels, func(c *Channel) bool { return c.Name == name })
 }
 
 /**
@@ -87,7 +87,7 @@ func (h *Hub) indexQueue(name string) int {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
 
-	return slices.IndexFunc(h.queues, func(c *Queue) bool { return c.Name == strs.Lowcase(name) })
+	return slices.IndexFunc(h.queues, func(c *Queue) bool { return c.Name == name })
 }
 
 /**
@@ -134,7 +134,7 @@ func (h *Hub) onConnect(client *Subscriber) {
 
 	msg := NewMessage(h.From(), et.Json{
 		"ok":       true,
-		"message":  "Connected successfully",
+		"message":  MSG_CONNECT_SUCCESSFULLY,
 		"clientId": client.Id,
 		"name":     client.Name,
 	}, TpConnect)
@@ -143,7 +143,7 @@ func (h *Hub) onConnect(client *Subscriber) {
 	h.Publish(msg.Channel, msg, []string{client.Id}, h.From())
 	client.sendMessage(msg)
 
-	logs.Logf("Websocket", MSG_CLIENT_CONNECT, client.Id, client.Name, h.Id)
+	logs.Logf(ServiceName, MSG_CLIENT_CONNECT, client.Id, client.Name, h.Id)
 }
 
 /**
@@ -157,14 +157,14 @@ func (h *Hub) onDisconnect(client *Subscriber) {
 
 	msg := NewMessage(h.From(), et.Json{
 		"ok":      true,
-		"message": "Subscriber disconnected",
+		"message": MSG_DISCONNECT_SUCCESSFULLY,
 		"client":  client.From(),
 	}, TpDisconnect)
 	msg.Channel = "ws/disconnect"
 
 	h.Publish(msg.Channel, msg, []string{clientId}, h.From())
 
-	logs.Logf("Websocket", MSG_CLIENT_DISCONNECT, clientId, name, h.Id)
+	logs.Logf(ServiceName, MSG_CLIENT_DISCONNECT, clientId, name, h.Id)
 }
 
 /**
@@ -181,7 +181,7 @@ func (h *Hub) connect(socket *websocket.Conn, clientId, name string) (*Subscribe
 		return h.clients[idxC], nil
 	}
 
-	client, isNew := newClient(h, socket, clientId, name)
+	client, isNew := newSubscriber(h, socket, clientId, name)
 	if isNew {
 		h.register <- client
 
@@ -213,7 +213,7 @@ func (h *Hub) broadcast(channel string, msg Message, ignored []string, from et.J
 			if !slices.Contains(ignored, client.Id) {
 				err := client.sendMessage(msg)
 				if err != nil {
-					console.AlertE(err)
+					logs.Alert(err)
 				} else {
 					n++
 				}
@@ -225,25 +225,18 @@ func (h *Hub) broadcast(channel string, msg Message, ignored []string, from et.J
 	if idx != -1 {
 		_channel := h.queues[idx]
 		msg.Channel = _channel.Name
-		client := _channel.nextTurn(QUEUE_STACK)
+		client := _channel.nextTurn(utility.QUEUE_STACK)
 		if client != nil {
 			err := client.sendMessage(msg)
 			if err != nil {
-				console.AlertE(err)
+				logs.Alert(err)
 			} else {
 				n++
 			}
 		}
 	}
 
-	console.LogF("Broadcast channel:%s sent:%d", channel, n)
+	logs.Logf(ServiceName, "Broadcast channel:%s sent:%d", channel, n)
 
 	return nil
-}
-
-/**
-* LoadMain
-**/
-func (h *Hub) LoadMain() {
-
 }

@@ -4,8 +4,6 @@ import (
 	"sync"
 
 	"github.com/celsiainternet/elvis/et"
-	"github.com/celsiainternet/elvis/logs"
-	"github.com/celsiainternet/elvis/strs"
 	"golang.org/x/exp/slices"
 )
 
@@ -25,7 +23,7 @@ type Channel struct {
 **/
 func newChannel(name string) *Channel {
 	result := &Channel{
-		Name:        strs.Lowcase(name),
+		Name:        name,
 		Subscribers: []*Subscriber{},
 		mutex:       &sync.RWMutex{},
 	}
@@ -69,13 +67,22 @@ func (c *Channel) close() {
 * describe return the channel name
 * @return et.Json
 **/
-func (c *Channel) describe() et.Json {
-	result, err := et.Object(c)
-	if err != nil {
-		logs.Error(err)
+func (c *Channel) describe(mode int) et.Json {
+	if mode == 0 {
+		subscribers := []et.Json{}
+		for _, subscriber := range c.Subscribers {
+			subscribers = append(subscribers, subscriber.From())
+		}
+
+		return et.Json{
+			"name":        c.Name,
+			"subscribers": subscribers,
+		}
 	}
 
-	return result
+	return et.Json{
+		"name": c.Name,
+	}
 }
 
 /**

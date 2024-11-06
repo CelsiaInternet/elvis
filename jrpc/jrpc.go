@@ -3,6 +3,7 @@ package jrpc
 import (
 	"encoding/json"
 	"net"
+	"net/http"
 	"net/rpc"
 	"os"
 	"reflect"
@@ -14,6 +15,7 @@ import (
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/middleware"
+	"github.com/celsiainternet/elvis/response"
 	"github.com/celsiainternet/elvis/strs"
 )
 
@@ -318,4 +320,21 @@ func Close() {
 	}
 
 	console.LogK("Rpc", `Shutting down server...`)
+}
+
+/**
+* HttpCallRPC
+* @param w http.ResponseWriter
+* @param r *http.Request
+**/
+func HttpCallRPC(w http.ResponseWriter, r *http.Request) {
+	body, _ := response.GetBody(r)
+	method := body.ValStr("", "method")
+	data := body.Json("data")
+	result, err := Call(method, data)
+	if err != nil {
+		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
+	}
+
+	response.JSON(w, r, http.StatusOK, result)
 }

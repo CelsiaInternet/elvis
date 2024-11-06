@@ -24,13 +24,13 @@ type MongoDocument struct {
 	Attributes map[string]string `bson:"attributes,omitempty"`
 }
 
-func Nerror(message string) error {
+func NewError(message string) error {
 	return errors.New(message)
 }
 
-func Nerrorf(format string, args ...any) error {
+func NewErrorf(format string, args ...any) error {
 	message := fmt.Sprintf(format, args...)
-	return Nerror(message)
+	return NewError(message)
 }
 
 func Log(kind string, args ...any) error {
@@ -80,7 +80,7 @@ func Alert(err error) error {
 }
 
 func Alertm(message string) error {
-	err := Nerror(message)
+	err := NewError(message)
 	return Alert(err)
 }
 
@@ -97,13 +97,13 @@ func Error(err error) error {
 }
 
 func Errorm(message string) error {
-	err := Nerror(message)
+	err := NewError(message)
 	return Error(err)
 }
 
 func Errorf(format string, args ...any) error {
 	message := fmt.Sprintf(format, args...)
-	err := Nerror(message)
+	err := NewError(message)
 	return Error(err)
 }
 

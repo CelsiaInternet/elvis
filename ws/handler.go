@@ -4,10 +4,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/logs"
+	"github.com/celsiainternet/elvis/utility"
 )
 
 /**
@@ -17,7 +17,7 @@ func (h *Hub) Close() {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
 
-	logs.Log("Websocket", "Shutting down server...")
+	logs.Log(ServiceName, "Shutting down server...")
 
 	if !h.run {
 		return
@@ -53,7 +53,7 @@ func (h *Hub) Start() {
 
 	go h.start()
 
-	console.LogKF("Websocket", "Run server on %s", h.Host)
+	logs.Logf(ServiceName, "Run server on %s", h.Host)
 }
 
 /**
@@ -125,7 +125,7 @@ func (h *Hub) NewChannel(name string, duration time.Duration) *Channel {
 * @return *Queue
 **/
 func (h *Hub) NewQueue(name string, duration time.Duration) *Queue {
-	idx := h.indexChannel(name)
+	idx := h.indexQueue(name)
 	if idx != -1 {
 		return h.queues[idx]
 	}
@@ -193,7 +193,7 @@ func (h *Hub) QueueSubscribe(clientId string, channel, queue string) error {
 * @return error
 **/
 func (h *Hub) Stack(clientId string, channel string) error {
-	return h.QueueSubscribe(clientId, channel, QUEUE_STACK)
+	return h.QueueSubscribe(clientId, channel, utility.QUEUE_STACK)
 }
 
 /**
@@ -251,7 +251,7 @@ func (h *Hub) Publish(channel string, msg Message, ignored []string, from et.Jso
 func (h *Hub) SendMessage(clientId string, msg Message) error {
 	idx := h.indexClient(clientId)
 	if idx == -1 {
-		return console.NewErrorF(ERR_CLIENT_NOT_FOUND)
+		return logs.NewError(ERR_CLIENT_NOT_FOUND)
 	}
 
 	if idx != -1 {
@@ -271,12 +271,12 @@ func (h *Hub) GetChannels(key string) et.Items {
 	result := []et.Json{}
 	if key == "" {
 		for _, channel := range h.channels {
-			result = append(result, channel.describe())
+			result = append(result, channel.describe(0))
 		}
 	} else {
 		idx := h.indexChannel(key)
 		if idx != -1 {
-			result = append(result, h.channels[idx].describe())
+			result = append(result, h.channels[idx].describe(0))
 		}
 	}
 
@@ -330,4 +330,14 @@ func (h *Hub) DrainChannel(channel string) error {
 	}
 
 	return nil
+}
+
+/**
+* LoadMain
+**/
+func (h *Hub) LoadMain(config ClientConfig) {
+	if h.main != nil {
+		h.main.Close()
+	}
+
 }
