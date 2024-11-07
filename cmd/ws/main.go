@@ -26,7 +26,7 @@ func main() {
 	conn.Start()
 
 	go startHttp()
-	go startHttp2()
+	// go startHttp2()
 
 	time.Sleep(3 * time.Second)
 	test1()
