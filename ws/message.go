@@ -79,7 +79,7 @@ type Message struct {
 	Data       interface{} `json:"data"`
 	Tp         TpMessage   `json:"tp"`
 	Channel    string      `json:"channel"`
-	queue      string
+	Queue      string      `json:"queue"`
 }
 
 /**

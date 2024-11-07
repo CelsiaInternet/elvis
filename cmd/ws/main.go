@@ -91,6 +91,10 @@ func test1() {
 		console.Fatal(err)
 	}
 
+	client1.DirectMessage = func(msg ws.Message) {
+		console.Debug("DirectMessage:", msg.ToString())
+	}
+
 	client1.Subscribe("Hola", func(msg ws.Message) {
 		console.Debug("client1", msg.ToString())
 	})

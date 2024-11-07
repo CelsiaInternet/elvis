@@ -71,6 +71,7 @@ func (c *Channel) describe(mode int) et.Json {
 		return et.Json{
 			"name":        c.Name,
 			"type":        "channel",
+			"count":       len(c.Subscribers),
 			"subscribers": subscribers,
 		}
 	}

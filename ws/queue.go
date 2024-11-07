@@ -9,10 +9,11 @@ import (
 )
 
 type Queue struct {
-	Name        string         `json:"name"`
-	Queue       map[string]int `json:"queue"`
-	Subscribers []*Subscriber  `json:"subscribers"`
-	mutex       *sync.RWMutex
+	Name        string        `json:"name"`
+	Queue       string        `json:"queue"`
+	Turn        int           `json:"turn"`
+	Subscribers []*Subscriber `json:"subscribers"`
+	mutex       *sync.Mutex
 }
 
 /**
@@ -20,12 +21,13 @@ type Queue struct {
 * @param name string
 * @return *Queue
 **/
-func newQueue(name string) *Queue {
+func newQueue(name, queue string) *Queue {
 	result := &Queue{
 		Name:        name,
-		Queue:       map[string]int{},
+		Queue:       queue,
+		Turn:        0,
 		Subscribers: []*Subscriber{},
-		mutex:       &sync.RWMutex{},
+		mutex:       &sync.Mutex{},
 	}
 
 	return result
@@ -35,7 +37,7 @@ func newQueue(name string) *Queue {
 * nextTurn return the next subscriber
 * @return *Subscriber
 **/
-func (c *Queue) nextTurn(queue string) *Subscriber {
+func (c *Queue) nextTurn() *Subscriber {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
@@ -44,18 +46,12 @@ func (c *Queue) nextTurn(queue string) *Subscriber {
 		return nil
 	}
 
-	turn, exist := c.Queue[queue]
-	if !exist {
-		turn = 0
+	if c.Turn >= n {
+		c.Turn = 0
 	}
 
-	if turn >= n {
-		turn = 0
-	}
-
-	result := c.Subscribers[turn]
-	turn++
-	c.Queue[queue] = turn
+	result := c.Subscribers[c.Turn]
+	c.Turn++
 
 	return result
 }
@@ -85,7 +81,6 @@ func (c *Queue) close() {
 	defer c.mutex.Unlock()
 
 	c.Subscribers = nil
-	c.Queue = nil
 }
 
 /**
@@ -101,14 +96,18 @@ func (c *Queue) describe(mode int) et.Json {
 
 		return et.Json{
 			"name":        c.Name,
+			"queue":       c.Queue,
+			"turn":        c.Turn,
 			"type":        "queue",
 			"subscribers": subscribers,
 		}
 	}
 
 	return et.Json{
-		"name": c.Name,
-		"type": "queue",
+		"name":  c.Name,
+		"queue": c.Queue,
+		"turn":  c.Turn,
+		"type":  "queue",
 	}
 }
 
@@ -116,18 +115,9 @@ func (c *Queue) describe(mode int) et.Json {
 * queueSubscribe a client to channel
 * @param client *Subscriber
 **/
-func (c *Queue) subscribe(client *Subscriber, queue string) {
+func (c *Queue) subscribe(client *Subscriber) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
-
-	if queue == "" {
-		return
-	}
-
-	_, exist := c.Queue[queue]
-	if !exist {
-		c.Queue[queue] = 0
-	}
 
 	idx := slices.IndexFunc(c.Subscribers, func(e *Subscriber) bool { return e.Id == client.Id })
 	if idx != -1 {
@@ -161,10 +151,10 @@ func (c *Queue) unsubscribe(client *Subscriber) {
 * @param ignored []string
 * @return int
 **/
-func (c *Queue) broadcast(queue string, msg Message, ignored []string) int {
+func (c *Queue) broadcast(msg Message, ignored []string) int {
 	result := 0
 	msg.Channel = c.Name
-	client := c.nextTurn(queue)
+	client := c.nextTurn()
 	if client != nil && !slices.Contains(ignored, client.Id) {
 		err := client.sendMessage(msg)
 		if err != nil {

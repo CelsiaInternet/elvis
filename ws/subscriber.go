@@ -73,6 +73,7 @@ func (c *Subscriber) describe() et.Json {
 		"id":         c.Id,
 		"name":       c.Name,
 		"addr":       c.Addr,
+		"count":      len(channels),
 		"channels":   channels,
 	}
 }
@@ -202,83 +203,78 @@ func (c *Subscriber) listener(message []byte) {
 
 		response(true, PARAMS_UPDATED)
 	case TpSubscribe:
-		channel := msg.Channel
-		if channel == "" {
+		if msg.Channel == "" {
 			response(false, ERR_CHANNEL_EMPTY)
 			return
 		}
 
-		err := c.hub.Subscribe(c.Id, channel)
+		err := c.hub.Subscribe(c.Id, msg.Channel)
 		if err != nil {
 			response(false, err.Error())
 			return
 		}
 
-		response(true, "Subscribed to channel "+channel)
+		response(true, "Subscribed to channel "+msg.Channel)
 	case TpQueueSubscribe:
-		channel := msg.Channel
-		if channel == "" {
+		if msg.Channel == "" {
 			response(false, ERR_CHANNEL_EMPTY)
 			return
 		}
 
-		queue := msg.queue
-		if queue == "" {
+		if msg.Queue == "" {
 			response(false, ERR_QUEUE_EMPTY)
 			return
 		}
 
-		err := c.hub.QueueSubscribe(c.Id, channel, queue)
+		err := c.hub.QueueSubscribe(c.Id, msg.Channel, msg.Queue)
 		if err != nil {
 			response(false, err.Error())
 			return
 		}
 
-		response(true, "Subscribe to queue "+channel)
+		response(true, strs.Format(`Subscribe to channel:%s queue:%s`, msg.Channel, msg.Queue))
 	case TpStack:
-		channel := msg.Channel
-		if channel == "" {
+		if msg.Channel == "" {
 			response(false, ERR_CHANNEL_EMPTY)
 			return
 		}
 
-		err := c.hub.Stack(c.Id, channel)
+		err := c.hub.Stack(c.Id, msg.Channel)
 		if err != nil {
 			response(false, err.Error())
 			return
 		}
 
-		response(true, "Subscribe to channel "+channel)
+		response(true, "Subscribe to channel "+msg.Channel)
 	case TpUnsubscribe:
-		channel := msg.Channel
-		if channel == "" {
+		if msg.Channel == "" {
 			response(false, ERR_CHANNEL_EMPTY)
 			return
 		}
+		if msg.Queue == "" {
+			msg.Queue = utility.QUEUE_STACK
+		}
 
-		err := c.hub.Unsubscribe(c.Id, channel)
+		err := c.hub.Unsubscribe(c.Id, msg.Channel, msg.Queue)
 		if err != nil {
 			response(false, err.Error())
 			return
 		}
 
-		response(true, "Unsubscribed from channel "+channel)
+		response(true, "Unsubscribed from channel "+msg.Channel)
 	case TpPublish:
-		channel := msg.Channel
-		if channel == "" {
+		if msg.Channel == "" {
 			response(false, ERR_CHANNEL_EMPTY)
 			return
 		}
-		if msg.queue == "" {
-			msg.queue = utility.QUEUE_STACK
+		if msg.Queue == "" {
+			msg.Queue = utility.QUEUE_STACK
 		}
 
-		go c.hub.Publish(channel, msg.queue, msg, []string{c.Id}, c.From())
+		go c.hub.Publish(msg.Channel, msg.Queue, msg, []string{c.Id}, c.From())
 	case TpDirect:
-		clientId := msg.To
-
 		msg.From = c.From()
-		err := c.hub.SendMessage(clientId, msg)
+		err := c.hub.SendMessage(msg.To, msg)
 		if err != nil {
 			response(false, err.Error())
 			return

@@ -124,8 +124,8 @@ func (h *Hub) NewChannel(name string, duration time.Duration) *Channel {
 * @param duration time.Duration
 * @return *Queue
 **/
-func (h *Hub) NewQueue(name string, duration time.Duration) *Queue {
-	result := h.getQueue(name)
+func (h *Hub) NewQueue(name, queue string, duration time.Duration) *Queue {
+	result := h.getQueue(name, queue)
 	if result != nil {
 		return result
 	}
@@ -133,7 +133,7 @@ func (h *Hub) NewQueue(name string, duration time.Duration) *Queue {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
 
-	result = newQueue(name)
+	result = newQueue(name, queue)
 	h.queues = append(h.queues, result)
 
 	clean := func() {
@@ -178,8 +178,8 @@ func (h *Hub) QueueSubscribe(clientId string, channel, queue string) error {
 		return logs.Alertm(ERR_CLIENT_NOT_FOUND)
 	}
 
-	ch := h.NewQueue(channel, 0)
-	ch.subscribe(client, queue)
+	ch := h.NewQueue(channel, queue, 0)
+	ch.subscribe(client)
 
 	return nil
 }
@@ -200,7 +200,7 @@ func (h *Hub) Stack(clientId string, channel string) error {
 * @param channel string
 * @return error
 **/
-func (h *Hub) Unsubscribe(clientId string, channel string) error {
+func (h *Hub) Unsubscribe(clientId string, channel, queue string) error {
 	client := h.getClient(clientId)
 	if client == nil {
 		return nil
@@ -211,7 +211,7 @@ func (h *Hub) Unsubscribe(clientId string, channel string) error {
 		ch.unsubscribe(client)
 	}
 
-	qu := h.getQueue(channel)
+	qu := h.getQueue(channel, queue)
 	if qu != nil {
 		qu.unsubscribe(client)
 	}
@@ -251,9 +251,9 @@ func (h *Hub) SendMessage(clientId string, msg Message) error {
 * @param key string
 * @return et.Items
 **/
-func (h *Hub) GetChannels(key string) et.Items {
+func (h *Hub) GetChannels(name, queue string) et.Items {
 	result := []et.Json{}
-	if key == "" {
+	if name == "" {
 		for _, channel := range h.channels {
 			result = append(result, channel.describe(0))
 		}
@@ -262,12 +262,12 @@ func (h *Hub) GetChannels(key string) et.Items {
 			result = append(result, queue.describe(0))
 		}
 	} else {
-		ch := h.getChannel(key)
+		ch := h.getChannel(name)
 		if ch != nil {
 			result = append(result, ch.describe(0))
 		}
 
-		qu := h.getQueue(key)
+		qu := h.getQueue(name, queue)
 		if qu != nil {
 			result = append(result, qu.describe(0))
 		}
@@ -309,13 +309,13 @@ func (h *Hub) GetClients(key string) et.Items {
 * DrainChannel
 * @param channel *Channel
 **/
-func (h *Hub) DrainChannel(channel string) error {
+func (h *Hub) DrainChannel(channel, queue string) error {
 	ch := h.getChannel(channel)
 	if ch != nil {
 		ch.drain()
 	}
 
-	qu := h.getQueue(channel)
+	qu := h.getQueue(channel, queue)
 	if qu != nil {
 		qu.drain()
 	}

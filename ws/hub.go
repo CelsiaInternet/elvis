@@ -132,11 +132,11 @@ func (h *Hub) removeChannel(value *Channel) {
 	h.channels = append(h.channels[:idx], h.channels[idx+1:]...)
 }
 
-func (h *Hub) getQueue(name string) *Queue {
+func (h *Hub) getQueue(name, queue string) *Queue {
 	h.mutex.RLock()
 	defer h.mutex.RUnlock()
 
-	idx := slices.IndexFunc(h.queues, func(c *Queue) bool { return c.Name == name })
+	idx := slices.IndexFunc(h.queues, func(c *Queue) bool { return c.Name == name && c.Queue == queue })
 	if idx == -1 {
 		return nil
 	}
@@ -165,10 +165,6 @@ func (h *Hub) removeQueuel(value *Queue) {
 	h.queues = append(h.queues[:idx], h.queues[idx+1:]...)
 }
 
-/**
-* onConnect
-* @param client *Subscriber
-**/
 func (h *Hub) onConnect(client *Subscriber) {
 	h.addClient(client)
 
@@ -186,10 +182,6 @@ func (h *Hub) onConnect(client *Subscriber) {
 	logs.Logf(ServiceName, MSG_CLIENT_CONNECT, client.Id, client.Name, h.Id)
 }
 
-/**
-* onDisconnect
-* @param client *Subscriber
-**/
 func (h *Hub) onDisconnect(client *Subscriber) {
 	clientId := client.Id
 	name := client.Name
@@ -207,14 +199,6 @@ func (h *Hub) onDisconnect(client *Subscriber) {
 	logs.Logf(ServiceName, MSG_CLIENT_DISCONNECT, clientId, name, h.Id)
 }
 
-/**
-* connect
-* @param socket *websocket.Conn
-* @param clientId string
-* @param name string
-* @return *Subscriber
-* @return error
-**/
 func (h *Hub) connect(socket *websocket.Conn, clientId, name string) (*Subscriber, error) {
 	client := h.getClient(clientId)
 	if client != nil {
@@ -232,15 +216,6 @@ func (h *Hub) connect(socket *websocket.Conn, clientId, name string) (*Subscribe
 	return client, nil
 }
 
-/**
-* broadcast
-* @param channel string
-* @param queue string
-* @param msg Message
-* @param ignored []string
-* @param from et.Json
-* @return error
-**/
 func (h *Hub) broadcast(channel, queue string, msg Message, ignored []string, from et.Json) {
 	msg.From = from
 	msg.Ignored = ignored
@@ -251,9 +226,9 @@ func (h *Hub) broadcast(channel, queue string, msg Message, ignored []string, fr
 		n = _channel.broadcast(msg, ignored)
 	}
 
-	_queue := h.getQueue(channel)
+	_queue := h.getQueue(channel, queue)
 	if _queue != nil {
-		n = _queue.broadcast(queue, msg, ignored)
+		n = _queue.broadcast(msg, ignored)
 	}
 
 	logs.Logf(ServiceName, "Broadcast channel:%s sent:%d", channel, n)

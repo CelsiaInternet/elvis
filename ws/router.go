@@ -44,8 +44,9 @@ func (h *Hub) ConnectHttp(w http.ResponseWriter, r *http.Request) (*Subscriber, 
 * @param r *http.Request
 **/
 func (h *Hub) HttpGetPublications(w http.ResponseWriter, r *http.Request) {
-	key := r.URL.Query().Get("key")
-	items := h.GetChannels(key)
+	name := r.URL.Query().Get("name")
+	queue := r.URL.Query().Get("queue")
+	items := h.GetChannels(name, queue)
 
 	response.ITEMS(w, r, http.StatusOK, items)
 }
