@@ -328,7 +328,7 @@ func (h *Hub) DrainChannel(channel, queue string) error {
 **/
 func (h *Hub) LoadMain(config ClientConfig) {
 	if h.main != nil {
-		h.main.Close()
+		return
 	}
 
 }

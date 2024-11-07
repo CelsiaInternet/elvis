@@ -3,8 +3,8 @@ package ws
 import (
 	"net/http"
 	"sync"
-	"time"
 
+	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/strs"
@@ -37,8 +37,8 @@ type Client struct {
 	config        *ClientConfig
 	Channels      map[string]func(Message)
 	DirectMessage func(Message)
+	Connected     bool
 	socket        *websocket.Conn
-	connected     bool
 	mutex         *sync.Mutex
 }
 
@@ -51,7 +51,7 @@ func NewClient(config *ClientConfig) (*Client, error) {
 	result := &Client{
 		config:    config,
 		Channels:  make(map[string]func(Message)),
-		connected: false,
+		Connected: false,
 		mutex:     &sync.Mutex{},
 	}
 
@@ -90,7 +90,7 @@ func (c *Client) deleteChannel(channel string) {
 * @return error
 **/
 func (c *Client) Connect() error {
-	if c.connected {
+	if c.Connected {
 		return nil
 	}
 
@@ -101,13 +101,31 @@ func (c *Client) Connect() error {
 	}
 
 	c.socket = socket
-	c.connected = true
+	c.Connected = true
 
 	go c.Listener()
 
 	logs.Logf("Real time", "Connected host:%s", path)
 
 	return nil
+}
+
+func (c *Client) Reconnect() {
+	console.Debug("Reconnect")
+	/*
+		if c.config.Reconcect == 0 {
+			return
+		}
+
+		ticker := time.NewTicker(time.Duration(c.config.Reconcect) * time.Second)
+		for range ticker.C {
+			c.mutex.Lock()
+			if !c.Connected {
+				c.Connect()
+			}
+			c.mutex.Unlock()
+		}
+	*/
 }
 
 /**
@@ -128,29 +146,14 @@ func (c *Client) Close() {
 func (c *Client) Listener() {
 	done := make(chan struct{})
 
-	reconnect := func() {
-		if c.config.Reconcect == 0 {
-			return
-		}
-
-		ticker := time.NewTicker(time.Duration(c.config.Reconcect) * time.Second)
-		for range ticker.C {
-			c.mutex.Lock()
-			if !c.connected {
-				c.Connect()
-			}
-			c.mutex.Unlock()
-		}
-	}
-
 	go func() {
 		defer close(done)
 
 		for {
 			_, data, err := c.socket.ReadMessage()
 			if err != nil {
-				c.connected = false
-				reconnect()
+				c.Connected = false
+				c.Reconnect()
 				return
 			}
 

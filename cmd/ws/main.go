@@ -26,6 +26,7 @@ func main() {
 	conn.Start()
 
 	go startHttp()
+	go startHttp2()
 
 	time.Sleep(3 * time.Second)
 	test1()
@@ -44,6 +45,14 @@ func startHttp() {
 	http.HandleFunc("/ws/subscribers", conn.HttpGetSubscribers)
 	console.LogK("WebSocket", "Http server in http://localhost:3500/ws")
 	console.Fatal(http.ListenAndServe(":3500", nil))
+}
+
+func startHttp2() {
+	http.HandleFunc("/ws", wsHandler)
+	http.HandleFunc("/ws/publications", conn.HttpGetPublications)
+	http.HandleFunc("/ws/subscribers", conn.HttpGetSubscribers)
+	console.LogK("WebSocket", "Http server in http://localhost:3600/ws")
+	console.Fatal(http.ListenAndServe(":3600", nil))
 }
 
 func wsHandler(w http.ResponseWriter, r *http.Request) {
