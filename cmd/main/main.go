@@ -22,14 +22,14 @@ func main() {
 		return
 	}
 
-	conn = ws.NewHub()
+	conn = ws.NewMaster()
 	conn.Start()
 
 	go startHttp()
-	// go startHttp2()
 
 	time.Sleep(3 * time.Second)
-	test1()
+
+	// test1()
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
@@ -40,14 +40,6 @@ func main() {
 }
 
 func startHttp() {
-	http.HandleFunc("/ws", wsHandler)
-	http.HandleFunc("/ws/publications", conn.HttpGetPublications)
-	http.HandleFunc("/ws/subscribers", conn.HttpGetSubscribers)
-	console.LogK("WebSocket", "Http server in http://localhost:3500/ws")
-	console.Fatal(http.ListenAndServe(":3500", nil))
-}
-
-func startHttp2() {
 	http.HandleFunc("/ws", wsHandler)
 	http.HandleFunc("/ws/publications", conn.HttpGetPublications)
 	http.HandleFunc("/ws/subscribers", conn.HttpGetSubscribers)
@@ -68,7 +60,7 @@ func test1() {
 		ClientId:  "client1",
 		Name:      "client1",
 		Schema:    "ws",
-		Host:      "localhost:3500",
+		Host:      "localhost:3600",
 		Path:      "/ws",
 		Reconcect: 3,
 	})
@@ -80,7 +72,7 @@ func test1() {
 		ClientId:  "client2",
 		Name:      "client2",
 		Schema:    "ws",
-		Host:      "localhost:3500",
+		Host:      "localhost:3600",
 		Path:      "/ws",
 		Reconcect: 3,
 	})
@@ -92,7 +84,7 @@ func test1() {
 		ClientId:  "client3",
 		Name:      "client3",
 		Schema:    "ws",
-		Host:      "localhost:3500",
+		Host:      "localhost:3600",
 		Path:      "/ws",
 		Reconcect: 3,
 	})
@@ -183,7 +175,7 @@ func test2() {
 		ClientId:  "client1",
 		Name:      "client1",
 		Schema:    "ws",
-		Host:      "localhost:3500",
+		Host:      "localhost:3600",
 		Path:      "/ws",
 		Reconcect: 5,
 	})

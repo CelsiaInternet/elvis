@@ -19,7 +19,7 @@ type ClientConfig struct {
 	Schema    string
 	Host      string
 	Path      string
-	Header    http.Handler
+	Header    http.Header
 	Reconcect int
 }
 
@@ -38,7 +38,14 @@ type Client struct {
 	Channels          map[string]func(Message)
 	Attempts          *race.Value
 	Connected         *race.Value
-	config            *ClientConfig
+	clientId          string
+	name              string
+	schema            string
+	host              string
+	path              string
+	header            http.Header
+	reconcect         int
+	typeNode          TypeNode
 	directMessage     func(Message)
 	reconnectCallback func(*Client)
 	socket            *websocket.Conn
@@ -46,7 +53,7 @@ type Client struct {
 }
 
 /**
-* LoadFrom
+* NewClient
 * @config config ConectPatams
 * @return erro
 **/
@@ -55,8 +62,14 @@ func NewClient(config *ClientConfig) (*Client, error) {
 		Channels:  make(map[string]func(Message)),
 		Attempts:  race.NewValue(0),
 		Connected: race.NewValue(false),
-		config:    config,
 		mutex:     &sync.Mutex{},
+		clientId:  config.ClientId,
+		name:      config.Name,
+		schema:    config.Schema,
+		host:      config.Host,
+		path:      config.Path,
+		header:    config.Header,
+		reconcect: config.Reconcect,
 	}
 
 	err := result.Connect()
@@ -98,8 +111,8 @@ func (c *Client) Connect() error {
 		return nil
 	}
 
-	path := strs.Format(`%s://%s%s?clientId=%s&name=%s`, c.config.Schema, c.config.Host, c.config.Path, c.config.ClientId, c.config.Name)
-	socket, _, err := websocket.DefaultDialer.Dial(path, nil)
+	path := strs.Format(`%s://%s%s?clientId=%s&name=%s&typeNode=%d`, c.schema, c.host, c.path, c.clientId, c.name, c.typeNode)
+	socket, _, err := websocket.DefaultDialer.Dial(path, c.header)
 	if err != nil {
 		return err
 	}
@@ -110,18 +123,18 @@ func (c *Client) Connect() error {
 
 	go c.Listener()
 
-	logs.Logf(ServiceName, "Connected host:%s", c.config.Host)
+	logs.Logf(ServiceName, "Connected host:%s", c.host)
 
 	return nil
 }
 
 func (c *Client) Reconnect() {
-	if c.config.Reconcect == 0 {
+	if c.reconcect == 0 {
 		logs.Log(ServiceName, "Reconnect disabled")
 		return
 	}
 
-	ticker := time.NewTicker(time.Duration(c.config.Reconcect) * time.Second)
+	ticker := time.NewTicker(time.Duration(c.reconcect) * time.Second)
 	for range ticker.C {
 		c.mutex.Lock()
 		if !c.Connected.Bool() {
@@ -236,6 +249,10 @@ func (c *Client) send(message Message) error {
 		return logs.Alertm(ERR_NOT_CONNECT_WS)
 	}
 
+	if !c.Connected.Bool() {
+		return logs.Alertm(ERR_CLIENT_DISCONNECTED)
+	}
+
 	msg, err := message.Encode()
 	if err != nil {
 		return err
@@ -254,7 +271,10 @@ func (c *Client) send(message Message) error {
 * @return et.Json
 **/
 func (c *Client) From() et.Json {
-	return c.config.From()
+	return et.Json{
+		"id":   c.clientId,
+		"name": c.name,
+	}
 }
 
 /**
@@ -276,7 +296,7 @@ func (c *Client) SetFrom(name string) error {
 		return logs.Alertm(ERR_INVALID_NAME)
 	}
 
-	c.config.Name = name
+	c.name = name
 	msg := NewMessage(c.From(), c.From(), TpSetFrom)
 	return c.send(msg)
 }
@@ -339,7 +359,7 @@ func (c *Client) Unsubscribe(channel string) {
 **/
 func (c *Client) Publish(channel string, message interface{}) {
 	msg := NewMessage(c.From(), message, TpPublish)
-	msg.Ignored = []string{c.config.ClientId}
+	msg.Ignored = []string{c.clientId}
 	msg.Channel = channel
 
 	c.send(msg)
@@ -353,7 +373,7 @@ func (c *Client) Publish(channel string, message interface{}) {
 **/
 func (c *Client) SendMessage(clientId string, message interface{}) error {
 	msg := NewMessage(c.From(), message, TpDirect)
-	msg.Ignored = []string{c.config.ClientId}
+	msg.Ignored = []string{c.clientId}
 	msg.To = clientId
 
 	return c.send(msg)

@@ -12,6 +12,7 @@ const (
 	ERR_NOT_DEFINE_CLIENTID     = "Not define clientId"
 	ERR_NOT_DEFINE_USERNAME     = "Not define username"
 	ERR_NOT_CONNECT_WS          = "Not connect socket"
+	ERR_CLIENT_DISCONNECTED     = "Client disconnected"
 	ERR_CHANNEL_NOT_FOUND       = "Channel not found"
 	ERR_CHANNEL_NOT_SUBSCRIBERS = "Channel not subscribers - %s"
 	ERR_CHANNEL_EMPTY           = "Channel is empty"

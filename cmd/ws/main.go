@@ -25,11 +25,9 @@ func main() {
 	conn = ws.NewHub()
 	conn.Start()
 
-	// go startHttp()
-	go startHttp2()
-
+	go startHttp()
 	time.Sleep(3 * time.Second)
-	test1()
+	test3()
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
@@ -45,14 +43,6 @@ func startHttp() {
 	http.HandleFunc("/ws/subscribers", conn.HttpGetSubscribers)
 	console.LogK("WebSocket", "Http server in http://localhost:3500/ws")
 	console.Fatal(http.ListenAndServe(":3500", nil))
-}
-
-func startHttp2() {
-	http.HandleFunc("/ws", wsHandler)
-	http.HandleFunc("/ws/publications", conn.HttpGetPublications)
-	http.HandleFunc("/ws/subscribers", conn.HttpGetSubscribers)
-	console.LogK("WebSocket", "Http server in http://localhost:3600/ws")
-	console.Fatal(http.ListenAndServe(":3600", nil))
 }
 
 func wsHandler(w http.ResponseWriter, r *http.Request) {
@@ -217,6 +207,17 @@ func test2() {
 
 	client1.Subscribe("Hola", func(msg ws.Message) {
 		console.DebugF("Channel:%s :: %s", msg.Channel, msg.ToString())
+	})
+
+}
+
+func test3() {
+	conn.Join(ws.AdapterConfig{
+		Schema:    "ws",
+		Host:      "localhost:3500",
+		Path:      "/ws",
+		TypeNode:  ws.NodeWorker,
+		Reconcect: 3,
 	})
 
 }

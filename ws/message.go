@@ -42,6 +42,10 @@ func (s TpMessage) String() string {
 		return "Publish"
 	case TpDirect:
 		return "Direct"
+	case TpConnect:
+		return "Connect"
+	case TpDisconnect:
+		return "Disconnect"
 	default:
 		return "Unknown"
 	}
@@ -114,19 +118,6 @@ func (e Message) Encode() ([]byte, error) {
 }
 
 /**
-* ToString return the message as string
-* @return string
-**/
-func (e Message) ToString() string {
-	b, err := e.Encode()
-	if err != nil {
-		return ""
-	}
-
-	return string(b)
-}
-
-/**
 * ToJson return the message as et.Json
 * @return et.Json
 **/
@@ -136,7 +127,22 @@ func (e Message) ToJson() et.Json {
 		return et.Json{}
 	}
 
+	result["tp"] = et.Json{
+		"code": e.Tp,
+		"name": e.Tp.String(),
+	}
+
 	return result
+}
+
+/**
+* ToString return the message as string
+* @return string
+**/
+func (e Message) ToString() string {
+	result := e.ToJson()
+
+	return result.ToString()
 }
 
 /**

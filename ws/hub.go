@@ -21,38 +21,64 @@ var upgrader = websocket.Upgrader{
 }
 
 type Hub struct {
-	Id         string
-	Name       string
-	Host       string
-	clients    []*Subscriber
-	channels   []*Channel
-	queues     []*Queue
-	mutex      *sync.RWMutex
-	register   chan *Subscriber
-	unregister chan *Subscriber
-	main       *Client
-	run        bool
+	Id                  string
+	Name                string
+	Host                string
+	TypeNode            TypeNode
+	clients             []*Subscriber
+	channels            []*Channel
+	queues              []*Queue
+	register            chan *Subscriber
+	unregister          chan *Subscriber
+	master              *Client
+	token               string
+	run                 bool
+	clusterConnected    func(string)
+	clusterSubscribed   func(string)
+	clusterUnSubscribed func(string)
+	mutex               *sync.RWMutex
 }
 
 /**
 * NewWs
 * @return *Hub
 **/
-func NewHub() *Hub {
-	name := envar.GetStr(ServiceName, "RT_HUB_NAME")
-
+func newHub(tp TypeNode, name string) *Hub {
 	result := &Hub{
 		Id:         utility.UUID(),
 		Name:       name,
+		TypeNode:   tp,
 		clients:    make([]*Subscriber, 0),
 		channels:   make([]*Channel, 0),
 		register:   make(chan *Subscriber),
 		unregister: make(chan *Subscriber),
-		mutex:      &sync.RWMutex{},
 		run:        false,
+		mutex:      &sync.RWMutex{},
 	}
 
 	return result
+}
+
+/**
+* NewHub
+* @return *Hub
+**/
+func NewHub() *Hub {
+	name := envar.GetStr(ServiceName, "RT_HUB_NAME")
+	return newHub(NotNode, name)
+}
+
+/**
+* NewMaster
+* @return *Hub
+**/
+func NewMaster() *Hub {
+	name := envar.GetStr("Master", "RT_HUB_NAME")
+	return newHub(NodeMaster, name)
+}
+
+func (h *Hub) config() {
+	h.token = ""
 }
 
 func (h *Hub) start() {
@@ -175,9 +201,8 @@ func (h *Hub) onConnect(client *Subscriber) {
 		"name":     client.Name,
 	}, TpConnect)
 	msg.Channel = "ws/connect"
-
-	h.Publish(msg.Channel, "", msg, []string{client.Id}, h.From())
 	client.sendMessage(msg)
+	h.ClusterConnected(client.Id)
 
 	logs.Logf(ServiceName, MSG_CLIENT_CONNECT, client.Id, client.Name, h.Id)
 }
@@ -186,15 +211,7 @@ func (h *Hub) onDisconnect(client *Subscriber) {
 	clientId := client.Id
 	name := client.Name
 	h.removeClient(client)
-
-	msg := NewMessage(h.From(), et.Json{
-		"ok":      true,
-		"message": MSG_DISCONNECT_SUCCESSFULLY,
-		"client":  client.From(),
-	}, TpDisconnect)
-	msg.Channel = "ws/disconnect"
-
-	h.Publish(msg.Channel, "", msg, []string{clientId}, h.From())
+	h.ClusterUnSubscribed(clientId)
 
 	logs.Logf(ServiceName, MSG_CLIENT_DISCONNECT, clientId, name, h.Id)
 }

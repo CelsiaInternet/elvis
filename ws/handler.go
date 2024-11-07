@@ -10,6 +10,18 @@ import (
 	"github.com/celsiainternet/elvis/utility"
 )
 
+func (h *Hub) Describe() et.Json {
+	return et.Json{
+		"id":       h.Id,
+		"name":     h.Name,
+		"host":     h.Host,
+		"type":     h.TypeNode.String(),
+		"channels": len(h.channels),
+		"clients":  len(h.clients),
+		"queues":   len(h.queues),
+	}
+}
+
 /**
 * Close
 **/
@@ -67,6 +79,13 @@ func (h *Hub) Start() {
 **/
 func (h *Hub) SetName(name string) {
 	h.Name = name
+}
+
+/**
+* InitMaster
+**/
+func (h *Hub) InitMaster() {
+	h.TypeNode = NodeMaster
 }
 
 /**
@@ -162,6 +181,10 @@ func (h *Hub) Subscribe(clientId string, channel string) error {
 	ch := h.NewChannel(channel, 0)
 	ch.subscribe(client)
 
+	if h.TypeNode != NotNode {
+		h.ClusterSubscribed(channel)
+	}
+
 	return nil
 }
 
@@ -180,6 +203,10 @@ func (h *Hub) QueueSubscribe(clientId string, channel, queue string) error {
 
 	ch := h.NewQueue(channel, queue, 0)
 	ch.subscribe(client)
+
+	if h.TypeNode != NotNode {
+		h.ClusterSubscribed(channel)
+	}
 
 	return nil
 }
@@ -216,6 +243,10 @@ func (h *Hub) Unsubscribe(clientId string, channel, queue string) error {
 		qu.unsubscribe(client)
 	}
 
+	if h.TypeNode != NotNode {
+		h.ClusterUnSubscribed(channel)
+	}
+
 	return nil
 }
 
@@ -229,6 +260,10 @@ func (h *Hub) Unsubscribe(clientId string, channel, queue string) error {
 **/
 func (h *Hub) Publish(channel, queue string, msg Message, ignored []string, from et.Json) {
 	h.broadcast(channel, queue, msg, ignored, from)
+
+	if h.TypeNode != NotNode {
+		h.ClusterPublish(channel, msg)
+	}
 }
 
 /**
@@ -239,6 +274,11 @@ func (h *Hub) Publish(channel, queue string, msg Message, ignored []string, from
 **/
 func (h *Hub) SendMessage(clientId string, msg Message) error {
 	client := h.getClient(clientId)
+	if client == nil && h.TypeNode != NotNode {
+		channel := clusterChannel(clientId)
+		h.master.Publish(channel, msg)
+	}
+
 	if client == nil {
 		return logs.Alertm(ERR_CLIENT_NOT_FOUND)
 	}
@@ -321,14 +361,4 @@ func (h *Hub) DrainChannel(channel, queue string) error {
 	}
 
 	return nil
-}
-
-/**
-* LoadMain
-**/
-func (h *Hub) LoadMain(config ClientConfig) {
-	if h.main != nil {
-		return
-	}
-
 }
