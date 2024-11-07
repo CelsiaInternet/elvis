@@ -25,8 +25,8 @@ func main() {
 	conn = ws.NewHub()
 	conn.Start()
 
-	// go startHttp()
-	go startHttp2()
+	go startHttp()
+	// go startHttp2()
 
 	time.Sleep(3 * time.Second)
 	test1()
@@ -100,10 +100,6 @@ func test1() {
 		console.Fatal(err)
 	}
 
-	client1.SetReconnectCallback(func(c *ws.Client) {
-		console.Debug("ReconnectCallback:", "Hola")
-	})
-
 	client1.SetDirectMessage(func(msg ws.Message) {
 		console.Debug("DirectMessage:", msg.ToString())
 	})
@@ -112,28 +108,12 @@ func test1() {
 		console.Debug("client1", msg.ToString())
 	})
 
-	client2.SetReconnectCallback(func(c *ws.Client) {
-		console.Debug("ReconnectCallback:", "Hola")
-	})
-
-	client2.SetDirectMessage(func(msg ws.Message) {
-		console.Debug("DirectMessage:", msg.ToString())
-	})
-
 	client2.Subscribe("Hola", func(msg ws.Message) {
 		console.Debug("client2", msg.ToString())
 	})
 
 	client3.Subscribe("Hola", func(msg ws.Message) {
 		console.Debug("client3:", msg.ToString())
-	})
-
-	client3.SetReconnectCallback(func(c *ws.Client) {
-		console.Debug("ReconnectCallback:", "Hola")
-	})
-
-	client3.SetDirectMessage(func(msg ws.Message) {
-		console.Debug("DirectMessage:", msg.ToString())
 	})
 
 	client1.Stack("cola", func(msg ws.Message) {
@@ -205,7 +185,7 @@ func test2() {
 		Schema:    "ws",
 		Host:      "localhost:3500",
 		Path:      "/ws",
-		Reconcect: 3,
+		Reconcect: 5,
 	})
 	if err != nil {
 		console.Fatal(err)

@@ -3,10 +3,11 @@ package ws
 import (
 	"net/http"
 	"sync"
+	"time"
 
-	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/logs"
+	"github.com/celsiainternet/elvis/race"
 	"github.com/celsiainternet/elvis/strs"
 	"github.com/celsiainternet/elvis/utility"
 	"github.com/gorilla/websocket"
@@ -34,12 +35,14 @@ func (s *ClientConfig) From() et.Json {
 }
 
 type Client struct {
-	config        *ClientConfig
-	Channels      map[string]func(Message)
-	DirectMessage func(Message)
-	Connected     bool
-	socket        *websocket.Conn
-	mutex         *sync.Mutex
+	Channels          map[string]func(Message)
+	Attempts          *race.Value
+	Connected         *race.Value
+	config            *ClientConfig
+	directMessage     func(Message)
+	reconnectCallback func(*Client)
+	socket            *websocket.Conn
+	mutex             *sync.Mutex
 }
 
 /**
@@ -49,9 +52,10 @@ type Client struct {
 **/
 func NewClient(config *ClientConfig) (*Client, error) {
 	result := &Client{
-		config:    config,
 		Channels:  make(map[string]func(Message)),
-		Connected: false,
+		Attempts:  race.NewValue(0),
+		Connected: race.NewValue(false),
+		config:    config,
 		mutex:     &sync.Mutex{},
 	}
 
@@ -90,7 +94,7 @@ func (c *Client) deleteChannel(channel string) {
 * @return error
 **/
 func (c *Client) Connect() error {
-	if c.Connected {
+	if c.Connected.Bool() {
 		return nil
 	}
 
@@ -101,31 +105,36 @@ func (c *Client) Connect() error {
 	}
 
 	c.socket = socket
-	c.Connected = true
+	c.Connected.Set(true)
+	c.Attempts.Set(0)
 
 	go c.Listener()
 
-	logs.Logf("Real time", "Connected host:%s", path)
+	logs.Logf(ServiceName, "Connected host:%s", c.config.Host)
 
 	return nil
 }
 
 func (c *Client) Reconnect() {
-	console.Debug("Reconnect")
-	/*
-		if c.config.Reconcect == 0 {
-			return
-		}
+	if c.config.Reconcect == 0 {
+		logs.Log(ServiceName, "Reconnect disabled")
+		return
+	}
 
-		ticker := time.NewTicker(time.Duration(c.config.Reconcect) * time.Second)
-		for range ticker.C {
-			c.mutex.Lock()
-			if !c.Connected {
-				c.Connect()
+	ticker := time.NewTicker(time.Duration(c.config.Reconcect) * time.Second)
+	for range ticker.C {
+		c.mutex.Lock()
+		if !c.Connected.Bool() {
+			err := c.Connect()
+			if err != nil {
+				c.Attempts.Increase(1)
+				logs.Logf(ServiceName, `Reconnect attempts:%d`, c.Attempts.Int())
+			} else {
+				c.ReconnectCallback()
 			}
-			c.mutex.Unlock()
 		}
-	*/
+		c.mutex.Unlock()
+	}
 }
 
 /**
@@ -152,7 +161,7 @@ func (c *Client) Listener() {
 		for {
 			_, data, err := c.socket.ReadMessage()
 			if err != nil {
-				c.Connected = false
+				c.Connected.Set(false)
 				c.Reconnect()
 				return
 			}
@@ -166,11 +175,52 @@ func (c *Client) Listener() {
 			f, ok := c.getChannel(msg.Channel)
 			if ok {
 				f(msg)
-			} else if c.DirectMessage != nil {
+			} else {
 				c.DirectMessage(msg)
 			}
 		}
 	}()
+}
+
+/**
+* SetDirectMessage
+* @param reciveFn func(message.Message)
+**/
+func (c *Client) SetDirectMessage(reciveFn func(Message)) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	c.directMessage = reciveFn
+}
+
+/**
+* DirectMessage
+* @param msg Message
+**/
+func (c *Client) DirectMessage(msg Message) {
+	if c.directMessage != nil {
+		c.directMessage(msg)
+	}
+}
+
+/**
+* SetReconnectCallback
+* @param reciveFn func()
+**/
+func (c *Client) SetReconnectCallback(reciveFn func(c *Client)) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	c.reconnectCallback = reciveFn
+}
+
+/**
+* ReconnectCallback
+**/
+func (c *Client) ReconnectCallback() {
+	if c.reconnectCallback != nil {
+		c.reconnectCallback(c)
+	}
 }
 
 /**
