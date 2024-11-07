@@ -37,6 +37,11 @@ func (h *Hub) Close() {
 		channel.close()
 	}
 	h.channels = nil
+
+	for _, queue := range h.queues {
+		queue.close()
+	}
+	h.queues = nil
 }
 
 /**
@@ -81,12 +86,7 @@ func (h *Hub) From() et.Json {
 * @return *Channel
 **/
 func (h *Hub) GetChanel(name string) *Channel {
-	idx := h.indexChannel(name)
-	if idx == -1 {
-		return nil
-	}
-
-	return h.channels[idx]
+	return h.getChannel(name)
 }
 
 /**
@@ -96,15 +96,15 @@ func (h *Hub) GetChanel(name string) *Channel {
 * @return *Channel
 **/
 func (h *Hub) NewChannel(name string, duration time.Duration) *Channel {
-	idx := h.indexChannel(name)
-	if idx != -1 {
-		return h.channels[idx]
+	result := h.getChannel(name)
+	if result != nil {
+		return result
 	}
 
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
 
-	result := newChannel(name)
+	result = newChannel(name)
 	h.channels = append(h.channels, result)
 
 	clean := func() {
@@ -125,15 +125,15 @@ func (h *Hub) NewChannel(name string, duration time.Duration) *Channel {
 * @return *Queue
 **/
 func (h *Hub) NewQueue(name string, duration time.Duration) *Queue {
-	idx := h.indexQueue(name)
-	if idx != -1 {
-		return h.queues[idx]
+	result := h.getQueue(name)
+	if result != nil {
+		return result
 	}
 
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
 
-	result := newQueue(name)
+	result = newQueue(name)
 	h.queues = append(h.queues, result)
 
 	clean := func() {
@@ -154,12 +154,11 @@ func (h *Hub) NewQueue(name string, duration time.Duration) *Queue {
 * @return error
 **/
 func (h *Hub) Subscribe(clientId string, channel string) error {
-	idxCl := h.indexClient(clientId)
-	if idxCl == -1 {
+	client := h.getClient(clientId)
+	if client == nil {
 		return logs.Alertm(ERR_CLIENT_NOT_FOUND)
 	}
 
-	client := h.clients[idxCl]
 	ch := h.NewChannel(channel, 0)
 	ch.subscribe(client)
 
@@ -174,12 +173,11 @@ func (h *Hub) Subscribe(clientId string, channel string) error {
 * @return error
 **/
 func (h *Hub) QueueSubscribe(clientId string, channel, queue string) error {
-	idxCl := h.indexClient(clientId)
-	if idxCl == -1 {
+	client := h.getClient(clientId)
+	if client == nil {
 		return logs.Alertm(ERR_CLIENT_NOT_FOUND)
 	}
 
-	client := h.clients[idxCl]
 	ch := h.NewQueue(channel, 0)
 	ch.subscribe(client, queue)
 
@@ -203,23 +201,19 @@ func (h *Hub) Stack(clientId string, channel string) error {
 * @return error
 **/
 func (h *Hub) Unsubscribe(clientId string, channel string) error {
-	idxCl := h.indexClient(clientId)
-	if idxCl == -1 {
+	client := h.getClient(clientId)
+	if client == nil {
 		return nil
 	}
 
-	client := h.clients[idxCl]
-
-	idx := h.indexChannel(channel)
-	if idx != -1 {
-		ch := h.channels[idx]
+	ch := h.getChannel(channel)
+	if ch != nil {
 		ch.unsubscribe(client)
 	}
 
-	idx = h.indexQueue(channel)
-	if idx != -1 {
-		ch := h.queues[idx]
-		ch.unsubscribe(client)
+	qu := h.getQueue(channel)
+	if qu != nil {
+		qu.unsubscribe(client)
 	}
 
 	return nil
@@ -233,13 +227,8 @@ func (h *Hub) Unsubscribe(clientId string, channel string) error {
 * @param from et.Json
 * @return error
 **/
-func (h *Hub) Publish(channel string, msg Message, ignored []string, from et.Json) error {
-	err := h.broadcast(channel, msg, ignored, from)
-	if err != nil {
-		return err
-	}
-
-	return nil
+func (h *Hub) Publish(channel, queue string, msg Message, ignored []string, from et.Json) {
+	h.broadcast(channel, queue, msg, ignored, from)
 }
 
 /**
@@ -249,17 +238,12 @@ func (h *Hub) Publish(channel string, msg Message, ignored []string, from et.Jso
 * @return error
 **/
 func (h *Hub) SendMessage(clientId string, msg Message) error {
-	idx := h.indexClient(clientId)
-	if idx == -1 {
-		return logs.NewError(ERR_CLIENT_NOT_FOUND)
+	client := h.getClient(clientId)
+	if client == nil {
+		return logs.Alertm(ERR_CLIENT_NOT_FOUND)
 	}
 
-	if idx != -1 {
-		client := h.clients[idx]
-		return client.sendMessage(msg)
-	}
-
-	return nil
+	return client.sendMessage(msg)
 }
 
 /**
@@ -273,10 +257,19 @@ func (h *Hub) GetChannels(key string) et.Items {
 		for _, channel := range h.channels {
 			result = append(result, channel.describe(0))
 		}
+
+		for _, queue := range h.queues {
+			result = append(result, queue.describe(0))
+		}
 	} else {
-		idx := h.indexChannel(key)
-		if idx != -1 {
-			result = append(result, h.channels[idx].describe(0))
+		ch := h.getChannel(key)
+		if ch != nil {
+			result = append(result, ch.describe(0))
+		}
+
+		qu := h.getQueue(key)
+		if qu != nil {
+			result = append(result, qu.describe(0))
 		}
 	}
 
@@ -299,9 +292,9 @@ func (h *Hub) GetClients(key string) et.Items {
 			result = append(result, client.describe())
 		}
 	} else {
-		idx := h.indexClient(key)
-		if idx != -1 {
-			result = append(result, h.clients[idx].describe())
+		client := h.getClient(key)
+		if client != nil {
+			result = append(result, client.describe())
 		}
 	}
 
@@ -317,16 +310,14 @@ func (h *Hub) GetClients(key string) et.Items {
 * @param channel *Channel
 **/
 func (h *Hub) DrainChannel(channel string) error {
-	idx := h.indexChannel(channel)
-	if idx != -1 {
-		ch := h.channels[idx]
+	ch := h.getChannel(channel)
+	if ch != nil {
 		ch.drain()
 	}
 
-	idx = h.indexQueue(channel)
-	if idx != -1 {
-		ch := h.queues[idx]
-		ch.drain()
+	qu := h.getQueue(channel)
+	if qu != nil {
+		qu.drain()
 	}
 
 	return nil

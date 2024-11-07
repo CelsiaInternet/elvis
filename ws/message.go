@@ -76,9 +76,10 @@ type Message struct {
 	From       et.Json     `json:"from"`
 	To         string      `json:"to"`
 	Ignored    []string    `json:"ignored"`
-	Channel    string      `json:"channel"`
 	Data       interface{} `json:"data"`
 	Tp         TpMessage   `json:"tp"`
+	Channel    string      `json:"channel"`
+	queue      string
 }
 
 /**

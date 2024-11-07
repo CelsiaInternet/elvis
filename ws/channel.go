@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/logs"
 	"golang.org/x/exp/slices"
 )
 
@@ -35,20 +36,6 @@ func newChannel(name string) *Channel {
 * drain
 **/
 func (c *Channel) drain() {
-	for _, client := range c.Subscribers {
-		if client == nil {
-			continue
-		}
-
-		delete(client.Channels, c.Name)
-	}
-	c.Subscribers = []*Subscriber{}
-}
-
-/**
-* close
-**/
-func (c *Channel) close() {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
@@ -60,7 +47,14 @@ func (c *Channel) close() {
 		delete(client.Channels, c.Name)
 	}
 
-	c.Subscribers = nil
+	c.Subscribers = []*Subscriber{}
+}
+
+/**
+* close
+**/
+func (c *Channel) close() {
+	c.drain()
 }
 
 /**
@@ -76,12 +70,14 @@ func (c *Channel) describe(mode int) et.Json {
 
 		return et.Json{
 			"name":        c.Name,
+			"type":        "channel",
 			"subscribers": subscribers,
 		}
 	}
 
 	return et.Json{
 		"name": c.Name,
+		"type": "channel",
 	}
 }
 
@@ -90,11 +86,14 @@ func (c *Channel) describe(mode int) et.Json {
 * @return int
 **/
 func (c *Channel) Count() int {
+	c.mutex.RLock()
+	defer c.mutex.RUnlock()
+
 	return len(c.Subscribers)
 }
 
 /**
-* queueSubscribe a client to channel
+* subscribe a client to channel
 * @param client *Subscriber
 **/
 func (c *Channel) subscribe(client *Subscriber) {
@@ -125,4 +124,30 @@ func (c *Channel) unsubscribe(client *Subscriber) {
 
 	c.Subscribers = append(c.Subscribers[:idx], c.Subscribers[idx+1:]...)
 	delete(client.Channels, c.Name)
+}
+
+/**
+* broadcast
+* @param msg Message
+* @param ignored []string
+* @return int
+**/
+func (c *Channel) broadcast(msg Message, ignored []string) int {
+	c.mutex.RLock()
+	defer c.mutex.RUnlock()
+
+	result := 0
+	msg.Channel = c.Name
+	for _, client := range c.Subscribers {
+		if !slices.Contains(ignored, client.Id) {
+			err := client.sendMessage(msg)
+			if err != nil {
+				logs.Alert(err)
+			} else {
+				result++
+			}
+		}
+	}
+
+	return result
 }

@@ -39,11 +39,11 @@ func (h *Hub) ConnectHttp(w http.ResponseWriter, r *http.Request) (*Subscriber, 
 }
 
 /**
-* HttpGetChannels
+* HttpGetPublications
 * @param w http.ResponseWriter
 * @param r *http.Request
 **/
-func (h *Hub) HttpGetChannels(w http.ResponseWriter, r *http.Request) {
+func (h *Hub) HttpGetPublications(w http.ResponseWriter, r *http.Request) {
 	key := r.URL.Query().Get("key")
 	items := h.GetChannels(key)
 
@@ -51,11 +51,11 @@ func (h *Hub) HttpGetChannels(w http.ResponseWriter, r *http.Request) {
 }
 
 /**
-* HttpGetClients
+* HttpGetSubscribers
 * @param w http.ResponseWriter
 * @param r *http.Request
 **/
-func (h *Hub) HttpGetClients(w http.ResponseWriter, r *http.Request) {
+func (h *Hub) HttpGetSubscribers(w http.ResponseWriter, r *http.Request) {
 	key := r.URL.Query().Get("key")
 	items := h.GetClients(key)
 

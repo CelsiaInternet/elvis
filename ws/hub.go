@@ -27,7 +27,7 @@ type Hub struct {
 	clients    []*Subscriber
 	channels   []*Channel
 	queues     []*Queue
-	mutex      *sync.Mutex
+	mutex      *sync.RWMutex
 	register   chan *Subscriber
 	unregister chan *Subscriber
 	main       *Client
@@ -48,7 +48,7 @@ func NewHub() *Hub {
 		channels:   make([]*Channel, 0),
 		register:   make(chan *Subscriber),
 		unregister: make(chan *Subscriber),
-		mutex:      &sync.Mutex{},
+		mutex:      &sync.RWMutex{},
 		run:        false,
 	}
 
@@ -66,63 +66,103 @@ func (h *Hub) start() {
 	}
 }
 
-/**
-* indexChannel
-* @param name string
-* @return int
-**/
-func (h *Hub) indexChannel(name string) int {
+func (h *Hub) getClient(id string) *Subscriber {
+	h.mutex.RLock()
+	defer h.mutex.RUnlock()
+
+	idx := slices.IndexFunc(h.clients, func(c *Subscriber) bool { return c.Id == id })
+	if idx == -1 {
+		return nil
+	}
+
+	return h.clients[idx]
+}
+
+func (h *Hub) addClient(value *Subscriber) {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
 
-	return slices.IndexFunc(h.channels, func(c *Channel) bool { return c.Name == name })
+	h.clients = append(h.clients, value)
 }
 
-/**
-* indexQueue
-* @param name string
-* @return int
-**/
-func (h *Hub) indexQueue(name string) int {
+func (h *Hub) removeClient(value *Subscriber) {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
 
-	return slices.IndexFunc(h.queues, func(c *Queue) bool { return c.Name == name })
-}
-
-/**
-* indexClient
-* @param id string
-* @return int
-**/
-func (h *Hub) indexClient(id string) int {
-	h.mutex.Lock()
-	defer h.mutex.Unlock()
-
-	return slices.IndexFunc(h.clients, func(c *Subscriber) bool { return c.Id == id })
-}
-
-func (h *Hub) addClient(client *Subscriber) {
-	h.mutex.Lock()
-	defer h.mutex.Unlock()
-
-	h.clients = append(h.clients, client)
-}
-
-func (h *Hub) removeClient(client *Subscriber) {
-	idx := h.indexClient(client.Id)
+	idx := slices.IndexFunc(h.clients, func(c *Subscriber) bool { return c.Id == value.Id })
 	if idx == -1 {
 		return
 	}
 
-	client.close()
+	value.close()
 
+	h.clients = append(h.clients[:idx], h.clients[idx+1:]...)
+}
+
+func (h *Hub) getChannel(name string) *Channel {
+	h.mutex.RLock()
+	defer h.mutex.RUnlock()
+
+	idx := slices.IndexFunc(h.channels, func(c *Channel) bool { return c.Name == name })
+	if idx == -1 {
+		return nil
+	}
+
+	return h.channels[idx]
+}
+
+func (h *Hub) addChannel(value *Channel) {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
 
-	copy(h.clients[idx:], h.clients[idx+1:])
-	h.clients[len(h.clients)-1] = nil
-	h.clients = h.clients[:len(h.clients)-1]
+	h.channels = append(h.channels, value)
+}
+
+func (h *Hub) removeChannel(value *Channel) {
+	h.mutex.Lock()
+	defer h.mutex.Unlock()
+
+	idx := slices.IndexFunc(h.channels, func(c *Channel) bool { return c.Name == value.Name })
+	if idx == -1 {
+		return
+	}
+
+	value.close()
+
+	h.channels = append(h.channels[:idx], h.channels[idx+1:]...)
+}
+
+func (h *Hub) getQueue(name string) *Queue {
+	h.mutex.RLock()
+	defer h.mutex.RUnlock()
+
+	idx := slices.IndexFunc(h.queues, func(c *Queue) bool { return c.Name == name })
+	if idx == -1 {
+		return nil
+	}
+
+	return h.queues[idx]
+}
+
+func (h *Hub) addQueue(value *Queue) {
+	h.mutex.Lock()
+	defer h.mutex.Unlock()
+
+	h.queues = append(h.queues, value)
+}
+
+func (h *Hub) removeQueuel(value *Queue) {
+	h.mutex.Lock()
+	defer h.mutex.Unlock()
+
+	idx := slices.IndexFunc(h.queues, func(c *Queue) bool { return c.Name == value.Name })
+	if idx == -1 {
+		return
+	}
+
+	value.close()
+
+	h.queues = append(h.queues[:idx], h.queues[idx+1:]...)
 }
 
 /**
@@ -140,7 +180,7 @@ func (h *Hub) onConnect(client *Subscriber) {
 	}, TpConnect)
 	msg.Channel = "ws/connect"
 
-	h.Publish(msg.Channel, msg, []string{client.Id}, h.From())
+	h.Publish(msg.Channel, "", msg, []string{client.Id}, h.From())
 	client.sendMessage(msg)
 
 	logs.Logf(ServiceName, MSG_CLIENT_CONNECT, client.Id, client.Name, h.Id)
@@ -162,7 +202,7 @@ func (h *Hub) onDisconnect(client *Subscriber) {
 	}, TpDisconnect)
 	msg.Channel = "ws/disconnect"
 
-	h.Publish(msg.Channel, msg, []string{clientId}, h.From())
+	h.Publish(msg.Channel, "", msg, []string{clientId}, h.From())
 
 	logs.Logf(ServiceName, MSG_CLIENT_DISCONNECT, clientId, name, h.Id)
 }
@@ -176,9 +216,9 @@ func (h *Hub) onDisconnect(client *Subscriber) {
 * @return error
 **/
 func (h *Hub) connect(socket *websocket.Conn, clientId, name string) (*Subscriber, error) {
-	idxC := h.indexClient(clientId)
-	if idxC != -1 {
-		return h.clients[idxC], nil
+	client := h.getClient(clientId)
+	if client != nil {
+		return client, nil
 	}
 
 	client, isNew := newSubscriber(h, socket, clientId, name)
@@ -195,48 +235,26 @@ func (h *Hub) connect(socket *websocket.Conn, clientId, name string) (*Subscribe
 /**
 * broadcast
 * @param channel string
+* @param queue string
 * @param msg Message
 * @param ignored []string
 * @param from et.Json
 * @return error
 **/
-func (h *Hub) broadcast(channel string, msg Message, ignored []string, from et.Json) error {
+func (h *Hub) broadcast(channel, queue string, msg Message, ignored []string, from et.Json) {
 	msg.From = from
 	msg.Ignored = ignored
 
 	n := 0
-	idx := h.indexChannel(channel)
-	if idx != -1 {
-		_channel := h.channels[idx]
-		msg.Channel = _channel.Name
-		for _, client := range _channel.Subscribers {
-			if !slices.Contains(ignored, client.Id) {
-				err := client.sendMessage(msg)
-				if err != nil {
-					logs.Alert(err)
-				} else {
-					n++
-				}
-			}
-		}
+	_channel := h.getChannel(channel)
+	if _channel != nil {
+		n = _channel.broadcast(msg, ignored)
 	}
 
-	idx = h.indexQueue(channel)
-	if idx != -1 {
-		_channel := h.queues[idx]
-		msg.Channel = _channel.Name
-		client := _channel.nextTurn(utility.QUEUE_STACK)
-		if client != nil {
-			err := client.sendMessage(msg)
-			if err != nil {
-				logs.Alert(err)
-			} else {
-				n++
-			}
-		}
+	_queue := h.getQueue(channel)
+	if _queue != nil {
+		n = _queue.broadcast(queue, msg, ignored)
 	}
 
 	logs.Logf(ServiceName, "Broadcast channel:%s sent:%d", channel, n)
-
-	return nil
 }

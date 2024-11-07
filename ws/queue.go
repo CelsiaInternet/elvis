@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/logs"
 	"golang.org/x/exp/slices"
 )
 
@@ -30,32 +31,39 @@ func newQueue(name string) *Queue {
 	return result
 }
 
-func (c *Queue) setQueue(key string, val int) {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
-
-	c.Queue[key] = val
-}
-
-func (c *Queue) getQueue(key string) (int, bool) {
-	c.mutex.RLock()
-	defer c.mutex.RUnlock()
-
-	result, ok := c.Queue[key]
-	return result, ok
-}
-
-func (c *Queue) deleteQueue(key string) {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
-
-	delete(c.Queue, key)
-}
-
 /**
-* drain
+* nextTurn return the next subscriber
+* @return *Subscriber
 **/
+func (c *Queue) nextTurn(queue string) *Subscriber {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	n := len(c.Subscribers)
+	if n == 0 {
+		return nil
+	}
+
+	turn, exist := c.Queue[queue]
+	if !exist {
+		turn = 0
+	}
+
+	if turn >= n {
+		turn = 0
+	}
+
+	result := c.Subscribers[turn]
+	turn++
+	c.Queue[queue] = turn
+
+	return result
+}
+
 func (c *Queue) drain() {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
 	for _, client := range c.Subscribers {
 		if client == nil {
 			continue
@@ -63,6 +71,7 @@ func (c *Queue) drain() {
 
 		delete(client.Channels, c.Name)
 	}
+
 	c.Subscribers = []*Subscriber{}
 }
 
@@ -70,16 +79,10 @@ func (c *Queue) drain() {
 * close
 **/
 func (c *Queue) close() {
+	c.drain()
+
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
-
-	for _, client := range c.Subscribers {
-		if client == nil {
-			continue
-		}
-
-		delete(client.Channels, c.Name)
-	}
 
 	c.Subscribers = nil
 	c.Queue = nil
@@ -98,52 +101,15 @@ func (c *Queue) describe(mode int) et.Json {
 
 		return et.Json{
 			"name":        c.Name,
+			"type":        "queue",
 			"subscribers": subscribers,
 		}
 	}
 
 	return et.Json{
 		"name": c.Name,
+		"type": "queue",
 	}
-}
-
-/**
-* Count return the number of subscribers
-* @return int
-**/
-func (c *Queue) Count() int {
-	return len(c.Subscribers)
-}
-
-/**
-* nextTurn return the next subscriber
-* @return *Subscriber
-**/
-func (c *Queue) nextTurn(queue string) *Subscriber {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
-
-	n := c.Count()
-	if n == 0 {
-		return nil
-	}
-
-	turn, exist := c.getQueue(queue)
-	if !exist {
-		turn = 0
-		c.setQueue(queue, turn)
-	}
-
-	if turn >= n {
-		turn = 0
-		c.setQueue(queue, turn)
-	}
-
-	result := c.Subscribers[turn]
-	turn++
-	c.setQueue(queue, turn)
-
-	return result
 }
 
 /**
@@ -158,9 +124,9 @@ func (c *Queue) subscribe(client *Subscriber, queue string) {
 		return
 	}
 
-	_, exist := c.getQueue(queue)
+	_, exist := c.Queue[queue]
 	if !exist {
-		c.setQueue(queue, 0)
+		c.Queue[queue] = 0
 	}
 
 	idx := slices.IndexFunc(c.Subscribers, func(e *Subscriber) bool { return e.Id == client.Id })
@@ -187,4 +153,26 @@ func (c *Queue) unsubscribe(client *Subscriber) {
 
 	c.Subscribers = append(c.Subscribers[:idx], c.Subscribers[idx+1:]...)
 	delete(client.Channels, c.Name)
+}
+
+/**
+* broadcast
+* @param msg Message
+* @param ignored []string
+* @return int
+**/
+func (c *Queue) broadcast(queue string, msg Message, ignored []string) int {
+	result := 0
+	msg.Channel = c.Name
+	client := c.nextTurn(queue)
+	if client != nil && !slices.Contains(ignored, client.Id) {
+		err := client.sendMessage(msg)
+		if err != nil {
+			logs.Alert(err)
+		} else {
+			result++
+		}
+	}
+
+	return result
 }

@@ -5,7 +5,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/strs"
@@ -75,10 +74,6 @@ func (c *Client) getChannel(channel string) (func(Message), bool) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
-	for c := range c.Channels {
-		console.Debug("Channel:", c, " :: ", channel)
-	}
-
 	resul, ok := c.Channels[channel]
 	return resul, ok
 }
@@ -123,6 +118,7 @@ func (c *Client) Close() {
 		return
 	}
 
+	c.Channels = nil
 	c.socket.Close()
 }
 

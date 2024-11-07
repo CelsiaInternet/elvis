@@ -28,7 +28,7 @@ func main() {
 	go startHttp()
 
 	time.Sleep(3 * time.Second)
-	test2()
+	test1()
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
@@ -40,8 +40,8 @@ func main() {
 
 func startHttp() {
 	http.HandleFunc("/ws", wsHandler)
-	http.HandleFunc("/ws/channels", conn.HttpGetChannels)
-	http.HandleFunc("/ws/clients", conn.HttpGetClients)
+	http.HandleFunc("/ws/publications", conn.HttpGetPublications)
+	http.HandleFunc("/ws/subscribers", conn.HttpGetSubscribers)
 	console.LogK("WebSocket", "Http server in http://localhost:3500/ws")
 	console.Fatal(http.ListenAndServe(":3500", nil))
 }
@@ -67,14 +67,6 @@ func test1() {
 		console.Fatal(err)
 	}
 
-	client1.Subscribe("Hola", func(msg ws.Message) {
-		console.Debug("client1", msg)
-	})
-
-	client1.Subscribe("Hola", func(msg ws.Message) {
-		console.Debug("client1", msg)
-	})
-
 	client2, err = ws.NewClient(&ws.ClientConfig{
 		ClientId:  "client2",
 		Name:      "client2",
@@ -86,10 +78,6 @@ func test1() {
 	if err != nil {
 		console.Fatal(err)
 	}
-
-	client2.Subscribe("Hola", func(msg ws.Message) {
-		console.Debug("client1", msg)
-	})
 
 	client3, err = ws.NewClient(&ws.ClientConfig{
 		ClientId:  "client3",
@@ -103,16 +91,32 @@ func test1() {
 		console.Fatal(err)
 	}
 
-	client3.Subscribe("Hola", func(msg ws.Message) {
-		console.Debug("client1", msg)
+	client1.Subscribe("Hola", func(msg ws.Message) {
+		console.Debug("client1", msg.ToString())
 	})
 
-	client3.Stack("Hola", func(msg ws.Message) {
-		console.Debug("client3", msg)
+	client2.Subscribe("Hola", func(msg ws.Message) {
+		console.Debug("client2", msg.ToString())
+	})
+
+	client3.Subscribe("Hola", func(msg ws.Message) {
+		console.Debug("client3:", msg.ToString())
+	})
+
+	client1.Stack("cola", func(msg ws.Message) {
+		console.Debug("client1", msg.ToString())
+	})
+
+	client2.Stack("cola", func(msg ws.Message) {
+		console.Debug("client2", msg.ToString())
+	})
+
+	client3.Stack("cola", func(msg ws.Message) {
+		console.Debug("client3:", msg.ToString())
 	})
 
 	t := time.Duration(100)
-	n := 1000
+	n := 100
 	sendTest1 := func() {
 		if n%2 == 0 {
 			go client1.SendMessage("client2", "Hello")

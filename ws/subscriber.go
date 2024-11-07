@@ -4,7 +4,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/strs"
@@ -65,9 +64,8 @@ func (c *Subscriber) describe() et.Json {
 		channels = append(channels, ch.describe(1))
 	}
 
-	queues := []et.Json{}
 	for _, q := range c.Queue {
-		queues = append(queues, q.describe(1))
+		channels = append(channels, q.describe(1))
 	}
 
 	return et.Json{
@@ -76,7 +74,6 @@ func (c *Subscriber) describe() et.Json {
 		"name":       c.Name,
 		"addr":       c.Addr,
 		"channels":   channels,
-		"queue":      queues,
 	}
 }
 
@@ -205,7 +202,6 @@ func (c *Subscriber) listener(message []byte) {
 
 		response(true, PARAMS_UPDATED)
 	case TpSubscribe:
-		console.Ping()
 		channel := msg.Channel
 		if channel == "" {
 			response(false, ERR_CHANNEL_EMPTY)
@@ -226,11 +222,7 @@ func (c *Subscriber) listener(message []byte) {
 			return
 		}
 
-		queue, ok := msg.Data.(string)
-		if !ok {
-			response(false, ERR_QUEUE_EMPTY)
-			return
-		}
+		queue := msg.queue
 		if queue == "" {
 			response(false, ERR_QUEUE_EMPTY)
 			return
@@ -242,7 +234,7 @@ func (c *Subscriber) listener(message []byte) {
 			return
 		}
 
-		response(true, "Subscribe to channel "+channel)
+		response(true, "Subscribe to queue "+channel)
 	case TpStack:
 		channel := msg.Channel
 		if channel == "" {
@@ -277,8 +269,11 @@ func (c *Subscriber) listener(message []byte) {
 			response(false, ERR_CHANNEL_EMPTY)
 			return
 		}
+		if msg.queue == "" {
+			msg.queue = utility.QUEUE_STACK
+		}
 
-		go c.hub.Publish(channel, msg, []string{c.Id}, c.From())
+		go c.hub.Publish(channel, msg.queue, msg, []string{c.Id}, c.From())
 	case TpDirect:
 		clientId := msg.To
 
@@ -292,5 +287,5 @@ func (c *Subscriber) listener(message []byte) {
 		response(false, ERR_MESSAGE_UNFORMATTED)
 	}
 
-	logs.Logf(ServiceName, "Subscriber %s message: %s", c.Id, msg.ToString())
+	logs.Logf(ServiceName, "listener subscriber:%s message: %s", c.Id, msg.ToString())
 }
