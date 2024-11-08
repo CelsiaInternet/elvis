@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/celsiainternet/elvis/console"
+	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/strs"
 )
 
@@ -169,7 +169,7 @@ func (it *Item) Json(atribs ...string) Json {
 	case map[string]interface{}:
 		return Json(v)
 	default:
-		console.ErrorF("Not Item.Json type (%v) value:%v", reflect.TypeOf(v), v)
+		logs.Errorf("Not Item.Json type (%v) value:%v", reflect.TypeOf(v), v)
 		return Json{}
 	}
 }

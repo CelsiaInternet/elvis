@@ -5,10 +5,10 @@ import (
 
 	"github.com/celsiainternet/elvis/cache"
 	"github.com/celsiainternet/elvis/claim"
-	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/jdb"
 	"github.com/celsiainternet/elvis/linq"
+	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/msg"
 	"github.com/celsiainternet/elvis/strs"
 	"github.com/celsiainternet/elvis/utility"
@@ -42,7 +42,7 @@ var Tokens *linq.Model
 
 func DefineTokens(db *jdb.DB) error {
 	if err := DefineSchemaModule(db); err != nil {
-		return console.Panic(err)
+		return logs.Panice(err)
 	}
 
 	if Tokens != nil {
@@ -92,7 +92,7 @@ func DefineTokens(db *jdb.DB) error {
 	})
 
 	if err := Tokens.Init(); err != nil {
-		return console.Panic(err)
+		return logs.Panice(err)
 	}
 
 	go LoadTokens()
@@ -165,7 +165,7 @@ func UpSetToken(projeectId, id, app, device, name, userId string) (et.Item, erro
 	}
 
 	if !user.Ok {
-		return et.Item{}, console.NewError(msg.USER_NOT_FONUND)
+		return et.Item{}, logs.NewError(msg.USER_NOT_FONUND)
 	}
 
 	id = utility.GenId(id)
@@ -253,19 +253,19 @@ func LoadTokens() error {
 
 		items, err := Tokens.Query(sql)
 		if err != nil {
-			return console.Error(err)
+			return logs.Error(err)
 		}
 
 		for _, item := range items.Result {
 			var result Token
 			err = result.Scan(&item)
 			if err != nil {
-				return console.Error(err)
+				return logs.Error(err)
 			}
 
 			err = loadToken(&result)
 			if err != nil {
-				return console.Error(err)
+				return logs.Error(err)
 			}
 
 			ok = true
@@ -297,7 +297,7 @@ func UnLoadTokens() error {
 
 		items, err := Tokens.Query(sql)
 		if err != nil {
-			return console.Error(err)
+			return logs.Error(err)
 		}
 
 		for _, item := range items.Result {
@@ -306,7 +306,7 @@ func UnLoadTokens() error {
 			id := item.Id()
 			err = unLoadToken(app, device, id)
 			if err != nil {
-				return console.Error(err)
+				return logs.Error(err)
 			}
 
 			ok = true

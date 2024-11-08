@@ -2,10 +2,10 @@ package module
 
 import (
 	"github.com/celsiainternet/elvis/cache"
-	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/jdb"
 	"github.com/celsiainternet/elvis/linq"
+	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/msg"
 	"github.com/celsiainternet/elvis/utility"
 )
@@ -14,7 +14,7 @@ var Users *linq.Model
 
 func DefineUsers(db *jdb.DB) error {
 	if err := DefineSchemaModule(db); err != nil {
-		return console.Panic(err)
+		return logs.Panice(err)
 	}
 
 	if Users != nil {
@@ -73,7 +73,7 @@ func DefineUsers(db *jdb.DB) error {
 	})
 
 	if err := Users.Init(); err != nil {
-		return console.Panic(err)
+		return logs.Panice(err)
 	}
 
 	return nil
@@ -143,15 +143,15 @@ func GetUserById(id string) (et.Item, error) {
 **/
 func InsertUser(id, fullName, country, phone, email, password string) (et.Item, error) {
 	if !utility.ValidStr(country, 0, []string{""}) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "country")
+		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "country")
 	}
 
 	if !utility.ValidStr(phone, 9, []string{""}) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "phone")
+		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "phone")
 	}
 
 	if !utility.ValidStr(fullName, 0, []string{""}) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "full_name")
+		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "full_name")
 	}
 
 	name := country + phone
@@ -161,7 +161,7 @@ func InsertUser(id, fullName, country, phone, email, password string) (et.Item, 
 	}
 
 	if current.Ok {
-		return current, console.AlertF(msg.RECORD_FOUND)
+		return current, logs.Alertf(msg.RECORD_FOUND)
 	}
 
 	password, err = utility.PasswordHash(password)
@@ -204,7 +204,7 @@ func InsertUser(id, fullName, country, phone, email, password string) (et.Item, 
 func UpdateUser(id string, data et.Json) (et.Item, error) {
 	fullName := data.ValStr("", "full_name")
 	if !utility.ValidStr(fullName, 3, []string{""}) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "full_name")
+		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "full_name")
 	}
 
 	current, err := GetUserById(id)
@@ -213,15 +213,15 @@ func UpdateUser(id string, data et.Json) (et.Item, error) {
 	}
 
 	if !current.Ok {
-		return et.Item{}, console.Alert(msg.RECORD_NOT_FOUND)
+		return et.Item{}, logs.Alertm(msg.RECORD_NOT_FOUND)
 	}
 
 	if current.State() == utility.OF_SYSTEM {
-		return et.Item{}, console.Alert(msg.RECORD_IS_SYSTEM)
+		return et.Item{}, logs.Alertm(msg.RECORD_IS_SYSTEM)
 	} else if current.State() == utility.FOR_DELETE {
-		return et.Item{}, console.Alert(msg.RECORD_DELETE)
+		return et.Item{}, logs.Alertm(msg.RECORD_DELETE)
 	} else if current.State() != utility.ACTIVE {
-		return et.Item{}, console.AlertF(msg.RECORD_NOT_ACTIVE, current.State())
+		return et.Item{}, logs.Alertf(msg.RECORD_NOT_ACTIVE, current.State())
 	}
 
 	now := utility.Now()
@@ -258,11 +258,11 @@ func UpdateUser(id string, data et.Json) (et.Item, error) {
 **/
 func StateUser(id, state string) (et.Item, error) {
 	if !utility.ValidId(id) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "id")
+		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "id")
 	}
 
 	if !utility.ValidStr(state, 0, []string{""}) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "state")
+		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "state")
 	}
 
 	current, err := GetUserById(id)
@@ -271,15 +271,15 @@ func StateUser(id, state string) (et.Item, error) {
 	}
 
 	if !current.Ok {
-		return et.Item{}, console.Alert(msg.RECORD_NOT_FOUND)
+		return et.Item{}, logs.Alertm(msg.RECORD_NOT_FOUND)
 	}
 
 	if current.State() == utility.OF_SYSTEM {
-		return et.Item{}, console.Alert(msg.RECORD_IS_SYSTEM)
+		return et.Item{}, logs.Alertm(msg.RECORD_IS_SYSTEM)
 	} else if current.State() == utility.FOR_DELETE {
-		return et.Item{}, console.Alert(msg.RECORD_DELETE)
+		return et.Item{}, logs.Alertm(msg.RECORD_DELETE)
 	} else if current.State() == state {
-		return et.Item{}, console.Alert(msg.RECORD_NOT_CHANGE)
+		return et.Item{}, logs.Alertm(msg.RECORD_NOT_CHANGE)
 	}
 
 	result, err := Users.Update(et.Json{

@@ -1,7 +1,6 @@
 package jdb
 
 import (
-	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/utility"
@@ -15,7 +14,7 @@ import (
 func defineCAOD(db *DB) error {
 	exist, err := ExistTable(db, "core", "CAOD")
 	if err != nil {
-		return console.Panic(err)
+		return logs.Panice(err)
 	}
 
 	if exist {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/celsiainternet/elvis/et"
@@ -16,6 +17,21 @@ import (
 )
 
 const IsNil = redis.Nil
+
+/**
+* GenKey
+* @params args ...interface{}
+* @return string
+**/
+func GenKey(args ...interface{}) string {
+	var keys []string
+	for _, arg := range args {
+		keys = append(keys, strs.Format(`%v`, arg))
+	}
+
+	result := strings.Join(keys, ":")
+	return utility.ToBase64(result)
+}
 
 /**
 * Set
@@ -292,8 +308,7 @@ func HDelete(key, atr string) error {
 * @return error
 **/
 func SetVerify(device, key, val string, duration time.Duration) error {
-	key = strs.Format(`verify:%s:%s`, device, key)
-	key = utility.ToBase64(key)
+	key = GenKey("verify", device, key)
 	return Set(key, val, duration)
 }
 
@@ -304,8 +319,7 @@ func SetVerify(device, key, val string, duration time.Duration) error {
 * @return string, error
 **/
 func GetVerify(device string, key string) (string, error) {
-	key = strs.Format(`verify:%s:%s`, device, key)
-	key = utility.ToBase64(key)
+	key = GenKey("verify", device, key)
 	result, err := Get(key, "")
 	if err != nil {
 		return "", err
@@ -323,8 +337,7 @@ func GetVerify(device string, key string) (string, error) {
 * @return int64, error
 **/
 func DeleteVerify(device string, key string) (int64, error) {
-	key = strs.Format(`verify:%s:%s`, device, key)
-	key = utility.ToBase64(key)
+	key = GenKey("verify", device, key)
 	return Delete(key)
 }
 

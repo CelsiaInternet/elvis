@@ -3,8 +3,8 @@ package linq
 import (
 	"reflect"
 
-	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/strs"
 )
 
@@ -33,12 +33,12 @@ func FunctionDef(linq *Linq, col *Column) string {
 			case string:
 				def = strs.Format(`%v`, et.Unquote(v))
 			default:
-				console.ErrorF(`FunctionDef:%s; value:%v`, reflect.TypeOf(v), v)
+				logs.Errorf(`FunctionDef:%s; value:%v`, reflect.TypeOf(v), v)
 			}
 			result = strs.Append(result, def, ", ")
 		}
 	default:
-		console.ErrorF(`FunctionDef:%s; value:%v`, reflect.TypeOf(args), args)
+		logs.Errorf(`FunctionDef:%s; value:%v`, reflect.TypeOf(args), args)
 	}
 
 	if len(result) > 0 {

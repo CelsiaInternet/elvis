@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"strings"
 
-	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/msg"
 	"github.com/celsiainternet/elvis/strs"
 )
@@ -74,12 +74,12 @@ func SQLParse(sql string, args ...any) string {
 **/
 func query(db *DB, sql string, args ...any) (*sql.Rows, error) {
 	if db == nil {
-		return nil, console.AlertF(msg.NOT_CONNECT_DB)
+		return nil, logs.Alertf(msg.NOT_CONNECT_DB)
 	}
 
 	rows, err := db.db.Query(sql, args...)
 	if err != nil {
-		return nil, console.AlertF(msg.ERR_SQL, err.Error(), sql)
+		return nil, logs.Alertf(msg.ERR_SQL, err.Error(), sql)
 	}
 
 	return rows, nil
@@ -95,13 +95,13 @@ func query(db *DB, sql string, args ...any) (*sql.Rows, error) {
 **/
 func exec(db *DB, id, sql string, args ...any) error {
 	if db == nil {
-		return console.AlertF(msg.NOT_CONNECT_DB)
+		return logs.Alertf(msg.NOT_CONNECT_DB)
 	}
 
 	query := SQLParse(sql, args...)
 	_, err := db.db.Exec(query)
 	if err != nil {
-		return console.ErrorF(msg.ERR_SQL, err.Error(), sql)
+		return logs.Errorf(msg.ERR_SQL, err.Error(), sql)
 	}
 
 	go db.upsertCAOD(id, query)
@@ -176,12 +176,12 @@ func (d *DB) QueryOne(sql string, args ...any) (et.Item, error) {
 **/
 func (d *DB) Source(sourceField string, sql string, args ...any) (et.Items, error) {
 	if d.db == nil {
-		return et.Items{}, console.AlertF(msg.NOT_CONNECT_DB)
+		return et.Items{}, logs.Alertf(msg.NOT_CONNECT_DB)
 	}
 
 	rows, err := d.db.Query(sql, args...)
 	if err != nil {
-		return et.Items{}, console.ErrorF(msg.ERR_SQL, err.Error(), sql)
+		return et.Items{}, logs.Errorf(msg.ERR_SQL, err.Error(), sql)
 	}
 	defer rows.Close()
 
@@ -201,7 +201,7 @@ func (d *DB) Source(sourceField string, sql string, args ...any) (et.Items, erro
 **/
 func (d *DB) SourceOne(sourceField string, sql string, args ...any) (et.Item, error) {
 	if d.db == nil {
-		return et.Item{}, console.AlertF(msg.NOT_CONNECT_DB)
+		return et.Item{}, logs.Alertf(msg.NOT_CONNECT_DB)
 	}
 
 	rows, err := d.db.Query(sql, args...)

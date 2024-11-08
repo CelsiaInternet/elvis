@@ -1,8 +1,6 @@
 package jdb
 
-import (
-	"github.com/celsiainternet/elvis/console"
-)
+import "github.com/celsiainternet/elvis/logs"
 
 var makedCore bool
 
@@ -12,7 +10,7 @@ func InitCore(db *DB) error {
 	}
 
 	if db == nil {
-		return console.PanicM("Database not found")
+		return logs.Panicm("Database not found")
 	}
 
 	if err := defineRecords(db); err != nil {
@@ -33,7 +31,7 @@ func InitCore(db *DB) error {
 
 	makedCore = true
 
-	console.LogK("CORE", "Init core")
+	logs.Log("CORE", "Init core")
 
 	return nil
 }

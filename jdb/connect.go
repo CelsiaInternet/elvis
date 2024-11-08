@@ -3,9 +3,9 @@ package jdb
 import (
 	"database/sql"
 
-	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/msg"
 	"github.com/celsiainternet/elvis/strs"
 	_ "github.com/lib/pq"
@@ -54,23 +54,23 @@ func connect() (*DB, error) {
 	application_name := envar.GetStr("elvis", "DB_APPLICATION_NAME")
 
 	if driver == "" {
-		return nil, console.PanicF(msg.ERR_ENV_REQUIRED, "DB_DRIVE")
+		return nil, logs.Panicf(msg.ERR_ENV_REQUIRED, "DB_DRIVE")
 	}
 
 	if host == "" {
-		return nil, console.PanicF(msg.ERR_ENV_REQUIRED, "DB_HOST")
+		return nil, logs.Panicf(msg.ERR_ENV_REQUIRED, "DB_HOST")
 	}
 
 	if dbname == "" {
-		return nil, console.PanicF(msg.ERR_ENV_REQUIRED, "DB_NAME")
+		return nil, logs.Panicf(msg.ERR_ENV_REQUIRED, "DB_NAME")
 	}
 
 	if user == "" {
-		return nil, console.PanicF(msg.ERR_ENV_REQUIRED, "DB_USER")
+		return nil, logs.Panicf(msg.ERR_ENV_REQUIRED, "DB_USER")
 	}
 
 	if password == "" {
-		return nil, console.PanicF(msg.ERR_ENV_REQUIRED, "DB_PASSWORD")
+		return nil, logs.Panicf(msg.ERR_ENV_REQUIRED, "DB_PASSWORD")
 	}
 
 	db, err := ConnectTo(driver, host, port, dbname, user, password, application_name)
@@ -94,10 +94,10 @@ func ConnectTo(driver, host string, port int, dbname, user, password, applicatio
 
 	db, err := sql.Open(driver, connStr)
 	if err != nil {
-		return nil, console.Alert(err.Error())
+		return nil, logs.Alert(err)
 	}
 
-	console.LogKF(driver, "Connected host:%s:%d", host, port)
+	logs.Logf(driver, "Connected host:%s:%d", host, port)
 
 	return &DB{
 		Driver:     driver,

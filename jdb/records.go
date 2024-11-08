@@ -1,13 +1,11 @@
 package jdb
 
-import (
-	"github.com/celsiainternet/elvis/console"
-)
+import "github.com/celsiainternet/elvis/logs"
 
 func defineRecords(db *DB) error {
 	exist, err := ExistTable(db, "core", "RECORDS")
 	if err != nil {
-		return console.Panic(err)
+		return logs.Panice(err)
 	}
 
 	if exist {
@@ -39,7 +37,7 @@ func defineRecords(db *DB) error {
 
 	_, err = db.db.Exec(sql)
 	if err != nil {
-		return console.Panic(err)
+		return logs.Panice(err)
 	}
 
 	return defineRecordsFunction(db)
@@ -138,7 +136,7 @@ func defineRecordsFunction(db *DB) error {
 
 	_, err := db.db.Exec(sql)
 	if err != nil {
-		return console.Panic(err)
+		return logs.Panice(err)
 	}
 
 	return nil

@@ -1,11 +1,11 @@
 package module
 
 import (
-	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/event"
 	"github.com/celsiainternet/elvis/jdb"
 	"github.com/celsiainternet/elvis/linq"
+	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/msg"
 	"github.com/celsiainternet/elvis/utility"
 )
@@ -14,7 +14,7 @@ var Folders *linq.Model
 
 func DefineFolders(db *jdb.DB) error {
 	if err := DefineSchemaModule(db); err != nil {
-		return console.Panic(err)
+		return logs.Panice(err)
 	}
 
 	if Folders != nil {
@@ -44,7 +44,7 @@ func DefineFolders(db *jdb.DB) error {
 	})
 
 	if err := Folders.Init(); err != nil {
-		return console.Panic(err)
+		return logs.Panice(err)
 	}
 
 	return nil
@@ -88,15 +88,15 @@ func GetFolderByName(moduleId, mainId, name string) (et.Item, error) {
 **/
 func InitFolder(moduleId, mainId, id, name, description string, data et.Json) (et.Item, error) {
 	if !utility.ValidId(moduleId) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "module_id")
+		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "module_id")
 	}
 
 	if !utility.ValidId(mainId) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "main_id")
+		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "main_id")
 	}
 
 	if !utility.ValidStr(name, 0, []string{""}) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "name")
+		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "name")
 	}
 
 	id = utility.GenKey(id)
@@ -141,15 +141,15 @@ func InitFolder(moduleId, mainId, id, name, description string, data et.Json) (e
 **/
 func UpSetFolder(moduleId, mainId, id, name, description string, data et.Json) (et.Item, error) {
 	if !utility.ValidId(moduleId) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "module_id")
+		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "module_id")
 	}
 
 	if !utility.ValidId(mainId) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "main_id")
+		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "main_id")
 	}
 
 	if !utility.ValidStr(name, 0, []string{""}) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "name")
+		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "name")
 	}
 
 	id = utility.GenKey(id)
@@ -181,11 +181,11 @@ func UpSetFolder(moduleId, mainId, id, name, description string, data et.Json) (
 	}
 
 	if current.State() == utility.OF_SYSTEM {
-		return et.Item{}, console.Alert(msg.RECORD_IS_SYSTEM)
+		return et.Item{}, logs.Alertm(msg.RECORD_IS_SYSTEM)
 	} else if current.State() == utility.FOR_DELETE {
-		return et.Item{}, console.Alert(msg.RECORD_DELETE)
+		return et.Item{}, logs.Alertm(msg.RECORD_DELETE)
 	} else if current.State() != utility.ACTIVE {
-		return et.Item{}, console.AlertF(msg.RECORD_NOT_ACTIVE, current.State())
+		return et.Item{}, logs.Alertf(msg.RECORD_NOT_ACTIVE, current.State())
 	}
 
 	delete(data, "module_id")
@@ -206,11 +206,11 @@ func UpSetFolder(moduleId, mainId, id, name, description string, data et.Json) (
 **/
 func StateFolder(id, state string) (et.Item, error) {
 	if !utility.ValidId(id) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "id")
+		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "id")
 	}
 
 	if !utility.ValidStr(state, 0, []string{""}) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "state")
+		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "state")
 	}
 
 	current, err := GetFolderById(id)
@@ -219,15 +219,15 @@ func StateFolder(id, state string) (et.Item, error) {
 	}
 
 	if !current.Ok {
-		return et.Item{}, console.Alert(msg.RECORD_NOT_FOUND)
+		return et.Item{}, logs.Alertm(msg.RECORD_NOT_FOUND)
 	}
 
 	if current.State() == utility.OF_SYSTEM {
-		return et.Item{}, console.Alert(msg.RECORD_IS_SYSTEM)
+		return et.Item{}, logs.Alertm(msg.RECORD_IS_SYSTEM)
 	} else if current.State() == utility.FOR_DELETE {
-		return et.Item{}, console.Alert(msg.RECORD_DELETE)
+		return et.Item{}, logs.Alertm(msg.RECORD_DELETE)
 	} else if current.State() == state {
-		return et.Item{}, console.Alert(msg.RECORD_NOT_CHANGE)
+		return et.Item{}, logs.Alertm(msg.RECORD_NOT_CHANGE)
 	}
 
 	result, err := Folders.Update(et.Json{

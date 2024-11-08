@@ -1,10 +1,10 @@
 package module
 
 import (
-	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/jdb"
 	"github.com/celsiainternet/elvis/linq"
+	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/msg"
 	"github.com/celsiainternet/elvis/utility"
 )
@@ -13,7 +13,7 @@ var Migration *linq.Model
 
 func DefineMigration(db *jdb.DB) error {
 	if err := DefineSchemaModule(db); err != nil {
-		return console.Panic(err)
+		return logs.Panice(err)
 	}
 
 	if Migration != nil {
@@ -34,7 +34,7 @@ func DefineMigration(db *jdb.DB) error {
 	})
 
 	if err := Migration.Init(); err != nil {
-		return console.Panic(err)
+		return logs.Panice(err)
 	}
 
 	return nil
@@ -91,15 +91,15 @@ func IdMigration(old_id string, tag string) (string, error) {
 **/
 func SetMigration(old_id string, id string, tag string) (et.Item, error) {
 	if !utility.ValidId(old_id) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "old_id")
+		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "old_id")
 	}
 
 	if !utility.ValidNil(tag) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "tag")
+		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "tag")
 	}
 
 	if !utility.ValidId(id) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "id")
+		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "id")
 	}
 
 	current, err := Migration.Select().

@@ -12,7 +12,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/strs"
@@ -60,14 +59,14 @@ var count = make(map[string]int64)
 **/
 func Ping() {
 	ping++
-	console.InfoF(`PING %d`, ping)
+	logs.Infof(`PING %d`, ping)
 }
 
 /**
 * Pong
 **/
 func Pong() {
-	console.Info("PONG")
+	logs.Info("PONG")
 	ping = 0
 }
 

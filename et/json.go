@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/celsiainternet/elvis/console"
+	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/strs"
 	"github.com/celsiainternet/elvis/timezone"
 )
@@ -69,7 +69,7 @@ func (s *Json) Scan(src interface{}) error {
 	case string:
 		ba = []byte(v)
 	default:
-		return console.ErrorF(`json/Scan - Failed to unmarshal JSON type:%s`, reflect.TypeOf(v))
+		return logs.Errorf(`json/Scan - Failed to unmarshal JSON type:%s`, reflect.TypeOf(v))
 	}
 
 	t := map[string]interface{}{}
@@ -113,7 +113,7 @@ func (s *Json) ScanRows(rows *sql.Rows) error {
 				continue
 			}
 			result[col] = src
-			console.DebugF(`[]byte Col:%s Type:%v Value:%v`, col, reflect.TypeOf(v), v)
+			logs.Debugf(`[]byte Col:%s Type:%v Value:%v`, col, reflect.TypeOf(v), v)
 		default:
 			result[col] = src
 		}
@@ -417,7 +417,7 @@ func (s Json) Data(atrib ...string) JsonD {
 			Value: v,
 		}
 	default:
-		console.ErrorF("json/Json - Atrib:%s Type:%v Value:%v", atrib, reflect.TypeOf(v), v)
+		logs.Errorf("json/Json - Atrib:%s Type:%v Value:%v", atrib, reflect.TypeOf(v), v)
 		return JsonD{
 			Type:  TpObject,
 			Value: Json{},
@@ -443,7 +443,7 @@ func (s Json) Json(atrib string) Json {
 
 		return result
 	default:
-		console.ErrorF("json/Json - Atrib:%s Type:%v Value:%v", atrib, reflect.TypeOf(v), v)
+		logs.Errorf("json/Json - Atrib:%s Type:%v Value:%v", atrib, reflect.TypeOf(v), v)
 		return Json{}
 	}
 }

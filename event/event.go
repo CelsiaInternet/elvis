@@ -1,7 +1,7 @@
 package event
 
 import (
-	"github.com/celsiainternet/elvis/console"
+	"github.com/celsiainternet/elvis/logs"
 	"github.com/nats-io/nats.go"
 )
 
@@ -40,5 +40,5 @@ func Close() {
 		close(conn.eventCreatedChan)
 	}
 
-	console.LogK("Event", `Disconnect...`)
+	logs.Log("Event", `Disconnect...`)
 }

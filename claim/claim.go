@@ -6,10 +6,9 @@ import (
 	"time"
 
 	"github.com/celsiainternet/elvis/cache"
-	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
-	"github.com/celsiainternet/elvis/strs"
+	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/utility"
 	"github.com/golang-jwt/jwt/v4"
 )
@@ -31,7 +30,7 @@ const (
 	ClientIdKey  ContextKey = "clientId"
 	AppKey       ContextKey = "app"
 	NameKey      ContextKey = "name"
-	KindKey      ContextKey = "kind"
+	SubjectKey   ContextKey = "subject"
 	UsernameKey  ContextKey = "username"
 	TokenKey     ContextKey = "token"
 	ProjectIdKey ContextKey = "projectId"
@@ -39,23 +38,14 @@ const (
 	ModelKey     ContextKey = "model"
 )
 
-type AuthType string
-
-const (
-	BasicAuth    AuthType = "BasicAuth"
-	BearerToken  AuthType = "BearerToken"
-	ServiceToken AuthType = "ServiceToken"
-)
-
 type Claim struct {
-	Salt     string        `json:"salt"`
-	ID       string        `json:"id"`
-	App      string        `json:"app"`
-	Name     string        `json:"name"`
-	Kind     string        `json:"kind"`
-	Username string        `json:"username"`
-	Device   string        `json:"device"`
-	Duration time.Duration `json:"duration"`
+	Salt     string `json:"salt"`
+	ID       string `json:"id"`
+	App      string `json:"app"`
+	Name     string `json:"name"`
+	Username string `json:"username"`
+	Device   string `json:"device"`
+	Duration time.Duration
 	jwt.StandardClaims
 }
 
@@ -65,13 +55,14 @@ type Claim struct {
 **/
 func (c *Claim) ToJson() et.Json {
 	return et.Json{
-		"id":       c.ID,
-		"app":      c.App,
-		"name":     c.Name,
-		"kind":     c.Kind,
-		"username": c.Username,
-		"device":   c.Device,
-		"duration": c.Duration,
+		"id":        c.ID,
+		"app":       c.App,
+		"name":      c.Name,
+		"username":  c.Username,
+		"device":    c.Device,
+		"subject":   c.Subject,
+		"duration":  c.Duration,
+		"expiresAt": time.Unix(c.ExpiresAt, 0).Format("2006-01-02 03:04:05 PM"),
 	}
 }
 
@@ -83,10 +74,7 @@ func (c *Claim) ToJson() et.Json {
 * @return string
 **/
 func GetTokenKey(app, device, id string) string {
-	str := strs.Append(app, device, "-")
-	str = strs.Append(str, id, "-")
-	str = strs.Format(`token:%s`, str)
-	return utility.ToBase64(str)
+	return cache.GenKey("token", app, device, id)
 }
 
 /**
@@ -94,7 +82,7 @@ func GetTokenKey(app, device, id string) string {
 * @param id string
 * @param app string
 * @param name string
-* @param kind AuthType
+* @param subject string
 * @param username string
 * @param device string
 * @param duration time.Duration
@@ -102,17 +90,20 @@ func GetTokenKey(app, device, id string) string {
 * @return key string
 * @return err error
 **/
-func NewToken(id, app, name string, kind AuthType, username, device string, duration time.Duration) (string, error) {
+func NewToken(id, app, name string, subject string, username, device string, duration time.Duration) (string, error) {
 	secret := envar.GetStr("1977", "SECRET")
 	c := Claim{}
 	c.Salt = utility.GetOTP(6)
 	c.ID = id
 	c.App = app
 	c.Name = name
-	c.Kind = string(kind)
+	c.Subject = subject
 	c.Username = username
 	c.Device = device
 	c.Duration = duration
+	if c.Duration != 0 {
+		c.ExpiresAt = time.Now().Add(c.Duration).Unix()
+	}
 	_jwt := jwt.NewWithClaims(jwt.SigningMethodHS256, c)
 	token, err := _jwt.SignedString([]byte(secret))
 	if err != nil {
@@ -171,73 +162,78 @@ func ParceToken(token string) (*Claim, error) {
 		return []byte(secret), nil
 	})
 	if err != nil {
-		return nil, console.Error(err)
+		return nil, logs.Error(err)
 	}
 
 	if !jToken.Valid {
-		return nil, console.Alert(MSG_TOKEN_INVALID)
+		return nil, logs.Alertm(MSG_TOKEN_INVALID)
 	}
 
 	claim, ok := jToken.Claims.(jwt.MapClaims)
 	if !ok {
-		return nil, console.Alert(MSG_REQUIRED_INVALID)
+		return nil, logs.Alertm(MSG_REQUIRED_INVALID)
 	}
 
 	app, ok := claim["app"].(string)
 	if !ok {
-		return nil, console.Alert(ERR_INVALID_CLAIM)
+		return nil, logs.Alertm(ERR_INVALID_CLAIM)
 	}
 
 	id, ok := claim["id"].(string)
 	if !ok {
-		return nil, console.Alert(ERR_INVALID_CLAIM)
+		return nil, logs.Alertm(ERR_INVALID_CLAIM)
 	}
 
 	name, ok := claim["name"].(string)
 	if !ok {
-		return nil, console.Alert(ERR_INVALID_CLAIM)
+		return nil, logs.Alertm(ERR_INVALID_CLAIM)
 	}
 
-	kind, ok := claim["kind"].(string)
+	subject, ok := claim["subject"].(string)
 	if !ok {
-		return nil, console.Alert(ERR_INVALID_CLAIM)
+		return nil, logs.Alertm(ERR_INVALID_CLAIM)
 	}
 
 	username, ok := claim["username"].(string)
 	if !ok {
-		return nil, console.Alert(ERR_INVALID_CLAIM)
+		return nil, logs.Alertm(ERR_INVALID_CLAIM)
 	}
 
 	device, ok := claim["device"].(string)
 	if !ok {
-		return nil, console.AlertF(MSG_TOKEN_INVALID_ATRIB, "device")
+		return nil, logs.Alertf(MSG_TOKEN_INVALID_ATRIB, "device")
 	}
 
 	second, ok := claim["duration"].(float64)
 	if !ok {
-		return nil, console.AlertF(MSG_TOKEN_INVALID_ATRIB, "duration")
+		return nil, logs.Alertf(MSG_TOKEN_INVALID_ATRIB, "duration")
 	}
 
 	duration := time.Duration(second)
 
-	return &Claim{
+	result := &Claim{
 		ID:       id,
 		App:      app,
 		Name:     name,
-		Kind:     kind,
 		Username: username,
 		Device:   device,
 		Duration: duration,
-	}, nil
+	}
+	result.Subject = subject
+	if result.Duration != 0 {
+		result.ExpiresAt = int64(claim["exp"].(float64))
+	}
+
+	return result, nil
 }
 
 /**
-* GetFromToken
+* ValidToken
 * @param token string
 * @return *Claim
 * @return error
 **/
-func GetFromToken(token string) (*Claim, error) {
+func ValidToken(token string) (*Claim, error) {
 	result, err := ParceToken(token)
 	if err != nil {
 		return nil, err

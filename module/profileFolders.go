@@ -1,10 +1,10 @@
 package module
 
 import (
-	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/jdb"
 	"github.com/celsiainternet/elvis/linq"
+	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/msg"
 	"github.com/celsiainternet/elvis/utility"
 )
@@ -13,7 +13,7 @@ var ProfileFolders *linq.Model
 
 func DefineProfileFolders(db *jdb.DB) error {
 	if err := DefineSchemaModule(db); err != nil {
-		return console.Panic(err)
+		return logs.Panice(err)
 	}
 
 	if ProfileFolders != nil {
@@ -35,7 +35,7 @@ func DefineProfileFolders(db *jdb.DB) error {
 	ProfileFolders.DefineForeignKey("folder_id", Folders.Column("_id"))
 
 	if err := ProfileFolders.Init(); err != nil {
-		return console.Panic(err)
+		return logs.Panice(err)
 	}
 
 	return nil
@@ -75,15 +75,15 @@ func GetProfileFolderById(moduleId, profileTp, folderId string) (et.Item, error)
 **/
 func CheckProfileFolder(moduleId, profileTp, folderId string, chk bool) (et.Item, error) {
 	if !utility.ValidId(moduleId) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "module_id")
+		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "module_id")
 	}
 
 	if !utility.ValidId(profileTp) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "profile_tp")
+		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "profile_tp")
 	}
 
 	if !utility.ValidId(folderId) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "folder_id")
+		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "folder_id")
 	}
 
 	if !chk {

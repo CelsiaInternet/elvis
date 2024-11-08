@@ -1,13 +1,11 @@
 package jdb
 
-import (
-	"github.com/celsiainternet/elvis/console"
-)
+import "github.com/celsiainternet/elvis/logs"
 
 func defineRecycling(db *DB) error {
 	exist, err := ExistTable(db, "core", "RECYCLING")
 	if err != nil {
-		return console.Panic(err)
+		return logs.Panice(err)
 	}
 
 	if exist {
@@ -34,7 +32,7 @@ func defineRecycling(db *DB) error {
 
 	_, err = db.db.Exec(sql)
 	if err != nil {
-		return console.Panic(err)
+		return logs.Panice(err)
 	}
 
 	return defineRecyclingFunction(db)
@@ -87,7 +85,7 @@ func defineRecyclingFunction(db *DB) error {
 
 	_, err := db.db.Exec(sql)
 	if err != nil {
-		return console.Panic(err)
+		return logs.Panice(err)
 	}
 
 	return nil

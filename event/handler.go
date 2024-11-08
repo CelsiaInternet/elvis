@@ -3,8 +3,8 @@ package event
 import (
 	"net/http"
 
-	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/response"
 	"github.com/celsiainternet/elvis/timezone"
 	"github.com/celsiainternet/elvis/utility"
@@ -68,7 +68,7 @@ func Subscribe(channel string, f func(EvenMessage)) (err error) {
 **/
 func Queue(channel, queue string, f func(EvenMessage)) (err error) {
 	if conn == nil {
-		return console.NewError(ERR_NOT_CONNECT)
+		return logs.NewError(ERR_NOT_CONNECT)
 	}
 
 	if len(channel) == 0 {

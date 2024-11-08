@@ -3,7 +3,7 @@ package cache
 import (
 	"context"
 
-	"github.com/celsiainternet/elvis/console"
+	"github.com/celsiainternet/elvis/logs"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -35,5 +35,5 @@ func Close() {
 		conn.db.Close()
 	}
 
-	console.LogK("Cache", `Disconnect...`)
+	logs.Log("Cache", `Disconnect...`)
 }

@@ -1,10 +1,10 @@
 package module
 
 import (
-	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/jdb"
 	"github.com/celsiainternet/elvis/linq"
+	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/msg"
 	"github.com/celsiainternet/elvis/utility"
 )
@@ -13,7 +13,7 @@ var ProjectModules *linq.Model
 
 func DefineProjectModules(db *jdb.DB) error {
 	if err := DefineSchemaModule(db); err != nil {
-		return console.Panic(err)
+		return logs.Panice(err)
 	}
 
 	if ProjectModules != nil {
@@ -34,7 +34,7 @@ func DefineProjectModules(db *jdb.DB) error {
 	})
 
 	if err := ProjectModules.Init(); err != nil {
-		return console.Panic(err)
+		return logs.Panice(err)
 	}
 
 	return nil
@@ -110,11 +110,11 @@ func GetProjectModules(projectId, state, search string, page, rows int) (et.List
 **/
 func CheckProjectModule(project_id, module_id string, chk bool) (et.Item, error) {
 	if !utility.ValidId(project_id) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "project_id")
+		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "project_id")
 	}
 
 	if !utility.ValidId(module_id) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "module_id")
+		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "module_id")
 	}
 
 	if !chk {

@@ -1,10 +1,10 @@
 package module
 
 import (
-	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/jdb"
 	"github.com/celsiainternet/elvis/linq"
+	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/msg"
 	"github.com/celsiainternet/elvis/utility"
 )
@@ -13,7 +13,7 @@ var ModelFolders *linq.Model
 
 func DefineModuleFolders(db *jdb.DB) error {
 	if err := DefineSchemaModule(db); err != nil {
-		return console.Panic(err)
+		return logs.Panice(err)
 	}
 
 	if ModelFolders != nil {
@@ -34,7 +34,7 @@ func DefineModuleFolders(db *jdb.DB) error {
 	})
 
 	if err := ModelFolders.Init(); err != nil {
-		return console.Panic(err)
+		return logs.Panice(err)
 	}
 
 	return nil
@@ -67,11 +67,11 @@ func GetModuleFolderById(module_id, folder_id string) (et.Item, error) {
 // Check folder that module
 func CheckModuleFolder(module_id, folder_id string, chk bool) (et.Item, error) {
 	if !utility.ValidId(module_id) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "module_id")
+		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "module_id")
 	}
 
 	if !utility.ValidId(folder_id) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "folder_id")
+		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "folder_id")
 	}
 
 	if !chk {

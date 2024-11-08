@@ -1,10 +1,10 @@
 package module
 
 import (
-	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/jdb"
 	"github.com/celsiainternet/elvis/linq"
+	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/msg"
 	"github.com/celsiainternet/elvis/utility"
 )
@@ -13,7 +13,7 @@ var Roles *linq.Model
 
 func DefineRoles(db *jdb.DB) error {
 	if err := DefineSchemaModule(db); err != nil {
-		return console.Panic(err)
+		return logs.Panice(err)
 	}
 
 	if Roles != nil {
@@ -37,7 +37,7 @@ func DefineRoles(db *jdb.DB) error {
 	})
 
 	if err := Roles.Init(); err != nil {
-		return console.Panic(err)
+		return logs.Panice(err)
 	}
 
 	return nil
@@ -162,19 +162,19 @@ func GetUserModules(userId string) ([]et.Json, error) {
 **/
 func CheckRole(projectId, moduleId, profileTp, userId string, chk bool) (et.Item, error) {
 	if !utility.ValidId(projectId) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "project_id")
+		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "project_id")
 	}
 
 	if !utility.ValidId(moduleId) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "module_id")
+		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "module_id")
 	}
 
 	if !utility.ValidId(userId) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "user_id")
+		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "user_id")
 	}
 
 	if !utility.ValidId(profileTp) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "profile_tp")
+		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "profile_tp")
 	}
 
 	project, err := GetProjectById(projectId)
@@ -183,7 +183,7 @@ func CheckRole(projectId, moduleId, profileTp, userId string, chk bool) (et.Item
 	}
 
 	if !project.Ok {
-		return et.Item{}, console.AlertF(msg.PROJECT_NOT_FOUND, projectId)
+		return et.Item{}, logs.Alertf(msg.PROJECT_NOT_FOUND, projectId)
 	}
 
 	module, err := GetModuleById(moduleId)
@@ -192,7 +192,7 @@ func CheckRole(projectId, moduleId, profileTp, userId string, chk bool) (et.Item
 	}
 
 	if !module.Ok {
-		return et.Item{}, console.Alert(msg.MODULE_NOT_FOUND)
+		return et.Item{}, logs.Alertm(msg.MODULE_NOT_FOUND)
 	}
 
 	profile, err := GetProfileById(moduleId, profileTp)
@@ -201,7 +201,7 @@ func CheckRole(projectId, moduleId, profileTp, userId string, chk bool) (et.Item
 	}
 
 	if !profile.Ok {
-		return et.Item{}, console.AlertF(msg.PROFILE_NOT_FOUND, profileTp)
+		return et.Item{}, logs.Alertf(msg.PROFILE_NOT_FOUND, profileTp)
 	}
 
 	if chk {

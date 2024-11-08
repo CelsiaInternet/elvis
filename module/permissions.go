@@ -5,13 +5,10 @@ import (
 	"net/http"
 
 	"github.com/celsiainternet/elvis/cache"
-	"github.com/celsiainternet/elvis/claim"
-	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/jdb"
 	"github.com/celsiainternet/elvis/linq"
-	"github.com/celsiainternet/elvis/response"
-	"github.com/celsiainternet/elvis/strs"
+	"github.com/celsiainternet/elvis/logs"
 )
 
 type Permission map[string]bool
@@ -76,7 +73,7 @@ var PERMISION_EXECUTE = "PERMISION.EXECUTE"
 
 func DefinePermisions(db *jdb.DB) error {
 	if err := DefineSchemaModule(db); err != nil {
-		return console.Panic(err)
+		return logs.Panice(err)
 	}
 
 	if Permissions != nil {
@@ -101,7 +98,7 @@ func DefinePermisions(db *jdb.DB) error {
 	})
 
 	if err := Permissions.Init(); err != nil {
-		return console.Panic(err)
+		return logs.Panice(err)
 	}
 
 	return nil
@@ -135,7 +132,7 @@ func ResetPermissions(projectId, profileTp, model string) (Permission, error) {
 		}
 	}
 
-	var key = strs.Format("%v-%v-%v", projectId, profileTp, model)
+	key := cache.GenKey("permissions", projectId, profileTp, model)
 	value, _ := result.ToString()
 	cache.SetM(key, value)
 
@@ -150,7 +147,7 @@ func ResetPermissions(projectId, profileTp, model string) (Permission, error) {
 * @return et.Item, error
 **/
 func GetPermissions(projectId, profileTp, model string) (Permission, error) {
-	var key = strs.Format("%v-%v-%v", projectId, profileTp, model)
+	key := cache.GenKey("permissions", projectId, profileTp, model)
 	value, err := cache.Get(key, "")
 	if err != nil {
 		return Permission{}, err
@@ -256,31 +253,4 @@ func CheckPermissions(projectId, profileTp, model, permissionTp string, chk bool
 	}
 
 	return nil
-}
-
-/**
-* PermissionsMiddleware
-* @param next http.Handler
-* @return http.Handler
-**/
-func PermissionsMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		project_id := claim.ProjectIdKey.String(ctx, "")
-		profile_tp := claim.ProfileTpKey.String(ctx, "")
-		model := claim.ModelKey.String(ctx, "")
-		permisions, err := GetPermissions(project_id, profile_tp, model)
-		if err != nil {
-			response.InternalServerError(w, r)
-			return
-		}
-
-		ok := permisions.Method(r)
-		if !ok {
-			response.Forbidden(w, r)
-			return
-		}
-
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
 }

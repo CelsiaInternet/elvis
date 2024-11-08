@@ -1,10 +1,10 @@
 package module
 
 import (
-	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/jdb"
+	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/utility"
 )
 
@@ -16,49 +16,49 @@ func InitDefine(db *jdb.DB) error {
 	}
 
 	if err := DefineUsers(db); err != nil {
-		return console.Panic(err)
+		return logs.Panice(err)
 	}
 	if err := DefineProjects(db); err != nil {
-		return console.Panic(err)
+		return logs.Panice(err)
 	}
 	if err := DefineTypes(db); err != nil {
-		return console.Panic(err)
+		return logs.Panice(err)
 	}
 	if err := DefineModules(db); err != nil {
-		return console.Panic(err)
+		return logs.Panice(err)
 	}
 	if err := DefineFolders(db); err != nil {
-		return console.Panic(err)
+		return logs.Panice(err)
 	}
 	if err := DefineProfiles(db); err != nil {
-		return console.Panic(err)
+		return logs.Panice(err)
 	}
 	if err := DefineRoles(db); err != nil {
-		return console.Panic(err)
+		return logs.Panice(err)
 	}
 	if err := DefineTokens(db); err != nil {
-		return console.Panic(err)
+		return logs.Panice(err)
 	}
 	if err := DefineMigration(db); err != nil {
-		return console.Panic(err)
+		return logs.Panice(err)
 	}
 	if err := DefineModuleFolders(db); err != nil {
-		return console.Panic(err)
+		return logs.Panice(err)
 	}
 	if err := DefineModuleFolders(db); err != nil {
-		return console.Panic(err)
+		return logs.Panice(err)
 	}
 	if err := DefineProjectModules(db); err != nil {
-		return console.Panic(err)
+		return logs.Panice(err)
 	}
 	if err := DefineProfileFolders(db); err != nil {
-		return console.Panic(err)
+		return logs.Panice(err)
 	}
 	if err := DefinePermisions(db); err != nil {
-		return console.Panic(err)
+		return logs.Panice(err)
 	}
 
-	console.LogK("Module", "Define models")
+	logs.Log("Module", "Define models")
 
 	initDefine = true
 
@@ -113,7 +113,7 @@ func InitData() error {
 	CheckRole("-1", "-1", "PROFILE.DEV", "USER.ADMIN", true)
 	CheckRole("-1", "-1", "PROFILE.SUPORT", "USER.ADMIN", true)
 
-	console.LogK("Module", "Init data module")
+	logs.Log("Module", "Init data module")
 
 	return nil
 }

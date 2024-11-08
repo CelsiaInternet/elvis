@@ -1,10 +1,10 @@
 package module
 
 import (
-	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/jdb"
 	"github.com/celsiainternet/elvis/linq"
+	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/msg"
 	"github.com/celsiainternet/elvis/utility"
 )
@@ -13,7 +13,7 @@ var Types *linq.Model
 
 func DefineTypes(db *jdb.DB) error {
 	if err := DefineSchemaModule(db); err != nil {
-		return console.Panic(err)
+		return logs.Panice(err)
 	}
 
 	if Types != nil {
@@ -44,7 +44,7 @@ func DefineTypes(db *jdb.DB) error {
 	})
 
 	if err := Types.Init(); err != nil {
-		return console.Panic(err)
+		return logs.Panice(err)
 	}
 
 	return nil
@@ -95,11 +95,11 @@ func GetTypeByIndex(idx int) (et.Item, error) {
 **/
 func InitType(projectId, id, state, kind, name, description string) (et.Item, error) {
 	if !utility.ValidId(kind) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "kind")
+		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "kind")
 	}
 
 	if !utility.ValidStr(name, 0, []string{""}) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "name")
+		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "name")
 	}
 
 	current, err := GetTypeByName(kind, name)
@@ -139,15 +139,15 @@ func InitType(projectId, id, state, kind, name, description string) (et.Item, er
 **/
 func UpSetType(projectId, id, kind, name, description string) (et.Item, error) {
 	if !utility.ValidId(id) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "_id")
+		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "_id")
 	}
 
 	if !utility.ValidId(kind) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "kind")
+		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "kind")
 	}
 
 	if !utility.ValidStr(name, 0, []string{""}) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "name")
+		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "name")
 	}
 
 	current, err := GetTypeByName(kind, name)
@@ -169,15 +169,15 @@ func UpSetType(projectId, id, kind, name, description string) (et.Item, error) {
 	}
 
 	if current.Id() != id {
-		return et.Item{}, console.Alert(msg.RECORD_FOUND)
+		return et.Item{}, logs.Alertm(msg.RECORD_FOUND)
 	}
 
 	if current.State() == utility.OF_SYSTEM {
-		return et.Item{}, console.Alert(msg.RECORD_IS_SYSTEM)
+		return et.Item{}, logs.Alertm(msg.RECORD_IS_SYSTEM)
 	} else if current.State() == utility.FOR_DELETE {
-		return et.Item{}, console.Alert(msg.RECORD_DELETE)
+		return et.Item{}, logs.Alertm(msg.RECORD_DELETE)
 	} else if current.State() != utility.ACTIVE {
-		return et.Item{}, console.AlertF(msg.RECORD_NOT_ACTIVE, current.State())
+		return et.Item{}, logs.Alertf(msg.RECORD_NOT_ACTIVE, current.State())
 	}
 
 	data := et.Json{}
@@ -200,11 +200,11 @@ func UpSetType(projectId, id, kind, name, description string) (et.Item, error) {
 **/
 func StateType(id, state string) (et.Item, error) {
 	if !utility.ValidId(id) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "id")
+		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "id")
 	}
 
 	if !utility.ValidStr(state, 0, []string{""}) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "state")
+		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "state")
 	}
 
 	current, err := GetTypeById(id)
@@ -213,15 +213,15 @@ func StateType(id, state string) (et.Item, error) {
 	}
 
 	if !current.Ok {
-		return et.Item{}, console.Alert(msg.RECORD_NOT_FOUND)
+		return et.Item{}, logs.Alertm(msg.RECORD_NOT_FOUND)
 	}
 
 	if current.State() == utility.OF_SYSTEM {
-		return et.Item{}, console.Alert(msg.RECORD_IS_SYSTEM)
+		return et.Item{}, logs.Alertm(msg.RECORD_IS_SYSTEM)
 	} else if current.State() == utility.FOR_DELETE {
-		return et.Item{}, console.Alert(msg.RECORD_DELETE)
+		return et.Item{}, logs.Alertm(msg.RECORD_DELETE)
 	} else if current.State() == state {
-		return et.Item{}, console.Alert(msg.RECORD_NOT_CHANGE)
+		return et.Item{}, logs.Alertm(msg.RECORD_NOT_CHANGE)
 	}
 
 	return Types.Update(et.Json{
@@ -238,7 +238,7 @@ func DeleteType(id string) (et.Item, error) {
 
 func AllTypes(projectId, kind, state, search string, page, rows int, _select string) (et.List, error) {
 	if !utility.ValidId(kind) {
-		return et.List{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "kind")
+		return et.List{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "kind")
 	}
 
 	if state == "" {

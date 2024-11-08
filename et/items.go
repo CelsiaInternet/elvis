@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/celsiainternet/elvis/console"
+	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/strs"
 )
 
@@ -23,7 +23,7 @@ func (it *Items) Scan(src interface{}) error {
 	case string:
 		ba = []byte(v)
 	default:
-		return console.ErrorF(`json/Scan - Failed to unmarshal JSON value:%s`, src)
+		return logs.Errorf(`json/Scan - Failed to unmarshal JSON value:%s`, src)
 	}
 
 	var t []Json
@@ -186,7 +186,7 @@ func (it *Items) Json(idx int, atribs ...string) Json {
 	case map[string]interface{}:
 		return Json(v)
 	default:
-		console.ErrorF("Not Items.Json type (%v) value:%v", reflect.TypeOf(v), v)
+		logs.Errorf("Not Items.Json type (%v) value:%v", reflect.TypeOf(v), v)
 		return Json{}
 	}
 }

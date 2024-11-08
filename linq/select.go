@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/strs"
 )
 
@@ -52,7 +52,7 @@ func (s *Linq) selCols(sel ...any) *Linq {
 				cols = append(cols, cols2...)
 			}
 		default:
-			console.ErrorF("Linq select type (%v) value:%v", reflect.TypeOf(v), v)
+			logs.Errorf("Linq select type (%v) value:%v", reflect.TypeOf(v), v)
 		}
 	}
 

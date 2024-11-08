@@ -1,10 +1,10 @@
 package module
 
 import (
-	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/jdb"
 	"github.com/celsiainternet/elvis/linq"
+	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/msg"
 	"github.com/celsiainternet/elvis/utility"
 )
@@ -23,7 +23,7 @@ var profileDefault = map[string]bool{
 
 func DefineProfiles(db *jdb.DB) error {
 	if err := DefineSchemaModule(db); err != nil {
-		return console.Panic(err)
+		return logs.Panice(err)
 	}
 
 	if Profiles != nil {
@@ -46,7 +46,7 @@ func DefineProfiles(db *jdb.DB) error {
 	Profiles.DefineForeignKey("module_id", Modules.Column("_id"))
 
 	if err := Profiles.Init(); err != nil {
-		return console.Panic(err)
+		return logs.Panice(err)
 	}
 
 	return nil
@@ -72,11 +72,11 @@ func GetProfileById(moduleId, profileTp string) (et.Item, error) {
 **/
 func InitProfile(moduleId, profileTp string, data et.Json) (et.Item, error) {
 	if !utility.ValidId(moduleId) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "moduleId")
+		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "moduleId")
 	}
 
 	if !utility.ValidId(profileTp) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "profile_tp")
+		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "profile_tp")
 	}
 
 	module, err := GetModuleById(moduleId)
@@ -85,7 +85,7 @@ func InitProfile(moduleId, profileTp string, data et.Json) (et.Item, error) {
 	}
 
 	if !module.Ok {
-		return et.Item{}, console.ErrorM(msg.MODULE_NOT_FOUND)
+		return et.Item{}, logs.Errorm(msg.MODULE_NOT_FOUND)
 	}
 
 	current, err := GetProfileById(moduleId, profileTp)
@@ -112,11 +112,11 @@ func InitProfile(moduleId, profileTp string, data et.Json) (et.Item, error) {
 
 func UpSetProfile(moduleId, profileTp string, data et.Json) (et.Item, error) {
 	if !utility.ValidId(moduleId) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "moduleId")
+		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "moduleId")
 	}
 
 	if !utility.ValidId(profileTp) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "profile_tp")
+		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "profile_tp")
 	}
 
 	module, err := GetModuleById(moduleId)
@@ -125,7 +125,7 @@ func UpSetProfile(moduleId, profileTp string, data et.Json) (et.Item, error) {
 	}
 
 	if !module.Ok {
-		return et.Item{}, console.ErrorM(msg.MODULE_NOT_FOUND)
+		return et.Item{}, logs.Errorm(msg.MODULE_NOT_FOUND)
 	}
 
 	data["module_id"] = moduleId
@@ -138,7 +138,7 @@ func UpSetProfile(moduleId, profileTp string, data et.Json) (et.Item, error) {
 
 func UpSetProfileTp(projectId, moduleId, id, name, description string, data et.Json) (et.Item, error) {
 	if !utility.ValidStr(name, 0, []string{""}) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "name")
+		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "name")
 	}
 
 	profile, err := UpSetType(projectId, id, "PROFILE", name, description)
@@ -206,11 +206,11 @@ func getProfileFolders(userId, projectId, mainId string) []et.Json {
 
 func GetProfileFolders(userId, projectId string) ([]et.Json, error) {
 	if !utility.ValidId(userId) {
-		return []et.Json{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "userId")
+		return []et.Json{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "userId")
 	}
 
 	if !utility.ValidId(projectId) {
-		return []et.Json{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "project_id")
+		return []et.Json{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "project_id")
 	}
 
 	mainId := "-1"

@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/celsiainternet/elvis/console"
+	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/strs"
 )
 
@@ -91,7 +91,7 @@ func Unquote(val interface{}) any {
 	case nil:
 		return strs.Format(`%s`, "NULL")
 	default:
-		console.ErrorF("Not quoted type:%v value:%v", reflect.TypeOf(v), v)
+		logs.Errorf("Not quoted type:%v value:%v", reflect.TypeOf(v), v)
 		return val
 	}
 }
@@ -158,7 +158,7 @@ func Quote(val interface{}) any {
 	case nil:
 		return strs.Format(`%s`, "NULL")
 	default:
-		console.ErrorF("Not double quoted type:%v value:%v", reflect.TypeOf(v), v)
+		logs.Errorf("Not double quoted type:%v value:%v", reflect.TypeOf(v), v)
 		return val
 	}
 }
@@ -188,7 +188,7 @@ func ToJson(src interface{}) (Json, error) {
 		}
 		return r, nil
 	default:
-		return nil, console.ErrorF(`Failed ToJson value: %v type: %v`, src, reflect.TypeOf(v))
+		return nil, logs.Errorf(`Failed ToJson value: %v type: %v`, src, reflect.TypeOf(v))
 	}
 
 	t := map[string]interface{}{}
@@ -285,7 +285,7 @@ func Val(data Json, _default any, atribs ...string) any {
 					return _default
 				}
 			default:
-				console.ErrorF("Val. Type (%v) value:%v", reflect.TypeOf(v), v)
+				logs.Errorf("Val. Type (%v) value:%v", reflect.TypeOf(v), v)
 				return _default
 			}
 		}
@@ -321,19 +321,19 @@ func IsDiferent(a, b Json) bool {
 			case Json:
 				_new, err := ToJson(new)
 				if err != nil {
-					console.Error(err)
+					logs.Error(err)
 					return false
 				}
 				return IsDiferent(v, _new)
 			case map[string]interface{}:
 				_old, err := ToJson(old)
 				if err != nil {
-					console.Error(err)
+					logs.Error(err)
 					return false
 				}
 				_new, err := ToJson(new)
 				if err != nil {
-					console.Error(err)
+					logs.Error(err)
 					return false
 				}
 				return IsDiferent(_old, _new)
@@ -361,19 +361,19 @@ func IsChange(a, b Json) bool {
 			case Json:
 				_new, err := ToJson(new)
 				if err != nil {
-					console.Error(err)
+					logs.Error(err)
 					return false
 				}
 				return IsChange(v, _new)
 			case map[string]interface{}:
 				_old, err := ToJson(old)
 				if err != nil {
-					console.Error(err)
+					logs.Error(err)
 					return false
 				}
 				_new, err := ToJson(new)
 				if err != nil {
-					console.Error(err)
+					logs.Error(err)
 					return false
 				}
 				return IsChange(_old, _new)
@@ -404,7 +404,7 @@ func Update(a, b Json) (Json, bool) {
 			case Json:
 				_old, err := ToJson(old)
 				if err != nil {
-					console.Error(err)
+					logs.Error(err)
 				}
 				_new, ch := Update(_old, v)
 				if !change {
@@ -414,7 +414,7 @@ func Update(a, b Json) (Json, bool) {
 			case map[string]interface{}:
 				_old, err := ToJson(old)
 				if err != nil {
-					console.Error(err)
+					logs.Error(err)
 				}
 				_new, ch := Update(_old, v)
 				if !change {
@@ -453,7 +453,7 @@ func Merge(a, b Json) (Json, bool) {
 			case Json:
 				_old, err := ToJson(old)
 				if err != nil {
-					console.Error(err)
+					logs.Error(err)
 				}
 				_new, ch := Merge(_old, v)
 				if !change {
@@ -463,7 +463,7 @@ func Merge(a, b Json) (Json, bool) {
 			case map[string]interface{}:
 				_old, err := ToJson(old)
 				if err != nil {
-					console.Error(err)
+					logs.Error(err)
 				}
 				_new, ch := Merge(_old, v)
 				if !change {

@@ -1,14 +1,14 @@
 package jdb
 
 import (
-	"github.com/celsiainternet/elvis/console"
+	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/strs"
 )
 
 func defineSeries(db *DB) error {
 	exist, err := ExistTable(db, "core", "SERIES")
 	if err != nil {
-		return console.Panic(err)
+		return logs.Panice(err)
 	}
 
 	if exist {
@@ -28,7 +28,7 @@ func defineSeries(db *DB) error {
 
 	_, err = db.db.Exec(sql)
 	if err != nil {
-		return console.Panic(err)
+		return logs.Panice(err)
 	}
 
 	return defineSeriesFunction(db)
@@ -82,7 +82,7 @@ func defineSeriesFunction(db *DB) error {
 
 	_, err := db.db.Exec(sql)
 	if err != nil {
-		return console.Panic(err)
+		return logs.Panice(err)
 	}
 
 	return nil
@@ -98,7 +98,7 @@ func NextSerie(db *DB, tag string) int64 {
 	if db.dm != nil {
 		rows, err := db.dm.Query(sql, tag)
 		if err != nil {
-			console.Error(err)
+			logs.Error(err)
 			return 0
 		}
 		defer rows.Close()
@@ -115,7 +115,7 @@ func NextSerie(db *DB, tag string) int64 {
 
 	item, err := db.QueryOne(sql, tag)
 	if err != nil {
-		console.Error(err)
+		logs.Error(err)
 		return 0
 	}
 	if !item.Ok {

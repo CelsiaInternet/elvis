@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/celsiainternet/elvis/claim"
-	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/event"
+	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/response"
 	"github.com/celsiainternet/elvis/utility"
 )
@@ -21,16 +21,16 @@ import (
 **/
 func tokenFromAuthorization(authorization string) (string, error) {
 	if authorization == "" {
-		return "", console.Alert("Autorization is required")
+		return "", logs.Alertm("Autorization is required")
 	}
 
 	if !strings.HasPrefix(authorization, "Bearer") {
-		return "", console.Alert("Invalid autorization format")
+		return "", logs.Alertm("Invalid autorization format")
 	}
 
 	l := strings.Split(authorization, " ")
 	if len(l) != 2 {
-		return "", console.Alert("Invalid autorization format")
+		return "", logs.Alertm("Invalid autorization format")
 	}
 
 	return l[1], nil
@@ -52,7 +52,7 @@ func GetAuthorization(w http.ResponseWriter, r *http.Request) (string, error) {
 	authorization := r.Header.Get("Authorization")
 	result, err := tokenFromAuthorization(authorization)
 	if err != nil {
-		return "", console.AlertE(err)
+		return "", logs.Alert(err)
 	}
 
 	return result, nil
@@ -70,7 +70,7 @@ func Authorization(next http.Handler) http.Handler {
 			return
 		}
 
-		c, err := claim.GetFromToken(token)
+		c, err := claim.ValidToken(token)
 		if err != nil {
 			response.Unauthorized(w, r)
 			return
@@ -87,7 +87,7 @@ func Authorization(next http.Handler) http.Handler {
 		ctx = context.WithValue(ctx, claim.ClientIdKey, c.Id)
 		ctx = context.WithValue(ctx, claim.AppKey, c.App)
 		ctx = context.WithValue(ctx, claim.NameKey, c.Name)
-		ctx = context.WithValue(ctx, claim.KindKey, c.Kind)
+		ctx = context.WithValue(ctx, claim.SubjectKey, c.Subject)
 		ctx = context.WithValue(ctx, claim.UsernameKey, c.Username)
 		ctx = context.WithValue(ctx, claim.TokenKey, token)
 

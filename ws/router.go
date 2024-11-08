@@ -9,13 +9,13 @@ import (
 )
 
 /**
-* ConnectHttp connect to the server using the http
+* HttpConnect connect to the server using the http
 * @param w http.ResponseWriter
 * @param r *http.Request
 * @return *Subscriber
 * @return error
 **/
-func (h *Hub) ConnectHttp(w http.ResponseWriter, r *http.Request) (*Subscriber, error) {
+func (h *Hub) HttpConnect(w http.ResponseWriter, r *http.Request) (*Subscriber, error) {
 	socket, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		return nil, err
@@ -43,7 +43,7 @@ func (h *Hub) ConnectHttp(w http.ResponseWriter, r *http.Request) (*Subscriber, 
 * @param w http.ResponseWriter
 * @param r *http.Request
 **/
-func (h *Hub) HttpDescribew(w http.ResponseWriter, r *http.Request) {
+func (h *Hub) HttpDescribe(w http.ResponseWriter, r *http.Request) {
 	result := h.Describe()
 
 	response.JSON(w, r, http.StatusOK, result)
