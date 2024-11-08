@@ -43,6 +43,17 @@ func (h *Hub) ConnectHttp(w http.ResponseWriter, r *http.Request) (*Subscriber, 
 * @param w http.ResponseWriter
 * @param r *http.Request
 **/
+func (h *Hub) HttpDescribew(w http.ResponseWriter, r *http.Request) {
+	result := h.Describe()
+
+	response.JSON(w, r, http.StatusOK, result)
+}
+
+/**
+* HttpGetPublications
+* @param w http.ResponseWriter
+* @param r *http.Request
+**/
 func (h *Hub) HttpGetPublications(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Query().Get("name")
 	queue := r.URL.Query().Get("queue")

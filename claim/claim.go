@@ -42,8 +42,9 @@ const (
 type AuthType string
 
 const (
-	BasicAuth   AuthType = "BasicAuth"
-	BearerToken AuthType = "BearerToken"
+	BasicAuth    AuthType = "BasicAuth"
+	BearerToken  AuthType = "BearerToken"
+	ServiceToken AuthType = "ServiceToken"
 )
 
 type Claim struct {

@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/utility"
@@ -21,33 +20,26 @@ var upgrader = websocket.Upgrader{
 }
 
 type Hub struct {
-	Id                  string
-	Name                string
-	Host                string
-	TypeNode            TypeNode
-	clients             []*Subscriber
-	channels            []*Channel
-	queues              []*Queue
-	register            chan *Subscriber
-	unregister          chan *Subscriber
-	master              *Client
-	token               string
-	run                 bool
-	clusterConnected    func(string)
-	clusterSubscribed   func(string)
-	clusterUnSubscribed func(string)
-	mutex               *sync.RWMutex
+	Id         string
+	Name       string
+	Host       string
+	clients    []*Subscriber
+	channels   []*Channel
+	queues     []*Queue
+	register   chan *Subscriber
+	unregister chan *Subscriber
+	run        bool
+	mutex      *sync.RWMutex
 }
 
 /**
-* NewWs
+* NewHub
 * @return *Hub
 **/
-func newHub(tp TypeNode, name string) *Hub {
+func NewHub() *Hub {
 	result := &Hub{
 		Id:         utility.UUID(),
-		Name:       name,
-		TypeNode:   tp,
+		Name:       ServiceName,
 		clients:    make([]*Subscriber, 0),
 		channels:   make([]*Channel, 0),
 		register:   make(chan *Subscriber),
@@ -57,28 +49,6 @@ func newHub(tp TypeNode, name string) *Hub {
 	}
 
 	return result
-}
-
-/**
-* NewHub
-* @return *Hub
-**/
-func NewHub() *Hub {
-	name := envar.GetStr(ServiceName, "RT_HUB_NAME")
-	return newHub(NotNode, name)
-}
-
-/**
-* NewMaster
-* @return *Hub
-**/
-func NewMaster() *Hub {
-	name := envar.GetStr("Master", "RT_HUB_NAME")
-	return newHub(NodeMaster, name)
-}
-
-func (h *Hub) config() {
-	h.token = ""
 }
 
 func (h *Hub) start() {
@@ -153,8 +123,9 @@ func (h *Hub) removeChannel(value *Channel) {
 		return
 	}
 
-	value.close()
+	h.ClusterUnSubscribed(value.Name)
 
+	value.close()
 	h.channels = append(h.channels[:idx], h.channels[idx+1:]...)
 }
 
@@ -177,7 +148,7 @@ func (h *Hub) addQueue(value *Queue) {
 	h.queues = append(h.queues, value)
 }
 
-func (h *Hub) removeQueuel(value *Queue) {
+func (h *Hub) removeQueue(value *Queue) {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
 
@@ -186,6 +157,8 @@ func (h *Hub) removeQueuel(value *Queue) {
 		return
 	}
 
+	h.ClusterUnSubscribed(value.Name)
+
 	value.close()
 
 	h.queues = append(h.queues[:idx], h.queues[idx+1:]...)
@@ -193,7 +166,6 @@ func (h *Hub) removeQueuel(value *Queue) {
 
 func (h *Hub) onConnect(client *Subscriber) {
 	h.addClient(client)
-
 	msg := NewMessage(h.From(), et.Json{
 		"ok":       true,
 		"message":  MSG_CONNECT_SUCCESSFULLY,
@@ -202,7 +174,8 @@ func (h *Hub) onConnect(client *Subscriber) {
 	}, TpConnect)
 	msg.Channel = "ws/connect"
 	client.sendMessage(msg)
-	h.ClusterConnected(client.Id)
+
+	h.ClusterSubscribed(client.Id)
 
 	logs.Logf(ServiceName, MSG_CLIENT_CONNECT, client.Id, client.Name, h.Id)
 }
@@ -211,6 +184,7 @@ func (h *Hub) onDisconnect(client *Subscriber) {
 	clientId := client.Id
 	name := client.Name
 	h.removeClient(client)
+
 	h.ClusterUnSubscribed(clientId)
 
 	logs.Logf(ServiceName, MSG_CLIENT_DISCONNECT, clientId, name, h.Id)

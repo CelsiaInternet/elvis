@@ -11,9 +11,9 @@ import (
 	"strings"
 
 	"github.com/celsiainternet/elvis/cache"
-	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/middleware"
 	"github.com/celsiainternet/elvis/response"
 	"github.com/celsiainternet/elvis/strs"
@@ -41,14 +41,14 @@ func StartServer() {
 	address := strs.Format(`:%d`, conn.Port)
 	listener, err := net.Listen("tcp", address)
 	if err != nil {
-		console.Fatal(err)
+		logs.Fatal(err)
 	}
 
-	console.LogKF("Rpc", `Running on %s`, listener.Addr())
+	logs.Logf("Rpc", `Running on %s`, listener.Addr())
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
-			console.PanicF("Error al aceptar la conexión:%s", err.Error())
+			logs.Panic(err.Error())
 			continue
 		}
 		go rpc.ServeConn(conn)
@@ -133,7 +133,7 @@ func setRoutes(name string, routers []*Router) error {
 func UnMount() error {
 	routers, err := getRouters(conn.key)
 	if err != nil {
-		return console.AlertE(err)
+		return logs.Alert(err)
 	}
 
 	idx := slices.IndexFunc(routers, func(e *Router) bool { return e.Host == conn.Host && e.Port == conn.Port })
@@ -143,7 +143,7 @@ func UnMount() error {
 
 	err = setRoutes(conn.key, routers)
 	if err != nil {
-		return console.AlertE(err)
+		return logs.Alert(err)
 	}
 
 	return nil
@@ -291,7 +291,7 @@ func Call(method string, data et.Json) (et.Item, error) {
 	}
 
 	if solver == nil {
-		return result, console.NewError(ERR_METHOD_NOT_FOUND)
+		return result, logs.NewError(ERR_METHOD_NOT_FOUND)
 	}
 
 	address := strs.Format(`%s:%d`, solver.Host, solver.Port)
@@ -319,7 +319,7 @@ func Close() {
 		UnMount()
 	}
 
-	console.LogK("Rpc", `Shutting down server...`)
+	logs.Log("Rpc", `Shutting down server...`)
 }
 
 /**

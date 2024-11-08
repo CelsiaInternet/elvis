@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/race"
 	"github.com/celsiainternet/elvis/strs"
@@ -13,15 +14,12 @@ import (
 type TypeNode int
 
 const (
-	NotNode TypeNode = iota
+	NodeWorker TypeNode = iota
 	NodeMaster
-	NodeWorker
 )
 
 func (t TypeNode) String() string {
 	switch t {
-	case NotNode:
-		return "notnode"
 	case NodeMaster:
 		return "master"
 	case NodeWorker:
@@ -31,12 +29,27 @@ func (t TypeNode) String() string {
 	return "unknown"
 }
 
+func (t TypeNode) ToJson() et.Json {
+	return et.Json{
+		"id":   t,
+		"name": t.String(),
+	}
+}
+
+type Adapter struct {
+	Client
+	typeNode TypeNode
+}
+
+var adapter *Adapter
+
 type AdapterConfig struct {
 	Schema    string
 	Host      string
 	Path      string
 	TypeNode  TypeNode
 	Reconcect int
+	Header    http.Header
 }
 
 func clusterChannel(channel string) string {
@@ -45,61 +58,52 @@ func clusterChannel(channel string) string {
 }
 
 /**
+* InitMaster
+* @return *Hub
+**/
+func (h *Hub) InitMaster() {
+	if adapter != nil {
+		return
+	}
+
+	adapter = &Adapter{
+		typeNode: NodeMaster,
+	}
+}
+
+/**
 * Join
 * @param config *ClientConfig
 **/
 func (h *Hub) Join(config AdapterConfig) error {
-	if h.master != nil {
+	if adapter != nil {
 		return nil
 	}
-	client := &Client{
-		Channels:  make(map[string]func(Message)),
-		Attempts:  race.NewValue(0),
-		Connected: race.NewValue(false),
-		mutex:     &sync.Mutex{},
-		clientId:  h.Id,
-		name:      h.Name,
-		schema:    config.Schema,
-		host:      config.Host,
-		path:      config.Path,
-		header: http.Header{
-			"Authorization": []string{"Bearer " + h.token},
-		},
-		reconcect: config.Reconcect,
-		typeNode:  config.TypeNode,
+
+	adapter = &Adapter{
+		typeNode: config.TypeNode,
 	}
-	err := client.Connect()
+	adapter.Channels = make(map[string]func(Message))
+	adapter.Attempts = race.NewValue(0)
+	adapter.Connected = race.NewValue(false)
+	adapter.mutex = &sync.Mutex{}
+	adapter.clientId = h.Id
+	adapter.name = h.Name
+	adapter.schema = config.Schema
+	adapter.host = config.Host
+	adapter.path = config.Path
+	adapter.header = config.Header
+	adapter.reconcect = config.Reconcect
+	err := adapter.Connect()
 	if err != nil {
 		return err
 	}
 
-	h.master = client
-	h.TypeNode = config.TypeNode
-
-	h.SetClusterConnected(func(clientId string) {
-		channel := clusterChannel(clientId)
-		h.master.Subscribe(channel, func(msg Message) {
-			h.SendMessage(msg.Id, msg)
-		})
-	})
-
-	h.SetClusterSubscribed(func(channel string) {
-		channel = clusterChannel(channel)
-		h.master.Subscribe(channel, func(msg Message) {
-			h.Publish(msg.Channel, msg.Queue, msg, msg.Ignored, msg.From)
-		})
-	})
-
-	h.SetClusterUnSubscribed(func(channel string) {
-		channel = clusterChannel(channel)
-		h.master.Unsubscribe(channel)
-	})
-
-	h.master.SetReconnectCallback(func(c *Client) {
+	adapter.SetReconnectCallback(func(c *Client) {
 		logs.Debug("ReconnectCallback:", "Hola")
 	})
 
-	h.master.SetDirectMessage(func(msg Message) {
+	adapter.SetDirectMessage(func(msg Message) {
 		logs.Debug("DirectMessage:", msg.ToString())
 	})
 
@@ -107,67 +111,14 @@ func (h *Hub) Join(config AdapterConfig) error {
 }
 
 /**
-* SetClusterConnected
-* @param fn func(*Subscriber)
+* Live
 **/
-func (h *Hub) SetClusterConnected(fn func(string)) {
-	h.mutex.Lock()
-	defer h.mutex.Unlock()
-
-	h.clusterConnected = fn
-}
-
-/**
-* ClusterConnected
-* @param sub *Subscriber
-**/
-func (h *Hub) ClusterConnected(clienId string) {
-	if h.clusterConnected != nil {
-		h.clusterConnected(clienId)
+func (h *Hub) Live() {
+	if adapter == nil {
+		return
 	}
-}
 
-/**
-* SetClusterUnSubscribed
-* @param fn func(string)
-**/
-func (h *Hub) SetClusterUnSubscribed(fn func(string)) {
-	h.mutex.Lock()
-	defer h.mutex.Unlock()
-
-	h.clusterUnSubscribed = fn
-}
-
-/**
-* ClusterUnSubscribed
-* @param sub channel string
-**/
-func (h *Hub) ClusterUnSubscribed(channel string) {
-	if h.clusterUnSubscribed != nil {
-		h.clusterUnSubscribed(channel)
-	}
-}
-
-/**
-* ClusterUnSubscribed
-* @param sub channel string
-**/
-func (h *Hub) ClusterPublish(channel string, msg Message) {
-	if h.master != nil {
-		channel = clusterChannel(channel)
-		h.master.Publish(channel, msg)
-	}
-}
-
-/**
-* SetClusterSubscribed
-* @param fn func(string)
-**/
-func (h *Hub) SetClusterSubscribed(fn func(string)) {
-	h.mutex.Lock()
-	defer h.mutex.Unlock()
-
-	h.clusterSubscribed = fn
+	adapter.Close()
 }
 
 /**
@@ -175,7 +126,54 @@ func (h *Hub) SetClusterSubscribed(fn func(string)) {
 * @param channel string
 **/
 func (h *Hub) ClusterSubscribed(channel string) {
-	if h.clusterSubscribed != nil {
-		h.clusterSubscribed(channel)
+	if adapter == nil {
+		return
 	}
+
+	if !adapter.Connected.Bool() {
+		return
+	}
+
+	channel = clusterChannel(channel)
+	adapter.Subscribe(channel, func(msg Message) {
+		if msg.Tp == TpDirect {
+			h.SendMessage(msg.Id, msg)
+		} else {
+			h.Publish(msg.Channel, msg.Queue, msg, msg.Ignored, msg.From)
+		}
+	})
+}
+
+/**
+* ClusterUnSubscribed
+* @param sub channel string
+**/
+func (h *Hub) ClusterUnSubscribed(channel string) {
+	if adapter == nil {
+		return
+	}
+
+	if !adapter.Connected.Bool() {
+		return
+	}
+
+	channel = clusterChannel(channel)
+	adapter.Unsubscribe(channel)
+}
+
+/**
+* ClusterUnSubscribed
+* @param sub channel string
+**/
+func (h *Hub) ClusterPublish(channel string, msg Message) {
+	if adapter == nil {
+		return
+	}
+
+	if !adapter.Connected.Bool() {
+		return
+	}
+
+	channel = clusterChannel(channel)
+	adapter.Publish(channel, msg)
 }

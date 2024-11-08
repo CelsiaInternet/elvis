@@ -13,7 +13,7 @@ type Queue struct {
 	Queue       string        `json:"queue"`
 	Turn        int           `json:"turn"`
 	Subscribers []*Subscriber `json:"subscribers"`
-	mutex       *sync.Mutex
+	mutex       *sync.RWMutex
 }
 
 /**
@@ -27,10 +27,21 @@ func newQueue(name, queue string) *Queue {
 		Queue:       queue,
 		Turn:        0,
 		Subscribers: []*Subscriber{},
-		mutex:       &sync.Mutex{},
+		mutex:       &sync.RWMutex{},
 	}
 
 	return result
+}
+
+/**
+* Count return the number of subscribers
+* @return int
+**/
+func (c *Queue) Count() int {
+	c.mutex.RLock()
+	defer c.mutex.RUnlock()
+
+	return len(c.Subscribers)
 }
 
 /**

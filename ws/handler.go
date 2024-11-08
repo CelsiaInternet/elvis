@@ -11,15 +11,29 @@ import (
 )
 
 func (h *Hub) Describe() et.Json {
-	return et.Json{
+	channels := h.GetChannels("", "")
+	clients := h.GetClients("")
+	result := et.Json{
 		"id":       h.Id,
 		"name":     h.Name,
 		"host":     h.Host,
-		"type":     h.TypeNode.String(),
-		"channels": len(h.channels),
-		"clients":  len(h.clients),
-		"queues":   len(h.queues),
+		"channels": et.Json{"count": channels.Count, "items": channels.Result},
+		"clients":  et.Json{"count": clients.Count, "items": clients.Result},
 	}
+
+	if adapter != nil && adapter.typeNode == NodeMaster {
+		result["typeNode"] = adapter.typeNode.ToJson()
+		result["nodos"] = et.Json{"count": channels.Count, "items": channels.Result}
+	} else if adapter != nil {
+		result["typeNode"] = adapter.typeNode.ToJson()
+		result["clients"] = et.Json{"count": clients.Count, "items": clients.Result}
+		result["channels"] = et.Json{"count": channels.Count, "items": channels.Result}
+	} else {
+		result["clients"] = et.Json{"count": clients.Count, "items": clients.Result}
+		result["channels"] = et.Json{"count": channels.Count, "items": channels.Result}
+	}
+
+	return result
 }
 
 /**
@@ -79,13 +93,6 @@ func (h *Hub) Start() {
 **/
 func (h *Hub) SetName(name string) {
 	h.Name = name
-}
-
-/**
-* InitMaster
-**/
-func (h *Hub) InitMaster() {
-	h.TypeNode = NodeMaster
 }
 
 /**
@@ -181,9 +188,7 @@ func (h *Hub) Subscribe(clientId string, channel string) error {
 	ch := h.NewChannel(channel, 0)
 	ch.subscribe(client)
 
-	if h.TypeNode != NotNode {
-		h.ClusterSubscribed(channel)
-	}
+	h.ClusterSubscribed(channel)
 
 	return nil
 }
@@ -204,9 +209,7 @@ func (h *Hub) QueueSubscribe(clientId string, channel, queue string) error {
 	ch := h.NewQueue(channel, queue, 0)
 	ch.subscribe(client)
 
-	if h.TypeNode != NotNode {
-		h.ClusterSubscribed(channel)
-	}
+	h.ClusterSubscribed(channel)
 
 	return nil
 }
@@ -236,15 +239,17 @@ func (h *Hub) Unsubscribe(clientId string, channel, queue string) error {
 	ch := h.getChannel(channel)
 	if ch != nil {
 		ch.unsubscribe(client)
+		if ch.Count() == 0 {
+			h.removeChannel(ch)
+		}
 	}
 
 	qu := h.getQueue(channel, queue)
 	if qu != nil {
 		qu.unsubscribe(client)
-	}
-
-	if h.TypeNode != NotNode {
-		h.ClusterUnSubscribed(channel)
+		if qu.Count() == 0 {
+			h.removeQueue(qu)
+		}
 	}
 
 	return nil
@@ -260,10 +265,7 @@ func (h *Hub) Unsubscribe(clientId string, channel, queue string) error {
 **/
 func (h *Hub) Publish(channel, queue string, msg Message, ignored []string, from et.Json) {
 	h.broadcast(channel, queue, msg, ignored, from)
-
-	if h.TypeNode != NotNode {
-		h.ClusterPublish(channel, msg)
-	}
+	h.ClusterPublish(channel, msg)
 }
 
 /**
@@ -274,9 +276,9 @@ func (h *Hub) Publish(channel, queue string, msg Message, ignored []string, from
 **/
 func (h *Hub) SendMessage(clientId string, msg Message) error {
 	client := h.getClient(clientId)
-	if client == nil && h.TypeNode != NotNode {
-		channel := clusterChannel(clientId)
-		h.master.Publish(channel, msg)
+	if client == nil && adapter != nil {
+		h.ClusterPublish(clientId, msg)
+		return nil
 	}
 
 	if client == nil {

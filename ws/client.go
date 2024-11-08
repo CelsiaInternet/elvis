@@ -45,7 +45,6 @@ type Client struct {
 	path              string
 	header            http.Header
 	reconcect         int
-	typeNode          TypeNode
 	directMessage     func(Message)
 	reconnectCallback func(*Client)
 	socket            *websocket.Conn
@@ -111,7 +110,7 @@ func (c *Client) Connect() error {
 		return nil
 	}
 
-	path := strs.Format(`%s://%s%s?clientId=%s&name=%s&typeNode=%d`, c.schema, c.host, c.path, c.clientId, c.name, c.typeNode)
+	path := strs.Format(`%s://%s%s?clientId=%s&name=%s`, c.schema, c.host, c.path, c.clientId, c.name)
 	socket, _, err := websocket.DefaultDialer.Dial(path, c.header)
 	if err != nil {
 		return err
