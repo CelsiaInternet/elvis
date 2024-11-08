@@ -1,7 +1,6 @@
 package main
 
 import (
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -9,7 +8,6 @@ import (
 
 	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/envar"
-	"github.com/celsiainternet/elvis/response"
 	"github.com/celsiainternet/elvis/strs"
 	"github.com/celsiainternet/elvis/ws"
 )
@@ -20,15 +18,15 @@ var client2 *ws.Client
 var client3 *ws.Client
 
 func main() {
+	if conn != nil {
+		return
+	}
+
 	envar.SetInt("port", 3000, "Port server", "PORT")
 	envar.SetStr("mode", "", "Modo cluster master, worker", "MODE")
 	envar.SetStr("master", "", "Master host", "MASTER_HOST")
 	envar.SetStr("schema", "", "Master host", "MASTER_SCHEMA")
 	envar.SetStr("path", "", "Master host", "MASTER_PATH")
-
-	if conn != nil {
-		return
-	}
 
 	port := envar.GetInt(3600, "PORT")
 	mode := envar.GetStr("master", "MODE")
@@ -36,37 +34,7 @@ func main() {
 	schema := envar.GetStr("ws", "MASTER_HOST")
 	path := envar.GetStr("/ws", "MASTER_PATH")
 
-	conn = ws.NewHub()
-	conn.Start()
-	switch mode {
-	case "master":
-		conn.InitMaster()
-		if master != "" {
-			conn.Join(ws.AdapterConfig{
-				Schema:    schema,
-				Host:      master,
-				Path:      path,
-				TypeNode:  ws.NodeMaster,
-				Reconcect: 3,
-				Header:    http.Header{},
-			})
-		}
-	case "worker":
-		if master != "" {
-			conn.Join(ws.AdapterConfig{
-				Schema:    schema,
-				Host:      master,
-				Path:      path,
-				TypeNode:  ws.NodeWorker,
-				Reconcect: 3,
-				Header:    http.Header{},
-			})
-		}
-	}
-
-	go startHttp(port)
-
-	time.Sleep(1 * time.Second)
+	conn = ws.ServerHttp(port, mode, master, schema, path)
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
@@ -74,24 +42,6 @@ func main() {
 	<-sigs
 
 	console.LogK("WebSocket", "Shoutdown server...")
-}
-
-func startHttp(port int) {
-	http.HandleFunc("/ws", wsHandler)
-	http.HandleFunc("/ws/describe", conn.HttpDescribe)
-	http.HandleFunc("/ws/publications", conn.HttpGetPublications)
-	http.HandleFunc("/ws/subscribers", conn.HttpGetSubscribers)
-
-	console.LogKF("WebSocket", "Http server in http://localhost:%d/ws", port)
-	addr := strs.Format(`:%d`, port)
-	console.Fatal(http.ListenAndServe(addr, nil))
-}
-
-func wsHandler(w http.ResponseWriter, r *http.Request) {
-	_, err := conn.HttpConnect(w, r)
-	if err != nil {
-		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
-	}
 }
 
 func test1(port int) {

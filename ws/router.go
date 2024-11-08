@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/celsiainternet/elvis/claim"
+	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/response"
 	"github.com/celsiainternet/elvis/utility"
 )
@@ -15,10 +16,10 @@ import (
 * @return *Subscriber
 * @return error
 **/
-func (h *Hub) HttpConnect(w http.ResponseWriter, r *http.Request) (*Subscriber, error) {
+func (h *Hub) HttpConnect(w http.ResponseWriter, r *http.Request) {
 	socket, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		return nil, err
+		response.HTTPError(w, r, http.StatusInternalServerError, err.Error())
 	}
 
 	clientId := r.URL.Query().Get("clientId")
@@ -35,7 +36,12 @@ func (h *Hub) HttpConnect(w http.ResponseWriter, r *http.Request) (*Subscriber, 
 	clientId = claim.ClientIdKey.String(ctx, clientId)
 	name = claim.NameKey.String(ctx, name)
 
-	return h.connect(socket, clientId, name)
+	_, err = h.connect(socket, clientId, name)
+	if err != nil {
+		response.HTTPError(w, r, http.StatusInternalServerError, err.Error())
+	}
+
+	response.JSON(w, r, http.StatusOK, et.Json{"message": "Connected"})
 }
 
 /**
