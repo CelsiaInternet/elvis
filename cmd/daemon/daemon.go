@@ -50,12 +50,13 @@ var apps map[string]RepositoryCMD
 var app string = "systemd"
 
 func main() {
+	_app := apps[app]
+
 	if len(os.Args) < 2 {
-		help("")
+		_app.Help("")
 		return
 	}
 
-	_app := apps[app]
 	command := os.Args[1]
 	switch ToTypeCommand(command) {
 	case CMD_Version:
@@ -74,20 +75,6 @@ func main() {
 		_app.Stop()
 	case CMD_Restart:
 		_app.Restart()
-	}
-}
-
-func help(val string) {
-	if val == "" {
-		println("Uso: daemon [opciones]")
-		println("Opciones:")
-		println("  --h, --help     Mostrar esta ayuda")
-		println("  --v, --version  Mostrar la versión")
-		println("  --s, --status   Mostrar el estado del servicio")
-		println("  --r, --restart  Reiniciar el servicio")
-		println("  --up   				 Actualizar el servicio")
-		println("  --down   			 Detener el servicio")
-		println("  --start   			 Iniciar el servicio")
 	}
 }
 
