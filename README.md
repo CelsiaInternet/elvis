@@ -50,8 +50,13 @@ go run github.com/celsiainternet/elvis/cmd/create-go create
 gofmt -w . && go run ./cmd/ws -port 3300 -rpc 4200
 gofmt -w . && go run ./cmd/ws -port 3500 -rpc 4500
 gofmt -w . && go run --race ./cmd/ws -port 3500
-gofmt -w . && go run --race ./cmd/ws -port 3600 -rpc 4600
-gofmt -w . && go run --race ./cmd/ws -port 3700 -rpc 4600
+gofmt -w . && go run --race ./cmd/ws -port 3600
+gofmt -w . && go run --race ./cmd/ws -port 3700
+
+gofmt -w . && go run --race ./cmd/daemon -port 3600 -rpc 4600
+
+gofmt -w . && go build --race -a -v -o ./daemon ./cmd/daemon
+
 gofmt -w . && go build -race ./cmd/ws/main
 ```
 

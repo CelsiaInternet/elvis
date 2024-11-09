@@ -6,183 +6,75 @@ import (
 	"syscall"
 	"time"
 
+	"math/rand"
+
 	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/envar"
+	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/strs"
 	"github.com/celsiainternet/elvis/ws"
 )
 
 var conn *ws.Hub
-var client1 *ws.Client
-var client2 *ws.Client
-var client3 *ws.Client
+var clients []*ws.Client
 
 func main() {
 	if conn != nil {
 		return
 	}
 
-	envar.SetInt("port", 3000, "Port server", "PORT")
-	envar.SetStr("mode", "", "Modo cluster master, worker", "MODE")
-	envar.SetStr("master", "", "Master host", "MASTER_HOST")
-	envar.SetStr("schema", "", "Master host", "MASTER_SCHEMA")
-	envar.SetStr("path", "", "Master host", "MASTER_PATH")
+	envar.SetInt("port", 3300, "Port server", "PORT")
+	envar.SetStr("mode", "", "Modo cluster: master or worker", "WS_MODE")
+	envar.SetStr("master-url", "", "Master host", "WS_MASTER_URL")
 
-	port := envar.GetInt(3600, "PORT")
-	mode := envar.GetStr("master", "MODE")
-	master := envar.GetStr("", "MASTER_HOST")
-	schema := envar.GetStr("ws", "MASTER_HOST")
-	path := envar.GetStr("/ws", "MASTER_PATH")
+	port := envar.GetInt(3300, "PORT")
+	mode := envar.GetStr("", "WS_MODE")
+	masterURL := envar.GetStr("", "WS_MASTER_URL")
 
-	conn = ws.ServerHttp(port, mode, master, schema, path)
+	conn = ws.ServerHttp(port, mode, masterURL)
+
+	test1(port)
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-
 	<-sigs
 
 	console.LogK("WebSocket", "Shoutdown server...")
 }
 
 func test1(port int) {
-	host := strs.Format(`localhost:%d`, port)
+	url := strs.Format(`ws://localhost:%d/ws`, port)
 
-	var err error
-	client1, err = ws.NewClient(&ws.ClientConfig{
-		ClientId:  "client1",
-		Name:      "client1",
-		Schema:    "ws",
-		Host:      host,
-		Path:      "/ws",
-		Reconcect: 3,
-	})
-	if err != nil {
-		console.Fatal(err)
+	n := 10000
+	for i := 0; i < n; i++ {
+		client, err := ws.NewClient(&ws.ClientConfig{
+			ClientId:  strs.Format("client-%d", i),
+			Name:      strs.Format("Client%d", i),
+			Url:       url,
+			Reconcect: 3,
+		})
+		if err != nil {
+			console.AlertE(err)
+		}
+
+		client.Subscribe("Hola", func(msg ws.Message) {
+			console.Debug("client1", msg.ToString())
+		})
+
+		clients = append(clients, client)
 	}
 
-	client2, err = ws.NewClient(&ws.ClientConfig{
-		ClientId:  "client2",
-		Name:      "client2",
-		Schema:    "ws",
-		Host:      host,
-		Path:      "/ws",
-		Reconcect: 3,
-	})
-	if err != nil {
-		console.Fatal(err)
-	}
-
-	client3, err = ws.NewClient(&ws.ClientConfig{
-		ClientId:  "client3",
-		Name:      "client3",
-		Schema:    "ws",
-		Host:      host,
-		Path:      "/ws",
-		Reconcect: 3,
-	})
-	if err != nil {
-		console.Fatal(err)
-	}
-
-	client1.SetDirectMessage(func(msg ws.Message) {
-		console.Debug("DirectMessage:", msg.ToString())
-	})
-
-	client1.Subscribe("Hola", func(msg ws.Message) {
-		console.Debug("client1", msg.ToString())
-	})
-
-	client2.Subscribe("Hola", func(msg ws.Message) {
-		console.Debug("client2", msg.ToString())
-	})
-
-	client3.Subscribe("Hola", func(msg ws.Message) {
-		console.Debug("client3:", msg.ToString())
-	})
-
-	client1.Stack("cola", func(msg ws.Message) {
-		console.Debug("client1", msg.ToString())
-	})
-
-	client2.Stack("cola", func(msg ws.Message) {
-		console.Debug("client2", msg.ToString())
-	})
-
-	client3.Stack("cola", func(msg ws.Message) {
-		console.Debug("client3:", msg.ToString())
-	})
+	rand.NewSource(time.Now().UnixNano())
 
 	t := time.Duration(100)
-	n := 1
-	sendTest1 := func() {
-		if n%2 == 0 {
-			go client1.SendMessage("client2", "Hello")
-		} else {
-			go client1.SendMessage("client3", "Hello")
+	for {
+		idx := rand.Intn(n)
+		client := clients[idx]
+		if client != nil {
+			client.Publish("Hola", et.Json{
+				"msg": strs.Format("Hola %d", idx),
+			})
 		}
-	}
-
-	sendTest2 := func() {
-		if n%2 == 0 {
-			go client2.SendMessage("client1", "Hello")
-		} else {
-			go client2.SendMessage("client3", "Hello")
-		}
-	}
-
-	sendTest3 := func() {
-		if n%2 == 0 {
-			go client3.SendMessage("client2", "Hello")
-		} else {
-			go client3.SendMessage("client1", "Hello")
-		}
-	}
-
-	sendTest4 := func() {
-		if n%2 == 0 {
-			go client1.Publish("Hola", "Ping")
-			go client2.Publish("Hola", "Pong")
-			go client3.Publish("Hola", "Ping")
-		} else {
-			go client1.Publish("Hola", "Pong")
-			go client2.Publish("Hola", "Ping")
-			go client3.Publish("Hola", "Pong")
-		}
-	}
-
-	for i := 0; i < n; i++ {
-		go sendTest1()
 		time.Sleep(t * time.Millisecond)
-		go sendTest2()
-		time.Sleep(t * time.Millisecond)
-		go sendTest3()
-		time.Sleep(t * time.Millisecond)
-		go sendTest4()
 	}
-}
-
-func test2(port int) {
-	host := strs.Format(`localhost:%d`, port)
-
-	var err error
-	client1, err = ws.NewClient(&ws.ClientConfig{
-		ClientId:  "client1",
-		Name:      "client1",
-		Schema:    "ws",
-		Host:      host,
-		Path:      "/ws",
-		Reconcect: 5,
-	})
-	if err != nil {
-		console.Fatal(err)
-	}
-
-	client1.SetDirectMessage(func(msg ws.Message) {
-		console.Debug("DirectMessage:", msg.ToString())
-	})
-
-	client1.Subscribe("Hola", func(msg ws.Message) {
-		console.DebugF("Channel:%s :: %s", msg.Channel, msg.ToString())
-	})
-
 }

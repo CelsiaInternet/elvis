@@ -17,28 +17,24 @@ import (
 * @params path string
 * @return *Hub
 **/
-func ServerHttp(port int, mode, master, schema, path string) *Hub {
+func ServerHttp(port int, mode, masterURL string) *Hub {
 	result := NewHub()
 	result.Start()
 	switch mode {
 	case "master":
 		result.InitMaster()
-		if master != "" {
+		if masterURL != "" {
 			result.Join(AdapterConfig{
-				Schema:    schema,
-				Host:      master,
-				Path:      path,
+				Url:       masterURL,
 				TypeNode:  NodeMaster,
 				Reconcect: 3,
 				Header:    http.Header{},
 			})
 		}
 	case "worker":
-		if master != "" {
+		if masterURL != "" {
 			result.Join(AdapterConfig{
-				Schema:    schema,
-				Host:      master,
-				Path:      path,
+				Url:       masterURL,
 				TypeNode:  NodeWorker,
 				Reconcect: 3,
 				Header:    http.Header{},

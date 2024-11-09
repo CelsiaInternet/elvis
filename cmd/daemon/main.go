@@ -40,6 +40,7 @@ func ToTypeCommand(val string) TypeCommand {
 type RepositoryCMD interface {
 	Help(key string)
 	Version() string
+	SetConfig(cfg string)
 	Status() et.Json
 	Start() et.Item
 	Stop() et.Item
@@ -67,6 +68,11 @@ func main() {
 		} else {
 			_app.Help("")
 		}
+	case CMD_Conf:
+		if len(os.Args) > 2 {
+			_app.SetConfig(os.Args[2])
+		}
+		println("Configuración: Sin parametros")
 	case CMD_Status:
 		_app.Status()
 	case CMD_Start:

@@ -16,9 +16,7 @@ import (
 type ClientConfig struct {
 	ClientId  string
 	Name      string
-	Schema    string
-	Host      string
-	Path      string
+	Url       string
 	Header    http.Header
 	Reconcect int
 }
@@ -40,9 +38,7 @@ type Client struct {
 	Connected         *race.Value
 	clientId          string
 	name              string
-	schema            string
-	host              string
-	path              string
+	url               string
 	header            http.Header
 	reconcect         int
 	directMessage     func(Message)
@@ -64,9 +60,7 @@ func NewClient(config *ClientConfig) (*Client, error) {
 		mutex:     &sync.Mutex{},
 		clientId:  config.ClientId,
 		name:      config.Name,
-		schema:    config.Schema,
-		host:      config.Host,
-		path:      config.Path,
+		url:       config.Url,
 		header:    config.Header,
 		reconcect: config.Reconcect,
 	}
@@ -110,7 +104,7 @@ func (c *Client) Connect() error {
 		return nil
 	}
 
-	path := strs.Format(`%s://%s%s?clientId=%s&name=%s`, c.schema, c.host, c.path, c.clientId, c.name)
+	path := strs.Format(`%s?clientId=%s&name=%s`, c.url, c.clientId, c.name)
 	socket, _, err := websocket.DefaultDialer.Dial(path, c.header)
 	if err != nil {
 		return err
@@ -122,7 +116,7 @@ func (c *Client) Connect() error {
 
 	go c.Listener()
 
-	logs.Logf(ServiceName, "Connected host:%s", c.host)
+	logs.Log(ServiceName, "Connected websocket")
 
 	return nil
 }
@@ -135,7 +129,6 @@ func (c *Client) Reconnect() {
 
 	ticker := time.NewTicker(time.Duration(c.reconcect) * time.Second)
 	for range ticker.C {
-		c.mutex.Lock()
 		if !c.Connected.Bool() {
 			err := c.Connect()
 			if err != nil {
@@ -145,7 +138,6 @@ func (c *Client) Reconnect() {
 				c.ReconnectCallback()
 			}
 		}
-		c.mutex.Unlock()
 	}
 }
 

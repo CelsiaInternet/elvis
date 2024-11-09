@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"log"
 	"sync"
 	"time"
 
@@ -124,8 +125,8 @@ func (c *Subscriber) read() {
 		if err != nil {
 			break
 		}
-
-		c.listener(message)
+		log.Printf("Received: %s\n", message)
+		// c.listener(message)
 	}
 }
 
@@ -186,7 +187,7 @@ func (c *Subscriber) listener(message []byte) {
 	}
 
 	msg.From = c.From()
-	switch msg.Tp {
+	switch msg.tp {
 	case TpPing:
 		response(true, "pong")
 	case TpSetFrom:

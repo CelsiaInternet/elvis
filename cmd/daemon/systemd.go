@@ -53,6 +53,21 @@ func (s *Systemd) Help(key string) {
 	}
 }
 
+func (s *Systemd) SetConfig(cfg string) {
+	if cfg == "" {
+		println(MSG_CONFIG_REQUIRED)
+		return
+	}
+
+	config, err := et.Object(cfg)
+	if err != nil {
+		logs.Alert(err)
+		return
+	}
+
+	s.port = config.Int("port")
+}
+
 func (s *Systemd) Status() et.Json {
 	return et.Json{}
 }

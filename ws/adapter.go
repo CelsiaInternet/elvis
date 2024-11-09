@@ -44,9 +44,7 @@ type Adapter struct {
 var adapter *Adapter
 
 type AdapterConfig struct {
-	Schema    string
-	Host      string
-	Path      string
+	Url       string
 	TypeNode  TypeNode
 	Reconcect int
 	Header    http.Header
@@ -67,6 +65,17 @@ func (h *Hub) InitMaster() {
 	}
 
 	adapter = &Adapter{
+		Client: Client{
+			Channels:  make(map[string]func(Message)),
+			Attempts:  race.NewValue(0),
+			Connected: race.NewValue(false),
+			mutex:     &sync.Mutex{},
+			clientId:  h.Id,
+			name:      h.Name,
+			url:       "",
+			header:    http.Header{},
+			reconcect: 3,
+		},
 		typeNode: NodeMaster,
 	}
 }
@@ -81,19 +90,19 @@ func (h *Hub) Join(config AdapterConfig) error {
 	}
 
 	adapter = &Adapter{
+		Client: Client{
+			Channels:  make(map[string]func(Message)),
+			Attempts:  race.NewValue(0),
+			Connected: race.NewValue(false),
+			mutex:     &sync.Mutex{},
+			clientId:  h.Id,
+			name:      h.Name,
+			url:       config.Url,
+			header:    config.Header,
+			reconcect: config.Reconcect,
+		},
 		typeNode: config.TypeNode,
 	}
-	adapter.Channels = make(map[string]func(Message))
-	adapter.Attempts = race.NewValue(0)
-	adapter.Connected = race.NewValue(false)
-	adapter.mutex = &sync.Mutex{}
-	adapter.clientId = h.Id
-	adapter.name = h.Name
-	adapter.schema = config.Schema
-	adapter.host = config.Host
-	adapter.path = config.Path
-	adapter.header = config.Header
-	adapter.reconcect = config.Reconcect
 	err := adapter.Connect()
 	if err != nil {
 		return err
@@ -136,7 +145,7 @@ func (h *Hub) ClusterSubscribed(channel string) {
 
 	channel = clusterChannel(channel)
 	adapter.Subscribe(channel, func(msg Message) {
-		if msg.Tp == TpDirect {
+		if msg.tp == TpDirect {
 			h.SendMessage(msg.Id, msg)
 		} else {
 			h.Publish(msg.Channel, msg.Queue, msg, msg.Ignored, msg.From)

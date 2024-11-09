@@ -1,6 +1,8 @@
 package rt
 
 import (
+	"net/http"
+
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/utility"
 	"github.com/celsiainternet/elvis/ws"
@@ -19,11 +21,11 @@ func Load() error {
 
 	var err error
 	params := &ws.ClientConfig{
-		ClientId: utility.UUID(),
-		Name:     envar.GetStr("Real Time", "RT_NAME"),
-		Schema:   envar.GetStr("ws", "RT_SCHEME"),
-		Host:     envar.GetStr("localhost", "RT_HOST"),
-		Path:     envar.GetStr("/ws", "RT_PATH"),
+		ClientId:  utility.UUID(),
+		Name:      envar.GetStr("Real Time", "RT_NAME"),
+		Url:       envar.GetStr("ws", "RT_URL"),
+		Header:    http.Header{},
+		Reconcect: envar.GetInt(3, "RT_RECONCECT"),
 	}
 	conn, err = ws.NewClient(params)
 	if err != nil {

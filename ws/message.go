@@ -43,11 +43,18 @@ func (s TpMessage) String() string {
 	case TpDirect:
 		return "Direct"
 	case TpConnect:
-		return "Connect"
+		return "Connected"
 	case TpDisconnect:
-		return "Disconnect"
+		return "Disconnected"
 	default:
 		return "Unknown"
+	}
+}
+
+func (s TpMessage) ToJson() et.Json {
+	return et.Json{
+		"code": s,
+		"name": s.String(),
 	}
 }
 
@@ -81,9 +88,10 @@ type Message struct {
 	To         string      `json:"to"`
 	Ignored    []string    `json:"ignored"`
 	Data       interface{} `json:"data"`
-	Tp         TpMessage   `json:"tp"`
 	Channel    string      `json:"channel"`
 	Queue      string      `json:"queue"`
+	Tp         et.Json     `json:"tp"`
+	tp         TpMessage
 }
 
 /**
@@ -100,7 +108,8 @@ func NewMessage(from et.Json, message interface{}, tp TpMessage) Message {
 		From:       from,
 		Ignored:    []string{},
 		Data:       message,
-		Tp:         tp,
+		Tp:         tp.ToJson(),
+		tp:         tp,
 	}
 }
 
@@ -125,11 +134,6 @@ func (e Message) ToJson() et.Json {
 	result, err := et.Object(e)
 	if err != nil {
 		return et.Json{}
-	}
-
-	result["tp"] = et.Json{
-		"code": e.Tp,
-		"name": e.Tp.String(),
 	}
 
 	return result
