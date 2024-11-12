@@ -39,13 +39,13 @@ const (
 )
 
 type Claim struct {
-	Salt     string `json:"salt"`
-	ID       string `json:"id"`
-	App      string `json:"app"`
-	Name     string `json:"name"`
-	Username string `json:"username"`
-	Device   string `json:"device"`
-	Duration time.Duration
+	Salt     string        `json:"salt"`
+	ID       string        `json:"id"`
+	App      string        `json:"app"`
+	Name     string        `json:"name"`
+	Username string        `json:"username"`
+	Device   string        `json:"device"`
+	Duration time.Duration `json:"duration"`
 	jwt.StandardClaims
 }
 
@@ -189,7 +189,7 @@ func ParceToken(token string) (*Claim, error) {
 		return nil, logs.Alertm(ERR_INVALID_CLAIM)
 	}
 
-	subject, ok := claim["subject"].(string)
+	subject, ok := claim["sub"].(string)
 	if !ok {
 		return nil, logs.Alertm(ERR_INVALID_CLAIM)
 	}

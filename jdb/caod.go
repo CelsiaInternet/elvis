@@ -7,12 +7,12 @@ import (
 )
 
 /**
-* defineCAD create alter or delete
+* defineDDL create alter or delete
 * @param db *linq.DB
 * @return error
 **/
-func defineCAOD(db *DB) error {
-	exist, err := ExistTable(db, "core", "CAOD")
+func defineDDL(db *DB) error {
+	exist, err := ExistTable(db, "core", "DDL")
 	if err != nil {
 		return logs.Panice(err)
 	}
@@ -22,32 +22,32 @@ func defineCAOD(db *DB) error {
 	}
 
 	sql := `
-  CREATE TABLE IF NOT EXISTS core.CAOD(
+  CREATE TABLE IF NOT EXISTS core.DDL(
 		_ID VARCHAR(80) DEFAULT '-1',
 		SQL BYTEA,
 		_IDT VARCHAR(80) DEFAULT '-1',
 		INDEX BIGINT DEFAULT 0,
-		PRIMARY KEY(OPTION, _ID)
+		PRIMARY KEY(_ID)
 	);
-	CREATE INDEX IF NOT EXISTS COMMANDS__ID_IDX ON core.CAOD(_ID);
-	CREATE INDEX IF NOT EXISTS COMMANDS__IDT_IDX ON core.CAOD(_IDT);
-	CREATE INDEX IF NOT EXISTS COMMANDS_INDEX_IDX ON core.CAOD(INDEX);
+	CREATE INDEX IF NOT EXISTS COMMANDS__ID_IDX ON core.DDL(_ID);
+	CREATE INDEX IF NOT EXISTS COMMANDS__IDT_IDX ON core.DDL(_IDT);
+	CREATE INDEX IF NOT EXISTS COMMANDS_INDEX_IDX ON core.DDL(INDEX);
 
-	DROP TRIGGER IF EXISTS RECORDS_BEFORE_INSERT ON core.CAOD CASCADE;
+	DROP TRIGGER IF EXISTS RECORDS_BEFORE_INSERT ON core.DDL CASCADE;
 	CREATE TRIGGER RECORDS_BEFORE_INSERT
-	BEFORE INSERT ON core.CAOD
+	BEFORE INSERT ON core.DDL
 	FOR EACH ROW
 	EXECUTE PROCEDURE core.RECORDS_BEFORE_INSERT();
 
-	DROP TRIGGER IF EXISTS RECORDS_BEFORE_UPDATE ON core.CAOD CASCADE;
+	DROP TRIGGER IF EXISTS RECORDS_BEFORE_UPDATE ON core.DDL CASCADE;
 	CREATE TRIGGER RECORDS_BEFORE_UPDATE
-	BEFORE UPDATE ON core.CAOD
+	BEFORE UPDATE ON core.DDL
 	FOR EACH ROW
 	EXECUTE PROCEDURE core.RECORDS_BEFORE_UPDATE();
 
-	DROP TRIGGER IF EXISTS RECORDS_BEFORE_DELETE ON core.CAOD CASCADE;
+	DROP TRIGGER IF EXISTS RECORDS_BEFORE_DELETE ON core.DDL CASCADE;
 	CREATE TRIGGER RECORDS_BEFORE_DELETE
-	BEFORE DELETE ON core.CAOD
+	BEFORE DELETE ON core.DDL
 	FOR EACH ROW
 	EXECUTE PROCEDURE core.RECORDS_BEFORE_DELETE();
 	`
@@ -61,13 +61,13 @@ func defineCAOD(db *DB) error {
 }
 
 /**
-* upsertCAOD
+* upsertDDL
 * @params query string
 **/
-func (d *DB) upsertCAOD(id string, query string) error {
+func (d *DB) upsertDDL(id string, query string) error {
 	sql := `
 	SELECT INDEX
-	FROM core.CAOD
+	FROM core.DDL
 	WHERE _ID = $1;`
 
 	item, err := d.QueryOne(sql, id)
@@ -77,7 +77,7 @@ func (d *DB) upsertCAOD(id string, query string) error {
 
 	if item.Ok {
 		sql = `
-		UPDATE core.CAOD SET
+		UPDATE core.DDL SET
 		SQL = $2
 		WHERE _ID = $1;`
 
@@ -90,11 +90,11 @@ func (d *DB) upsertCAOD(id string, query string) error {
 	}
 
 	sql = `
-	INSERT INTO core.CAOD (_ID, SQL, INDEX)
+	INSERT INTO core.DDL (_ID, SQL, INDEX)
 	VALUES ($1, $2, $3);`
 
 	id = utility.GenKey(id)
-	index := NextSerie(d, "caod")
+	index := NextSerie(d, "ddl")
 	_, err = d.db.Exec(sql, id, []byte(query), index)
 	if err != nil {
 		logs.Alertm(et.Json{
@@ -108,12 +108,12 @@ func (d *DB) upsertCAOD(id string, query string) error {
 }
 
 /**
-* deleteCAOD
+* deleteDDL
 * @params query string
 **/
-func (d *DB) deleteCAOD(id string) error {
+func (d *DB) deleteDDL(id string) error {
 	sql := `
-	DELETE FROM core.CAOD
+	DELETE FROM core.DDL
 	WHERE _ID = $1;`
 
 	_, err := d.db.Exec(sql, id)

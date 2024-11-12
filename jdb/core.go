@@ -25,7 +25,7 @@ func InitCore(db *DB) error {
 		return err
 	}
 
-	if err := defineCAOD(db); err != nil {
+	if err := defineDDL(db); err != nil {
 		return err
 	}
 

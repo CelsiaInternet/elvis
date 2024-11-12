@@ -1,4 +1,4 @@
-package utility
+package event
 
 type WorkStatus int
 

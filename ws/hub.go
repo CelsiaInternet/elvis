@@ -207,6 +207,23 @@ func (h *Hub) connect(socket *websocket.Conn, clientId, name string) (*Subscribe
 	return client, nil
 }
 
+func (h *Hub) streaming(socket *websocket.Conn, clientId, name string) (*Subscriber, error) {
+	client := h.getClient(clientId)
+	if client != nil {
+		return client, nil
+	}
+
+	client, isNew := newSubscriber(h, socket, clientId, name)
+	if isNew {
+		h.register <- client
+
+		go client.write()
+		go client.stream()
+	}
+
+	return client, nil
+}
+
 func (h *Hub) broadcast(channel, queue string, msg Message, ignored []string, from et.Json) {
 	msg.From = from
 	msg.Ignored = ignored

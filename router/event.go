@@ -2,9 +2,6 @@ package router
 
 import (
 	"github.com/celsiainternet/elvis/event"
-	"github.com/celsiainternet/elvis/logs"
-	"github.com/celsiainternet/elvis/msg"
-	"github.com/celsiainternet/elvis/utility"
 )
 
 const (
@@ -18,30 +15,11 @@ func EventLoad(m event.EvenMessage) {
 		path := item.Str("path")
 		resolve := item.Str("resolve")
 		header := item.Json("header")
-		tpHeader := ToTpHeader(item.Int("tpHeader"))
+		tpHeader := ToTpHeader(item.Int("tp_header"))
+		excludeHeader := item.ArrayStr("exclude_header")
 		private := item.Bool("private")
 		packageName := item.Str("package_name")
 
-		if !utility.ValidStr(method, 0, []string{""}) {
-			logs.Alertf(msg.MSG_ATRIB_REQUIRED, "method")
-			continue
-		}
-
-		if !utility.ValidStr(path, 0, []string{""}) {
-			logs.Alertf(msg.MSG_ATRIB_REQUIRED, "path")
-			continue
-		}
-
-		if !utility.ValidStr(resolve, 0, []string{""}) {
-			logs.Alertf(msg.MSG_ATRIB_REQUIRED, "resolve")
-			continue
-		}
-
-		if !utility.ValidStr(packageName, 0, []string{""}) {
-			logs.Alertf(msg.MSG_ATRIB_REQUIRED, "package_name")
-			continue
-		}
-
-		PushApiGateway(id, method, path, resolve, header, tpHeader, private, packageName)
+		PushApiGateway(id, method, path, resolve, header, tpHeader, excludeHeader, private, packageName)
 	}
 }

@@ -104,7 +104,10 @@ func exec(db *DB, id, sql string, args ...any) error {
 		return logs.Errorf(msg.ERR_SQL, err.Error(), sql)
 	}
 
-	go db.upsertCAOD(id, query)
+	err = db.upsertDDL(id, query)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

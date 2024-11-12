@@ -129,7 +129,7 @@ func Work(event string, data et.Json) et.Json {
 * @param status WorkStatus
 * @param data et.Json
 **/
-func WorkState(work_id string, status utility.WorkStatus, data et.Json) {
+func WorkState(work_id string, status WorkStatus, data et.Json) {
 	work := et.Json{
 		"update_at": timezone.Now(),
 		"_id":       work_id,
@@ -137,15 +137,15 @@ func WorkState(work_id string, status utility.WorkStatus, data et.Json) {
 		"data":      data,
 	}
 	switch status {
-	case utility.WorkStatusPending:
+	case WorkStatusPending:
 		work["pending_at"] = utility.Now()
-	case utility.WorkStatusAccepted:
+	case WorkStatusAccepted:
 		work["accepted_at"] = utility.Now()
-	case utility.WorkStatusProcessing:
+	case WorkStatusProcessing:
 		work["processing_at"] = utility.Now()
-	case utility.WorkStatusCompleted:
+	case WorkStatusCompleted:
 		work["completed_at"] = utility.Now()
-	case utility.WorkStatusFailed:
+	case WorkStatusFailed:
 		work["failed_at"] = utility.Now()
 	}
 

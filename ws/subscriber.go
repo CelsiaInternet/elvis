@@ -1,10 +1,10 @@
 package ws
 
 import (
-	"log"
 	"sync"
 	"time"
 
+	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/strs"
@@ -125,8 +125,29 @@ func (c *Subscriber) read() {
 		if err != nil {
 			break
 		}
-		log.Printf("Received: %s\n", message)
-		// c.listener(message)
+
+		c.listener(message)
+	}
+}
+
+/**
+* stream
+**/
+func (c *Subscriber) stream() {
+	defer func() {
+		if c.hub != nil {
+			c.hub.unregister <- c
+			c.socket.Close()
+		}
+	}()
+
+	for {
+		_, message, err := c.socket.ReadMessage()
+		if err != nil {
+			break
+		}
+
+		c.streaming(message)
 	}
 }
 
@@ -285,4 +306,8 @@ func (c *Subscriber) listener(message []byte) {
 	}
 
 	logs.Logf(ServiceName, "listener subscriber:%s message: %s", c.Id, msg.ToString())
+}
+
+func (c *Subscriber) streaming(message []byte) {
+	console.Debug("streaming:", string(message))
 }

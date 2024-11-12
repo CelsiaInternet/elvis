@@ -58,9 +58,9 @@ func StartServer() {
 /**
 * load
 **/
-func Load() {
+func Load() *Router {
 	if conn != nil {
-		return
+		return conn
 	}
 
 	defaultHost, err := os.Hostname()
@@ -78,6 +78,8 @@ func Load() {
 		Port:    port,
 		Solvers: map[string]et.Json{},
 	}
+
+	return conn
 }
 
 /**
@@ -296,7 +298,7 @@ func Call(method string, data et.Json) (et.Item, error) {
 
 	address := strs.Format(`%s:%d`, solver.Host, solver.Port)
 	metric.CallSearchTime()
-	metric.SetAddress(address)
+	metric.ClientIP = address
 
 	client, err := rpc.Dial("tcp", address)
 	if err != nil {
