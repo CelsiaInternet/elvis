@@ -15,7 +15,6 @@ while [[ "$#" -gt 0 ]]; do
         --h | --help) HELP=true ;;                      # Mostrar la ayuda
         --m | --major) MAYOR=true ;;                    # Activar la bandera si se proporciona --major
         --n | --minor) MINOR=true ;;                    # Activar la bandera si se proporciona --minor
-        --r | --rebuild) REBUILD=true ;;                # Activar la bandera si se proporciona --rebuild
         *) echo "Opción desconocida: $1"; exit 1 ;;
     esac
     shift
@@ -38,7 +37,6 @@ elif [ "$HELP" == true ]; then
   echo "  --h, --help     Mostrar esta ayuda"
   echo "  --m, --major    Incrementar la versión mayor"
   echo "  --n, --minor    Incrementar la versión menor"
-  echo "  --r, --rebuild  Incrementar el rebuild actual"
   exit 0
 else
   # Divide la etiqueta en componentes usando el punto como delimitador
