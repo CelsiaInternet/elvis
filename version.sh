@@ -7,7 +7,7 @@ MINOR=false
 INDEX=2
 VERSION=$(git describe --tags --abbrev=0)               # Valor para reemplazar $VERSION obtenido de Git
 README_FILE="README.md"                                 # Nombre del archivo a modificar
-HELP=true                                               # Bandera para mostrar la ayuda
+HELP=false                                              # Bandera para mostrar la ayuda
 
 # Parsear opciones
 while [[ "$#" -gt 0 ]]; do
