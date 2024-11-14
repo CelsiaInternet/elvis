@@ -88,6 +88,14 @@ func (h *Hub) Start() {
 }
 
 /**
+* IsRun
+* @return bool
+**/
+func (h *Hub) IsRun() bool {
+	return h.run
+}
+
+/**
 * SetName
 * @param name string
 **/
