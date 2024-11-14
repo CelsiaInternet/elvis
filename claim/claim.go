@@ -176,27 +176,27 @@ func ParceToken(token string) (*Claim, error) {
 
 	app, ok := claim["app"].(string)
 	if !ok {
-		return nil, logs.Alertm(ERR_INVALID_CLAIM)
+		return nil, logs.Alertf(MSG_TOKEN_INVALID_ATRIB, "app")
 	}
 
 	id, ok := claim["id"].(string)
 	if !ok {
-		return nil, logs.Alertm(ERR_INVALID_CLAIM)
+		return nil, logs.Alertf(MSG_TOKEN_INVALID_ATRIB, "id")
 	}
 
 	name, ok := claim["name"].(string)
 	if !ok {
-		return nil, logs.Alertm(ERR_INVALID_CLAIM)
+		return nil, logs.Alertf(MSG_TOKEN_INVALID_ATRIB, "name")
 	}
 
 	subject, ok := claim["sub"].(string)
 	if !ok {
-		return nil, logs.Alertm(ERR_INVALID_CLAIM)
+		return nil, logs.Alertf(MSG_TOKEN_INVALID_ATRIB, "sub")
 	}
 
 	username, ok := claim["username"].(string)
 	if !ok {
-		return nil, logs.Alertm(ERR_INVALID_CLAIM)
+		return nil, logs.Alertf(MSG_TOKEN_INVALID_ATRIB, "username")
 	}
 
 	device, ok := claim["device"].(string)

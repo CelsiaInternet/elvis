@@ -9,15 +9,16 @@ import (
 )
 
 func (c *Model) DefineColum(name, description, _type string, _default any) *Model {
+	name = strs.Uppcase(name)
 	NewColumn(c, name, description, _type, _default)
 
 	return c
 }
 
 func (c *Model) DefineAtrib(name, description, _type string, _default any) *Model {
+	name = strs.Lowcase(name)
 	source := NewColumn(c, SourceField, "", "JSONB", "{}")
 	result := NewColumn(c, name, description, _type, _default)
-	result.name = strs.Lowcase(name)
 	result.Tp = TpAtrib
 	result.Column = source
 	source.Atribs = append(source.Atribs, result)

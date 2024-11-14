@@ -385,7 +385,7 @@ func (c *Linq) AddValidate(col *Column, val any) {
 **/
 func (c *Linq) query() (et.Items, error) {
 	if c.debug == 1 {
-		logs.Log(c.sql)
+		logs.Debug(c.sql)
 	}
 
 	if c.Tp == TpData {
@@ -407,7 +407,7 @@ func (c *Linq) query() (et.Items, error) {
 
 func (c *Linq) queryOne() (et.Item, error) {
 	if c.debug == 1 {
-		logs.Log(c.sql)
+		logs.Debug(c.sql)
 	}
 
 	if c.Tp == TpData {
@@ -429,7 +429,7 @@ func (c *Linq) queryOne() (et.Item, error) {
 
 func (c *Linq) queryCount() int {
 	if c.debug == 1 {
-		logs.Log(c.sql)
+		logs.Debug(c.sql)
 	}
 
 	result, err := c.db.QueryOne(c.sql)

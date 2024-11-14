@@ -57,6 +57,7 @@ type Model struct {
 	AfterDelete        []Trigger
 	OnListener         Listener
 	Version            int
+	mutation           bool
 }
 
 func NewModel(schema *Schema, name, description string, version int) *Model {
@@ -71,6 +72,7 @@ func NewModel(schema *Schema, name, description string, version int) *Model {
 		Version:            version,
 		integrityReference: true,
 		indexeSource:       true,
+		mutation:           false,
 	}
 
 	result.BeforeInsert = append(result.BeforeInsert, beforeInsert)
@@ -82,6 +84,12 @@ func NewModel(schema *Schema, name, description string, version int) *Model {
 
 	schema.Models = append(schema.Models, result)
 	models = append(models, result)
+
+	return result
+}
+
+func Mutation(schema *Schema, name, description string, version int) *Model {
+	result := NewModel(schema, name, description, version)
 
 	return result
 }
@@ -225,7 +233,7 @@ func (c *Model) DDLFunction() string {
 }
 
 func (c *Model) DDLMigration() string {
-	return dllMigration(c)
+	return ddlMigration(c)
 }
 
 func (c *Model) DropDDL() string {

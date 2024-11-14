@@ -26,6 +26,9 @@ func (c *Where) Str1() string {
 		result = strs.Format(`(%s)`, result)
 	default:
 		result = c.Def(v)
+		if c.operator == "@@" {
+			result = strs.Format(`to_tsvector('spanish', %s)`, result)
+		}
 	}
 
 	return result
@@ -42,6 +45,9 @@ func (c *Where) Str2() string {
 		result = strs.Format(`(%s)`, result)
 	default:
 		result = c.Def(v)
+		if c.operator == "@@" {
+			result = strs.Format(`to_tsquery('spanish', %s)`, result)
+		}
 	}
 
 	return result

@@ -1,6 +1,8 @@
 package event
 
 import (
+	"sync"
+
 	"github.com/celsiainternet/elvis/logs"
 	"github.com/nats-io/nats.go"
 )
@@ -8,9 +10,9 @@ import (
 var conn *Conn
 
 type Conn struct {
-	conn             *nats.Conn
-	eventCreatedSub  *nats.Subscription
-	eventCreatedChan chan EvenMessage
+	*nats.Conn
+	eventCreatedSub map[string]*nats.Subscription
+	mutex           *sync.RWMutex
 }
 
 func Load() (*Conn, error) {
@@ -28,17 +30,15 @@ func Load() (*Conn, error) {
 }
 
 func Close() {
-	if conn != nil && conn.conn != nil {
-		conn.conn.Close()
+	if conn == nil {
+		return
 	}
 
-	if conn.eventCreatedSub != nil {
-		conn.eventCreatedSub.Unsubscribe()
+	for _, sub := range conn.eventCreatedSub {
+		sub.Unsubscribe()
 	}
 
-	if conn.eventCreatedChan != nil {
-		close(conn.eventCreatedChan)
-	}
+	conn.Close()
 
 	logs.Log("Event", `Disconnect...`)
 }

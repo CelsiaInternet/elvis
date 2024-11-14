@@ -133,7 +133,6 @@ func defineRecordsFunction(db *DB) error {
   END;
   $$ LANGUAGE plpgsql;
 	`
-
 	_, err := db.db.Exec(sql)
 	if err != nil {
 		return logs.Panice(err)

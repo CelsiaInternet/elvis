@@ -33,7 +33,7 @@ func ddlColumn(col *Column) string {
 
 func ddlIndex(col *Column) string {
 	result := jdb.SQLDDL(`CREATE INDEX IF NOT EXISTS $2_$3_$4_IDX ON $1($4);`, col.Model.Table, strs.Uppcase(col.Model.Schema.Name), col.Model.Name, strs.Uppcase(col.name))
-	if col.Low() == strs.Lowcase(SourceField) && col.Model.indexeSource {
+	if col.Low() == strs.Lowcase(SourceField) {
 		result = jdb.SQLDDL(`CREATE INDEX IF NOT EXISTS $2_$3_$4_IDX ON $1 USING GIN($4);`, col.Model.Table, strs.Uppcase(col.Model.Schema.Name), col.Model.Name, strs.Uppcase(col.name))
 	}
 
@@ -42,8 +42,8 @@ func ddlIndex(col *Column) string {
 
 func ddlUniqueIndex(col *Column) string {
 	result := jdb.SQLDDL(`CREATE UNIQUE INDEX IF NOT EXISTS $2_$3_$4_IDX ON $1($4);`, col.Model.Table, strs.Uppcase(col.Model.Schema.Name), col.Model.Name, strs.Uppcase(col.name))
-	if col.Low() == strs.Lowcase(SourceField) && col.Model.indexeSource {
-		result = jdb.SQLDDL(`CREATE UNIQUE INDEX IF NOT EXISTS $2_$3_$4_IDX ON $1 USING GIN($4);`, col.Model.Table, strs.Uppcase(col.Model.Schema.Name), col.Model.Name, strs.Uppcase(col.name))
+	if col.Low() == strs.Lowcase(SourceField) {
+		result = ""
 	}
 
 	return result
@@ -123,20 +123,20 @@ func ddlTable(model *Model) string {
 	NewColumn(model, IdTFiled, "UUId", "VARCHAR(80)", "-1")
 
 	var result string
-	var columns string
-	var indexs string
-	var uniqueKeys string
+	var columnsDef string
+	var indexsDef string
+	var uniqueKeysDef string
 
 	appedColumns := func(def string) {
-		columns = strs.Append(columns, def, ",\n")
+		columnsDef = strs.Append(columnsDef, def, ",\n")
 	}
 
 	appendIndex := func(def string) {
-		indexs = strs.Append(indexs, def, "\n")
+		indexsDef = strs.Append(indexsDef, def, "\n")
 	}
 
 	appendUniqueKey := func(def string) {
-		uniqueKeys = strs.Append(uniqueKeys, def, ", ")
+		uniqueKeysDef = strs.Append(uniqueKeysDef, def, ", ")
 	}
 
 	for _, column := range model.Definition {
@@ -154,12 +154,12 @@ func ddlTable(model *Model) string {
 			}
 		}
 	}
-	columns = strs.Append(columns, ",", "")
-	columns = strs.Append(columns, ddlPrimaryKey(model), "\n")
-	table := strs.Format("\nCREATE TABLE IF NOT EXISTS %s (\n%s);", model.Table, columns)
+	columnsDef = strs.Append(columnsDef, ",", "")
+	columnsDef = strs.Append(columnsDef, ddlPrimaryKey(model), "\n")
+	table := strs.Format("\nCREATE TABLE IF NOT EXISTS %s (\n%s);", model.Table, columnsDef)
 	result = strs.Append(result, table, "\n")
-	result = strs.Append(result, uniqueKeys, "\n")
-	result = strs.Append(result, indexs, "\n\n")
+	result = strs.Append(result, uniqueKeysDef, "\n")
+	result = strs.Append(result, indexsDef, "\n\n")
 	foreign := ddlForeignKeys(model)
 	result = strs.Append(result, foreign, "\n\n")
 	sync := ddlSetSync(model)
@@ -217,7 +217,7 @@ func ddlFunctions(model *Model) string {
 	return model.DdlIndex
 }
 
-func dllMigration(model *Model) string {
+func ddlMigration(model *Model) string {
 	var fields []string
 
 	table := model.Table

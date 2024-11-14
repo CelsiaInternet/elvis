@@ -113,7 +113,7 @@ func Quote(val interface{}) any {
 	case int64:
 		return v
 	case bool:
-		return v
+		return strs.Format(`"%v"`, v)
 	case time.Time:
 		return strs.Format(`"%s"`, v.Format("2006-01-02 15:04:05"))
 	case Json:

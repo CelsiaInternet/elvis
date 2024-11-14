@@ -101,7 +101,7 @@ func NewColumn(model *Model, name, description, _type string, _default any) *Col
 	result = &Column{
 		Model:       model,
 		Tp:          TpColumn,
-		name:        strs.Uppcase(name),
+		name:        name,
 		Description: description,
 		Type:        _type,
 		Default:     _default,
@@ -469,6 +469,12 @@ func (c *Column) Like(val any) *Where {
 	}
 
 	result := NewWhere(c, "ILIKE", val)
+	result.SetPrimaryKey(c, val)
+	return result
+}
+
+func (c *Column) Search(val any) *Where {
+	result := NewWhere(c, "@@", val)
 	result.SetPrimaryKey(c, val)
 	return result
 }

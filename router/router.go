@@ -111,17 +111,19 @@ func PushApiGateway(id, method, path, resolve string, header et.Json, tpHeader T
 		"package_name":   packageName,
 	}
 
-	event.Work("apigateway/set/resolve", router[id])
+	event.Publish("apigateway/set/resolve", router[id])
 }
 
 /**
 * DeleteApiGatewayById
 * @param id string
 **/
-func DeleteApiGatewayById(id string) {
+func DeleteApiGatewayById(id, method, path string) {
 	delete(router, id)
-	event.Work("apigateway/delete/resolve", et.Json{
-		"_id": id,
+	event.Publish("apigateway/delete/resolve", et.Json{
+		"_id":    id,
+		"method": method,
+		"path":   path,
 	})
 }
 

@@ -54,7 +54,6 @@ func (rw *ResponseWriterWrapper) SetHeader(header http.Header) {
 				continue
 			}
 			rw.Header().Add(key, value)
-			// rw.Header().Set(key, value)
 		}
 	}
 }
@@ -67,7 +66,6 @@ type Metrics struct {
 	Host         string
 	Method       string
 	Path         string
-	Resolute     string
 	StatusCode   int
 	ResponseSize int
 	SearchTime   time.Duration
@@ -90,7 +88,6 @@ func (m *Metrics) ToJson() et.Json {
 		"host":          m.Host,
 		"method":        m.Method,
 		"path":          m.Path,
-		"resolute":      m.Resolute,
 		"status_code":   m.StatusCode,
 		"search_time":   m.SearchTime,
 		"response_time": m.ResponseTime,
@@ -151,7 +148,6 @@ func NewMetric(r *http.Request) *Metrics {
 		Host:      hostName,
 		Method:    r.Method,
 		Path:      r.URL.Path,
-		Resolute:  r.URL.Path,
 		Scheme:    scheme,
 		mark:      timezone.NowTime(),
 		key:       strs.Format(`%s:%s`, r.Method, r.URL.Path),
@@ -186,6 +182,10 @@ func NewRpcMetric(method string) *Metrics {
 * @params val string
 **/
 func (m *Metrics) SetPath(val string) {
+	if val == "" {
+		return
+	}
+
 	m.Path = val
 	m.key = strs.Format(`%s:%s`, m.Method, m.Path)
 }
@@ -241,9 +241,6 @@ func (m *Metrics) CallMetrics() Telemetry {
 func (m *Metrics) println() et.Json {
 	w := lg.Color(lg.NMagenta, fmt.Sprintf(" [%s]: ", m.Method))
 	lg.CW(w, lg.NCyan, fmt.Sprintf("%s", m.Path))
-	if m.Path != m.Resolute {
-		lg.CW(w, lg.NWhite, fmt.Sprintf(" Resolve:%s", m.Resolute))
-	}
 	lg.CW(w, lg.NWhite, fmt.Sprintf(" from:%s", m.ClientIP))
 	if m.StatusCode >= 500 {
 		lg.CW(w, lg.NRed, fmt.Sprintf(" - %s", http.StatusText(m.StatusCode)))
@@ -390,10 +387,6 @@ func (m *Metrics) ITEM(w http.ResponseWriter, r *http.Request, statusCode int, d
 		return err
 	}
 
-	if !dt.Ok {
-		statusCode = http.StatusNotFound
-	}
-
 	return m.WriteResponse(w, r, statusCode, e)
 }
 
@@ -414,10 +407,6 @@ func (m *Metrics) ITEMS(w http.ResponseWriter, r *http.Request, statusCode int, 
 	e, err := json.Marshal(dt)
 	if err != nil {
 		return err
-	}
-
-	if !dt.Ok {
-		statusCode = http.StatusNotFound
 	}
 
 	return m.WriteResponse(w, r, statusCode, e)

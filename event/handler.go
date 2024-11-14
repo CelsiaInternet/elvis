@@ -28,7 +28,7 @@ func Publish(channel string, data et.Json) error {
 		return err
 	}
 
-	return conn.conn.Publish(msg.Channel, dt)
+	return conn.Publish(msg.Channel, dt)
 }
 
 /**
@@ -37,16 +37,16 @@ func Publish(channel string, data et.Json) error {
 * @param f func(EvenMessage)
 * @return error
 **/
-func Subscribe(channel string, f func(EvenMessage)) (err error) {
+func Subscribe(channel string, f func(EvenMessage)) error {
 	if conn == nil {
-		return
+		return logs.NewError(ERR_NOT_CONNECT)
 	}
 
 	if len(channel) == 0 {
-		return
+		return logs.NewError(ERR_CHANNEL_REQUIRED)
 	}
 
-	conn.eventCreatedSub, err = conn.conn.Subscribe(channel,
+	subscribe, err := conn.Subscribe(channel,
 		func(m *nats.Msg) {
 			msg, err := DecodeMessage(m.Data)
 			if err != nil {
@@ -56,8 +56,15 @@ func Subscribe(channel string, f func(EvenMessage)) (err error) {
 			f(msg)
 		},
 	)
+	if err != nil {
+		return err
+	}
 
-	return
+	conn.mutex.Lock()
+	conn.eventCreatedSub[channel] = subscribe
+	conn.mutex.Unlock()
+
+	return err
 }
 
 /**
@@ -66,16 +73,16 @@ func Subscribe(channel string, f func(EvenMessage)) (err error) {
 * @param func(EvenMessage) f
 * @return error
 **/
-func Queue(channel, queue string, f func(EvenMessage)) (err error) {
+func Queue(channel, queue string, f func(EvenMessage)) error {
 	if conn == nil {
 		return logs.NewError(ERR_NOT_CONNECT)
 	}
 
 	if len(channel) == 0 {
-		return nil
+		return logs.NewError(ERR_CHANNEL_REQUIRED)
 	}
 
-	conn.eventCreatedSub, err = conn.conn.QueueSubscribe(
+	subscribe, err := conn.QueueSubscribe(
 		channel,
 		queue,
 		func(m *nats.Msg) {
@@ -90,6 +97,10 @@ func Queue(channel, queue string, f func(EvenMessage)) (err error) {
 	if err != nil {
 		return err
 	}
+
+	conn.mutex.Lock()
+	conn.eventCreatedSub[channel] = subscribe
+	conn.mutex.Unlock()
 
 	return nil
 }

@@ -1,6 +1,8 @@
 package event
 
 import (
+	"sync"
+
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/msg"
@@ -24,6 +26,8 @@ func connect() (*Conn, error) {
 	logs.Logf("NATS", `Connected host:%s`, host)
 
 	return &Conn{
-		conn: connect,
+		Conn:            connect,
+		eventCreatedSub: map[string]*nats.Subscription{},
+		mutex:           &sync.RWMutex{},
 	}, nil
 }

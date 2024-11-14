@@ -16,6 +16,10 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+const (
+	ServiceName = "daemon"
+)
+
 type Systemd struct {
 	serviceName string
 	port        int
@@ -128,7 +132,7 @@ func (s *Systemd) Stop() et.Item {
 	}
 	s.wg.Wait()
 	s.isRunning = false
-	logs.Log("Servidor detenido.")
+	logs.Log(ServiceName, "Servidor detenido.")
 
 	return et.Item{
 		Ok:     true,
