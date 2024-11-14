@@ -22,7 +22,7 @@ func SetCtx(ctx context.Context, key, val string, second time.Duration) error {
 		return logs.NewError(msg.ERR_NOT_CACHE_SERVICE)
 	}
 
-	err := conn.db.Set(ctx, key, val, second).Err()
+	err := conn.Set(ctx, key, val, second).Err()
 	if err != nil {
 		return err
 	}
@@ -42,7 +42,7 @@ func GetCtx(ctx context.Context, key, def string) (string, error) {
 		return def, logs.NewError(msg.ERR_NOT_CACHE_SERVICE)
 	}
 
-	result, err := conn.db.Get(ctx, key).Result()
+	result, err := conn.Get(ctx, key).Result()
 	switch {
 	case err == redis.Nil:
 		return def, nil
@@ -64,7 +64,7 @@ func DeleteCtx(ctx context.Context, key string) (int64, error) {
 		return 0, logs.NewError(msg.ERR_NOT_CACHE_SERVICE)
 	}
 
-	intCmd := conn.db.Del(ctx, key)
+	intCmd := conn.Del(ctx, key)
 
 	return intCmd.Val(), intCmd.Err()
 }
@@ -81,7 +81,7 @@ func HSetCtx(ctx context.Context, key string, val map[string]string) error {
 		return logs.NewError(msg.ERR_NOT_CACHE_SERVICE)
 	}
 
-	err := conn.db.HSet(ctx, key, val).Err()
+	err := conn.HSet(ctx, key, val).Err()
 	if err != nil {
 		return err
 	}
@@ -100,7 +100,7 @@ func HGetCtx(ctx context.Context, key string) (map[string]string, error) {
 		return map[string]string{}, logs.NewError(msg.ERR_NOT_CACHE_SERVICE)
 	}
 
-	result := conn.db.HGetAll(ctx, key).Val()
+	result := conn.HGetAll(ctx, key).Val()
 
 	return result, nil
 }
@@ -117,7 +117,7 @@ func HDeleteCtx(ctx context.Context, key, atr string) error {
 		return logs.NewError(msg.ERR_NOT_CACHE_SERVICE)
 	}
 
-	err := conn.db.Do(ctx, "HDEL", key, atr).Err()
+	err := conn.Do(ctx, "HDEL", key, atr).Err()
 	if err != nil {
 		return err
 	}

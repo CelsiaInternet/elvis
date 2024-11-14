@@ -10,10 +10,10 @@ import (
 var conn *Conn
 
 type Conn struct {
+	*redis.Client
 	ctx    context.Context
 	host   string
 	dbname int
-	db     *redis.Client
 }
 
 func Load() (*Conn, error) {
@@ -31,9 +31,11 @@ func Load() (*Conn, error) {
 }
 
 func Close() {
-	if conn != nil && conn.db != nil {
-		conn.db.Close()
+	if conn == nil {
+		return
 	}
+
+	conn.Close()
 
 	logs.Log("Cache", `Disconnect...`)
 }

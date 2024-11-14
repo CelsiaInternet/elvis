@@ -13,7 +13,7 @@ func pubCtx(ctx context.Context, channel string, message interface{}) error {
 		return logs.Errorm(msg.ERR_NOT_CACHE_SERVICE)
 	}
 
-	err := conn.db.Publish(ctx, channel, message).Err()
+	err := conn.Publish(ctx, channel, message).Err()
 	if err != nil {
 		return err
 	}
@@ -31,7 +31,7 @@ func subCtx(ctx context.Context, channel string, f func(interface{})) {
 		return
 	}
 
-	pubsub := conn.db.Subscribe(ctx, channel)
+	pubsub := conn.Subscribe(ctx, channel)
 	defer pubsub.Close()
 
 	ch := pubsub.Channel()

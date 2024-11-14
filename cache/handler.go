@@ -195,7 +195,7 @@ func Empty(match string) error {
 	}
 
 	ctx := context.Background()
-	iter := conn.db.Scan(ctx, 0, match, 0).Iterator()
+	iter := conn.Scan(ctx, 0, match, 0).Iterator()
 	for iter.Next(ctx) {
 		key := iter.Val()
 		DeleteCtx(ctx, key)
@@ -374,7 +374,7 @@ func AllCache(search string, page, rows int) (et.List, error) {
 	cursor = uint64(offset)
 	count = int64(rows)
 
-	iter := conn.db.Scan(ctx, cursor, search, count).Iterator()
+	iter := conn.Scan(ctx, cursor, search, count).Iterator()
 	for iter.Next(ctx) {
 		key := iter.Val()
 		items.Result = append(items.Result, et.Json{"key": key})
