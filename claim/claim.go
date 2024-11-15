@@ -191,7 +191,7 @@ func ParceToken(token string) (*Claim, error) {
 
 	subject, ok := claim["sub"].(string)
 	if !ok {
-		return nil, logs.Alertf(MSG_TOKEN_INVALID_ATRIB, "sub")
+		subject = ""
 	}
 
 	username, ok := claim["username"].(string)
