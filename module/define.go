@@ -99,11 +99,9 @@ func InitData() error {
 	InitProfile("-1", "PROFILE.SUPORT", et.Json{})
 
 	// User Admin
-	ADMIN_COUNTRY := envar.GetStr("", "ADMIN_COUNTRY")
-	ADMIN_PHONE := envar.GetStr("", "ADMIN_PHONE")
-	ADMIN_NAME := envar.GetStr("", "ADMIN_NAME")
-	ADMIN_EMAIL := envar.GetStr("", "ADMIN_EMAIL")
-	InsertUser("USER.ADMIN", ADMIN_NAME, ADMIN_COUNTRY, ADMIN_PHONE, ADMIN_EMAIL, "")
+	USER_ADMIN := envar.GetStr("", "USER_ADMIN")
+	PASWWOR_ADMIN := envar.GetStr("", "PAWWOR_ADMIN")
+	InsertUser("USER.ADMIN", USER_ADMIN, "", "", "", "", PASWWOR_ADMIN)
 
 	// Initial folder
 	InitFolder("-1", "-1", "-1", "", "", et.Json{})

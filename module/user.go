@@ -133,6 +133,7 @@ func GetUserById(id string) (et.Item, error) {
 /**
 * InsertUser
 * @param id string
+* @param username string
 * @param fullName string
 * @param country string
 * @param phone string
@@ -141,20 +142,15 @@ func GetUserById(id string) (et.Item, error) {
 * @return et.Item
 * @return error
 **/
-func InsertUser(id, fullName, country, phone, email, password string) (et.Item, error) {
-	if !utility.ValidStr(country, 0, []string{""}) {
-		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "country")
+func InsertUser(id, username, fullName, country, phone, email, password string) (et.Item, error) {
+	if !utility.ValidStr(username, 0, []string{""}) {
+		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "username")
 	}
 
-	if !utility.ValidStr(phone, 9, []string{""}) {
+	if !utility.ValidStr(phone, 12, []string{""}) {
 		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "phone")
 	}
 
-	if !utility.ValidStr(fullName, 0, []string{""}) {
-		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "full_name")
-	}
-
-	username := country + phone
 	current, err := GetUserByUserName(username)
 	if err != nil {
 		return et.Item{}, err
@@ -201,8 +197,7 @@ func InsertUser(id, fullName, country, phone, email, password string) (et.Item, 
 * @return et.Item
 * @return error
 **/
-func UpdateUser(id string, data et.Json) (et.Item, error) {
-	fullName := data.ValStr("", "full_name")
+func UpdateUser(id, fullName, country, phone, email string) (et.Item, error) {
 	if !utility.ValidStr(fullName, 3, []string{""}) {
 		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "full_name")
 	}
@@ -216,26 +211,21 @@ func UpdateUser(id string, data et.Json) (et.Item, error) {
 		return et.Item{}, logs.Alertm(msg.RECORD_NOT_FOUND)
 	}
 
-	if current.State() == utility.OF_SYSTEM {
-		return et.Item{}, logs.Alertm(msg.RECORD_IS_SYSTEM)
-	} else if current.State() == utility.FOR_DELETE {
-		return et.Item{}, logs.Alertm(msg.RECORD_DELETE)
-	} else if current.State() != utility.ACTIVE {
+	if current.State() != utility.ACTIVE {
 		return et.Item{}, logs.Alertf(msg.RECORD_NOT_ACTIVE, current.State())
 	}
 
 	now := utility.Now()
-	delete(data, "country")
-	delete(data, "phone")
-	delete(data, "username")
-	delete(data, "email")
-	delete(data, "password")
+	data := et.Json{}
 	data["date_update"] = now
 	data["_id"] = id
 	data["_state"] = utility.ACTIVE
+	data["full_name"] = fullName
+	data["country"] = country
+	data["phone"] = phone
+	data["email"] = email
 	_, err = Users.Insert(data).
 		Where(Users.Column("_id").Eq(id)).
-		And(Users.Column("_state").Eq(utility.ACTIVE)).
 		CommandOne()
 	if err != nil {
 		return et.Item{}, err
@@ -257,10 +247,6 @@ func UpdateUser(id string, data et.Json) (et.Item, error) {
 * @return error
 **/
 func StateUser(id, state string) (et.Item, error) {
-	if !utility.ValidId(id) {
-		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "id")
-	}
-
 	if !utility.ValidStr(state, 0, []string{""}) {
 		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "state")
 	}
@@ -276,8 +262,6 @@ func StateUser(id, state string) (et.Item, error) {
 
 	if current.State() == utility.OF_SYSTEM {
 		return et.Item{}, logs.Alertm(msg.RECORD_IS_SYSTEM)
-	} else if current.State() == utility.FOR_DELETE {
-		return et.Item{}, logs.Alertm(msg.RECORD_DELETE)
 	} else if current.State() == state {
 		return et.Item{}, logs.Alertm(msg.RECORD_NOT_CHANGE)
 	}
@@ -338,7 +322,7 @@ func AllUsers(state, search string, page, rows int, _select string) (et.List, er
 
 	if search != "" {
 		return Users.Data(_select).
-			Where(Users.Concat("NAME:", Users.Column("username"), ":DATA:", Users.Column("_data"), ":").Like("%"+search+"%")).
+			Where(Users.Concat("USERNAME:", Users.Column("username"), ":DATA:", Users.Column("_data"), ":").Like("%"+search+"%")).
 			OrderBy(Users.Column("username"), true).
 			List(page, rows)
 	} else if auxState == "*" {
