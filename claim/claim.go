@@ -82,7 +82,6 @@ func GetTokenKey(app, device, id string) string {
 * @param id string
 * @param app string
 * @param name string
-* @param subject string
 * @param username string
 * @param device string
 * @param duration time.Duration
@@ -90,14 +89,13 @@ func GetTokenKey(app, device, id string) string {
 * @return key string
 * @return err error
 **/
-func NewToken(id, app, name string, subject string, username, device string, duration time.Duration) (string, error) {
+func NewToken(id, app, name string, username, device string, duration time.Duration) (string, error) {
 	secret := envar.GetStr("1977", "SECRET")
 	c := Claim{}
 	c.Salt = utility.GetOTP(6)
 	c.ID = id
 	c.App = app
 	c.Name = name
-	c.Subject = subject
 	c.Username = username
 	c.Device = device
 	c.Duration = duration
@@ -189,11 +187,6 @@ func ParceToken(token string) (*Claim, error) {
 		return nil, logs.Alertf(MSG_TOKEN_INVALID_ATRIB, "name")
 	}
 
-	subject, ok := claim["sub"].(string)
-	if !ok {
-		subject = ""
-	}
-
 	username, ok := claim["username"].(string)
 	if !ok {
 		return nil, logs.Alertf(MSG_TOKEN_INVALID_ATRIB, "username")
@@ -219,7 +212,6 @@ func ParceToken(token string) (*Claim, error) {
 		Device:   device,
 		Duration: duration,
 	}
-	result.Subject = subject
 	if result.Duration != 0 {
 		result.ExpiresAt = int64(claim["exp"].(float64))
 	}

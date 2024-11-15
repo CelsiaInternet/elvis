@@ -192,7 +192,7 @@ func UpSetToken(projeectId, id, app, device, name, userId string) (et.Item, erro
 		}, nil
 	}
 
-	token, err := claim.NewToken(id, app, name, "token", app, device, 0)
+	token, err := claim.NewToken(id, app, name, app, device, 0)
 	if err != nil {
 		return et.Item{}, err
 	}

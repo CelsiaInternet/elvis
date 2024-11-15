@@ -26,7 +26,7 @@ func DefineUsers(db *jdb.DB) error {
 	Users.DefineColum("date_update", "", "TIMESTAMP", "NOW()")
 	Users.DefineColum("_state", "", "VARCHAR(80)", utility.ACTIVE)
 	Users.DefineColum("_id", "", "VARCHAR(80)", "-1")
-	Users.DefineColum("name", "", "VARCHAR(250)", "")
+	Users.DefineColum("username", "", "VARCHAR(250)", "")
 	Users.DefineColum("password", "", "VARCHAR(250)", "")
 	Users.DefineColum("_data", "", "JSONB", "{}")
 	Users.DefineColum("index", "", "INTEGER", 0)
@@ -40,7 +40,7 @@ func DefineUsers(db *jdb.DB) error {
 		"date_make",
 		"date_update",
 		"_state",
-		"name",
+		"username",
 		"index",
 	})
 	Users.DefineHidden([]string{"password"})
@@ -80,14 +80,14 @@ func DefineUsers(db *jdb.DB) error {
 }
 
 /**
-* GetUserByName
-* @param name string
+* GetUserByUserName
+* @param username string
 * @return et.Item
 * @return error
 **/
-func GetUserByName(name string) (et.Item, error) {
+func GetUserByUserName(username string) (et.Item, error) {
 	item, err := Users.Data().
-		Where(Users.Column("name").Eq(name)).
+		Where(Users.Column("username").Eq(username)).
 		First()
 	if err != nil {
 		return et.Item{}, err
@@ -154,8 +154,8 @@ func InsertUser(id, fullName, country, phone, email, password string) (et.Item, 
 		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "full_name")
 	}
 
-	name := country + phone
-	current, err := GetUserByName(name)
+	username := country + phone
+	current, err := GetUserByUserName(username)
 	if err != nil {
 		return et.Item{}, err
 	}
@@ -173,7 +173,7 @@ func InsertUser(id, fullName, country, phone, email, password string) (et.Item, 
 	data := et.Json{}
 	data["_id"] = id
 	data["_state"] = utility.ACTIVE
-	data["name"] = name
+	data["username"] = username
 	data["full_name"] = fullName
 	data["country"] = country
 	data["phone"] = phone
@@ -227,7 +227,7 @@ func UpdateUser(id string, data et.Json) (et.Item, error) {
 	now := utility.Now()
 	delete(data, "country")
 	delete(data, "phone")
-	delete(data, "name")
+	delete(data, "username")
 	delete(data, "email")
 	delete(data, "password")
 	data["date_update"] = now
@@ -338,20 +338,20 @@ func AllUsers(state, search string, page, rows int, _select string) (et.List, er
 
 	if search != "" {
 		return Users.Data(_select).
-			Where(Users.Concat("NAME:", Users.Column("name"), ":DATA:", Users.Column("_data"), ":").Like("%"+search+"%")).
-			OrderBy(Users.Column("name"), true).
+			Where(Users.Concat("NAME:", Users.Column("username"), ":DATA:", Users.Column("_data"), ":").Like("%"+search+"%")).
+			OrderBy(Users.Column("username"), true).
 			List(page, rows)
 	} else if auxState == "*" {
 		state = utility.FOR_DELETE
 
 		return Users.Data(_select).
 			Where(Users.Column("_state").Neg(state)).
-			OrderBy(Users.Column("name"), true).
+			OrderBy(Users.Column("username"), true).
 			List(page, rows)
 	} else {
 		return Users.Data(_select).
 			Where(Users.Column("_state").Eq(state)).
-			OrderBy(Users.Column("name"), true).
+			OrderBy(Users.Column("username"), true).
 			List(page, rows)
 	}
 }
