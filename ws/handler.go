@@ -43,8 +43,6 @@ func (h *Hub) Close() {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
 
-	logs.Log(ServiceName, "Shutting down server...")
-
 	if !h.run {
 		return
 	}
@@ -54,20 +52,7 @@ func (h *Hub) Close() {
 	close(h.register)
 	close(h.unregister)
 
-	for _, client := range h.clients {
-		client.close()
-	}
-	h.clients = nil
-
-	for _, channel := range h.channels {
-		channel.close()
-	}
-	h.channels = nil
-
-	for _, queue := range h.queues {
-		queue.close()
-	}
-	h.queues = nil
+	logs.Log(ServiceName, "Shutting down server...")
 }
 
 /**

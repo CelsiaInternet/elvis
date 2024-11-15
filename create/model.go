@@ -169,6 +169,7 @@ import (
 	"time"
 
 	"github.com/celsiainternet/elvis/cache"
+	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/event"
 	"github.com/celsiainternet/elvis/jdb"
 	"github.com/celsiainternet/elvis/jrpc"
@@ -184,17 +185,17 @@ func New() http.Handler {
 
 	_, err := cache.Load()
 	if err != nil {
-		panic(err)
+		console.Panic(err)
 	}
 
 	_, err = event.Load()
 	if err != nil {
-		panic(err)
+		console.Panic(err)
 	}
 
 	db, err := jdb.Load()
 	if err != nil {
-		panic(err)
+		console.Panic(err)
 	}
 
 	_pkg := &pkg.Router{
@@ -218,7 +219,7 @@ func Close() {
 
 func Banner() {
 	time.Sleep(3 * time.Second)
-	templ := utility.BannerTitle(pkg.PackageName, pkg.PackageVersion, 4)
+	templ := utility.BannerTitle(pkg.PackageName, 4)
 	banner.InitString(colorable.NewColorableStdout(), true, true, templ)
 	fmt.Println()
 }
@@ -232,8 +233,10 @@ import (
 	"time"
 
 	"github.com/celsiainternet/elvis/cache"
+	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/event"
 	"github.com/celsiainternet/elvis/jdb"
+	"github.com/celsiainternet/elvis/jrpc"
 	"github.com/celsiainternet/elvis/utility"
 	"github.com/dimiro1/banner"
 	"github.com/go-chi/chi/v5"
@@ -246,17 +249,17 @@ func New() http.Handler {
 
 	_, err := cache.Load()
 	if err != nil {
-		panic(err)
+		console.Panic(err)
 	}
 
 	_, err = event.Load()
 	if err != nil {
-		panic(err)
+		console.Panic(err)
 	}
 
 	db, err := jdb.Load()
 	if err != nil {
-		panic(err)
+		console.Panic(err)
 	}
 
 	_pkg := &pkg.Router{
@@ -267,17 +270,20 @@ func New() http.Handler {
 
 	r.Mount(pkg.PackagePath, _pkg.Routes())
 
+	pkg.StartRpcServer()
+
 	return r
 }
 
 func Close() {
+	jrpc.Close()
 	cache.Close()
 	event.Close()
 }
 
 func Banner() {
 	time.Sleep(3 * time.Second)
-	templ := utility.BannerTitle(pkg.PackageName, pkg.PackageVersion, 4)
+	templ := utility.BannerTitle(pkg.PackageName, 4)
 	banner.InitString(colorable.NewColorableStdout(), true, true, templ)
 	fmt.Println()
 }
@@ -292,12 +298,7 @@ import (
 	"github.com/celsiainternet/elvis/et"
 )
 
-func initEvents() {
-	err := event.Stack(router.APIMANAGER_LOADED, router.EventLoad)
-	if err != nil {
-		console.Error(err)
-	}
-
+func initEvents() {	
 	err = event.Stack("<channel>", eventAction)
 	if err != nil {
 		console.Error(err)
@@ -356,13 +357,11 @@ import (
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/jrpc"
-	"github.com/celsiainternet/elvis/utility"
 )
 
 type Services struct{}
 
 func StartRpcServer() {
-	jrpc.Load()
 	services := new(Services)
 	err := jrpc.Mount(services, PackageName)
 	if err != nil {
@@ -373,10 +372,10 @@ func StartRpcServer() {
 }
 
 func (c *Services) Version(require et.Json, response *et.Item) error {
-	company := envar.GetStr("", "COMPANY")
-	web := envar.GetStr("", "WEB")
-	version := utility.GitVersion(1)
-	help := envar.GetStr("", "RPC_HELP")
+	company := envar.EnvarStr("", "COMPANY")
+	web := envar.EnvarStr("", "WEB")
+	version := envar.EnvarStr("", "VERSION")
+	help := envar.EnvarStr("", "RPC_HELP")
 	response.Ok = true
 	response.Result = et.Json{
 		"methos":  "RPC",
@@ -506,10 +505,11 @@ import (
 
 	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/envar"
+	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/middleware"
 	"github.com/celsiainternet/elvis/response"
 	er "github.com/celsiainternet/elvis/router"
 	"github.com/celsiainternet/elvis/strs"
-	"github.com/celsiainternet/elvis/utility"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -530,15 +530,17 @@ func (rt *Router) Routes() http.Handler {
 	r := chi.NewRouter()
 
 	er.PublicRoute(r, er.Get, "/version", rt.version, PackageName, PackagePath, host)
+	er.ProtectRoute(r, er.Get, "/routes", rt.routes, PackageName, PackagePath, host)
 	// $2
 	er.ProtectRoute(r, er.Get, "/{id}", rt.get$2ById, PackageName, PackagePath, host)
 	er.ProtectRoute(r, er.Post, "/", rt.upSert$2, PackageName, PackagePath, host)
 	er.ProtectRoute(r, er.Put, "/state/{id}", rt.state$2, PackageName, PackagePath, host)
 	er.ProtectRoute(r, er.Delete, "/{id}", rt.delete$2, PackageName, PackagePath, host)
-	er.ProtectRoute(r, er.Get, "/all", rt.all$2, PackageName, PackagePath, host)
+	er.ProtectRoute(r, er.Get, "/", rt.all$2, PackageName, PackagePath, host)
 
 	ctx := context.Background()
 	rt.Repository.Init(ctx)
+	middleware.SetServiceName(PackageName)
 
 	console.LogKF(PackageName, "Router version:%s", PackageVersion)
 	return r
@@ -554,6 +556,25 @@ func (rt *Router) version(w http.ResponseWriter, r *http.Request) {
 
 	response.JSON(w, r, http.StatusOK, result)
 }
+
+func (rt *Router) routes(w http.ResponseWriter, r *http.Request) {
+	_routes := er.GetRoutes()
+	routes := []et.Json{}
+	for _, route := range _routes {
+		routes = append(routes, et.Json{
+			"method": route.Str("method"),
+			"path":   route.Str("path"),
+		})
+	}
+
+	result := et.Items{
+		Ok:     true,
+		Count:  len(routes),
+		Result: routes,
+	}
+
+	response.ITEMS(w, r, http.StatusOK, result)
+}
 `
 
 const modelRouter = `package $1
@@ -565,10 +586,11 @@ import (
 
 	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/envar"
+	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/middleware"
 	"github.com/celsiainternet/elvis/response"
 	er "github.com/celsiainternet/elvis/router"
 	"github.com/celsiainternet/elvis/strs"
-	"github.com/celsiainternet/elvis/utility"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -583,16 +605,19 @@ type Router struct {
 }
 
 func (rt *Router) Routes() http.Handler {
-	var host = strs.Format("%s:%d", envar.GetStr("http://localhost", "HOST"), envar.GetInt(3300, "PORT"))
+	defaultHost := strs.Format("http://%s", HostName)
+	var host = strs.Format("%s:%d", envar.GetStr(defaultHost, "HOST"), envar.GetInt(3300, "PORT"))
 
 	r := chi.NewRouter()
 
 	er.PublicRoute(r, er.Get, "/version", rt.version, PackageName, PackagePath, host)
+	er.ProtectRoute(r, er.Get, "/routes", rt.routes, PackageName, PackagePath, host)
 	// $2
 	er.ProtectRoute(r, er.Post, "/", rt.$2, PackageName, PackagePath, host)
 	
 	ctx := context.Background()
 	rt.Repository.Init(ctx)
+	middleware.SetServiceName(PackageName)
 
 	console.LogKF(PackageName, "Router version:%s", PackageVersion)
 	return r
@@ -607,6 +632,25 @@ func (rt *Router) version(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.JSON(w, r, http.StatusOK, result)
+}
+
+func (rt *Router) routes(w http.ResponseWriter, r *http.Request) {
+	_routes := er.GetRoutes()
+	routes := []et.Json{}
+	for _, route := range _routes {
+		routes = append(routes, et.Json{
+			"method": route.Str("method"),
+			"path":   route.Str("path"),
+		})
+	}
+
+	result := et.Items{
+		Ok:     true,
+		Count:  len(routes),
+		Result: routes,
+	}
+
+	response.ITEMS(w, r, http.StatusOK, result)
 }
 `
 
@@ -766,18 +810,15 @@ func Insert$2(project_id, id, name, description string, data et.Json) (et.Item, 
 		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "_id")
 	}
 
-	item, err := $2.Data("_state", "_id").
+	current, err := $2.Data("_state", "_id").
 		Where($2.Column("_id").Eq(id)).
 		First()
 	if err != nil {
 		return et.Item{}, err
 	}
 
-	if item.Ok {
-		return et.Item{
-			Ok:     false,
-			Result: item.Result,
-		}, nil
+	if current.Ok {
+		return et.Item{Ok: false, Result: item.Result}, nil
 	}
 
 	_, err = Valida$2(id, name)
@@ -785,7 +826,7 @@ func Insert$2(project_id, id, name, description string, data et.Json) (et.Item, 
 		return et.Item{}, err
 	}
 
-	id = utility.GenId(id)
+	id = utility.GenKey(id)
 	now := utility.Now()
 	data["date_make"] = now
 	data["date_update"] = now
@@ -814,10 +855,9 @@ func UpSert$2(project_id, id, name, description string, data et.Json) (et.Item, 
 	if err != nil {
 		return et.Item{}, err
 	}
-
-	id = current.Key("_id")
+	
 	if !current.Ok {
-		return Get$2ById(id)
+		return return et.Item{Ok: true, Result: current.Result}, nil
 	}
 
 	current_state := current.Key("_state")
@@ -825,26 +865,21 @@ func UpSert$2(project_id, id, name, description string, data et.Json) (et.Item, 
 		return et.Item{}, console.Alert(msg.RECORD_NOT_UPDATE)
 	}
 
-	_, err = Valida$2(id, name)
-	if err != nil {
-		return et.Item{}, err
-	}
-
-	id = utility.GenId(id)
+	id = current.Str("_id")
 	now := utility.Now()
 	data["date_update"] = now
 	data["project_id"] = project_id
 	data["_id"] = id
 	data["name"] = name
 	data["description"] = description
-	_, err = $2.Update(data).
+	result, err := $2.Update(data).
 		Where($2.Column("_id").Eq(id)).
 		CommandOne()
 	if err != nil {
 		return et.Item{}, err
 	}
 
-	return Get$2ById(id)
+	return result, nil
 }
 
 /**
@@ -857,24 +892,20 @@ func State$2(id, state string) (et.Item, error) {
 		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "state")
 	}
 
-	item, err := $2.Data("_state").
+	current, err := $2.Data("_state").
 		Where($2.Column("_id").Eq(id)).
 		First()
 	if err != nil {
 		return et.Item{}, err
 	}
 
-	if !item.Ok {
+	if !current.Ok {
 		return et.Item{}, console.Alert(msg.RECORD_NOT_FOUND)
 	}
 
-	old_state := item.Key("_state")
+	old_state := current.Key("_state")
 	if old_state == state {
-		return et.Item{
-			Ok: true,
-			Result: et.Json{
-				"message": msg.RECORD_NOT_UPDATE,
-			}}, nil
+		return et.Item{}, console.Alert(msg.RECORD_NOT_CHANGE)		
 	}
 
 	return $2.Update(et.Json{
@@ -1096,26 +1127,7 @@ go mod init github.com/$1/api
 
 ### Dependencias
 
-go get github.com/cgalvisleon/elvis@v1.0.54
-go get github.com/joho/godotenv/autoload
-go get go.mongodb.org/mongo-driver/mongo
-go get go.mongodb.org/mongo-driver/mongo/options
-go get github.com/google/uuid
-go get golang.org/x/crypto/bcrypt
-go get golang.org/x/exp/slices
-go get github.com/manifoldco/promptui
-go get github.com/schollz/progressbar/v3
-go get github.com/spf13/cobra
-go get github.com/go-chi/chi/v5
-go get github.com/redis/go-redis/v9
-go get github.com/golang-jwt/jwt/v4
-go get github.com/nats-io/nats.go
-go get github.com/shirou/gopsutil/cpu
-go get github.com/shirou/gopsutil/mem
-go get github.com/lib/pq
-go get github.com/dimiro1/banner
-go get github.com/mattn/go-colorable
-go get github.com/rs/cors
+go get github.com/celsiainternet/elvis@v1.1.2
 
 ### Crear projecto, microservicios, modelos
 
@@ -1226,6 +1238,7 @@ data
 build
 sql
 .vscode
+deployments/oke.yml
 
 # Test binary, built with 'go test -c'
 *.test

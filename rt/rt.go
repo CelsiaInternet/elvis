@@ -3,6 +3,7 @@ package rt
 import (
 	"net/http"
 
+	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/utility"
 	"github.com/celsiainternet/elvis/ws"
@@ -14,25 +15,33 @@ var conn *ws.Client
 * LoadFrom
 * @return erro
 **/
-func Load() error {
+func Load() (*ws.Client, error) {
 	if conn != nil {
-		return nil
+		return conn, nil
 	}
 
-	var err error
-	params := &ws.ClientConfig{
-		ClientId:  utility.UUID(),
-		Name:      envar.GetStr("Real Time", "RT_NAME"),
-		Url:       envar.GetStr("ws", "RT_URL"),
-		Header:    http.Header{},
-		Reconcect: envar.GetInt(3, "RT_RECONCECT"),
+	url := envar.GetStr("", "RT_HOST")
+	if url == "" {
+		return nil, console.NewError(MSG_RT_URL_REQUIRED)
 	}
-	conn, err = ws.NewClient(params)
+
+	token := envar.GetStr("", "RT_AUTH")
+	client, err := ws.NewClient(&ws.ClientConfig{
+		ClientId: utility.UUID(),
+		Name:     envar.GetStr("RealTime", "RT_NAME"),
+		Url:      url,
+		Header: http.Header{
+			"Authorization": []string{"Bearer " + token},
+		},
+		Reconnect: envar.GetInt(3, "RT_RECONCECT"),
+	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	conn = client
+
+	return conn, nil
 }
 
 /**

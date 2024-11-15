@@ -128,6 +128,14 @@ func DeleteApiGatewayById(id, method, path string) {
 }
 
 /**
+* GetRoutes
+* @return map[string]et.Json
+**/
+func GetRoutes() map[string]et.Json {
+	return router
+}
+
+/**
 * PushApiGateway
 * @param method string
 * @param path string

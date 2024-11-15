@@ -52,13 +52,12 @@ func RequestLogger(f LogFormatter) func(next http.Handler) http.Handler {
 			metric := NewMetric(r)
 			metric.CallSearchTime()
 			w.Header().Set("Reqid", metric.ReqID)
-			rww := &ResponseWriterWrapper{ResponseWriter: w, StatusCode: http.StatusOK}
-			ww := NewWrapResponseWriter(rww, r.ProtoMajor)
+			ww := &ResponseWriterWrapper{ResponseWriter: w, StatusCode: http.StatusOK}
 			entry := f.NewLogEntry(r)
-			rw := WithLogEntry(r, entry)
+			wr := WithLogEntry(r, entry)
 
-			next.ServeHTTP(ww, rw)
-			metric.DoneFn(rww)
+			next.ServeHTTP(ww, wr)
+			metric.DoneHTTP(ww)
 		}
 
 		return http.HandlerFunc(fn)

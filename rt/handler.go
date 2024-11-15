@@ -42,7 +42,7 @@ func Ping() {
 **/
 func SetFrom(name string) error {
 	if conn == nil {
-		return logs.NewError(ERR_NOT_CONNECT_WS)
+		return logs.Alertm(ERR_NOT_CONNECT_WS)
 	}
 
 	return conn.SetFrom(name)
@@ -55,7 +55,7 @@ func SetFrom(name string) error {
 **/
 func Publish(channel string, message interface{}) error {
 	if conn == nil {
-		return logs.NewError(ERR_NOT_CONNECT_WS)
+		return logs.Alertm(ERR_NOT_CONNECT_WS)
 	}
 
 	conn.Publish(channel, message)
@@ -70,7 +70,7 @@ func Publish(channel string, message interface{}) error {
 **/
 func SendMessage(clientId string, message interface{}) error {
 	if conn == nil {
-		return logs.NewError(ERR_NOT_CONNECT_WS)
+		return logs.Alertm(ERR_NOT_CONNECT_WS)
 	}
 
 	return conn.SendMessage(clientId, message)
@@ -83,7 +83,7 @@ func SendMessage(clientId string, message interface{}) error {
 **/
 func Subscribe(channel string, reciveFn func(ws.Message)) error {
 	if conn == nil {
-		return logs.NewError(ERR_NOT_CONNECT_WS)
+		return logs.Alertm(ERR_NOT_CONNECT_WS)
 	}
 
 	conn.Subscribe(channel, reciveFn)

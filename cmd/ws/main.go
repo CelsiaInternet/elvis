@@ -45,13 +45,13 @@ func main() {
 func test1(port int) {
 	url := strs.Format(`ws://localhost:%d/ws`, port)
 
-	n := 10000
+	n := 10
 	for i := 0; i < n; i++ {
 		client, err := ws.NewClient(&ws.ClientConfig{
 			ClientId:  strs.Format("client-%d", i),
 			Name:      strs.Format("Client%d", i),
 			Url:       url,
-			Reconcect: 3,
+			Reconnect: 3,
 		})
 		if err != nil {
 			console.AlertE(err)

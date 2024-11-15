@@ -19,6 +19,7 @@ import (
 
 var hostName, _ = os.Hostname()
 var commonHeader = make(map[string]bool)
+var serviceName = "telemetry"
 
 type Result struct {
 	Ok     bool        `json:"ok"`
@@ -58,21 +59,31 @@ func (rw *ResponseWriterWrapper) SetHeader(header http.Header) {
 	}
 }
 
+/**
+* SetServiceName
+* @params name string
+**/
+func SetServiceName(name string) {
+	serviceName = name
+}
+
 type Metrics struct {
-	TimeStamp    time.Time
-	ReqID        string
-	ClientIP     string
-	Scheme       string
-	Host         string
-	Method       string
-	Path         string
-	StatusCode   int
-	ResponseSize int
-	SearchTime   time.Duration
-	ResponseTime time.Duration
-	Latency      time.Duration
+	TimeStamp    time.Time     `json:"timestamp"`
+	ServiceName  string        `json:"service_name"`
+	ReqID        string        `json:"req_id"`
+	ClientIP     string        `json:"client_ip"`
+	Scheme       string        `json:"scheme"`
+	Host         string        `json:"host"`
+	Method       string        `json:"method"`
+	Path         string        `json:"path"`
+	StatusCode   int           `json:"status_code"`
+	ResponseSize int           `json:"response_size"`
+	SearchTime   time.Duration `json:"search_time"`
+	ResponseTime time.Duration `json:"response_time"`
+	Latency      time.Duration `json:"latency"`
 	key          string
 	mark         time.Time
+	metrics      Telemetry
 }
 
 /**
@@ -97,6 +108,8 @@ func (m *Metrics) ToJson() et.Json {
 }
 
 type Telemetry struct {
+	TimeStamp         string
+	ServiceName       string
 	Key               string
 	RequestsPerSecond int
 	RequestsPerMinute int
@@ -111,7 +124,9 @@ type Telemetry struct {
 **/
 func (m *Telemetry) ToJson() et.Json {
 	return et.Json{
+		"timestamp":           m.TimeStamp,
 		"key":                 m.Key,
+		"service_name":        m.ServiceName,
 		"requests_per_second": m.RequestsPerSecond,
 		"requests_per_minute": m.RequestsPerMinute,
 		"requests_per_hour":   m.RequestsPerHour,
@@ -142,15 +157,16 @@ func NewMetric(r *http.Request) *Metrics {
 	}
 
 	result := &Metrics{
-		TimeStamp: timezone.NowTime(),
-		ReqID:     utility.UUID(),
-		ClientIP:  remoteAddr,
-		Host:      hostName,
-		Method:    r.Method,
-		Path:      r.URL.Path,
-		Scheme:    scheme,
-		mark:      timezone.NowTime(),
-		key:       strs.Format(`%s:%s`, r.Method, r.URL.Path),
+		TimeStamp:   timezone.NowTime(),
+		ServiceName: serviceName,
+		ReqID:       utility.UUID(),
+		ClientIP:    remoteAddr,
+		Host:        hostName,
+		Method:      r.Method,
+		Path:        r.URL.Path,
+		Scheme:      scheme,
+		mark:        timezone.NowTime(),
+		key:         strs.Format(`%s:%s`, r.Method, r.URL.Path),
 	}
 
 	return result
@@ -165,13 +181,14 @@ func NewRpcMetric(method string) *Metrics {
 	scheme := "rpc"
 
 	result := &Metrics{
-		TimeStamp: timezone.NowTime(),
-		ReqID:     utility.UUID(),
-		Path:      method,
-		Method:    strs.Uppcase(scheme),
-		Scheme:    scheme,
-		mark:      timezone.NowTime(),
-		key:       strs.Format(`%s:%s`, strs.Uppcase(scheme), method),
+		TimeStamp:   timezone.NowTime(),
+		ServiceName: serviceName,
+		ReqID:       utility.UUID(),
+		Path:        method,
+		Method:      strs.Uppcase(scheme),
+		Scheme:      scheme,
+		mark:        timezone.NowTime(),
+		key:         strs.Format(`%s:%s`, strs.Uppcase(scheme), method),
 	}
 
 	return result
@@ -225,6 +242,8 @@ func (m *Metrics) CallMetrics() Telemetry {
 	second := timeNow.Format("2006-01-02-15:04:05")
 
 	return Telemetry{
+		TimeStamp:         date,
+		ServiceName:       serviceName,
 		Key:               m.key,
 		RequestsPerSecond: cache.Count(cache.GenKey(m.key, second), 2*time.Second),
 		RequestsPerMinute: cache.Count(cache.GenKey(m.key, minute), 1*time.Minute+1*time.Second),
@@ -262,26 +281,37 @@ func (m *Metrics) println() et.Json {
 		lg.CW(w, lg.NRed, " Latency:%s", m.Latency)
 	}
 	lg.CW(w, lg.NWhite, " Response:%s", m.ResponseTime)
-	metric := m.CallMetrics()
-	if metric.RequestsPerSecond > metric.RequestsLimit {
-		lg.CW(w, lg.NRed, " - Request:S:%vM:%vH:%vD:%vL:%v", metric.RequestsPerSecond, metric.RequestsPerMinute, metric.RequestsPerHour, metric.RequestsPerDay, metric.RequestsLimit)
-	} else if metric.RequestsPerSecond > int(float64(metric.RequestsLimit)*0.6) {
-		lg.CW(w, lg.NYellow, " - Request:S:%vM:%vH:%vD:%vL:%v", metric.RequestsPerSecond, metric.RequestsPerMinute, metric.RequestsPerHour, metric.RequestsPerDay, metric.RequestsLimit)
+	m.metrics = m.CallMetrics()
+	if m.metrics.RequestsPerSecond > m.metrics.RequestsLimit {
+		lg.CW(w, lg.NRed, " - Request:S:%vM:%vH:%vD:%vL:%v", m.metrics.RequestsPerSecond, m.metrics.RequestsPerMinute, m.metrics.RequestsPerHour, m.metrics.RequestsPerDay, m.metrics.RequestsLimit)
+	} else if m.metrics.RequestsPerSecond > int(float64(m.metrics.RequestsLimit)*0.6) {
+		lg.CW(w, lg.NYellow, " - Request:S:%vM:%vH:%vD:%vL:%v", m.metrics.RequestsPerSecond, m.metrics.RequestsPerMinute, m.metrics.RequestsPerHour, m.metrics.RequestsPerDay, m.metrics.RequestsLimit)
 	} else {
-		lg.CW(w, lg.NGreen, " - Request:S:%vM:%vH:%vD:%vL:%v", metric.RequestsPerSecond, metric.RequestsPerMinute, metric.RequestsPerHour, metric.RequestsPerDay, metric.RequestsLimit)
+		lg.CW(w, lg.NGreen, " - Request:S:%vM:%vH:%vD:%vL:%v", m.metrics.RequestsPerSecond, m.metrics.RequestsPerMinute, m.metrics.RequestsPerHour, m.metrics.RequestsPerDay, m.metrics.RequestsLimit)
 	}
 	lg.Println(w)
 
+	return m.ToJson()
+}
+
+/**
+* telemetry
+* @return et.Json
+**/
+func (m *Metrics) telemetry() et.Json {
 	result := m.ToJson()
-	result["metric"] = metric.ToJson()
+	result["metric"] = m.metrics.ToJson()
 
 	go event.Telemetry(et.Json{
 		"response": m,
-		"metric":   metric.ToJson(),
+		"metric":   m.metrics.ToJson(),
 	})
 
-	if metric.RequestsPerSecond > metric.RequestsLimit {
-		go event.Overflow(result)
+	if m.metrics.RequestsPerSecond > m.metrics.RequestsLimit {
+		go event.Overflow(et.Json{
+			"response": m,
+			"metric":   m.metrics.ToJson(),
+		})
 	}
 
 	return result
@@ -294,6 +324,21 @@ func (m *Metrics) println() et.Json {
 * @return et.Json
 **/
 func (m *Metrics) DoneFn(rw *ResponseWriterWrapper) et.Json {
+	m.StatusCode = rw.StatusCode
+	m.ResponseSize = rw.Size
+	m.CallResponseTime()
+	m.CallLatency()
+	m.println()
+
+	return m.telemetry()
+}
+
+/**
+* DoneHTTP
+* @params rw *ResponseWriterWrapper
+* @return et.Json
+**/
+func (m *Metrics) DoneHTTP(rw *ResponseWriterWrapper) et.Json {
 	m.StatusCode = rw.StatusCode
 	m.ResponseSize = rw.Size
 	m.CallResponseTime()
