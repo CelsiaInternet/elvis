@@ -124,6 +124,10 @@ func (s *Json) ScanRows(rows *sql.Rows) error {
 	return nil
 }
 
+func (s Json) IsEmpty() bool {
+	return len(s) == 0
+}
+
 func (s Json) ToByte() []byte {
 	result, err := json.Marshal(s)
 	if err != nil {

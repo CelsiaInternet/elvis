@@ -160,7 +160,7 @@ func ParceToken(token string) (*Claim, error) {
 		return []byte(secret), nil
 	})
 	if err != nil {
-		return nil, logs.Error(err)
+		return nil, logs.Alert(err)
 	}
 
 	if !jToken.Valid {

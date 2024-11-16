@@ -270,7 +270,8 @@ func (m *Metrics) println() et.Json {
 	} else {
 		lg.CW(w, lg.NGreen, fmt.Sprintf(" - %s", http.StatusText(m.StatusCode)))
 	}
-	lg.CW(w, lg.NCyan, fmt.Sprintf(" Size:%v%s", m.ResponseSize, "KB"))
+	size := float64(m.ResponseSize) / 1024
+	lg.CW(w, lg.NCyan, fmt.Sprintf(` Size:%.2f%s`, size, "KB"))
 	lg.CW(w, lg.NWhite, " in ")
 	limitLatency := time.Duration(envar.GetInt64(1000, "LIMIT_LATENCY")) * time.Millisecond
 	if m.Latency < limitLatency {
@@ -349,23 +350,18 @@ func (m *Metrics) DoneHTTP(rw *ResponseWriterWrapper) et.Json {
 
 /**
 * DoneRpc
-* @params r interface{}
+* @params r et.Json
 * @return et.Json
 **/
-func (m *Metrics) DoneRpc(r interface{}) et.Json {
-	var size int
-	jsonData, err := json.Marshal(r)
-	if err != nil {
-		size = 0
-	} else {
-		size = len(jsonData)
-		size = size / 1024
-	}
-
+func (m *Metrics) DoneRpc(r et.Item) et.Json {
+	size := len(r.ToString())
 	m.StatusCode = http.StatusOK
 	m.ResponseSize = size
+	m.CallResponseTime()
+	m.CallLatency()
+	m.println()
 
-	return m.println()
+	return m.telemetry()
 }
 
 /**

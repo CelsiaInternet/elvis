@@ -22,7 +22,7 @@ func Load() (*ws.Client, error) {
 
 	url := envar.GetStr("", "RT_HOST")
 	if url == "" {
-		return nil, console.NewError(MSG_RT_URL_REQUIRED)
+		return nil, console.NewError(MSG_RT_HOST_REQUIRED)
 	}
 
 	token := envar.GetStr("", "RT_AUTH")

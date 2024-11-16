@@ -98,6 +98,50 @@ func SetBool(name string, _default bool, usage, _var string) bool {
 }
 
 /**
+* UpSetStr
+* @param string name
+* @param string value
+* @return string
+**/
+func UpSetStr(name string, value string) string {
+	os.Setenv(name, value)
+	return value
+}
+
+/**
+* SetInt
+* @param string name
+* @param int value
+* @return int
+**/
+func UpSetInt(name string, value int) int {
+	os.Setenv(name, strconv.Itoa(value))
+	return value
+}
+
+/**
+* UpSetIn64
+* @param string name
+* @param int64 value
+* @return int64
+**/
+func UpSetIn64(name string, value int64) int64 {
+	os.Setenv(name, strconv.FormatInt(value, 10))
+	return value
+}
+
+/**
+* UpSetBool
+* @param string name
+* @param bool value
+* @return bool
+**/
+func UpSetBool(name string, value bool) bool {
+	os.Setenv(name, strconv.FormatBool(value))
+	return value
+}
+
+/**
 * GetStr
 * @param string _default
 * @param string _var

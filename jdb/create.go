@@ -115,15 +115,11 @@ func CreateSequence(db *DB, schema, tag string) error {
 
 // Create user
 func CreateUser(db *DB, name, password string) error {
-	passwordHash, err := utility.PasswordHash(password)
-	if err != nil {
-		return err
-	}
-
+	passwordHash := utility.PasswordSha256(password)
 	sql := strs.Format(`CREATE USER %s WITH PASSWORD '%s';`, name, passwordHash)
 
 	id := strs.Format(`create-user-%s`, name)
-	err = db.Exec(id, sql)
+	err := db.Exec(id, sql)
 	if err != nil {
 		return err
 	}
@@ -133,15 +129,11 @@ func CreateUser(db *DB, name, password string) error {
 
 // Changue password
 func ChangePassword(db *DB, name, password string) error {
-	passwordHash, err := utility.PasswordHash(password)
-	if err != nil {
-		return err
-	}
-
+	passwordHash := utility.PasswordSha256(password)
 	sql := strs.Format(`ALTER USER %s WITH PASSWORD '%s';`, name, passwordHash)
 
 	id := strs.Format(`change-password-%s`, name)
-	err = db.Exec(id, sql)
+	err := db.Exec(id, sql)
 	if err != nil {
 		return err
 	}

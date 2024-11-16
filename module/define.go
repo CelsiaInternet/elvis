@@ -1,6 +1,7 @@
 package module
 
 import (
+	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/jdb"
@@ -100,11 +101,19 @@ func InitData() error {
 
 	// User Admin
 	USER_ADMIN := envar.GetStr("", "USER_ADMIN")
-	PASWWOR_ADMIN := envar.GetStr("", "PAWWOR_ADMIN")
-	InsertUser("USER.ADMIN", USER_ADMIN, "", "", "", "", PASWWOR_ADMIN)
+	if len(USER_ADMIN) == 0 {
+		return console.NewError("USER_ADMIN is empty")
+	}
+
+	PASSWORD_ADMIN := envar.GetStr("", "PASSWORD_ADMIN")
+	if len(PASSWORD_ADMIN) == 0 {
+		return console.NewError("PAWWOR_ADMIN is empty")
+	}
+
+	InsertUser("USER.ADMIN", USER_ADMIN, "Admin", "", "", "", PASSWORD_ADMIN)
 
 	// Initial folder
-	InitFolder("-1", "-1", "-1", "", "", et.Json{})
+	InitFolder("-1", "-1", "-1", "main", "", et.Json{})
 
 	CheckProjectModule("-1", "-1", true)
 	CheckRole("-1", "-1", "PROFILE.ADMIN", "USER.ADMIN", true)

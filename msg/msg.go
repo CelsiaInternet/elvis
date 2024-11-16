@@ -4,6 +4,7 @@ const (
 	MSG_ATRIB_REQUIRED      = "Atributo requerido (%s)"
 	MSG_VALUE_REQUIRED      = "Atributo requerido (%s) value:%s"
 	MSG_USER_INVALID        = "Usuario no valido, atrib (%s)"
+	MSG_USER_NOT_FOUND      = "Usuario no encontrado"
 	MSG_MAIL_001            = "Verifica tu dirección de correo electrónico"
 	MSG_MAIL_002            = "Código de validación"
 	MSG_MOBILE_VALIDATION   = "%s: Código de validación %s. Su código expira en 3 minutos."
@@ -64,4 +65,5 @@ const (
 	ERR_NOT_FONUND          = "Documento no encontrado"
 	ERR_NOT_COLLETION_MONGO = "Collection no encontrada"
 	ERR_INVALID_TYPE        = "Tipo invalido"
+	PASSWORD_NOT_MATCH      = "Contraseña no coincide"
 )

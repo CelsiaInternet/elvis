@@ -144,11 +144,7 @@ func GetUserById(id string) (et.Item, error) {
 **/
 func InsertUser(id, username, fullName, country, phone, email, password string) (et.Item, error) {
 	if !utility.ValidStr(username, 0, []string{""}) {
-		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "username")
-	}
-
-	if !utility.ValidStr(phone, 12, []string{""}) {
-		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "phone")
+		return et.Item{}, logs.NewErrorf(msg.MSG_ATRIB_REQUIRED, "username")
 	}
 
 	current, err := GetUserByUserName(username)
@@ -157,14 +153,10 @@ func InsertUser(id, username, fullName, country, phone, email, password string) 
 	}
 
 	if current.Ok {
-		return current, logs.Alertf(msg.RECORD_FOUND)
+		return current, logs.NewErrorf(msg.RECORD_FOUND)
 	}
 
-	password, err = utility.PasswordHash(password)
-	if err != nil {
-		return et.Item{}, err
-	}
-
+	password = utility.PasswordSha256(password)
 	id = utility.GenKey(id)
 	data := et.Json{}
 	data["_id"] = id
@@ -240,6 +232,121 @@ func UpdateUser(id, fullName, country, phone, email string) (et.Item, error) {
 }
 
 /**
+* UpdatePassword
+* @param id string
+* @param oldPassword string
+* @param newPassword string
+* @param confirmPassword string
+* @return et.Item
+* @return error
+**/
+func UpdatePassword(id string, oldPassword, newPassword, confirmPassword string) (et.Item, error) {
+	if !utility.ValidStr(oldPassword, 6, []string{""}) {
+		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "oldPassword")
+	}
+
+	if !utility.ValidStr(newPassword, 6, []string{""}) {
+		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "newPassword")
+	}
+
+	if !utility.ValidStr(confirmPassword, 6, []string{""}) {
+		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "confirmPassword")
+	}
+
+	if newPassword != confirmPassword {
+		return et.Item{}, logs.Alertm(msg.PASSWORD_NOT_MATCH)
+	}
+
+	oldPassword = utility.PasswordSha256(oldPassword)
+	current, err := Users.Data("_state").
+		Where(Users.Column("_id").Eq(id)).
+		And(Users.Column("_state").Eq(utility.ACTIVE)).
+		And(Users.Column("password").Eq(oldPassword)).
+		First()
+	if err != nil {
+		return et.Item{}, err
+	}
+
+	if !current.Ok {
+		return et.Item{}, logs.Alertm(msg.RECORD_NOT_FOUND)
+	}
+
+	password := utility.PasswordSha256(newPassword)
+	now := utility.Now()
+	data := et.Json{}
+	data["date_update"] = now
+	data["_id"] = id
+	data["password"] = password
+	_, err = Users.Insert(data).
+		Where(Users.Column("_id").Eq(id)).
+		CommandOne()
+	if err != nil {
+		return et.Item{}, err
+	}
+
+	return et.Item{
+		Ok: true,
+		Result: et.Json{
+			"message": msg.RECORD_UPDATE,
+		},
+	}, nil
+}
+
+/**
+* SetPassword
+* @param id string
+* @param newPassword string
+* @param confirmPassword string
+* @return et.Item
+* @return error
+**/
+func SetPassword(id string, newPassword, confirmPassword string) (et.Item, error) {
+	if !utility.ValidStr(newPassword, 6, []string{""}) {
+		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "newPassword")
+	}
+
+	if !utility.ValidStr(confirmPassword, 6, []string{""}) {
+		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "confirmPassword")
+	}
+
+	if newPassword != confirmPassword {
+		return et.Item{}, logs.Alertm(msg.PASSWORD_NOT_MATCH)
+	}
+
+	current, err := Users.Data("_state").
+		Where(Users.Column("_id").Eq(id)).
+		And(Users.Column("_state").Eq(utility.ACTIVE)).
+		First()
+	if err != nil {
+		return et.Item{}, err
+	}
+
+	if !current.Ok {
+		return et.Item{}, logs.Alertm(msg.RECORD_NOT_FOUND)
+	}
+
+	password := utility.PasswordSha256(newPassword)
+	now := utility.Now()
+	data := et.Json{}
+	data["date_update"] = now
+	data["_id"] = id
+	data["password"] = password
+	_, err = Users.Insert(data).
+		Where(Users.Column("_id").Eq(id)).
+		CommandOne()
+	if err != nil {
+		return et.Item{}, err
+	}
+
+	return et.Item{
+		Ok: true,
+		Result: et.Json{
+			"message": msg.RECORD_UPDATE,
+		},
+	}, nil
+}
+
+/**
 * StateUser
 * @param id string
 * @param state string
@@ -290,13 +397,38 @@ func StateUser(id, state string) (et.Item, error) {
 * @return error
 **/
 func DeleteUser(id string) (et.Item, error) {
-	result, err := StateUser(id, utility.FOR_DELETE)
+	current, err := GetUserById(id)
+	if err != nil {
+		return et.Item{}, err
+	}
+
+	if !current.Ok {
+		return et.Item{}, logs.Alertm(msg.RECORD_NOT_FOUND)
+	}
+
+	_, err = Roles.Delete().
+		Where(Roles.Column("user_id").Eq(id)).
+		CommandOne()
+	if err != nil {
+		return et.Item{}, err
+	}
+
+	_, err = Tokens.Delete().
+		Where(Tokens.Column("user_id").Eq(id)).
+		CommandOne()
+	if err != nil {
+		return et.Item{}, err
+	}
+
+	_, err = Users.Delete().
+		Where(Users.Column("_id").Eq(id)).
+		CommandOne()
 	if err != nil {
 		return et.Item{}, err
 	}
 
 	return et.Item{
-		Ok: result.Ok,
+		Ok: true,
 		Result: et.Json{
 			"message": msg.RECORD_DELETE,
 		},

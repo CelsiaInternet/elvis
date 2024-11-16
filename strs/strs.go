@@ -128,7 +128,8 @@ func Trim(str string) string {
 * @return string
 **/
 func NotSpace(str string) string {
-	return Replace(str, " ", "")
+	result := Replace(str, " ", "")
+	return Trim(result)
 }
 
 /**
@@ -137,7 +138,8 @@ func NotSpace(str string) string {
 * @return string
 **/
 func DaskSpace(str string) string {
-	return Replace(str, " ", "-")
+	result := Replace(str, " ", "-")
+	return Trim(result)
 }
 
 /**

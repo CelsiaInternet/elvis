@@ -105,10 +105,11 @@ func LogF(format string, args ...any) error {
 }
 
 func Rpc(args ...any) error {
-	pc, _, _, _ := runtime.Caller(2)
-	fn := runtime.FuncForPC(pc)
-	kind := fmt.Sprintf("Rpc:%s", fn.Name())
-	Printl(kind, "Blue", args...)
+	pc, _, _, _ := runtime.Caller(1)
+	fullFuncName := runtime.FuncForPC(pc).Name()
+	funcName := fullFuncName[strings.LastIndex(fullFuncName, "/")+1:]
+	message := append([]any{funcName, ":"}, args...)
+	Printl("Rpc", "Blue", message...)
 
 	return nil
 }
@@ -145,26 +146,33 @@ func InfoF(format string, args ...any) error {
 	return Info(message)
 }
 
-func Alert(message string) error {
-	err := NewError(message)
-	if err != nil {
-		Printl("Alert", "Yellow", err.Error())
-	}
+func PrintFunctionName() string {
+	pc, _, _, _ := runtime.Caller(2)
+	fullFuncName := runtime.FuncForPC(pc).Name()
 
+	return fullFuncName
+}
+
+func Alert(message string) error {
+	functionName := PrintFunctionName()
+	err := NewError(message)
+	Printl("Alert", "Yellow", err.Error(), " - ", functionName)
 	return err
 }
 
 func AlertE(err error) error {
+	functionName := PrintFunctionName()
 	if err != nil {
-		Printl("Alert", "Yellow", err.Error())
+		Printl("Alert", "Yellow", err.Error(), " - ", functionName)
 	}
-
 	return err
 }
 
 func AlertF(format string, args ...any) error {
-	message := strs.Format(format, args...)
-	return Alert(message)
+	functionName := PrintFunctionName()
+	err := NewError(fmt.Sprintf(format, args...))
+	Printl("Alert", "Yellow", err.Error(), " - ", functionName)
+	return err
 }
 
 func Error(err error) error {
