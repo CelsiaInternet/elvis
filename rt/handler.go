@@ -230,6 +230,30 @@ func TokenLastUse(data et.Json) {
 }
 
 /**
+* SetDirectMessageCallback
+* @param reciveFn func(ws.Message)
+**/
+func SetDirectMessageCallback(reciveFn func(ws.Message)) {
+	if conn == nil {
+		return
+	}
+
+	conn.SetDirectMessageCallback(reciveFn)
+}
+
+/**
+* SetReconnectCallback
+* @param reciveFn func(ws.Client)
+**/
+func SetReconnectCallback(reciveFn func(c *ws.Client)) {
+	if conn == nil {
+		return
+	}
+
+	conn.SetReconnectCallback(reciveFn)
+}
+
+/**
 * HttpEventWork
 * @param w http.ResponseWriter
 * @param r *http.Request

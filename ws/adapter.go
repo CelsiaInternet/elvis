@@ -110,14 +110,6 @@ func (h *Hub) Join(config AdapterConfig) error {
 
 	logs.Log(ServiceName, "Connected to master")
 
-	adapter.SetReconnectCallback(func(c *Client) {
-		logs.Debug("ReconnectCallback:", "Hola")
-	})
-
-	adapter.SetDirectMessage(func(msg Message) {
-		logs.Debug("DirectMessage:", msg.ToString())
-	})
-
 	return nil
 }
 

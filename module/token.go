@@ -5,6 +5,7 @@ import (
 
 	"github.com/celsiainternet/elvis/cache"
 	"github.com/celsiainternet/elvis/claim"
+	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/jdb"
 	"github.com/celsiainternet/elvis/linq"
@@ -149,7 +150,7 @@ func GetTokenById(id string) (et.Item, error) {
 
 /**
 * UpSetToken
-* @param projeectId string
+* @param projectId string
 * @param id string
 * @param app string
 * @param device string
@@ -158,7 +159,23 @@ func GetTokenById(id string) (et.Item, error) {
 * @return et.Item
 * @return error
 **/
-func UpSetToken(projeectId, id, app, device, name, userId string) (et.Item, error) {
+func UpSetToken(projectId, id, app, device, name, userId string) (et.Item, error) {
+	if !utility.ValidId(projectId) {
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "project_id")
+	}
+
+	if !utility.ValidStr(app, 0, []string{}) {
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "app")
+	}
+
+	if !utility.ValidStr(device, 0, []string{}) {
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "device")
+	}
+
+	if !utility.ValidStr(name, 0, []string{}) {
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "name")
+	}
+
 	user, err := GetUserById(userId)
 	if err != nil {
 		return et.Item{}, err
@@ -168,28 +185,25 @@ func UpSetToken(projeectId, id, app, device, name, userId string) (et.Item, erro
 		return et.Item{}, logs.NewError(msg.USER_NOT_FONUND)
 	}
 
-	id = utility.GenId(id)
+	id = utility.GenKey(id)
 	current, err := GetTokenById(id)
 	if err != nil {
 		return et.Item{}, err
 	}
 
 	if current.Ok {
-		item, err := Tokens.Update(et.Json{
-			"name": name,
-		}).
+		now := utility.Now()
+		data := et.Json{}
+		data["date_update"] = now
+		data["name"] = name
+		result, err := Tokens.Update(data).
 			Where(Tokens.Col("_id").Eq(id)).
 			CommandOne()
 		if err != nil {
 			return et.Item{}, err
 		}
 
-		return et.Item{
-			Ok: item.Ok,
-			Result: et.OkOrNotJson(item.Ok, item.Result, et.Json{
-				"message": msg.RECORD_NOT_UPDATE,
-			}),
-		}, nil
+		return result, nil
 	}
 
 	token, err := claim.NewToken(id, app, name, app, device, 0)
@@ -198,39 +212,34 @@ func UpSetToken(projeectId, id, app, device, name, userId string) (et.Item, erro
 	}
 
 	data := et.Json{}
-	data.Set("project_id", projeectId)
+	data.Set("project_id", projectId)
 	data.Set("_id", id)
 	data.Set("user_id", userId)
 	data.Set("app", app)
 	data.Set("device", device)
 	data.Set("name", name)
 	data.Set("token", token)
-	item, err := Tokens.Insert(data).
+	result, err := Tokens.Insert(data).
 		CommandOne()
 	if err != nil {
 		return et.Item{}, err
 	}
 
 	err = loadToken(&Token{
-		Date_make:   item.Time("date_make"),
-		Date_update: item.Time("date_update"),
+		Date_make:   result.Time("date_make"),
+		Date_update: result.Time("date_update"),
 		Id:          id,
 		Name:        name,
 		App:         app,
 		Device:      device,
 		Token:       token,
-		Index:       item.Index(),
+		Index:       result.Index(),
 	})
 	if err != nil {
 		return et.Item{}, err
 	}
 
-	return et.Item{
-		Ok: item.Ok,
-		Result: et.OkOrNotJson(item.Ok, item.Result, et.Json{
-			"message": msg.RECORD_NOT_CREATE,
-		}),
-	}, nil
+	return result, nil
 }
 
 /**

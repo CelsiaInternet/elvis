@@ -5,7 +5,6 @@ import (
 	"net/rpc"
 
 	"github.com/celsiainternet/elvis/et"
-	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/middleware"
 	"github.com/celsiainternet/elvis/response"
 	"github.com/celsiainternet/elvis/strs"
@@ -48,6 +47,31 @@ func GetRouters() (et.Items, error) {
 }
 
 /**
+* clientCall
+* @param metric *middleware.Metrics
+* @param method string
+* @return *rpc.Client
+* @return error
+**/
+func clientCall(metric *middleware.Metrics, method string) (*rpc.Client, *Solver, error) {
+	solver, err := GetSolver(method)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	address := strs.Format(`%s:%d`, solver.Host, solver.Port)
+	metric.CallSearchTime()
+	metric.ClientIP = address
+
+	result, err := rpc.Dial("tcp", address)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return result, solver, nil
+}
+
+/**
 * Call
 * @param method string
 * @param data et.Json
@@ -56,29 +80,68 @@ func GetRouters() (et.Items, error) {
 **/
 func Call(method string, data et.Json) (et.Item, error) {
 	metric := middleware.NewRpcMetric(method)
-	solver, err := GetSolver(method)
-	if err != nil {
-		return et.Item{}, err
-	}
-
-	if solver == nil {
-		return et.Item{}, logs.NewErrorf(ERR_METHOD_NOT_FOUND, method)
-	}
-
-	address := strs.Format(`%s:%d`, solver.Host, solver.Port)
-	metric.CallSearchTime()
-	metric.ClientIP = address
-
-	client, err := rpc.Dial("tcp", address)
+	client, solver, err := clientCall(metric, method)
 	if err != nil {
 		return et.Item{}, err
 	}
 	defer client.Close()
 
 	result := et.Item{}
-	err = client.Call(method, data, &result)
+	err = client.Call(solver.Method, data, &result)
 	if err != nil {
 		return et.Item{}, err
+	}
+
+	metric.DoneRpc(result)
+
+	return result, nil
+}
+
+/**
+* CallItems
+* @param method string
+* @param data et.Json
+* @return et.Items
+* @return error
+**/
+func CallItems(method string, data et.Json) (et.Items, error) {
+	metric := middleware.NewRpcMetric(method)
+	client, solver, err := clientCall(metric, method)
+	if err != nil {
+		return et.Items{}, err
+	}
+	defer client.Close()
+
+	result := et.Items{}
+	err = client.Call(solver.Method, data, &result)
+	if err != nil {
+		return et.Items{}, err
+	}
+
+	metric.DoneRpc(result)
+
+	return result, nil
+}
+
+/**
+* CallItems
+* @param method string
+* @param data et.Json
+* @return et.List
+* @return error
+**/
+func CallList(method string, data et.Json) (et.List, error) {
+	metric := middleware.NewRpcMetric(method)
+	client, solver, err := clientCall(metric, method)
+	if err != nil {
+		return et.List{}, err
+	}
+	defer client.Close()
+
+	result := et.List{}
+	err = client.Call(solver.Method, data, &result)
+	if err != nil {
+		return et.List{}, err
 	}
 
 	metric.DoneRpc(result)

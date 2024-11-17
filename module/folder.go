@@ -86,7 +86,7 @@ func GetFolderByName(moduleId, mainId, name string) (et.Item, error) {
 * @param data et.Json
 * @return et.Item, error
 **/
-func InitFolder(moduleId, mainId, id, name, description string, data et.Json) (et.Item, error) {
+func InitFolder(moduleId, mainId, id, name string, data et.Json) (et.Item, error) {
 	if !utility.ValidId(moduleId) {
 		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "module_id")
 	}
@@ -110,7 +110,6 @@ func InitFolder(moduleId, mainId, id, name, description string, data et.Json) (e
 		data["main_id"] = mainId
 		data["_id"] = id
 		data["name"] = name
-		data["description"] = description
 		item, err := Folders.Insert(data).
 			CommandOne()
 		if err != nil {
@@ -297,18 +296,18 @@ func AllFolders(state, search string, page, rows int) (et.List, error) {
 }
 
 /**
-* DefaultFolderUsers
+* defaultFolders
 * @param moduleId string
 * @return error
 **/
-func DefaultFolderUsers(moduleId string) error {
-	_, err := InitFolder(moduleId, "-1", "FOLDER.USERS", "Usuarios", "", et.Json{
+func defaultFolders(moduleId string) error {
+	_, err := InitFolder(moduleId, "-1", "FOLDER.USERS", "Usuarios", et.Json{
 		"icon":   "users",
 		"view":   "users",
-		"clase":  "user",
+		"clase":  Users.Name,
 		"help":   "help/module/users",
 		"title":  "Usuario",
-		"url":    "user/all?state=0&search={search}&page={page}&rows={rows}",
+		"url":    "users?state=0&search={search}&page={page}&rows={rows}",
 		"state":  "",
 		"filter": []et.Json{},
 		"states": []et.Json{},
@@ -330,6 +329,111 @@ func DefaultFolderUsers(moduleId string) error {
 		"showNew":   true,
 		"showPrint": false,
 		"order":     10,
+	})
+	if err != nil {
+		return err
+	}
+
+	_, err = InitFolder(moduleId, "-1", "FOLDER.MODULES", "Modulos", et.Json{
+		"icon":  "folder",
+		"view":  "list",
+		"clase": Modules.Name,
+		"help":  "help/module/modules",
+		"title": "Modulo",
+		"url":   "modules?state=0&search={search}&page={page}&rows={rows}",
+		"state": "0",
+		"filter": []et.Json{
+			{"name": "Nombre"},
+			{"description": "Descripción"},
+		},
+		"states": []et.Json{
+			{"_id": "0", "name": "Active"},
+		},
+		"detail": et.Json{
+			"title":    []string{"$1", "name"},
+			"subtitle": []string{"$1", "description"},
+			"datetime": []string{"$1", "date_update"},
+			"code":     []string{"$1", "index"},
+			"new_code": "",
+			"state_color": et.Json{
+				"field_name": "_state",
+				"warning":    "",
+				"alert":      "",
+				"info":       "",
+			},
+		},
+		"showNew":   true,
+		"showPrint": false,
+		"order":     20,
+	})
+	if err != nil {
+		return err
+	}
+
+	_, err = InitFolder(moduleId, "-1", "FOLDER.PROJECTS", "Projectos", et.Json{
+		"icon":  "folder",
+		"view":  "list",
+		"clase": Projects.Name,
+		"help":  "help/module/projects",
+		"title": "Projectos",
+		"url":   "projects?state=0&search={search}&page={page}&rows={rows}",
+		"state": "0",
+		"filter": []et.Json{
+			{"name": "Nombre"},
+			{"description": "Descripción"},
+		},
+		"states": []et.Json{
+			{"_id": "0", "name": "Active"},
+		},
+		"detail": et.Json{
+			"title":    []string{"$1", "name"},
+			"subtitle": []string{"$1", "description"},
+			"datetime": []string{"$1", "date_update"},
+			"code":     []string{"$1", "index"},
+			"new_code": "",
+			"state_color": et.Json{
+				"field_name": "_state",
+				"warning":    "",
+				"alert":      "",
+				"info":       "",
+			},
+		},
+		"showNew":   true,
+		"showPrint": false,
+		"order":     20,
+	})
+	if err != nil {
+		return err
+	}
+
+	_, err = InitFolder(moduleId, "-1", "FOLDER.APIKEYS", "API keys", et.Json{
+		"icon":   "key",
+		"view":   "apiKeys",
+		"clase":  Tokens.Name,
+		"help":   "help/module/api_keys",
+		"title":  "API keys",
+		"url":    "tokens?state=0&search={search}&page={page}&rows={rows}",
+		"state":  "0",
+		"filter": []et.Json{},
+		"states": []et.Json{},
+		"detail": et.Json{
+			"title":    []string{},
+			"subtitle": []string{},
+			"datetime": []string{},
+			"code":     []string{},
+			"new_code": "",
+			"state_color": et.Json{
+				"field_name": "_state",
+				"warning":    "",
+				"alert":      "",
+				"info":       "",
+			},
+			"email":  []string{"$1", "email"},
+			"avatar": []string{"$1", "avatar"},
+		},
+		"showNew":   true,
+		"showPrint": false,
+		"order":     30,
 	})
 	if err != nil {
 		return err

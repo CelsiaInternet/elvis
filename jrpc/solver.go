@@ -109,13 +109,23 @@ func GetSolver(method string) (*Solver, error) {
 		return nil, err
 	}
 
-	idx := slices.IndexFunc(routers, func(e *Package) bool { return e.Name == pkg.Name })
+	lst := strings.Split(method, ".")
+	if len(lst) != 3 {
+		return nil, logs.NewErrorf(ERR_METHOD_NOT_FOUND, method)
+	}
+
+	packageName := lst[0]
+	idx := slices.IndexFunc(routers, func(e *Package) bool { return e.Name == packageName })
 	if idx == -1 {
 		return nil, logs.NewError(ERR_PACKAGE_NOT_FOUND)
 	}
 
 	router := routers[idx]
 	solver := router.Solvers[method]
+
+	if solver == nil {
+		return nil, logs.NewErrorf(ERR_METHOD_NOT_FOUND, method)
+	}
 
 	return solver, nil
 }

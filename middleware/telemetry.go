@@ -353,10 +353,14 @@ func (m *Metrics) DoneHTTP(rw *ResponseWriterWrapper) et.Json {
 * @params r et.Json
 * @return et.Json
 **/
-func (m *Metrics) DoneRpc(r et.Item) et.Json {
-	size := len(r.ToString())
+func (m *Metrics) DoneRpc(r any) et.Json {
+	str, ok := r.(string)
+	if !ok {
+		m.ResponseSize = 0
+	} else {
+		m.ResponseSize = len(str)
+	}
 	m.StatusCode = http.StatusOK
-	m.ResponseSize = size
 	m.CallResponseTime()
 	m.CallLatency()
 	m.println()

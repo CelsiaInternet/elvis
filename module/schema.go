@@ -12,7 +12,7 @@ func DefineSchemaModule(db *jdb.DB) error {
 		return nil
 	}
 
-	SchemaModule = linq.NewSchema(db, "module")
+	SchemaModule = linq.NewSchema(db, PackageName)
 
 	return nil
 }

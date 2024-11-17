@@ -75,7 +75,7 @@ func GetProjectName(name string) (et.Item, error) {
 * @param data et.Json
 * @return et.Item, error
 **/
-func InitProject(id, name, description string, data et.Json) (et.Item, error) {
+func InitProject(id, name string, data et.Json) (et.Item, error) {
 	if !utility.ValidStr(name, 0, []string{""}) {
 		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "name")
 	}
@@ -89,7 +89,6 @@ func InitProject(id, name, description string, data et.Json) (et.Item, error) {
 		id = utility.GenId(id)
 		data.Set("_id", id)
 		data.Set("name", name)
-		data.Set("description", description)
 		item, err := Projects.Insert(data).
 			CommandOne()
 		if err != nil {

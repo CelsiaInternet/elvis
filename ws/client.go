@@ -189,10 +189,10 @@ func (c *Client) Listener() {
 }
 
 /**
-* SetDirectMessage
+* SetDirectMessageCallback
 * @param reciveFn func(message.Message)
 **/
-func (c *Client) SetDirectMessage(reciveFn func(Message)) {
+func (c *Client) SetDirectMessageCallback(reciveFn func(Message)) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 

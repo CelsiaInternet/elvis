@@ -118,6 +118,16 @@ func NewToken(id, app, name string, username, device string, duration time.Durat
 }
 
 /**
+* GetToken
+* @param key string
+* @return string
+* @return error
+**/
+func GetToken(key string) (string, error) {
+	return cache.Get(key, "")
+}
+
+/**
 * DeleteToken
 * @param app string
 * @param device string
@@ -272,13 +282,23 @@ func SetToken(app, device, id, token string, duration time.Duration) error {
 * @param r *http.Request
 * @return et.Json
 **/
+func ClientId(r *http.Request) string {
+	ctx := r.Context()
+	return ClientIdKey.String(ctx, "-1")
+}
+
+/**
+* GetUser
+* @param r *http.Request
+* @return et.Json
+**/
 func GetUser(r *http.Request) et.Json {
 	now := utility.Now()
 	ctx := r.Context()
 	username := UsernameKey.String(ctx, "Anonimo")
 
 	return et.Json{
-		"date_of":  now,
+		"date_at":  now,
 		"username": username,
 	}
 }

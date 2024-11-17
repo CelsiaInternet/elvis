@@ -90,10 +90,9 @@ func GetTypeByIndex(idx int) (et.Item, error) {
 * @param string state
 * @param string kind
 * @param string name
-* @param string description
 * @return et.Item, error
 **/
-func InitType(projectId, id, state, kind, name, description string) (et.Item, error) {
+func InitType(projectId, id, state, kind, name string) (et.Item, error) {
 	if !utility.ValidId(kind) {
 		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "kind")
 	}
@@ -115,7 +114,6 @@ func InitType(projectId, id, state, kind, name, description string) (et.Item, er
 		data["_id"] = id
 		data["kind"] = kind
 		data["name"] = name
-		data["description"] = description
 		result, err := Types.Insert(data).
 			CommandOne()
 		if err != nil {

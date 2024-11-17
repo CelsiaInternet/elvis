@@ -5,9 +5,12 @@ import (
 
 	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/envar"
+	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/utility"
 	"github.com/celsiainternet/elvis/ws"
 )
+
+const ServiceName = "Real Time"
 
 var conn *ws.Client
 
@@ -16,6 +19,19 @@ var conn *ws.Client
 * @return erro
 **/
 func Load() (*ws.Client, error) {
+	if conn != nil {
+		return conn, nil
+	}
+
+	result, _ := Connect()
+	return result, nil
+}
+
+/**
+* Connect
+* @return *ws.Client, error
+**/
+func Connect() (*ws.Client, error) {
 	if conn != nil {
 		return conn, nil
 	}
@@ -40,6 +56,8 @@ func Load() (*ws.Client, error) {
 	}
 
 	conn = client
+
+	logs.Logf(ServiceName, `Connected host:%s`, url)
 
 	return conn, nil
 }

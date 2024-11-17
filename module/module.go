@@ -9,6 +9,8 @@ import (
 	"github.com/celsiainternet/elvis/utility"
 )
 
+const PackageName = "module"
+
 var Modules *linq.Model
 
 func DefineModules(db *jdb.DB) error {
@@ -71,11 +73,10 @@ func GetModuleById(id string) (et.Item, error) {
 * InitModule
 * @param id string
 * @param name string
-* @param description string
 * @param data et.Json
 * @return et.Item, error
 **/
-func InitModule(id, name, description string, data et.Json) (et.Item, error) {
+func InitModule(id, name string, data et.Json) (et.Item, error) {
 	if !utility.ValidStr(name, 0, []string{""}) {
 		return et.Item{}, logs.Alertf(msg.MSG_ATRIB_REQUIRED, "name")
 	}
@@ -89,7 +90,6 @@ func InitModule(id, name, description string, data et.Json) (et.Item, error) {
 		id = utility.GenId(id)
 		data.Set("_id", id)
 		data.Set("name", name)
-		data.Set("description", description)
 		return Modules.Insert(data).
 			CommandOne()
 	}

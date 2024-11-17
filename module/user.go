@@ -147,6 +147,10 @@ func InsertUser(id, username, fullName, country, phone, email, password string) 
 		return et.Item{}, logs.NewErrorf(msg.MSG_ATRIB_REQUIRED, "username")
 	}
 
+	if !utility.ValidStr(fullName, 0, []string{""}) {
+		return et.Item{}, logs.NewErrorf(msg.MSG_ATRIB_REQUIRED, "fullName")
+	}
+
 	current, err := GetUserByUserName(username)
 	if err != nil {
 		return et.Item{}, err
