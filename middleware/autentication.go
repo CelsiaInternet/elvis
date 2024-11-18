@@ -59,10 +59,10 @@ func GetAuthorization(w http.ResponseWriter, r *http.Request) (string, error) {
 }
 
 /**
-* Authorization
+* Autentication
 * @param next http.Handler
 **/
-func Authorization(next http.Handler) http.Handler {
+func Autentication(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token, err := GetAuthorization(w, r)
 		if err != nil {

@@ -120,13 +120,13 @@ func UpSetInt(name string, value int) int {
 }
 
 /**
-* UpSetIn64
+* UpSetFloat
 * @param string name
 * @param int64 value
 * @return int64
 **/
-func UpSetIn64(name string, value int64) int64 {
-	os.Setenv(name, strconv.FormatInt(value, 10))
+func UpSetFloat(name string, value float64) float64 {
+	os.Setenv(name, strconv.FormatFloat(float64(value), 'f', -1, 64))
 	return value
 }
 

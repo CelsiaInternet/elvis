@@ -5,4 +5,5 @@ const (
 	ERR_INVALID_ID       = "Invalid id"
 	ERR_INVALID_NAME     = "Invalid name"
 	MSG_RT_HOST_REQUIRED = "RT_HOST required"
+	MSG_RT_AUTH_REQUIRED = "RT_AUTH required"
 )

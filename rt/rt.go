@@ -23,25 +23,16 @@ func Load() (*ws.Client, error) {
 		return conn, nil
 	}
 
-	result, _ := Connect()
-	return result, nil
-}
-
-/**
-* Connect
-* @return *ws.Client, error
-**/
-func Connect() (*ws.Client, error) {
-	if conn != nil {
-		return conn, nil
-	}
-
 	url := envar.GetStr("", "RT_HOST")
 	if url == "" {
 		return nil, console.NewError(MSG_RT_HOST_REQUIRED)
 	}
 
 	token := envar.GetStr("", "RT_AUTH")
+	if token == "" {
+		return nil, console.NewError(MSG_RT_AUTH_REQUIRED)
+	}
+
 	client, err := ws.NewClient(&ws.ClientConfig{
 		ClientId: utility.UUID(),
 		Name:     envar.GetStr("RealTime", "RT_NAME"),

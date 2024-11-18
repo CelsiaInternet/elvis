@@ -90,7 +90,7 @@ func (d *DB) upsertDDL(id string, query string) error {
 	}
 
 	sql = `
-	INSERT INTO core.DDL (_ID, SQL, INDEX)
+	INSERT INTO core.DDL(_ID, SQL, INDEX)
 	VALUES ($1, $2, $3);`
 
 	id = utility.GenKey(id)

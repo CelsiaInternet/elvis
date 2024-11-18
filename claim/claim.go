@@ -248,11 +248,7 @@ func ValidToken(token string) (*Claim, error) {
 	}
 
 	if val != token {
-		return nil, err
-	}
-
-	err = cache.Set(key, token, result.Duration)
-	if err != nil {
+		cache.Delete(key)
 		return nil, err
 	}
 

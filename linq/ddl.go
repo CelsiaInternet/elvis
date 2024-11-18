@@ -119,6 +119,27 @@ func ddlSetRecyclig(model *Model) string {
 	return result
 }
 
+func ddlSetSeries(model *Model) string {
+	result := jdb.SQLDDL(`
+	DROP TRIGGER IF EXISTS RECORDS_BEFORE_INSERT ON $1 CASCADE;
+	CREATE TRIGGER RECORDS_BEFORE_INSERT
+	AFTER INSERT ON $1
+	FOR EACH ROW
+	EXECUTE PROCEDURE core.SERIES_AFTER_SET();
+
+	DROP TRIGGER IF EXISTS RECORDS_BEFORE_UPDATE ON $1 CASCADE;
+	CREATE TRIGGER RECORDS_BEFORE_UPDATE
+	AFTER UPDATE ON $1
+	FOR EACH ROW
+	WHEN (OLD.INDEX IS DISTINCT FROM NEW.INDEX)
+	EXECUTE PROCEDURE core.SERIES_AFTER_SET();
+	`, model.Table)
+
+	result = strs.Replace(result, "\t", "")
+
+	return result
+}
+
 func ddlTable(model *Model) string {
 	NewColumn(model, IdTFiled, "UUId", "VARCHAR(80)", "-1")
 
@@ -168,6 +189,10 @@ func ddlTable(model *Model) string {
 		recicle := ddlSetRecyclig(model)
 		result = strs.Append(result, recicle, "\n\n")
 	}
+	if model.UseSerie {
+		series := ddlSetSeries(model)
+		result = strs.Append(result, series, "\n\n")
+	}
 
 	model.Ddl = result
 
@@ -210,6 +235,10 @@ func ddlFunctions(model *Model) string {
 	if model.UseState {
 		recicle := ddlSetRecyclig(model)
 		result = strs.Append(result, recicle, "\n\n")
+	}
+	if model.UseSerie {
+		series := ddlSetSeries(model)
+		result = strs.Append(result, series, "\n\n")
 	}
 
 	model.DdlIndex = result

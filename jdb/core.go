@@ -13,11 +13,11 @@ func InitCore(db *DB) error {
 		return logs.Panicm("Database not found")
 	}
 
-	if err := defineRecords(db); err != nil {
+	if err := defineSeries(db); err != nil {
 		return err
 	}
 
-	if err := defineSeries(db); err != nil {
+	if err := defineRecords(db); err != nil {
 		return err
 	}
 

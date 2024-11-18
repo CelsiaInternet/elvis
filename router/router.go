@@ -4,8 +4,11 @@ import (
 	"net/http"
 
 	"github.com/celsiainternet/elvis/cache"
+	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/event"
+	"github.com/celsiainternet/elvis/jrpc"
+	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/middleware"
 	"github.com/go-chi/chi/v5"
 )
@@ -202,24 +205,84 @@ func PublicRoute(r *chi.Mux, method, path string, h http.HandlerFunc, packageNam
 func ProtectRoute(r *chi.Mux, method, path string, h http.HandlerFunc, packageName, packagePath, host string) *chi.Mux {
 	switch method {
 	case "GET":
-		r.With(middleware.Authorization).Get(path, h)
+		r.With(middleware.Autentication).Get(path, h)
 	case "POST":
-		r.With(middleware.Authorization).Post(path, h)
+		r.With(middleware.Autentication).Post(path, h)
 	case "PUT":
-		r.With(middleware.Authorization).Put(path, h)
+		r.With(middleware.Autentication).Put(path, h)
 	case "PATCH":
-		r.With(middleware.Authorization).Patch(path, h)
+		r.With(middleware.Autentication).Patch(path, h)
 	case "DELETE":
-		r.With(middleware.Authorization).Delete(path, h)
+		r.With(middleware.Autentication).Delete(path, h)
 	case "HEAD":
-		r.With(middleware.Authorization).Head(path, h)
+		r.With(middleware.Autentication).Head(path, h)
 	case "OPTIONS":
-		r.With(middleware.Authorization).Options(path, h)
+		r.With(middleware.Autentication).Options(path, h)
 	case "HandlerFunc":
-		r.With(middleware.Authorization).HandleFunc(path, h)
+		r.With(middleware.Autentication).HandleFunc(path, h)
 	}
 
 	pushApiGateway(method, path, packagePath, host, packageName, true)
 
 	return r
+}
+
+/**
+* AuthorizationRoute
+* @param r *chi.Mux
+* @param method string
+* @param path string
+* @param h http.HandlerFunc
+* @param packageName string
+* @param packagePath string
+* @param host string
+* @return *chi.Mux
+**/
+func AuthorizationRoute(r *chi.Mux, method, path string, h http.HandlerFunc, packageName, packagePath, host string) *chi.Mux {
+	switch method {
+	case "GET":
+		r.With(middleware.Autentication).With(middleware.Authorization).Get(path, h)
+	case "POST":
+		r.With(middleware.Autentication).With(middleware.Authorization).Post(path, h)
+	case "PUT":
+		r.With(middleware.Autentication).With(middleware.Authorization).Put(path, h)
+	case "PATCH":
+		r.With(middleware.Autentication).With(middleware.Authorization).Patch(path, h)
+	case "DELETE":
+		r.With(middleware.Autentication).With(middleware.Authorization).Delete(path, h)
+	case "HEAD":
+		r.With(middleware.Autentication).With(middleware.Authorization).Head(path, h)
+	case "OPTIONS":
+		r.With(middleware.Autentication).With(middleware.Authorization).Options(path, h)
+	case "HandlerFunc":
+		r.With(middleware.Autentication).With(middleware.Authorization).HandleFunc(path, h)
+	}
+
+	pushApiGateway(method, path, packagePath, host, packageName, true)
+
+	return r
+}
+
+func authorization(profile et.Json) (map[string]bool, error) {
+	method := envar.GetStr("", "AUTHORIZATION_METHOD")
+	if method == "" {
+		return map[string]bool{}, logs.NewError("Authorization method not found")
+	}
+
+	var result = map[string]bool{}
+	var err error
+	resultAny, err := jrpc.CallAny(method, profile)
+	if err != nil {
+		return map[string]bool{}, err
+	}
+	result, ok := resultAny.(map[string]bool)
+	if !ok {
+		return map[string]bool{}, logs.NewError("Invalid type assertion")
+	}
+
+	return result, nil
+}
+
+func init() {
+	middleware.SetAuthorizationFunc(authorization)
 }

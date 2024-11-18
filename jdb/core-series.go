@@ -41,11 +41,19 @@ func defineSeriesFunction(db *DB) error {
 	DECLARE
 	 result BIGINT;
 	BEGIN
-	 INSERT INTO core.SERIES AS A (SERIE, VALUE)
-	 SELECT tag, 1
-	 ON CONFLICT (SERIE) DO UPDATE SET
-	 VALUE = A.VALUE + 1
-	 RETURNING VALUE INTO result;
+	 SELECT VALUE INTO result
+	 FROM core.SERIES
+	 WHERE SERIE = tag LIMIT 1;
+	 IF NOT FOUND THEN
+	  INSERT INTO core.SERIES(SERIE, VALUE)
+		VALUES (tag, 1)
+		RETURNING VALUE INTO result;
+	 ELSE
+	 	UPDATE core.SERIES SET
+	 	VALUE = VALUE + 1
+	 	WHERE SERIE = tag
+	 	RETURNING VALUE INTO result;
+	 END IF;
 
 	 RETURN COALESCE(result, 0);
 	END;
@@ -56,12 +64,19 @@ func defineSeriesFunction(db *DB) error {
 	DECLARE
 	 result BIGINT;
 	BEGIN
-	 INSERT INTO core.SERIES AS A (SERIE, VALUE)
-	 SELECT tag, val
-	 ON CONFLICT (SERIE) DO UPDATE SET
-	 VALUE = val
-	 WHERE A.VALUE < val
-	 RETURNING VALUE INTO result;
+	 SELECT VALUE INTO result
+	 FROM core.SERIES
+	 WHERE SERIE = tag LIMIT 1;
+	 IF NOT FOUND THEN
+	  INSERT INTO core.SERIES(SERIE, VALUE)
+		VALUES (tag, val)
+		RETURNING VALUE INTO result;
+	 ELSE
+	 	UPDATE core.SERIES SET
+	 	VALUE = val
+	 	WHERE SERIE = tag
+	 	RETURNING VALUE INTO result;
+	 END IF;
 
 	 RETURN COALESCE(result, 0);
 	END;
@@ -78,7 +93,21 @@ func defineSeriesFunction(db *DB) error {
 
 	 RETURN COALESCE(result, 0);
 	END;
-	$$ LANGUAGE plpgsql;`
+	$$ LANGUAGE plpgsql;
+	
+	CREATE OR REPLACE FUNCTION core.SERIES_AFTER_SET()
+  RETURNS
+    TRIGGER AS $$
+	DECLARE
+		TAG VARCHAR(250);
+  BEGIN
+	  SELECT CONCAT(TG_TABLE_SCHEMA, '.',  TG_TABLE_NAME) INTO TAG;
+		PERFORM core.setserie(TAG, NEW.INDEX);
+
+  	RETURN NEW;
+  END;
+  $$ LANGUAGE plpgsql;
+	`
 
 	_, err := db.db.Exec(sql)
 	if err != nil {

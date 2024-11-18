@@ -150,6 +150,32 @@ func CallList(method string, data et.Json) (et.List, error) {
 }
 
 /**
+* CallAny
+* @param method string
+* @param data et.Json
+* @return et.List
+* @return error
+**/
+func CallAny(method string, data et.Json) (any, error) {
+	metric := middleware.NewRpcMetric(method)
+	client, solver, err := clientCall(metric, method)
+	if err != nil {
+		return map[string]bool{}, err
+	}
+	defer client.Close()
+
+	result := map[string]bool{}
+	err = client.Call(solver.Method, data, &result)
+	if err != nil {
+		return map[string]bool{}, err
+	}
+
+	metric.DoneRpc(result)
+
+	return result, nil
+}
+
+/**
 * HttpCallRPC
 * @param w http.ResponseWriter
 * @param r *http.Request
