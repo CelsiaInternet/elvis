@@ -37,7 +37,7 @@ version() {
   git push origin "$new_version"
   echo "Etiqueta creada y enviada a Git"
 
-  sed -i "s#\$CURRENT_VERSION#$new_version#g" "$README_FILE"
+  sed -i "s#\$CURRENT_VERSION/$new_version/g" "$README_FILE"
 }
 
 if [ "$HELP" == true ]; then
