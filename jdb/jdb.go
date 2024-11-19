@@ -11,7 +11,7 @@ import (
 **/
 func Load() (*DB, error) {
 	conn, err := ConnectTo(et.Json{
-		"driver":           envar.GetStr("", "DB_DRIVE"),
+		"driver":           envar.GetStr("", "DB_DRIVER"),
 		"host":             envar.GetStr("", "DB_HOST"),
 		"port":             envar.GetInt(5432, "DB_PORT"),
 		"dbname":           envar.GetStr("", "DB_NAME"),
