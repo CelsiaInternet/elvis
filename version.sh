@@ -8,6 +8,7 @@ MINOR=false
 INDEX=2
 REBUILD=false
 CURRENT_VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0") # Obtener la versión actual de Git
+README_FILE="README.md"
 
 # Parsear opciones
 while [[ "$#" -gt 0 ]]; do
@@ -35,6 +36,8 @@ version() {
   git tag "$new_version"
   git push origin "$new_version"
   echo "Etiqueta creada y enviada a Git"
+
+  sed -i "s#\$CURRENT_VERSION#$new_version#g" "$README_FILE"
 }
 
 if [ "$HELP" == true ]; then
