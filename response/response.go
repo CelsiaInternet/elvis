@@ -231,12 +231,8 @@ func Unauthorized(w http.ResponseWriter, r *http.Request) {
 	HTTPError(w, r, http.StatusUnauthorized, "401 Unauthorized")
 }
 
-func AtenticationServerError(w http.ResponseWriter, r *http.Request) {
-	HTTPError(w, r, http.StatusInternalServerError, "500 Autentication Function Undefined")
-}
-
-func InternalServerError(w http.ResponseWriter, r *http.Request) {
-	HTTPError(w, r, http.StatusInternalServerError, "500 Internal Server Error")
+func InternalServerError(w http.ResponseWriter, r *http.Request, err error) {
+	HTTPError(w, r, http.StatusInternalServerError, "500 Autentication Server Error - "+err.Error())
 }
 
 func Forbidden(w http.ResponseWriter, r *http.Request) {

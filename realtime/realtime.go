@@ -1,11 +1,10 @@
-package rt
+package realtime
 
 import (
 	"net/http"
 
 	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/envar"
-	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/utility"
 	"github.com/celsiainternet/elvis/ws"
 )
@@ -47,8 +46,6 @@ func Load() (*ws.Client, error) {
 	}
 
 	conn = client
-
-	logs.Logf(ServiceName, `Connected host:%s`, url)
 
 	return conn, nil
 }

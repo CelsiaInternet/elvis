@@ -130,6 +130,26 @@ func (d *DB) Exec(id, sql string, args ...any) error {
 }
 
 /**
+* QueryRows
+* @param sql string
+* @param args ...any
+* @return *sql.Rows
+* @return error
+**/
+func (d *DB) QueryRows(sql string, args ...any) (*sql.Rows, error) {
+	if d.db == nil {
+		return nil, logs.Alertf(msg.NOT_CONNECT_DB)
+	}
+
+	rows, err := d.db.Query(sql, args...)
+	if err != nil {
+		return nil, logs.Alertf(msg.ERR_SQL, err.Error(), sql)
+	}
+
+	return rows, nil
+}
+
+/**
 * Query
 * @param db *DB
 * @param sql string

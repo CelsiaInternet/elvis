@@ -32,13 +32,20 @@ func JsonToArrayJson(src map[string]interface{}) ([]Json, error) {
 }
 
 func Object(src interface{}) (Json, error) {
-	j, err := json.Marshal(src)
-	if err != nil {
-		return Json{}, err
+	var bt []byte
+	var err error
+	switch v := src.(type) {
+	case string:
+		bt = []byte(v)
+	default:
+		bt, err = json.Marshal(v)
+		if err != nil {
+			return Json{}, err
+		}
 	}
 
 	result := Json{}
-	err = json.Unmarshal(j, &result)
+	err = json.Unmarshal(bt, &result)
 	if err != nil {
 		return Json{}, err
 	}
@@ -47,13 +54,20 @@ func Object(src interface{}) (Json, error) {
 }
 
 func Array(src interface{}) ([]Json, error) {
-	j, err := json.Marshal(src)
-	if err != nil {
-		return []Json{}, err
+	var bt []byte
+	var err error
+	switch v := src.(type) {
+	case string:
+		bt = []byte(v)
+	default:
+		bt, err = json.Marshal(src)
+		if err != nil {
+			return []Json{}, err
+		}
 	}
 
 	result := []Json{}
-	err = json.Unmarshal(j, &result)
+	err = json.Unmarshal(bt, &result)
 	if err != nil {
 		return []Json{}, err
 	}

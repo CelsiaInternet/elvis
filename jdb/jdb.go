@@ -10,6 +10,10 @@ func Load() (*DB, error) {
 		return nil, err
 	}
 
+	if !conn.UseCore {
+		return conn, nil
+	}
+
 	err = InitCore(conn)
 	if err != nil {
 		return nil, err

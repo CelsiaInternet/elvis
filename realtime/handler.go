@@ -1,4 +1,4 @@
-package rt
+package realtime
 
 import (
 	"net/http"

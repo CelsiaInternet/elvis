@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/response"
 )
 
@@ -84,20 +85,20 @@ func Authorization(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		if authorizationFunc == nil {
-			response.AtenticationServerError(w, r)
+			response.InternalServerError(w, r, logs.NewError("AuthorizationFunc not set"))
 			return
 		}
 
-		profileStr := r.Header.Get("profile")
+		profileStr := r.Header.Get("Profile")
 		profile, err := et.Object(profileStr)
 		if err != nil {
-			response.InternalServerError(w, r)
+			response.InternalServerError(w, r, err)
 			return
 		}
 
 		permisions, err := authorizationFunc(profile)
 		if err != nil {
-			response.InternalServerError(w, r)
+			response.InternalServerError(w, r, err)
 			return
 		}
 

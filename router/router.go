@@ -264,7 +264,7 @@ func AuthorizationRoute(r *chi.Mux, method, path string, h http.HandlerFunc, pac
 }
 
 func authorization(profile et.Json) (map[string]bool, error) {
-	method := envar.GetStr("", "AUTHORIZATION_METHOD")
+	method := envar.GetStr("Module.Services.GetPermissions", "AUTHORIZATION_METHOD")
 	if method == "" {
 		return map[string]bool{}, logs.NewError("Authorization method not found")
 	}

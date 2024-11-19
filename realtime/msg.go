@@ -1,4 +1,4 @@
-package rt
+package realtime
 
 const (
 	ERR_NOT_CONNECT_WS   = "Not connect to the websocket"

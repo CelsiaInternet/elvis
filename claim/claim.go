@@ -292,9 +292,11 @@ func GetUser(r *http.Request) et.Json {
 	now := utility.Now()
 	ctx := r.Context()
 	username := UsernameKey.String(ctx, "Anonimo")
+	fullName := NameKey.String(ctx, "Anonimo")
 
 	return et.Json{
-		"date_at":  now,
-		"username": username,
+		"date_at":   now,
+		"username":  username,
+		"full_name": fullName,
 	}
 }

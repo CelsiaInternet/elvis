@@ -9,9 +9,14 @@ import (
 	"github.com/celsiainternet/elvis/msg"
 	"github.com/celsiainternet/elvis/strs"
 	_ "github.com/lib/pq"
+	goOra "github.com/sijms/go-ora/v2"
 )
 
-const Postgres = "postgres"
+const (
+	Postgres = "postgres"
+	Oracle   = "oracle"
+	Mysql    = "mysql"
+)
 
 type DB struct {
 	Description string
@@ -52,6 +57,7 @@ func connect() (*DB, error) {
 	user := envar.GetStr("", "DB_USER")
 	password := envar.GetStr("", "DB_PASSWORD")
 	application_name := envar.GetStr("elvis", "DB_APPLICATION_NAME")
+	useCore := envar.GetBool(true, "USE_CORE")
 
 	if driver == "" {
 		return nil, logs.Panicf(msg.ERR_ENV_REQUIRED, "DB_DRIVE")
@@ -78,7 +84,7 @@ func connect() (*DB, error) {
 		return nil, err
 	}
 
-	db.UseCore = true
+	db.UseCore = useCore
 
 	return db, nil
 }
@@ -88,6 +94,15 @@ func ConnectTo(driver, host string, port int, dbname, user, password, applicatio
 	switch driver {
 	case Postgres:
 		connStr = strs.Format(`%s://%s:%s@%s:%d/%s?sslmode=disable&application_name=%s`, driver, user, password, host, port, dbname, application_name)
+	case Oracle:
+		service_name := envar.GetStr("", "DB_SERVICE_NAME_ORACLE")
+		ssl := envar.GetStr("false", "DB_SSL_ORACLE")
+		sslVerify := envar.GetStr("false", "DB_SSL_VERIFY_ORACLE")
+		urlOptions := map[string]string{
+			"ssl":        ssl,
+			"ssl verify": sslVerify,
+		}
+		connStr = goOra.BuildUrl(host, port, service_name, user, password, urlOptions)
 	default:
 		panic(msg.NOT_SELECT_DRIVE)
 	}
