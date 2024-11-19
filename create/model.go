@@ -460,52 +460,27 @@ func basicdb(stage string) {
 		return
 	}
 
-	if !result.Ok {
+	loadConfig(result)	
+}
+
+func loadConfig(params et.Item) {
+	if !params.Ok {
 		return
 	}
 
-	config := result.Result
-	// DB
-	db_driver := config.Str("db_driver")
-	db_host := config.Str("db_host")
-	db_port := config.Int("db_port")
-	db_name := config.Str("db_name")
-	db_user := config.Str("db_user")
-	db_password := config.Str("db_password")
-	// REDIS
-	redis_host := config.Str("redis_host")
-	redis_password := config.Str("redis_password")
-	redis_db := config.Int("redis_db")
-	redis_cluster := config.Bool("redis_cluster")
-	// NATS
-	nats_host := config.Str("nats_host")
-	// CALM
-	secret := config.Str("secret")
-	// Realtime
-	rt_auth := config.Str("rt_auth")
-	rt_host := config.Str("rt_host")
-	rt_reconect := config.Int("rt_reconect")
-
-	// DB
-	envar.UpSetStr("DB_DRIVER", db_driver)
-	envar.UpSetStr("DB_HOST", db_host)
-	envar.UpSetInt("DB_PORT", db_port)
-	envar.UpSetStr("DB_NAME", db_name)
-	envar.UpSetStr("DB_USER", db_user)
-	envar.UpSetStr("DB_PASSWORD", db_password)
-	// REDIS
-	envar.UpSetStr("REDIS_HOST", redis_host)
-	envar.UpSetStr("REDIS_PASSWORD", redis_password)
-	envar.UpSetInt("REDIS_DB", redis_db)
-	envar.UpSetBool("REDIS_CLUSTER", redis_cluster)
-	// NATS
-	envar.UpSetStr("NATS_HOST", nats_host)
-	// CALM
-	envar.UpSetStr("SECRET", secret)
-	// Realtime
-	envar.UpSetStr("RT_AUTH", rt_auth)
-	envar.UpSetStr("RT_HOST", rt_host)
-	envar.UpSetInt("RT_RECONCECT", rt_reconect)
+	for k, v := range params.Result {
+		k = strs.Uppcase(k)
+		switch val := v.(type) {
+		case string:
+			envar.UpSetStr(k, val)
+		case int:
+			envar.UpSetInt(k, val)
+		case bool:
+			envar.UpSetBool(k, val)
+		case float64:
+			envar.UpSetFloat(k, val)
+		}
+	}
 }
 
 `
