@@ -5,13 +5,7 @@ import (
 )
 
 func (c *Linq) Debug() *Linq {
-	c.debug = 1
-
-	return c
-}
-
-func (c *Linq) Dev() *Linq {
-	c.debug = 2
+	c.debug = true
 
 	return c
 }

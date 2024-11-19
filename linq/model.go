@@ -194,17 +194,6 @@ func (c *Model) Db() *jdb.DB {
 }
 
 /**
-* SetDB
-* @param db *jdb.DB
-* @return void
-**/
-func (c *Model) SetDB(db *jdb.DB) {
-	if c.db == nil {
-		c.db = db
-	}
-}
-
-/**
 * DDL
 **/
 func (c *Model) Init() error {

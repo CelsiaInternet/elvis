@@ -14,7 +14,7 @@ const ServiceName = "Real Time"
 var conn *ws.Client
 
 /**
-* LoadFrom
+* Load
 * @return erro
 **/
 func Load() (*ws.Client, error) {

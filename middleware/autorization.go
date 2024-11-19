@@ -17,6 +17,14 @@ const (
 	PERMISION_EXECUTE = "PERMISION.EXECUTE"
 )
 
+var PERMISION_ALL = map[string]bool{
+	PERMISION_READ:    true,
+	PERMISION_WRITE:   true,
+	PERMISION_DELETE:  true,
+	PERMISION_UPDATE:  true,
+	PERMISION_EXECUTE: true,
+}
+
 func MethodAutorized(p map[string]bool, r *http.Request) bool {
 	method := r.Method
 	switch method {
