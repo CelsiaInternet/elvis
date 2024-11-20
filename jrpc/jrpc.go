@@ -29,6 +29,7 @@ func Load(name string) (*Package, error) {
 	}
 
 	host := envar.GetStr("localhost", "HOST")
+	host = envar.GetStr(host, "RPC_HOST")
 	parsedURL, err := url.Parse(host)
 	if err != nil {
 		host = "localhost"
