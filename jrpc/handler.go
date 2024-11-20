@@ -3,8 +3,10 @@ package jrpc
 import (
 	"net/http"
 	"net/rpc"
+	"slices"
 
 	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/middleware"
 	"github.com/celsiainternet/elvis/response"
 	"github.com/celsiainternet/elvis/strs"
@@ -173,6 +175,39 @@ func CallAny(method string, data et.Json) (any, error) {
 	metric.DoneRpc(result)
 
 	return result, nil
+}
+
+/**
+* DeleteRouters
+* @param host string
+* @param packageName string
+* @return et.Item
+* @return error
+**/
+func DeleteRouters(host, packageName string) (et.Item, error) {
+	routers, err := getRouters()
+	if err != nil {
+		return et.Item{}, err
+	}
+
+	idx := slices.IndexFunc(routers, func(e *Package) bool { return e.Host == host && e.Name == packageName })
+	if idx == -1 {
+		return et.Item{}, logs.Errorm(MSG_PACKAGE_NOT_FOUND)
+	} else {
+		routers = append(routers[:idx], routers[idx+1:]...)
+	}
+
+	err = setRoutes(routers)
+	if err != nil {
+		return et.Item{}, err
+	}
+
+	return et.Item{
+		Ok: true,
+		Result: et.Json{
+			"message": MSG_PACKAGE_DELETE,
+		},
+	}, nil
 }
 
 /**
