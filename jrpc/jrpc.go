@@ -3,9 +3,9 @@ package jrpc
 import (
 	"net"
 	"net/rpc"
-	"net/url"
 
 	"github.com/celsiainternet/elvis/cache"
+	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/strs"
@@ -30,12 +30,6 @@ func Load(name string) (*Package, error) {
 
 	host := envar.GetStr("localhost", "HOST")
 	host = envar.GetStr(host, "RPC_HOST")
-	parsedURL, err := url.Parse(host)
-	if err != nil {
-		host = "localhost"
-	} else {
-		host = parsedURL.Hostname()
-	}
 	port := envar.GetInt(4200, "RPC_PORT")
 	name = strs.DaskSpace(name)
 
@@ -46,24 +40,23 @@ func Load(name string) (*Package, error) {
 		Solvers: make(map[string]*Solver),
 	}
 
+	console.Debug("HOST:", host)
+
 	return pkg, nil
 }
 
 /**
 * Start
 **/
-func Start() error {
-	if pkg == nil {
-		return logs.NewError(ERR_SERVER_NOT_FOUND)
-	}
-
-	address := strs.Format(`:%d`, pkg.Port)
+func (s *Package) Start() error {
+	address := strs.Format(`:%d`, s.Port)
 	listener, err := net.Listen("tcp", address)
 	if err != nil {
 		logs.Fatal(err)
 	}
 
-	logs.Logf("Rpc", `Running on %s%s`, pkg.Host, listener.Addr())
+	logs.Logf("Rpc", `Running on %s%s`, s.Host, listener.Addr())
+
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
