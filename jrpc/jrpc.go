@@ -5,7 +5,6 @@ import (
 	"net/rpc"
 
 	"github.com/celsiainternet/elvis/cache"
-	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/strs"
@@ -39,8 +38,6 @@ func Load(name string) (*Package, error) {
 		Port:    port,
 		Solvers: make(map[string]*Solver),
 	}
-
-	console.Debug("HOST:", host)
 
 	return pkg, nil
 }

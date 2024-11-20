@@ -67,7 +67,7 @@ func clientCall(metric *middleware.Metrics, method string) (*rpc.Client, *Solver
 
 	result, err := rpc.Dial("tcp", address)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, logs.NewErrorf(`%s - %s`, err.Error(), address)
 	}
 
 	return result, solver, nil
@@ -88,6 +88,7 @@ func Call(method string, data et.Json) (et.Item, error) {
 	}
 	defer client.Close()
 
+	logs.Debug("Call:", data.ToString())
 	result := et.Item{}
 	err = client.Call(solver.Method, data, &result)
 	if err != nil {

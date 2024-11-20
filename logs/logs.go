@@ -144,12 +144,12 @@ func Panicm(v string) error {
 	return Panice(err)
 }
 
-func Ping() {
-	console.Printl("PING", "")
+func Ping(args ...any) {
+	console.Printl("PONG", "Cyan", args...)
 }
 
-func Pong() {
-	console.Printl("PONG", "")
+func Pong(args ...any) {
+	console.Printl("PING", "Cyan", args...)
 }
 
 func Debug(v ...any) {
