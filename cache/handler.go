@@ -403,7 +403,7 @@ func GetJson(key string) (et.Json, error) {
 		return et.Json{}, logs.NewError(msg.ERR_NOT_CACHE_SERVICE)
 	}
 
-	_default := "{}"
+	_default := ""
 	val, err := Get(key, _default)
 	if err != nil {
 		return et.Json{}, err
@@ -432,7 +432,7 @@ func GetItem(key string) (et.Item, error) {
 		return et.Item{}, logs.NewError(msg.ERR_NOT_CACHE_SERVICE)
 	}
 
-	_default := "{}"
+	_default := ""
 	val, err := Get(key, _default)
 	if err != nil {
 		return et.Item{}, err
@@ -464,7 +464,7 @@ func GetItems(key string) (et.Items, error) {
 		return et.Items{}, logs.NewError(msg.ERR_NOT_CACHE_SERVICE)
 	}
 
-	_default := "[]"
+	_default := ""
 	val, err := Get(key, _default)
 	if err != nil {
 		return et.Items{}, err
