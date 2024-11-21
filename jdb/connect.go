@@ -52,15 +52,15 @@ func (c *DB) Describe() et.Json {
 func ConnectTo(params et.Json) (*DB, error) {
 	driver := params.Str("driver")
 	if !utility.ValidStr(driver, 0, []string{""}) {
-		return nil, logs.Panicf(msg.MSG_ATRIB_REQUIRED, "driver")
+		return nil, logs.Errorf(msg.MSG_ATRIB_REQUIRED, "driver")
 	}
 	host := params.Str("host")
 	if !utility.ValidStr(host, 0, []string{""}) {
-		return nil, logs.Panicf(msg.MSG_ATRIB_REQUIRED, "host")
+		return nil, logs.Errorf(msg.MSG_ATRIB_REQUIRED, "host")
 	}
 	port := params.Int("port")
 	if port == 0 {
-		return nil, logs.Panicf(msg.MSG_ATRIB_REQUIRED, "port")
+		return nil, logs.Errorf(msg.MSG_ATRIB_REQUIRED, "port")
 	}
 	dbname := params.Str("dbname")
 
@@ -69,38 +69,38 @@ func ConnectTo(params et.Json) (*DB, error) {
 	case Postgres:
 		user := params.Str("user")
 		if !utility.ValidStr(user, 0, []string{""}) {
-			return nil, logs.Panicf(msg.MSG_ATRIB_REQUIRED, "user")
+			return nil, logs.Errorf(msg.MSG_ATRIB_REQUIRED, "user")
 		}
 		password := params.Str("password")
 		if !utility.ValidStr(password, 4, []string{""}) {
-			return nil, logs.Panicf(msg.MSG_ATRIB_REQUIRED, "password")
+			return nil, logs.Errorf(msg.MSG_ATRIB_REQUIRED, "password")
 		}
 		application_name := params.Str("application_name")
 		if !utility.ValidStr(password, 4, []string{""}) {
-			return nil, logs.Panicf(msg.MSG_ATRIB_REQUIRED, "application_name")
+			return nil, logs.Errorf(msg.MSG_ATRIB_REQUIRED, "application_name")
 		}
 
 		connStr = strs.Format(`%s://%s:%s@%s:%d/%s?sslmode=disable&application_name=%s`, driver, user, password, host, port, dbname, application_name)
 	case Oracle:
 		user := params.Str("user")
 		if !utility.ValidStr(user, 0, []string{""}) {
-			return nil, logs.Panicf(msg.MSG_ATRIB_REQUIRED, "user")
+			return nil, logs.Errorf(msg.MSG_ATRIB_REQUIRED, "user")
 		}
 		password := params.Str("password")
 		if !utility.ValidStr(password, 4, []string{""}) {
-			return nil, logs.Panicf(msg.MSG_ATRIB_REQUIRED, "password")
+			return nil, logs.Errorf(msg.MSG_ATRIB_REQUIRED, "password")
 		}
 		service_name := params.Str("service_name")
 		if !utility.ValidStr(service_name, 0, []string{""}) {
-			return nil, logs.Panicf(msg.MSG_ATRIB_REQUIRED, "service_name")
+			return nil, logs.Errorf(msg.MSG_ATRIB_REQUIRED, "service_name")
 		}
 		ssl := params.Str("ssl")
 		if !utility.ValidIn(ssl, 0, []string{"TREU", "FALSE", "true", "false"}) {
-			return nil, logs.Panicf(msg.MSG_ATRIB_REQUIRED, "ssl (boolean)")
+			return nil, logs.Errorf(msg.MSG_ATRIB_REQUIRED, "ssl (boolean)")
 		}
 		sslVerify := params.Str("ssl_verify")
 		if !utility.ValidIn(sslVerify, 0, []string{"TREU", "FALSE", "true", "false"}) {
-			return nil, logs.Panicf(msg.MSG_ATRIB_REQUIRED, "ssl_verify (boolean)")
+			return nil, logs.Errorf(msg.MSG_ATRIB_REQUIRED, "ssl_verify (boolean)")
 		}
 
 		urlOptions := map[string]string{
@@ -109,17 +109,17 @@ func ConnectTo(params et.Json) (*DB, error) {
 		}
 		connStr = goOra.BuildUrl(host, port, service_name, user, password, urlOptions)
 	default:
-		panic(msg.NOT_SELECT_DRIVE)
+		return nil, logs.Errorm(msg.NOT_SELECT_DRIVE)
 	}
 
 	db, err := sql.Open(driver, connStr)
 	if err != nil {
-		return nil, logs.Alert(err)
+		return nil, err
 	}
 
 	err = db.Ping()
 	if err != nil {
-		return nil, logs.Alert(err)
+		return nil, err
 	}
 
 	logs.Logf(driver, "Connected host:%s:%d", host, port)
