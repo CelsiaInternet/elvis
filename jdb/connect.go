@@ -8,6 +8,7 @@ import (
 	"github.com/celsiainternet/elvis/msg"
 	"github.com/celsiainternet/elvis/strs"
 	"github.com/celsiainternet/elvis/utility"
+	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 	goOra "github.com/sijms/go-ora/v2"
 )
@@ -108,6 +109,17 @@ func ConnectTo(params et.Json) (*DB, error) {
 			"ssl verify": sslVerify,
 		}
 		connStr = goOra.BuildUrl(host, port, service_name, user, password, urlOptions)
+	case Mysql:
+		user := params.Str("user")
+		if !utility.ValidStr(user, 0, []string{""}) {
+			return nil, logs.Errorf(msg.MSG_ATRIB_REQUIRED, "user")
+		}
+		password := params.Str("password")
+		if !utility.ValidStr(password, 4, []string{""}) {
+			return nil, logs.Errorf(msg.MSG_ATRIB_REQUIRED, "password")
+		}
+
+		connStr = strs.Format(`%s:%s@tcp(%s:%d)/%s`, user, password, host, port, dbname)
 	default:
 		return nil, logs.Errorm(msg.NOT_SELECT_DRIVE)
 	}
