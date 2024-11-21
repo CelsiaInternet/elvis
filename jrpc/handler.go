@@ -1,6 +1,7 @@
 package jrpc
 
 import (
+	"encoding/gob"
 	"net/http"
 	"net/rpc"
 	"slices"
@@ -49,53 +50,71 @@ func GetRouters() (et.Items, error) {
 }
 
 /**
-* clientCall
-* @param metric *middleware.Metrics
+* CallJson
 * @param method string
-* @return *rpc.Client
+* @param data et.Json
+* @return et.Json
 * @return error
 **/
-func clientCall(metric *middleware.Metrics, method string) (*rpc.Client, *Solver, error) {
+func CallJson(method string, data et.Json) (et.Json, error) {
+	var result et.Json
+	metric := middleware.NewRpcMetric(method)
 	solver, err := GetSolver(method)
 	if err != nil {
-		return nil, nil, err
+		return result, err
 	}
 
 	address := strs.Format(`%s:%d`, solver.Host, solver.Port)
 	metric.CallSearchTime()
 	metric.ClientIP = address
 
-	result, err := rpc.Dial("tcp", address)
+	client, err := rpc.Dial("tcp", address)
 	if err != nil {
-		return nil, nil, logs.NewErrorf(`%s - %s`, err.Error(), address)
+		return result, err
+	}
+	defer client.Close()
+
+	err = client.Call(solver.Method, data, &result)
+	if err != nil {
+		return result, logs.Alert(err)
 	}
 
-	return result, solver, nil
+	metric.DoneRpc(result.ToString())
+
+	return result, nil
 }
 
 /**
-* Call
+* CallItem
 * @param method string
 * @param data et.Json
 * @return et.Item
 * @return error
 **/
-func Call(method string, data et.Json) (et.Item, error) {
+func CallItem(method string, data et.Json) (et.Item, error) {
+	var result et.Item
 	metric := middleware.NewRpcMetric(method)
-	client, solver, err := clientCall(metric, method)
+	solver, err := GetSolver(method)
 	if err != nil {
-		return et.Item{}, err
+		return result, err
+	}
+
+	address := strs.Format(`%s:%d`, solver.Host, solver.Port)
+	metric.CallSearchTime()
+	metric.ClientIP = address
+
+	client, err := rpc.Dial("tcp", address)
+	if err != nil {
+		return result, err
 	}
 	defer client.Close()
 
-	logs.Debug("Call:", data.ToString())
-	result := et.Item{}
 	err = client.Call(solver.Method, data, &result)
 	if err != nil {
-		return et.Item{}, err
+		return result, logs.Alert(err)
 	}
 
-	metric.DoneRpc(result)
+	metric.DoneRpc(result.ToJson().ToString())
 
 	return result, nil
 }
@@ -104,73 +123,100 @@ func Call(method string, data et.Json) (et.Item, error) {
 * CallItems
 * @param method string
 * @param data et.Json
-* @return et.Items
+* @return et.Item
 * @return error
 **/
 func CallItems(method string, data et.Json) (et.Items, error) {
+	var result et.Items
 	metric := middleware.NewRpcMetric(method)
-	client, solver, err := clientCall(metric, method)
+	solver, err := GetSolver(method)
 	if err != nil {
-		return et.Items{}, err
+		return result, err
+	}
+
+	address := strs.Format(`%s:%d`, solver.Host, solver.Port)
+	metric.CallSearchTime()
+	metric.ClientIP = address
+
+	client, err := rpc.Dial("tcp", address)
+	if err != nil {
+		return result, err
 	}
 	defer client.Close()
 
-	result := et.Items{}
 	err = client.Call(solver.Method, data, &result)
 	if err != nil {
-		return et.Items{}, err
+		return result, logs.Alert(err)
 	}
 
-	metric.DoneRpc(result)
+	metric.DoneRpc(result.ToJson().ToString())
 
 	return result, nil
 }
 
 /**
-* CallItems
+* CallList
 * @param method string
 * @param data et.Json
 * @return et.List
 * @return error
 **/
 func CallList(method string, data et.Json) (et.List, error) {
+	var result et.List
 	metric := middleware.NewRpcMetric(method)
-	client, solver, err := clientCall(metric, method)
+	solver, err := GetSolver(method)
 	if err != nil {
-		return et.List{}, err
+		return result, err
+	}
+
+	address := strs.Format(`%s:%d`, solver.Host, solver.Port)
+	metric.CallSearchTime()
+	metric.ClientIP = address
+
+	client, err := rpc.Dial("tcp", address)
+	if err != nil {
+		return result, err
 	}
 	defer client.Close()
 
-	result := et.List{}
 	err = client.Call(solver.Method, data, &result)
 	if err != nil {
-		return et.List{}, err
+		return result, logs.Alert(err)
 	}
 
-	metric.DoneRpc(result)
+	metric.DoneRpc(result.ToJson().ToString())
 
 	return result, nil
 }
 
 /**
-* CallAny
+* CallPermitios
 * @param method string
 * @param data et.Json
-* @return et.List
+* @return map[string]bool
 * @return error
 **/
-func CallAny(method string, data et.Json) (any, error) {
+func CallPermitios(method string, data et.Json) (map[string]bool, error) {
 	metric := middleware.NewRpcMetric(method)
-	client, solver, err := clientCall(metric, method)
+	solver, err := GetSolver(method)
+	if err != nil {
+		return map[string]bool{}, err
+	}
+
+	address := strs.Format(`%s:%d`, solver.Host, solver.Port)
+	metric.CallSearchTime()
+	metric.ClientIP = address
+
+	client, err := rpc.Dial("tcp", address)
 	if err != nil {
 		return map[string]bool{}, err
 	}
 	defer client.Close()
 
-	result := map[string]bool{}
+	var result map[string]bool
 	err = client.Call(solver.Method, data, &result)
 	if err != nil {
-		return map[string]bool{}, err
+		return map[string]bool{}, logs.Error(err)
 	}
 
 	metric.DoneRpc(result)
@@ -220,10 +266,22 @@ func HttpCallRPC(w http.ResponseWriter, r *http.Request) {
 	body, _ := response.GetBody(r)
 	method := body.ValStr("", "method")
 	data := body.Json("data")
-	result, err := Call(method, data)
+	result, err := CallItem(method, data)
 	if err != nil {
 		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
 	}
 
 	response.JSON(w, r, http.StatusOK, result)
+}
+
+func init() {
+	gob.Register(map[string]interface{}{})
+	gob.Register(map[string]bool{})
+	gob.Register(map[string]string{})
+	gob.Register(map[string]int{})
+	gob.Register(et.Json{})
+	gob.Register([]et.Json{})
+	gob.Register(et.Item{})
+	gob.Register(et.Items{})
+	gob.Register(et.List{})
 }

@@ -269,15 +269,9 @@ func authorization(profile et.Json) (map[string]bool, error) {
 		return map[string]bool{}, logs.NewError("Authorization method not found")
 	}
 
-	var result = map[string]bool{}
-	var err error
-	resultAny, err := jrpc.CallAny(method, profile)
+	result, err := jrpc.CallPermitios(method, profile)
 	if err != nil {
 		return map[string]bool{}, err
-	}
-	result, ok := resultAny.(map[string]bool)
-	if !ok {
-		return map[string]bool{}, logs.NewError("Invalid type assertion")
 	}
 
 	return result, nil

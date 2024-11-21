@@ -1,9 +1,6 @@
 package jrpc
 
 import (
-	"net"
-	"net/rpc"
-
 	"github.com/celsiainternet/elvis/cache"
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/logs"
@@ -40,29 +37,6 @@ func Load(name string) (*Package, error) {
 	}
 
 	return pkg, nil
-}
-
-/**
-* Start
-**/
-func (s *Package) Start() error {
-	address := strs.Format(`:%d`, s.Port)
-	listener, err := net.Listen("tcp", address)
-	if err != nil {
-		logs.Fatal(err)
-	}
-
-	logs.Logf("Rpc", `Running on %s%s`, s.Host, listener.Addr())
-
-	for {
-		conn, err := listener.Accept()
-		if err != nil {
-			logs.Panic(err.Error())
-			continue
-		}
-
-		go rpc.ServeConn(conn)
-	}
 }
 
 /**
