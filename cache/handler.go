@@ -410,7 +410,7 @@ func GetJson(key string) (et.Json, error) {
 	}
 
 	if val == _default {
-		return et.Json{}, nil
+		return et.Json{}, IsNil
 	}
 
 	var result et.Json
@@ -439,7 +439,7 @@ func GetItem(key string) (et.Item, error) {
 	}
 
 	if val == _default {
-		return et.Item{}, nil
+		return et.Item{}, IsNil
 	}
 
 	var result et.Json
@@ -471,7 +471,7 @@ func GetItems(key string) (et.Items, error) {
 	}
 
 	if val == _default {
-		return et.Items{}, nil
+		return et.Items{}, IsNil
 	}
 
 	var result et.Items

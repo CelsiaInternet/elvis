@@ -15,13 +15,13 @@ var pkg *Package
 * load
 **/
 func Load(name string) (*Package, error) {
-	if pkg != nil {
-		return pkg, nil
-	}
-
 	_, err := cache.Load()
 	if err != nil {
 		return nil, err
+	}
+
+	if pkg != nil {
+		return pkg, nil
 	}
 
 	host := envar.GetStr("localhost", "HOST")

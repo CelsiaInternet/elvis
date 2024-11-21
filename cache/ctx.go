@@ -6,6 +6,7 @@ import (
 
 	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/msg"
+	"github.com/redis/go-redis/v9"
 )
 
 /**
@@ -42,7 +43,9 @@ func GetCtx(ctx context.Context, key, def string) (string, error) {
 	}
 
 	result, err := conn.Get(ctx, key).Result()
-	if err != nil {
+	if err == redis.Nil {
+		return def, nil
+	} else if err != nil {
 		return def, err
 	}
 

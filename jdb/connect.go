@@ -117,6 +117,11 @@ func ConnectTo(params et.Json) (*DB, error) {
 		return nil, logs.Alert(err)
 	}
 
+	err = db.Ping()
+	if err != nil {
+		return nil, logs.Alert(err)
+	}
+
 	logs.Logf(driver, "Connected host:%s:%d", host, port)
 
 	return &DB{
