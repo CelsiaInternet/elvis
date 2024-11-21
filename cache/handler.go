@@ -19,17 +19,26 @@ import (
 const IsNil = redis.Nil
 
 /**
-* GenKey
+* GenId
 * @params args ...interface{}
 * @return string
 **/
-func GenKey(args ...interface{}) string {
+func GenId(args ...interface{}) string {
 	var keys []string
 	for _, arg := range args {
 		keys = append(keys, strs.Format(`%v`, arg))
 	}
 
-	result := strings.Join(keys, ":")
+	return strings.Join(keys, ":")
+}
+
+/**
+* GenKey
+* @params args ...interface{}
+* @return string
+**/
+func GenKey(args ...interface{}) string {
+	result := GenId(args...)
 	return utility.ToBase64(result)
 }
 
