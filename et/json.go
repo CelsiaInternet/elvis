@@ -545,6 +545,7 @@ func (s Json) Get(key string) interface{} {
 }
 
 func (s Json) Set(key string, val interface{}) bool {
+	key = strs.Lowcase(key)
 	if s[key] != nil {
 		s[key] = val
 		return true

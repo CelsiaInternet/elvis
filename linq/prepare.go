@@ -106,7 +106,7 @@ func (c *Model) Changue(current et.Json, linq *Linq) *Linq {
 func (c *Linq) PrepareInsert() (et.Items, error) {
 	model := c.from[0].model
 	model.Consolidate(c)
-	c.idT = utility.UUID()
+	c.idT = "-1"
 	c.new.Set(IdTFiled, c.idT)
 
 	for _, validate := range c.validates {
