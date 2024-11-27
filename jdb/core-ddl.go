@@ -66,26 +66,17 @@ func defineDDL(db *DB) error {
 **/
 func (d *DB) upsertDDL(id string, query string) error {
 	sql := `
-	SELECT INDEX
-	FROM core.DDL
-	WHERE _ID = $1;`
+	UPDATE core.DDL SET
+	SQL = $2
+	WHERE _ID = $1
+	RETURNING _ID;`
 
-	item, err := d.QueryOne(sql, id)
+	item, err := d.QueryOne(sql, id, []byte(query))
 	if err != nil {
 		return err
 	}
 
 	if item.Ok {
-		sql = `
-		UPDATE core.DDL SET
-		SQL = $2
-		WHERE _ID = $1;`
-
-		_, err = d.db.Exec(sql, id, []byte(query))
-		if err != nil {
-			return err
-		}
-
 		return nil
 	}
 

@@ -41,18 +41,14 @@ func defineSeriesFunction(db *DB) error {
 	DECLARE
 	 result BIGINT;
 	BEGIN
-	 SELECT VALUE INTO result
-	 FROM core.SERIES
-	 WHERE SERIE = tag LIMIT 1;
+	 UPDATE core.SERIES SET
+	 VALUE = VALUE + 1
+	 WHERE SERIE = tag
+	 RETURNING VALUE INTO result;
 	 IF NOT FOUND THEN
 	  INSERT INTO core.SERIES(SERIE, VALUE)
 		VALUES (tag, 1)
 		RETURNING VALUE INTO result;
-	 ELSE
-	 	UPDATE core.SERIES SET
-	 	VALUE = VALUE + 1
-	 	WHERE SERIE = tag
-	 	RETURNING VALUE INTO result;
 	 END IF;
 
 	 RETURN COALESCE(result, 0);
@@ -64,18 +60,14 @@ func defineSeriesFunction(db *DB) error {
 	DECLARE
 	 result BIGINT;
 	BEGIN
-	 SELECT VALUE INTO result
-	 FROM core.SERIES
-	 WHERE SERIE = tag LIMIT 1;
+	 UPDATE core.SERIES SET
+	 VALUE = val
+	 WHERE SERIE = tag
+	 RETURNING VALUE INTO result;
 	 IF NOT FOUND THEN
 	  INSERT INTO core.SERIES(SERIE, VALUE)
 		VALUES (tag, val)
-		RETURNING VALUE INTO result;
-	 ELSE
-	 	UPDATE core.SERIES SET
-	 	VALUE = val
-	 	WHERE SERIE = tag
-	 	RETURNING VALUE INTO result;
+		RETURNING VALUE INTO result;	
 	 END IF;
 
 	 RETURN COALESCE(result, 0);
