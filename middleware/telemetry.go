@@ -18,7 +18,6 @@ import (
 )
 
 var hostName, _ = os.Hostname()
-var commonHeader = make(map[string]bool)
 var serviceName = "telemetry"
 
 type Result struct {
@@ -40,23 +39,6 @@ func (rw *ResponseWriterWrapper) Write(b []byte) (int, error) {
 	size, err := rw.ResponseWriter.Write(b)
 	rw.Size += size
 	return size, err
-}
-
-/**
-* WriteHeader
-* @params statusCode int
-**/
-func (rw *ResponseWriterWrapper) SetHeader(header http.Header) {
-	for key, values := range header {
-		for _, value := range values {
-			if commonHeader[key] {
-				continue
-			} else if len(value) > 255 {
-				continue
-			}
-			rw.Header().Add(key, value)
-		}
-	}
 }
 
 /**
@@ -479,13 +461,4 @@ func (m *Metrics) HTTPError(w http.ResponseWriter, r *http.Request, statusCode i
 **/
 func (m *Metrics) Unauthorized(w http.ResponseWriter, r *http.Request) {
 	m.HTTPError(w, r, http.StatusUnauthorized, "401 Unauthorized")
-}
-
-func init() {
-	for _, v := range []string{
-		"Content-Security-Policy",
-		"Content-Length",
-	} {
-		commonHeader[v] = true
-	}
 }
