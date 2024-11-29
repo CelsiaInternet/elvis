@@ -13,6 +13,8 @@ import (
 
 const ServiceName = "Websocket"
 
+var adapters map[string]func() Adapter
+
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
 		return true
@@ -30,6 +32,7 @@ type Hub struct {
 	unregister chan *Subscriber
 	run        bool
 	mutex      *sync.RWMutex
+	adapter    Adapter
 }
 
 /**
@@ -121,7 +124,9 @@ func (h *Hub) removeChannel(value *Channel) {
 		return
 	}
 
-	h.ClusterUnSubscribed(value.Name)
+	if h.adapter != nil {
+		h.adapter.UnSubscribed(value.Name)
+	}
 
 	value.close()
 	h.channels = append(h.channels[:idx], h.channels[idx+1:]...)
@@ -155,7 +160,9 @@ func (h *Hub) removeQueue(value *Queue) {
 		return
 	}
 
-	h.ClusterUnSubscribed(value.Name)
+	if h.adapter != nil {
+		h.adapter.UnSubscribed(value.Name)
+	}
 
 	value.close()
 
@@ -177,7 +184,9 @@ func (h *Hub) onConnect(client *Subscriber) {
 	msg.Channel = "ws/connect"
 	client.sendMessage(msg)
 
-	h.ClusterSubscribed(client.Id)
+	if h.adapter != nil {
+		h.adapter.Subscribed(client.Id)
+	}
 
 	logs.Logf(ServiceName, MSG_CLIENT_CONNECT, client.Id, client.Name, h.Id)
 }
@@ -191,7 +200,9 @@ func (h *Hub) onDisconnect(client *Subscriber) {
 	name := client.Name
 	h.removeClient(client)
 
-	h.ClusterUnSubscribed(clientId)
+	if h.adapter != nil {
+		h.adapter.UnSubscribed(clientId)
+	}
 
 	logs.Logf(ServiceName, MSG_CLIENT_DISCONNECT, clientId, name, h.Id)
 }
@@ -246,4 +257,44 @@ func (h *Hub) broadcast(channel, queue string, msg Message, ignored []string, fr
 	}
 
 	logs.Logf(ServiceName, "Broadcast channel:%s sent:%d", channel, n)
+}
+
+/**
+* Join
+* @param config *ClientConfig
+**/
+func (h *Hub) Join(config et.Json) error {
+	if h.adapter != nil {
+		return nil
+	}
+
+	name := config.Str("adapter")
+	if _, ok := adapters[name]; !ok {
+		return logs.NewError(ERR_ADAPTER_NOT_FOUND)
+	}
+
+	adapter := adapters[name]()
+	err := adapter.ConnectTo(config)
+	if err != nil {
+		return err
+	}
+
+	logs.Log(ServiceName, "Connected to master")
+
+	return nil
+}
+
+/**
+* Live
+**/
+func (h *Hub) Live() {
+	if h.adapter == nil {
+		return
+	}
+
+	h.adapter.Close()
+}
+
+func init() {
+	adapters = make(map[string]func() Adapter)
 }

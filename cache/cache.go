@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"sync"
 
 	"github.com/celsiainternet/elvis/logs"
 	"github.com/redis/go-redis/v9"
@@ -11,9 +12,11 @@ var conn *Conn
 
 type Conn struct {
 	*redis.Client
-	ctx    context.Context
-	host   string
-	dbname int
+	ctx     context.Context
+	host    string
+	dbname  int
+	chanels map[string]*redis.PubSub
+	mutex   *sync.RWMutex
 }
 
 func Load() (*Conn, error) {
@@ -22,7 +25,7 @@ func Load() (*Conn, error) {
 	}
 
 	var err error
-	conn, err = connect()
+	conn, err = Connect()
 	if err != nil {
 		return nil, err
 	}

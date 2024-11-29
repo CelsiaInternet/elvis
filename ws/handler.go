@@ -21,18 +21,6 @@ func (h *Hub) Describe() et.Json {
 		"clients":  et.Json{"count": clients.Count, "items": clients.Result},
 	}
 
-	if adapter != nil && adapter.typeNode == NodeMaster {
-		result["typeNode"] = adapter.typeNode.ToJson()
-		result["nodos"] = et.Json{"count": channels.Count, "items": channels.Result}
-	} else if adapter != nil {
-		result["typeNode"] = adapter.typeNode.ToJson()
-		result["clients"] = et.Json{"count": clients.Count, "items": clients.Result}
-		result["channels"] = et.Json{"count": channels.Count, "items": channels.Result}
-	} else {
-		result["clients"] = et.Json{"count": clients.Count, "items": clients.Result}
-		result["channels"] = et.Json{"count": channels.Count, "items": channels.Result}
-	}
-
 	return result
 }
 
@@ -181,7 +169,9 @@ func (h *Hub) Subscribe(clientId string, channel string) error {
 	ch := h.NewChannel(channel, 0)
 	ch.subscribe(client)
 
-	h.ClusterSubscribed(channel)
+	if h.adapter != nil {
+		h.adapter.Subscribed(channel)
+	}
 
 	return nil
 }
@@ -202,7 +192,9 @@ func (h *Hub) QueueSubscribe(clientId string, channel, queue string) error {
 	ch := h.NewQueue(channel, queue, 0)
 	ch.subscribe(client)
 
-	h.ClusterSubscribed(channel)
+	if h.adapter != nil {
+		h.adapter.Subscribed(channel)
+	}
 
 	return nil
 }
@@ -258,7 +250,9 @@ func (h *Hub) Unsubscribe(clientId string, channel, queue string) error {
 **/
 func (h *Hub) Publish(channel, queue string, msg Message, ignored []string, from et.Json) {
 	h.broadcast(channel, queue, msg, ignored, from)
-	h.ClusterPublish(channel, msg)
+	if h.adapter != nil {
+		h.adapter.Publish(channel, msg)
+	}
 }
 
 /**
@@ -269,8 +263,8 @@ func (h *Hub) Publish(channel, queue string, msg Message, ignored []string, from
 **/
 func (h *Hub) SendMessage(clientId string, msg Message) error {
 	client := h.getClient(clientId)
-	if client == nil && adapter != nil {
-		h.ClusterPublish(clientId, msg)
+	if client == nil && h.adapter != nil {
+		h.adapter.Publish(clientId, msg)
 		return nil
 	}
 

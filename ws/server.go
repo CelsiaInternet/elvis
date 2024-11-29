@@ -17,31 +17,9 @@ import (
 * @params path string
 * @return *Hub
 **/
-func ServerHttp(port int, mode, masterURL string) *Hub {
+func ServerHttp(port int) *Hub {
 	result := NewHub()
 	result.Start()
-	switch mode {
-	case "master":
-		result.InitMaster()
-		if masterURL != "" {
-			result.Join(AdapterConfig{
-				Url:       masterURL,
-				TypeNode:  NodeMaster,
-				Reconcect: 3,
-				Header:    http.Header{},
-			})
-		}
-	case "worker":
-		if masterURL != "" {
-			result.Join(AdapterConfig{
-				Url:       masterURL,
-				TypeNode:  NodeWorker,
-				Reconcect: 3,
-				Header:    http.Header{},
-			})
-		}
-	}
-
 	go startHttp(result, port)
 	time.Sleep(1 * time.Second)
 

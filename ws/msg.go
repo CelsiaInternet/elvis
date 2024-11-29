@@ -23,5 +23,6 @@ const (
 	ERR_REDISADAPTER_NOT_FOUND  = "Redis adapter not found"
 	ERR_INVALID_ID              = "Invalid id"
 	ERR_INVALID_NAME            = "Invalid name"
+	ERR_ADAPTER_NOT_FOUND       = "Adapter not found"
 	PARAMS_UPDATED              = "Params updated"
 )

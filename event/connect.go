@@ -9,7 +9,7 @@ import (
 	"github.com/nats-io/nats.go"
 )
 
-func connect() (*Conn, error) {
+func Connect() (*Conn, error) {
 	host := envar.GetStr("", "NATS_HOST")
 	if host == "" {
 		return nil, logs.Alertf(msg.ERR_ENV_REQUIRED, "NATS_HOST")

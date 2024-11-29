@@ -10,7 +10,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-func connect() (*Conn, error) {
+func Connect() (*Conn, error) {
 	host := envar.GetStr("", "REDIS_HOST")
 	password := envar.GetStr("", "REDIS_PASSWORD")
 	dbname := envar.GetInt(0, "REDIS_DB")

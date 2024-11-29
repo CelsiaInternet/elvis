@@ -28,10 +28,13 @@ func main() {
 	envar.SetStr("master-url", "", "Master host", "WS_MASTER_URL")
 
 	port := envar.GetInt(3300, "PORT")
-	mode := envar.GetStr("", "WS_MODE")
-	masterURL := envar.GetStr("", "WS_MASTER_URL")
-
-	conn = ws.ServerHttp(port, mode, masterURL)
+	conn = ws.ServerHttp(port)
+	conn.Join(et.Json{
+		"adapter": "redis",
+		"host":    "localhost:6379",
+		"db":      0,
+		"user":    "",
+	})
 
 	test1(port)
 
