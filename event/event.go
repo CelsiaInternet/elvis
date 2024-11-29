@@ -21,7 +21,7 @@ func Load() (*Conn, error) {
 	}
 
 	var err error
-	conn, err = Connect()
+	conn, err = connect()
 	if err != nil {
 		return nil, err
 	}

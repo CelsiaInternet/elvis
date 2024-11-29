@@ -31,6 +31,7 @@ func startHttp(hub *Hub, port int) {
 	http.HandleFunc("/ws/describe", hub.HttpDescribe)
 	http.HandleFunc("/ws/publications", hub.HttpGetPublications)
 	http.HandleFunc("/ws/subscribers", hub.HttpGetSubscribers)
+	http.HandleFunc("/cluster", hub.HttpCluster)
 
 	logs.Logf("WebSocket", "Http server in http://localhost:%d/ws", port)
 	addr := strs.Format(`:%d`, port)

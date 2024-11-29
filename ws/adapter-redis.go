@@ -2,12 +2,46 @@ package ws
 
 import (
 	"github.com/celsiainternet/elvis/cache"
+	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/logs"
 )
 
 type AdapterRedis struct {
 	conn *cache.Conn
 }
+
+func NewRedisAdapter() Adapter {
+	return &AdapterRedis{}
+}
+
+/**
+* ConnectTo
+* @param params et.Json
+* @return error
+**/
+func (s *AdapterRedis) ConnectTo(params et.Json) error {
+	if s.conn != nil {
+		return nil
+	}
+
+	host := params.Str("host")
+	password := params.Str("password")
+	dbname := params.Int("dbname")
+	result, err := cache.ConnectTo(host, password, dbname)
+	if err != nil {
+		return err
+	}
+
+	s.conn = result
+	logs.Debug("AdapterRedis:", params.ToString())
+
+	return nil
+}
+
+/**
+* Close
+**/
+func (s *AdapterRedis) Close() {}
 
 /**
 * Subscribed

@@ -33,10 +33,10 @@ func main() {
 		"adapter": "redis",
 		"host":    "localhost:6379",
 		"db":      0,
-		"user":    "",
+		"user":    "test",
 	})
 
-	test1(port)
+	// test1(port)
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)

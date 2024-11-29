@@ -297,4 +297,6 @@ func (h *Hub) Live() {
 
 func init() {
 	adapters = make(map[string]func() Adapter)
+	adapters["redis"] = NewRedisAdapter
+	adapters["ws"] = NewWSAdapter
 }

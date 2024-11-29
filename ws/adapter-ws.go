@@ -1,8 +1,48 @@
 package ws
 
+import (
+	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/logs"
+)
+
 type AdapterWS struct {
 	conn *Client
 }
+
+func NewWSAdapter() Adapter {
+	return &AdapterWS{}
+}
+
+/**
+* ConnectTo
+* @param params et.Json
+* @return error
+**/
+func (s *AdapterWS) ConnectTo(params et.Json) error {
+	if s.conn != nil {
+		return nil
+	}
+
+	result, err := NewClient(&ClientConfig{
+		ClientId:  params.Str("clientId"),
+		Name:      params.Str("name"),
+		Url:       params.Str("url"),
+		Reconnect: 3,
+	})
+	if err != nil {
+		return err
+	}
+
+	s.conn = result
+	logs.Debug("AdapterRedis:", params.ToString())
+
+	return nil
+}
+
+/**
+* Close
+**/
+func (s *AdapterWS) Close() {}
 
 /**
 * Subscribed

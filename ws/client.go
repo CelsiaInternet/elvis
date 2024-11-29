@@ -100,13 +100,11 @@ func (c *Client) deleteChannel(channel string) {
 * Connect
 * @return error
 **/
-func (c *Client) Connect() error {
+func (c *Client) connectTo(path string) error {
 	if c.Connected.Bool() {
 		return nil
 	}
 
-	name := strings.ReplaceAll(c.name, " ", "_")
-	path := strs.Format(`%s?clientId=%s&name=%s`, c.url, c.clientId, name)
 	socket, _, err := websocket.DefaultDialer.Dial(path, c.header)
 	if err != nil {
 		return err
@@ -121,6 +119,16 @@ func (c *Client) Connect() error {
 	logs.Logf(ServiceName, `Connected host:%s`, c.url)
 
 	return nil
+}
+
+/**
+* Connect
+* @return error
+**/
+func (c *Client) Connect() error {
+	name := strings.ReplaceAll(c.name, " ", "_")
+	path := strs.Format(`%s?clientId=%s&name=%s`, c.url, c.clientId, name)
+	return c.connectTo(path)
 }
 
 func (c *Client) Reconnect() {
