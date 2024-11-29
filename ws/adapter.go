@@ -35,7 +35,6 @@ func NewNode(config *ClientConfig) (*Client, error) {
 		Connected: race.NewValue(false),
 		mutex:     &sync.Mutex{},
 		url:       config.Url,
-		header:    config.Header,
 		reconnect: config.Reconnect,
 	}
 

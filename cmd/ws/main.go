@@ -28,12 +28,14 @@ func main() {
 	envar.SetStr("password", "", "Master host", "WS_PASSWORD")
 
 	port := envar.GetInt(3300, "PORT")
+	username := envar.GetStr("", "WS_USERNAME")
+	password := envar.GetStr("", "WS_PASSWORD")
 	conn = ws.ServerHttp(port, username, password)
-	conn.Join(et.Json{
+	conn.JoinTo(et.Json{
 		"adapter":  "redis",
 		"host":     "localhost:6379",
-		"dbname":   0,
-		"password": "",
+		"dbname":   envar.GetInt(0, "REDIS_DB"),
+		"password": envar.GetStr("", "REDIS_PASSWORD"),
 	})
 
 	// test1(port)

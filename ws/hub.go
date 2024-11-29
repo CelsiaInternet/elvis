@@ -260,21 +260,21 @@ func (h *Hub) broadcast(channel, queue string, msg Message, ignored []string, fr
 }
 
 /**
-* Join
+* JoinTo
 * @param config *ClientConfig
 **/
-func (h *Hub) Join(config et.Json) error {
+func (h *Hub) JoinTo(master et.Json) error {
 	if h.adapter != nil {
 		return nil
 	}
 
-	name := config.Str("adapter")
+	name := master.Str("adapter")
 	if _, ok := adapters[name]; !ok {
 		return logs.NewError(ERR_ADAPTER_NOT_FOUND)
 	}
 
 	adapter := adapters[name]()
-	err := adapter.ConnectTo(config)
+	err := adapter.ConnectTo(master)
 	if err != nil {
 		return err
 	}

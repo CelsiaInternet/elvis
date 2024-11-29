@@ -23,9 +23,6 @@ func (s *AdapterRedis) ConnectTo(params et.Json) error {
 	if s.conn != nil {
 		return nil
 	}
-
-	logs.Debug("AdapterRedis:", params.ToString())
-
 	host := params.Str("host")
 	password := params.Str("password")
 	dbname := params.Int("dbname")
@@ -35,7 +32,6 @@ func (s *AdapterRedis) ConnectTo(params et.Json) error {
 	}
 
 	s.conn = result
-	logs.Debug("AdapterRedis:", params.ToString())
 
 	return nil
 }
