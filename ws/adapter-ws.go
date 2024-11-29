@@ -23,6 +23,11 @@ func (s *AdapterWS) ConnectTo(params et.Json) error {
 		return nil
 	}
 
+	url := params.Str("url")
+	if url == "" {
+		return nil
+	}
+
 	result, err := NewNode(&ClientConfig{
 		Url:       params.Str("url"),
 		Reconnect: params.ValInt(3, "reconnect"),
