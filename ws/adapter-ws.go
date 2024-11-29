@@ -24,8 +24,6 @@ func (s *AdapterWS) ConnectTo(params et.Json) error {
 	}
 
 	result, err := NewClient(&ClientConfig{
-		ClientId:  params.Str("clientId"),
-		Name:      params.Str("name"),
 		Url:       params.Str("url"),
 		Reconnect: 3,
 	})

@@ -24,16 +24,16 @@ func main() {
 	}
 
 	envar.SetInt("port", 3300, "Port server", "PORT")
-	envar.SetStr("mode", "", "Modo cluster: master or worker", "WS_MODE")
-	envar.SetStr("master-url", "", "Master host", "WS_MASTER_URL")
+	envar.SetStr("username", "", "Modo cluster: master or worker", "WS_USERNAME")
+	envar.SetStr("password", "", "Master host", "WS_PASSWORD")
 
 	port := envar.GetInt(3300, "PORT")
-	conn = ws.ServerHttp(port)
+	conn = ws.ServerHttp(port, username, password)
 	conn.Join(et.Json{
-		"adapter": "redis",
-		"host":    "localhost:6379",
-		"db":      0,
-		"user":    "test",
+		"adapter":  "redis",
+		"host":     "localhost:6379",
+		"dbname":   0,
+		"password": "",
 	})
 
 	// test1(port)

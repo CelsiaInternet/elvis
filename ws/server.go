@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/strs"
 )
@@ -11,13 +12,13 @@ import (
 /**
 * ServerHttp
 * @params port int
-* @params mode string
-* @params master string
-* @params schema string
-* @params path string
+* @params username string
+* @params password string
 * @return *Hub
 **/
-func ServerHttp(port int) *Hub {
+func ServerHttp(port int, username, password string) *Hub {
+	envar.UpSetStr("WS_USERNAME", username)
+	envar.UpSetStr("WS_PASSWORD", password)
 	result := NewHub()
 	result.Start()
 	go startHttp(result, port)
