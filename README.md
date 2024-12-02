@@ -35,7 +35,7 @@ go mod init github.com/apimanager/api
 ## Dependencias
 
 ```
-go get github.com/celsiainternet/elvis@v1.1.32
+go get github.com/celsiainternet/elvis@v1.1.33
 ```
 
 ## Crear projecto, microservicios, modelos
