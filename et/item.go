@@ -178,6 +178,10 @@ func (it *Item) Array(atrib string) []Json {
 	return it.Result.Array(atrib)
 }
 
+func (it *Item) ArrayStr(atrib string) []string {
+	return it.Result.ArrayStr(atrib)
+}
+
 func (it *Item) ToString() string {
 	return it.Result.ToString()
 }

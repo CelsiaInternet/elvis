@@ -7,4 +7,5 @@ const (
 	MSG_PACKAGE_NOT_FOUND = "Package not found"
 	MSG_PACKAGE_DELETE    = "Package deleted"
 	MSG_INVALID_RESPONSE  = "Invalid response - %s"
+	MSG_NOT_LOAD_CONFIG   = "Not load config - stage:%s name:%s"
 )

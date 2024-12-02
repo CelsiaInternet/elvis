@@ -51,7 +51,7 @@ func (s *Package) Save() error {
 		return err
 	}
 
-	idx := slices.IndexFunc(routers, func(e *Package) bool { return e.Host == s.Host && e.Port == s.Port })
+	idx := slices.IndexFunc(routers, func(e *Package) bool { return e.Host == s.Host && e.Name == s.Name })
 	if idx == -1 {
 		routers = append(routers, s)
 	} else {

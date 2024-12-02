@@ -503,7 +503,7 @@ type Controller struct {
 func (c *Controller) Version(ctx context.Context) (et.Json, error) {
 	company := envar.GetStr("", "COMPANY")
 	web := envar.GetStr("", "WEB")
-	version := utility.GitVersion(1)
+	version := envar.EnvarStr("0.0.1", "VERSION")
   service := et.Json{
 		"version": version,
 		"service": PackageName,
@@ -545,7 +545,7 @@ type Controller struct {
 func (c *Controller) Version(ctx context.Context) (et.Json, error) {
 	company := envar.GetStr("", "COMPANY")
 	web := envar.GetStr("", "WEB")
-	version := utility.GitVersion(1)
+	version := envar.EnvarStr("0.0.1", "VERSION")
   service := et.Json{
 		"version": version,
 		"service": PackageName,

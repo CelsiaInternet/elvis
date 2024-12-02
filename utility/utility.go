@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
-	"os/exec"
 	"reflect"
 	"regexp"
 	"strings"
@@ -503,22 +502,6 @@ func GoMod(atrib string) (string, error) {
 	}
 
 	return result, nil
-}
-
-/**
-* GitVersion
-* @param idx int
-* @return string
-**/
-func GitVersion(idx int) string {
-	result := "v0.0.0"
-	attr := strs.Format("--abbrev=%d", idx)
-	out, err := exec.Command("git", "describe", "--tags", attr).Output()
-	if err == nil {
-		result = string(out)
-	}
-
-	return result
 }
 
 /**

@@ -73,13 +73,13 @@ func Mount(services any) error {
 * UnMount
 * @return error
 **/
-func UnMount(host, name string, port int) error {
+func UnMount(host, name string) error {
 	routers, err := getRouters()
 	if err != nil {
 		return logs.Alert(err)
 	}
 
-	idx := slices.IndexFunc(routers, func(e *Package) bool { return e.Name == name && e.Host == host && e.Port == port })
+	idx := slices.IndexFunc(routers, func(e *Package) bool { return e.Name == name && e.Host == host })
 	if idx != -1 {
 		routers = append(routers[:idx], routers[idx+1:]...)
 	}

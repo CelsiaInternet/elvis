@@ -16,7 +16,7 @@ import (
 * @param w http.ResponseWriter
 * @param r *http.Request
 **/
-func (h *Hub) HttpCluster(w http.ResponseWriter, r *http.Request) {
+func (h *Hub) HttpLogin(w http.ResponseWriter, r *http.Request) {
 	ws_username := envar.GetStr("", "WS_USERNAME")
 	if !utility.ValidStr(ws_username, 0, []string{}) {
 		response.HTTPError(w, r, http.StatusInternalServerError, errors.New(ERR_NOT_SIGNATURE).Error())
