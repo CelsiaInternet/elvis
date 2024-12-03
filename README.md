@@ -3,12 +3,6 @@
 # Public
 
 ```
-go mod tidy &&
-gofmt -w . &&
-git update &&
-git tag v1.0.83 &&
-git tags
-
 git push origin --tags
 
 go build ./cmd/create-go
@@ -42,6 +36,17 @@ go get github.com/celsiainternet/elvis@v1.1.33
 
 ```
 go run github.com/celsiainternet/elvis/cmd/create-go create
+```
+
+## Version
+
+```
+go mod tidy &&
+gofmt -w . &&
+git update &&
+git tag v1.0.83 &&
+git tags
+
 ```
 
 ## Run
