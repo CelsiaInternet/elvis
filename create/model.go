@@ -294,12 +294,11 @@ const modelEvent = `package $1
 import (
 	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/event"
-	"github.com/celsiainternet/elvis/router"
 	"github.com/celsiainternet/elvis/et"
 )
 
 func initEvents() {	
-	err = event.Stack("<channel>", eventAction)
+	err := event.Stack("<channel>", eventAction)
 	if err != nil {
 		console.Error(err)
 	}
@@ -422,67 +421,37 @@ const (
 const modelConfig = `package $1
 
 import (
+	"github.com/celsiainternet/elvis/config"
 	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/jrpc"
 )
 
-func LoadConfig() {
+func LoadConfig() error {
 	StartRpcServer()
 
-	// Stage
 	stage := envar.GetStr("local", "STAGE")
-	basicdb(stage)
-	result, err := jrpc.Call("Configs.Services.GetConfig", et.Json{
-		"stage":      stage,
-		"name":       PackageName,
-		"project_id": "200410220959-999999",
+	return defaultConfig(stage)
+}
+
+func defaultConfig(stage string) error {
+	name := "default"
+	result, err := jrpc.CallItem("Module.Services.GetConfig", et.Json{
+		"stage": stage,
+		"name":  name,
 	})
-	if console.AlertE(err) != nil {
-		return
+	if err != nil {
+		return err
 	}
 
 	if !result.Ok {
-		return
+		return console.NewErrorF(jrpc.MSG_NOT_LOAD_CONFIG, stage, name)
 	}
 
-	config := result.Result
-	envar.UpSetStr("PROJECT_ID", config.Str("project_id"))
+	cfg := result.Json("config")
+	return config.Load(cfg)
 }
-
-func basicdb(stage string) {
-	result, err := jrpc.Call("Configs.Services.GetConfig", et.Json{
-		"stage": stage,
-		"name":  "basicdb",
-	})
-	if console.AlertE(err) != nil {
-		return
-	}
-
-	loadConfig(result)	
-}
-
-func loadConfig(params et.Item) {
-	if !params.Ok {
-		return
-	}
-
-	for k, v := range params.Result {
-		k = strs.Uppcase(k)
-		switch val := v.(type) {
-		case string:
-			envar.UpSetStr(k, val)
-		case int:
-			envar.UpSetInt(k, val)
-		case bool:
-			envar.UpSetBool(k, val)
-		case float64:
-			envar.UpSetFloat(k, val)
-		}
-	}
-}
-
 `
 
 const modelDbController = `package $1
@@ -493,7 +462,6 @@ import (
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/jdb"
 	"github.com/celsiainternet/elvis/et"
-	"github.com/celsiainternet/elvis/utility"
 )
 
 type Controller struct {
@@ -875,7 +843,7 @@ func Insert$2(project_id, id, name, description string, data et.Json) (et.Item, 
 	}
 
 	if !utility.ValidStr(name, 0, []string{""}) {
-		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "service_id")
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "name")
 	}
 
 	if !utility.ValidId(id) {
