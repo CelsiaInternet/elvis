@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/response"
@@ -103,6 +104,8 @@ func Authorization(next http.Handler) http.Handler {
 			response.InternalServerError(w, r, err)
 			return
 		}
+
+		console.Debug("Profile: ", profile.ToString())
 
 		permisions, err := authorizationFunc(profile)
 		if err != nil {

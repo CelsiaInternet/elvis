@@ -216,7 +216,7 @@ func CallPermitios(method string, data et.Json) (map[string]bool, error) {
 	var result map[string]bool
 	err = client.Call(solver.Method, data, &result)
 	if err != nil {
-		return map[string]bool{}, logs.Error(err)
+		return map[string]bool{}, logs.Alert(err)
 	}
 
 	metric.DoneRpc(result)
