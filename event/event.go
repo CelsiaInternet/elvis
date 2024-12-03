@@ -8,9 +8,11 @@ import (
 )
 
 var conn *Conn
+var FromId string
 
 type Conn struct {
 	*nats.Conn
+	_id             string
 	eventCreatedSub map[string]*nats.Subscription
 	mutex           *sync.RWMutex
 }
@@ -25,6 +27,8 @@ func Load() (*Conn, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	FromId = conn._id
 
 	return conn, nil
 }

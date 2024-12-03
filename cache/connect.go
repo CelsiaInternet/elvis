@@ -32,6 +32,7 @@ func ConnectTo(host, password string, dbname int) (*Conn, error) {
 
 	return &Conn{
 		Client: client,
+		_id:    utility.UUID(),
 		ctx:    context.Background(),
 		host:   host,
 		dbname: dbname,

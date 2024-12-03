@@ -10,6 +10,7 @@ import (
 const ServiceName = "Real Time"
 
 var conn *ws.Client
+var FromId string
 
 /**
 * Load
@@ -36,6 +37,7 @@ func Load(name string) (*ws.Client, error) {
 	}
 
 	conn = client
+	FromId = client.ClientId
 
 	return conn, nil
 }

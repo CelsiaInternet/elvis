@@ -9,9 +9,11 @@ import (
 )
 
 var conn *Conn
+var FromId string
 
 type Conn struct {
 	*redis.Client
+	_id     string
 	ctx     context.Context
 	host    string
 	dbname  int
@@ -29,6 +31,8 @@ func Load() (*Conn, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	FromId = conn._id
 
 	return conn, nil
 }

@@ -24,6 +24,7 @@ func ConnectTo(host, user, password string) (*Conn, error) {
 
 	return &Conn{
 		Conn:            connect,
+		_id:             utility.UUID(),
 		eventCreatedSub: map[string]*nats.Subscription{},
 		mutex:           &sync.RWMutex{},
 	}, nil
