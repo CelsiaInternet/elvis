@@ -44,7 +44,7 @@ go run github.com/celsiainternet/elvis/cmd/create-go create
 go mod tidy &&
 gofmt -w . &&
 git update &&
-git tag v1.0.83 &&
+git tag v1.1.33 &&
 git tags
 
 ```
