@@ -18,8 +18,8 @@ go run github.com/celsiainternet/elvis/cmd/apigateway
 
 go build ./cmd/apigateway
 
-go get -u github.com/celsiainternet/elvis@v1.0.83
-go get github.com/celsiainternet/elvis@v1.0.83
+go get -u github.com/celsiainternet/elvis@v1.1.34
+go get github.com/celsiainternet/elvis@v1.1.34
 ```
 
 ## Create project
@@ -29,7 +29,7 @@ go mod init github.com/apimanager/api
 ## Dependencias
 
 ```
-go get github.com/celsiainternet/elvis@v1.1.33
+go get github.com/celsiainternet/elvis@v1.1.34
 ```
 
 ## Crear projecto, microservicios, modelos
@@ -44,7 +44,7 @@ go run github.com/celsiainternet/elvis/cmd/create-go create
 go mod tidy &&
 gofmt -w . &&
 git update &&
-git tag v1.1.33 &&
+git tag v1.1.34 &&
 git tags
 
 ```

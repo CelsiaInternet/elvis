@@ -145,6 +145,7 @@ func WorkState(work_id string, status WorkStatus, data et.Json) {
 	work := et.Json{
 		"update_at": timezone.Now(),
 		"_id":       work_id,
+		"from_id":   FromId,
 		"status":    status.String(),
 		"data":      data,
 	}
