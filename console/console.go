@@ -17,10 +17,12 @@ import (
 func printLn(kind string, color string, args ...any) {
 	stdrout.Printl(kind, color, args...)
 
-	realtime.Publish("logs", et.Json{
-		"kind":    kind,
-		"message": fmt.Sprint(args...),
-	})
+	if realtime.Active() {
+		realtime.Publish("logs", et.Json{
+			"kind":    kind,
+			"message": fmt.Sprint(args...),
+		})
+	}
 }
 
 func LogK(kind string, args ...any) error {

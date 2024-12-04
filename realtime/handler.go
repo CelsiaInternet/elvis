@@ -36,6 +36,10 @@ func Ping() {
 	conn.Ping()
 }
 
+func Active() bool {
+	return conn != nil
+}
+
 /**
 * SetFrom
 * @param params et.Json
