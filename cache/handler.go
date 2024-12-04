@@ -102,6 +102,19 @@ func Get(key, def string) (string, error) {
 }
 
 /**
+* Exists
+* @params key string
+* @return bool
+**/
+func Exists(key string) bool {
+	if conn == nil {
+		return false
+	}
+
+	return ExistsCtx(conn.ctx, key)
+}
+
+/**
 * Delete
 * @params key string
 * @return int64, error

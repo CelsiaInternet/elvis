@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/celsiainternet/elvis/console"
+	"github.com/celsiainternet/elvis/claim"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/response"
@@ -105,8 +105,8 @@ func Authorization(next http.Handler) http.Handler {
 			return
 		}
 
-		console.Debug("Profile: ", profile.ToString())
-
+		ClientId := claim.ClientId(r)
+		profile["client_id"] = ClientId
 		permisions, err := authorizationFunc(profile)
 		if err != nil {
 			response.InternalServerError(w, r, err)

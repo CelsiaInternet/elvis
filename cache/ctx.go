@@ -53,6 +53,27 @@ func GetCtx(ctx context.Context, key, def string) (string, error) {
 }
 
 /**
+* ExistsCtx
+* @params ctx context.Context
+* @params key string
+* @return bool
+**/
+func ExistsCtx(ctx context.Context, key string) bool {
+	if conn == nil {
+		logs.Alertm(msg.ERR_NOT_CACHE_SERVICE)
+		return false
+	}
+
+	result, err := conn.Exists(ctx, key).Result()
+	if err != nil {
+		logs.Alertm(msg.ERR_NOT_CACHE_SERVICE)
+		return false
+	}
+
+	return result == 1
+}
+
+/**
 * DeleteCtx
 * @params ctx context.Context
 * @params key string
