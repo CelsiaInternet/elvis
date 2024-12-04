@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/celsiainternet/elvis/claim"
-	lg "github.com/celsiainternet/elvis/console"
+	lg "github.com/celsiainternet/elvis/stdrout"
 )
 
 var (

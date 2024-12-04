@@ -11,8 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/celsiainternet/elvis/et"
-	"github.com/celsiainternet/elvis/logs"
+	"github.com/celsiainternet/elvis/stdrout"
 	"github.com/celsiainternet/elvis/strs"
 	"github.com/celsiainternet/elvis/timezone"
 	"github.com/google/uuid"
@@ -52,22 +51,6 @@ const QUEUE_STACK = "stack"
 var ping = 0
 var locks = make(map[string]*sync.RWMutex)
 var count = make(map[string]int64)
-
-/**
-* Ping
-**/
-func Ping() {
-	ping++
-	logs.Infof(`PING %d`, ping)
-}
-
-/**
-* Pong
-**/
-func Pong() {
-	logs.Info("PONG")
-	ping = 0
-}
 
 /**
 * NowTime
@@ -417,7 +400,7 @@ func Quote(val interface{}) any {
 	case nil:
 		return "NULL"
 	default:
-		logs.Errorf("Not quote type:%v value:%v", reflect.TypeOf(v), v)
+		stdrout.Printl("Quote", "", strs.Format("Not type:%v value:%v", reflect.TypeOf(v), v))
 		return val
 	}
 }
@@ -525,30 +508,4 @@ func FromBase64(data string) string {
 	}
 
 	return string(result)
-}
-
-/**
-* PayloadEncoded
-* @param data et.Json
-* @return string
-**/
-func PayloadEncoded(data et.Json) string {
-	result := ToBase64(data.ToString())
-
-	return result
-}
-
-/**
-* PayloadDecoded
-* @param token string
-* @return et.Json
-**/
-func PayloadDecoded(token string) (et.Json, error) {
-	data := FromBase64(token)
-	result, err := et.Object(data)
-	if err != nil {
-		return et.Json{}, err
-	}
-
-	return result, nil
 }

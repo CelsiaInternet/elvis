@@ -7,85 +7,24 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/realtime"
+	"github.com/celsiainternet/elvis/stdrout"
 	"github.com/celsiainternet/elvis/strs"
-	"github.com/celsiainternet/elvis/timezone"
+	"github.com/celsiainternet/elvis/utility"
 )
 
-var Reset = "\033[0m"
-var Red = "\033[31m"
-var Green = "\033[32m"
-var Yellow = "\033[33m"
-var Blue = "\033[34m"
-var Purple = "\033[35m"
-var Cyan = "\033[36m"
-var Gray = "\033[37m"
-var White = "\033[97m"
-var useColor = true
+func printLn(kind string, color string, args ...any) {
+	stdrout.Printl(kind, color, args...)
 
-func init() {
-	if runtime.GOOS == "windows" {
-		Reset = ""
-		Red = ""
-		Green = ""
-		Yellow = ""
-		Blue = ""
-		Purple = ""
-		Cyan = ""
-		Gray = ""
-		White = ""
-		useColor = false
-	}
-}
-
-func Printl(kind string, color string, args ...any) string {
-	kind = strings.ToUpper(kind)
-	message := fmt.Sprint(args...)
-	now := timezone.Now()
-	var result string
-
-	switch color {
-	case "Reset":
-		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + message + Reset
-	case "Red":
-		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Red + message + Reset
-	case "Green":
-		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Green + message + Reset
-	case "Yellow":
-		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Yellow + message + Reset
-	case "Blue":
-		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Blue + message + Reset
-	case "Purple":
-		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Purple + message + Reset
-	case "Cyan":
-		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Cyan + message + Reset
-	case "Gray":
-		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Gray + message + Reset
-	case "White":
-		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + White + message + Reset
-	default:
-		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Green + message + Reset
-	}
-
-	println(result)
-
-	return result
-}
-
-func NewError(message string) error {
-	err := errors.New(message)
-
-	return err
-}
-
-func NewErrorF(format string, args ...any) error {
-	message := strs.Format(format, args...)
-	err := NewError(message)
-
-	return err
+	realtime.Publish("logs", et.Json{
+		"kind":    kind,
+		"message": fmt.Sprint(args...),
+	})
 }
 
 func LogK(kind string, args ...any) error {
-	Printl(kind, "", args...)
+	printLn(kind, "", args...)
 
 	return nil
 }
@@ -109,13 +48,13 @@ func Rpc(args ...any) error {
 	fullFuncName := runtime.FuncForPC(pc).Name()
 	funcName := fullFuncName[strings.LastIndex(fullFuncName, "/")+1:]
 	message := append([]any{funcName, ":"}, args...)
-	Printl("Rpc", "Blue", message...)
+	printLn("Rpc", "Blue", message...)
 
 	return nil
 }
 
 func Debug(args ...any) error {
-	Printl("Debug", "Cyan", args...)
+	printLn("Debug", "Cyan", args...)
 	return nil
 }
 
@@ -137,7 +76,7 @@ func Print(args ...any) error {
 }
 
 func Info(args ...any) error {
-	Printl("Info", "Blue", args...)
+	printLn("Info", "Blue", args...)
 	return nil
 }
 
@@ -146,54 +85,48 @@ func InfoF(format string, args ...any) error {
 	return Info(message)
 }
 
-func PrintFunctionName() string {
-	pc, _, _, _ := runtime.Caller(2)
-	fullFuncName := runtime.FuncForPC(pc).Name()
-
-	return fullFuncName
-}
-
 func Alert(message string) error {
-	functionName := PrintFunctionName()
-	err := NewError(message)
-	Printl("Alert", "Yellow", err.Error(), " - ", functionName)
+	functionName := utility.PrintFunctionName()
+	err := errors.New(message)
+	printLn("Alert", "Yellow", err.Error(), " - ", functionName)
 	return err
 }
 
 func AlertE(err error) error {
-	functionName := PrintFunctionName()
+	functionName := utility.PrintFunctionName()
 	if err != nil {
-		Printl("Alert", "Yellow", err.Error(), " - ", functionName)
+		printLn("Alert", "Yellow", err.Error(), " - ", functionName)
 	}
 	return err
 }
 
 func AlertF(format string, args ...any) error {
-	functionName := PrintFunctionName()
-	err := NewError(fmt.Sprintf(format, args...))
-	Printl("Alert", "Yellow", err.Error(), " - ", functionName)
+	functionName := utility.PrintFunctionName()
+	message := fmt.Sprintf(format, args...)
+	err := errors.New(message)
+	printLn("Alert", "Yellow", err.Error(), " - ", functionName)
 	return err
 }
 
 func Error(err error) error {
-	Printl("Error", "Red", err.Error())
+	printLn("Error", "Red", err.Error())
 
 	return err
 }
 
 func ErrorM(message string) error {
-	err := NewError(message)
+	err := errors.New(message)
 	return Error(err)
 }
 
 func ErrorF(format string, args ...any) error {
 	message := strs.Format(format, args...)
-	err := NewError(message)
+	err := errors.New(message)
 	return Error(err)
 }
 
 func Fatal(v ...any) {
-	Printl("Fatal", "Red", v...)
+	printLn("Fatal", "Red", v...)
 	os.Exit(1)
 }
 
@@ -203,7 +136,7 @@ func FatalF(format string, args ...any) {
 }
 
 func Panic(err error) error {
-	Printl("Panic", "Red", err.Error())
+	printLn("Panic", "Red", err.Error())
 	os.Exit(1)
 
 	return err

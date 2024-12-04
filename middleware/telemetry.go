@@ -8,10 +8,10 @@ import (
 	"time"
 
 	"github.com/celsiainternet/elvis/cache"
-	lg "github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/event"
+	lg "github.com/celsiainternet/elvis/stdrout"
 	"github.com/celsiainternet/elvis/strs"
 	"github.com/celsiainternet/elvis/timezone"
 	"github.com/celsiainternet/elvis/utility"

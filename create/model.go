@@ -425,6 +425,7 @@ import (
 	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/utility"
 	"github.com/celsiainternet/elvis/jrpc"
 )
 
@@ -446,7 +447,7 @@ func defaultConfig(stage string) error {
 	}
 
 	if !result.Ok {
-		return console.NewErrorF(jrpc.MSG_NOT_LOAD_CONFIG, stage, name)
+		return utility.NewErrorf(jrpc.MSG_NOT_LOAD_CONFIG, stage, name)
 	}
 
 	cfg := result.Json("config")
@@ -823,7 +824,7 @@ func Valida$2(id, name string) (et.Item, error) {
 	}
 
 	if item.Ok {
-		return item, console.NewErrorF(msg.RECORD_DUPLICATE)
+		return item, utility.NewErrorf(msg.RECORD_DUPLICATE)
 	}
 
 	return et.Item{

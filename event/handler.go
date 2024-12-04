@@ -1,10 +1,10 @@
 package event
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/celsiainternet/elvis/et"
-	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/response"
 	"github.com/celsiainternet/elvis/timezone"
 	"github.com/celsiainternet/elvis/utility"
@@ -39,11 +39,11 @@ func Publish(channel string, data et.Json) error {
 **/
 func Subscribe(channel string, f func(EvenMessage)) error {
 	if conn == nil {
-		return logs.NewError(ERR_NOT_CONNECT)
+		return errors.New(ERR_NOT_CONNECT)
 	}
 
 	if len(channel) == 0 {
-		return logs.NewError(ERR_CHANNEL_REQUIRED)
+		return errors.New(ERR_CHANNEL_REQUIRED)
 	}
 
 	subscribe, err := conn.Subscribe(channel,
@@ -75,11 +75,11 @@ func Subscribe(channel string, f func(EvenMessage)) error {
 **/
 func Queue(channel, queue string, f func(EvenMessage)) error {
 	if conn == nil {
-		return logs.NewError(ERR_NOT_CONNECT)
+		return errors.New(ERR_NOT_CONNECT)
 	}
 
 	if len(channel) == 0 {
-		return logs.NewError(ERR_CHANNEL_REQUIRED)
+		return errors.New(ERR_CHANNEL_REQUIRED)
 	}
 
 	subscribe, err := conn.QueueSubscribe(

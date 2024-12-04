@@ -1,7 +1,8 @@
 package realtime
 
 import (
-	"github.com/celsiainternet/elvis/console"
+	"errors"
+
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/utility"
 	"github.com/celsiainternet/elvis/ws"
@@ -23,7 +24,7 @@ func Load(name string) (*ws.Client, error) {
 
 	url := envar.GetStr("", "RT_URL")
 	if url == "" {
-		return nil, console.NewError(MSG_RT_URL_REQUIRED)
+		return nil, errors.New(MSG_RT_URL_REQUIRED)
 	}
 
 	client, err := ws.NewClient(&ws.ClientConfig{

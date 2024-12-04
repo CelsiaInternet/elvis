@@ -8,6 +8,7 @@ import (
 
 	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/strs"
+	"github.com/celsiainternet/elvis/utility"
 )
 
 /**
@@ -490,4 +491,30 @@ func OkOrNotJson(condition bool, ok Json, not Json) Json {
 	} else {
 		return not
 	}
+}
+
+/**
+* PayloadEncoded
+* @param data Json
+* @return string
+**/
+func PayloadEncoded(data Json) string {
+	result := utility.ToBase64(data.ToString())
+
+	return result
+}
+
+/**
+* PayloadDecoded
+* @param token string
+* @return et.Json
+**/
+func PayloadDecoded(token string) (Json, error) {
+	data := utility.FromBase64(token)
+	result, err := Object(data)
+	if err != nil {
+		return Json{}, err
+	}
+
+	return result, nil
 }

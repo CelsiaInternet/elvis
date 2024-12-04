@@ -4,7 +4,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/strs"
@@ -309,5 +308,5 @@ func (c *Subscriber) listener(message []byte) {
 }
 
 func (c *Subscriber) streaming(message []byte) {
-	console.Debug("streaming:", string(message))
+	logs.Debug("streaming:", string(message))
 }

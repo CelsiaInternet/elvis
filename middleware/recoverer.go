@@ -12,7 +12,7 @@ import (
 	"runtime/debug"
 	"strings"
 
-	lg "github.com/celsiainternet/elvis/console"
+	lg "github.com/celsiainternet/elvis/stdrout"
 )
 
 // Recoverer is a middleware that recovers from panics, logs the panic (and a

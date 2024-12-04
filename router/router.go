@@ -1,6 +1,7 @@
 package router
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/celsiainternet/elvis/cache"
@@ -8,7 +9,6 @@ import (
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/event"
 	"github.com/celsiainternet/elvis/jrpc"
-	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/middleware"
 	"github.com/go-chi/chi/v5"
 )
@@ -266,7 +266,7 @@ func AuthorizationRoute(r *chi.Mux, method, path string, h http.HandlerFunc, pac
 func authorization(profile et.Json) (map[string]bool, error) {
 	method := envar.GetStr("Module.Services.GetPermissions", "AUTHORIZATION_METHOD")
 	if method == "" {
-		return map[string]bool{}, logs.NewError("Authorization method not found")
+		return map[string]bool{}, errors.New("Authorization method not found")
 	}
 
 	result, err := jrpc.CallPermitios(method, profile)

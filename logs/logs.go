@@ -4,128 +4,87 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"runtime"
-	"slices"
-	"strings"
 
-	"github.com/celsiainternet/elvis/console"
+	"github.com/celsiainternet/elvis/stdrout"
+	"github.com/celsiainternet/elvis/utility"
 )
 
-func NewError(message string) error {
-	return errors.New(message)
-}
-
-func NewErrorf(format string, args ...any) error {
-	message := fmt.Sprintf(format, args...)
-	return NewError(message)
+func printLn(kind string, color string, args ...any) {
+	stdrout.Printl(kind, color, args...)
 }
 
 func Log(kind string, args ...any) error {
-	console.Printl(kind, "", args...)
+	printLn(kind, "", args...)
 	return nil
 }
 
 func Logf(kind string, format string, args ...any) {
 	message := fmt.Sprintf(format, args...)
-	console.Printl(kind, "", message)
-}
-
-func Traces(kind, color string, err error) ([]string, error) {
-	var n int = 1
-	var traces []string = []string{err.Error()}
-
-	console.Printl(kind, color, err.Error())
-
-	for {
-		pc, file, line, more := runtime.Caller(n)
-		if !more {
-			break
-		}
-		n++
-		function := runtime.FuncForPC(pc)
-		name := function.Name()
-		list := strings.Split(name, ".")
-		if len(list) > 0 {
-			name = list[len(list)-1]
-		}
-		if !slices.Contains([]string{"ErrorM", "ErrorF"}, name) {
-			trace := fmt.Sprintf("%s:%d func:%s", file, line, name)
-			traces = append(traces, trace)
-			console.Printl("TRACE", color, trace)
-		}
-	}
-
-	return traces, err
-}
-
-func PrintFunctionName() string {
-	pc, _, _, _ := runtime.Caller(2)
-	fullFuncName := runtime.FuncForPC(pc).Name()
-
-	return fullFuncName
+	printLn(kind, "", message)
 }
 
 func Alert(err error) error {
-	functionName := PrintFunctionName()
+	functionName := utility.PrintFunctionName()
 	if err != nil {
-		console.Printl("Alert", "Yellow", err.Error(), " - ", functionName)
+		printLn("Alert", "Yellow", err.Error(), " - ", functionName)
 	}
 
 	return err
 }
 
 func Alertm(message string) error {
-	functionName := PrintFunctionName()
-	err := NewError(message)
-	console.Printl("Alert", "Yellow", err.Error(), " - ", functionName)
+	functionName := utility.PrintFunctionName()
+	err := errors.New(message)
+	printLn("Alert", "Yellow", err.Error(), " - ", functionName)
 	return err
 }
 
 func Alertf(format string, args ...any) error {
-	functionName := PrintFunctionName()
-	err := NewError(fmt.Sprintf(format, args...))
-	console.Printl("Alert", "Yellow", err.Error(), " - ", functionName)
+	functionName := utility.PrintFunctionName()
+	message := fmt.Sprintf(format, args...)
+	err := errors.New(message)
+	printLn("Alert", "Yellow", err.Error(), " - ", functionName)
 	return err
 }
 
 func Error(err error) error {
-	_, err = Traces("Error", "red", err)
+	_, err = utility.Traces("Error", "red", err)
 
 	return err
 }
 
 func Errorm(message string) error {
-	err := NewError(message)
+	err := errors.New(message)
 	return Error(err)
 }
 
 func Errorf(format string, args ...any) error {
 	message := fmt.Sprintf(format, args...)
-	err := NewError(message)
+	err := errors.New(message)
 	return Error(err)
 }
 
 func Info(v ...any) {
-	console.Printl("Info", "Blue", v...)
+	printLn("Info", "Blue", v...)
 }
 
 func Infof(format string, args ...any) {
 	message := fmt.Sprintf(format, args...)
-	console.Printl("Info", "Blue", message)
+	printLn("Info", "Blue", message)
 }
 
 func Fatal(v ...any) {
-	console.Printl("Fatal", "Red", v...)
+	printLn("Fatal", "Red", v...)
 	os.Exit(1)
 }
 
 func Panic(v ...any) {
-	console.Printl("Panic", "Red", v...)
+	printLn("Panic", "Red", v...)
 	os.Exit(1)
 }
 
 func Panice(v error) error {
-	console.Printl("Panic", "Red", v.Error())
+	printLn("Panic", "Red", v.Error())
 	os.Exit(1)
 
 	return v
@@ -133,30 +92,30 @@ func Panice(v error) error {
 
 func Panicf(format string, args ...any) error {
 	message := fmt.Sprintf(format, args...)
-	err := NewError(message)
+	err := errors.New(message)
 
 	return Panice(err)
 }
 
 func Panicm(v string) error {
-	err := NewError(v)
+	err := errors.New(v)
 
 	return Panice(err)
 }
 
 func Ping(args ...any) {
-	console.Printl("PONG", "Cyan", args...)
+	printLn("PONG", "Cyan", args...)
 }
 
 func Pong(args ...any) {
-	console.Printl("PING", "Cyan", args...)
+	printLn("PING", "Cyan", args...)
 }
 
 func Debug(v ...any) {
-	console.Printl("Debug", "Cyan", v...)
+	printLn("Debug", "Cyan", v...)
 }
 
 func Debugf(format string, args ...any) {
 	message := fmt.Sprintf(format, args...)
-	console.Printl("Debug", "Cyan", message)
+	printLn("Debug", "Cyan", message)
 }

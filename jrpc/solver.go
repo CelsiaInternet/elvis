@@ -1,6 +1,7 @@
 package jrpc
 
 import (
+	"errors"
 	"net/rpc"
 	"reflect"
 	"slices"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/strs"
+	"github.com/celsiainternet/elvis/utility"
 )
 
 type Solver struct {
@@ -107,20 +109,20 @@ func GetSolver(method string) (*Solver, error) {
 
 	lst := strings.Split(method, ".")
 	if len(lst) != 3 {
-		return nil, logs.NewErrorf(ERR_METHOD_NOT_FOUND, method)
+		return nil, utility.NewErrorf(ERR_METHOD_NOT_FOUND, method)
 	}
 
 	packageName := lst[0]
 	idx := slices.IndexFunc(routers, func(e *Package) bool { return e.Name == packageName })
 	if idx == -1 {
-		return nil, logs.NewError(ERR_PACKAGE_NOT_FOUND)
+		return nil, errors.New(ERR_PACKAGE_NOT_FOUND)
 	}
 
 	router := routers[idx]
 	solver := router.Solvers[method]
 
 	if solver == nil {
-		return nil, logs.NewErrorf(ERR_METHOD_NOT_FOUND, method)
+		return nil, utility.NewErrorf(ERR_METHOD_NOT_FOUND, method)
 	}
 
 	return solver, nil
