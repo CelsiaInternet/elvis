@@ -74,6 +74,33 @@ func NewClient(config *ClientConfig) (*Client, error) {
 	return result, nil
 }
 
+/**
+* NewNode
+* @config config ConectPatams
+* @return erro
+**/
+func Login(config *ClientConfig) (*Client, error) {
+	result := &Client{
+		Channels:  make(map[string]func(Message)),
+		Attempts:  race.NewValue(0),
+		Connected: race.NewValue(false),
+		mutex:     &sync.Mutex{},
+		ClientId:  config.ClientId,
+		name:      config.Name,
+		url:       config.Url,
+		header:    config.Header,
+		reconnect: config.Reconnect,
+	}
+
+	path := strs.Format(`%s`, result.url)
+	err := result.ConnectTo(path)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
 func (c *Client) setChannel(channel string, reciveFn func(Message)) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
@@ -100,7 +127,7 @@ func (c *Client) deleteChannel(channel string) {
 * Connect
 * @return error
 **/
-func (c *Client) connectTo(path string) error {
+func (c *Client) ConnectTo(path string) error {
 	if c.Connected.Bool() {
 		return nil
 	}
@@ -116,8 +143,6 @@ func (c *Client) connectTo(path string) error {
 
 	go c.Listener()
 
-	logs.Logf(ServiceName, `Connected host:%s`, c.url)
-
 	return nil
 }
 
@@ -128,7 +153,14 @@ func (c *Client) connectTo(path string) error {
 func (c *Client) Connect() error {
 	name := strings.ReplaceAll(c.name, " ", "_")
 	path := strs.Format(`%s?clientId=%s&name=%s`, c.url, c.ClientId, name)
-	return c.connectTo(path)
+	err := c.ConnectTo(path)
+	if err != nil {
+		return err
+	}
+
+	logs.Logf(ServiceName, `Connected host:%s`, c.url)
+
+	return nil
 }
 
 func (c *Client) Reconnect() {

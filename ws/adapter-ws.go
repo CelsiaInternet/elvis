@@ -1,8 +1,12 @@
 package ws
 
 import (
+	"net/http"
+
+	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/logs"
+	"github.com/celsiainternet/elvis/utility"
 )
 
 type AdapterWS struct {
@@ -28,9 +32,26 @@ func (s *AdapterWS) ConnectTo(params et.Json) error {
 		return nil
 	}
 
-	result, err := NewNode(&ClientConfig{
-		Url:       params.Str("url"),
-		Reconnect: params.ValInt(3, "reconnect"),
+	username := params.Str("username")
+	if username == "" {
+		return utility.NewError("WS Adapter, username is required")
+	}
+
+	password := envar.GetStr("", "WS_PASSWORD")
+	if password == "" {
+		return utility.NewError("WS Adapter, password is required")
+	}
+
+	name := params.ValStr("Anonime", "name")
+	result, err := Login(&ClientConfig{
+		ClientId:  utility.UUID(),
+		Name:      name,
+		Url:       url,
+		Reconnect: envar.GetInt(3, "RT_RECONCECT"),
+		Header: http.Header{
+			"username": []string{username},
+			"password": []string{password},
+		},
 	})
 	if err != nil {
 		return err

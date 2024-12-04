@@ -6,6 +6,7 @@ import (
 
 	"github.com/celsiainternet/elvis/claim"
 	"github.com/celsiainternet/elvis/envar"
+	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/response"
 	"github.com/celsiainternet/elvis/utility"
@@ -17,6 +18,14 @@ import (
 * @param r *http.Request
 **/
 func (h *Hub) HttpLogin(w http.ResponseWriter, r *http.Request) {
+	username := r.Header.Get("username")
+	password := r.Header.Get("password")
+
+	logs.Debug(et.Json{
+		"username": username,
+		"password": password,
+	}.ToString())
+
 	ws_username := envar.GetStr("", "WS_USERNAME")
 	if !utility.ValidStr(ws_username, 0, []string{}) {
 		response.HTTPError(w, r, http.StatusInternalServerError, errors.New(ERR_NOT_SIGNATURE).Error())
@@ -24,18 +33,6 @@ func (h *Hub) HttpLogin(w http.ResponseWriter, r *http.Request) {
 
 	ws_password := envar.GetStr("", "WS_PASSWORD")
 	if !utility.ValidStr(ws_password, 0, []string{}) {
-		response.HTTPError(w, r, http.StatusInternalServerError, errors.New(ERR_NOT_SIGNATURE).Error())
-	}
-
-	us := utility.ToBase64("username")
-	username := r.URL.Query().Get(us)
-	if !utility.ValidStr(username, 0, []string{}) {
-		response.HTTPError(w, r, http.StatusInternalServerError, errors.New(ERR_NOT_SIGNATURE).Error())
-	}
-
-	ps := utility.ToBase64("password")
-	password := r.URL.Query().Get(ps)
-	if !utility.ValidStr(password, 0, []string{}) {
 		response.HTTPError(w, r, http.StatusInternalServerError, errors.New(ERR_NOT_SIGNATURE).Error())
 	}
 
@@ -62,12 +59,13 @@ func (h *Hub) HttpLogin(w http.ResponseWriter, r *http.Request) {
 * @param r *http.Request
 **/
 func (h *Hub) HttpConnect(w http.ResponseWriter, r *http.Request) {
-	clientId := r.URL.Query().Get("clientId")
+	query := response.GetQuery(r)
+	clientId := query.ValStr("", "clientId")
 	if clientId == "" {
 		clientId = utility.UUID()
 	}
 
-	name := r.URL.Query().Get("name")
+	name := query.ValStr("", "name")
 	if name == "" {
 		name = "Anonimo"
 	}
@@ -93,12 +91,13 @@ func (h *Hub) HttpConnect(w http.ResponseWriter, r *http.Request) {
 * @param r *http.Request
 **/
 func (h *Hub) HttpStream(w http.ResponseWriter, r *http.Request) {
-	clientId := r.URL.Query().Get("clientId")
+	query := response.GetQuery(r)
+	clientId := query.ValStr("", "clientId")
 	if clientId == "" {
 		clientId = utility.UUID()
 	}
 
-	name := r.URL.Query().Get("name")
+	name := query.ValStr("", "name")
 	if name == "" {
 		name = "Anonimo"
 	}

@@ -4,6 +4,7 @@ import (
 	"github.com/celsiainternet/elvis/cache"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/logs"
+	"github.com/celsiainternet/elvis/utility"
 )
 
 type AdapterRedis struct {
@@ -23,7 +24,12 @@ func (s *AdapterRedis) ConnectTo(params et.Json) error {
 	if s.conn != nil {
 		return nil
 	}
+
 	host := params.Str("host")
+	if host == "" {
+		return utility.NewError("WS Adapter, Redis host is required")
+	}
+
 	password := params.Str("password")
 	dbname := params.Int("dbname")
 	result, err := cache.ConnectTo(host, password, dbname)

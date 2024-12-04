@@ -94,7 +94,7 @@ func GetArray(r *http.Request) ([]et.Json, error) {
 * @return et.Json
 **/
 func GetQuery(r *http.Request) et.Json {
-	var result et.Json = et.Json{}
+	var result = et.Json{}
 	values := r.URL.Query()
 	for key, value := range values {
 		if len(value) > 0 {
