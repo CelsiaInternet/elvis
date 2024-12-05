@@ -840,15 +840,15 @@ func Valida$2(id, name string) (et.Item, error) {
 **/
 func Insert$2(project_id, id, name, description string, data et.Json) (et.Item, error) {
 	if !utility.ValidId(project_id) {
-		return et.Item{}, console.ErrorF(msg.MSG_ATRIB_REQUIRED, "project_id")
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "project_id")
 	}
 
 	if !utility.ValidStr(name, 0, []string{""}) {
-		return et.Item{}, console.ErrorF(msg.MSG_ATRIB_REQUIRED, "name")
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "name")
 	}
 
 	if !utility.ValidId(id) {
-		return et.Item{}, console.ErrorF(msg.MSG_ATRIB_REQUIRED, "_id")
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "_id")
 	}
 
 	current, err := $2.Data("_state", "_id").
@@ -903,7 +903,7 @@ func UpSert$2(project_id, id, name, description string, data et.Json) (et.Item, 
 
 	current_state := current.Key("_state")
 	if current_state != utility.ACTIVE {
-		return et.Item{}, console.ErrorF(msg.RECORD_NOT_UPDATE)
+		return et.Item{}, console.AlertF(msg.RECORD_NOT_UPDATE)
 	}
 
 	id = current.Str("_id")
@@ -930,7 +930,7 @@ func UpSert$2(project_id, id, name, description string, data et.Json) (et.Item, 
 **/
 func State$2(id, state string) (et.Item, error) {
 	if !utility.ValidId(state) {
-		return et.Item{}, console.ErrorF(msg.MSG_ATRIB_REQUIRED, "state")
+		return et.Item{}, console.AlertF(msg.MSG_ATRIB_REQUIRED, "state")
 	}
 
 	current, err := $2.Data("_state").
@@ -941,12 +941,12 @@ func State$2(id, state string) (et.Item, error) {
 	}
 
 	if !current.Ok {
-		return et.Item{}, console.ErrorF(msg.RECORD_NOT_FOUND)
+		return et.Item{}, console.AlertF(msg.RECORD_NOT_FOUND)
 	}
 
 	old_state := current.Key("_state")
 	if old_state == state {
-		return et.Item{}, console.ErrorF(msg.RECORD_NOT_CHANGE)		
+		return et.Item{}, console.AlertF(msg.RECORD_NOT_CHANGE)		
 	}
 
 	return $2.Update(et.Json{

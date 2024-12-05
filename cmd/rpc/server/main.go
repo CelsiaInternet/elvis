@@ -7,7 +7,6 @@ import (
 	"net/rpc"
 	"os"
 
-	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/utility"
 )
@@ -17,9 +16,6 @@ type Services struct{}
 
 // Función Version que se expone vía RPC
 func (c *Services) Version(require et.Json, response *et.Item) error {
-	// Simulando un ping a la consola
-	console.Pong()
-
 	// Rellenando la respuesta
 	response.Ok = true
 	response.Result = et.Json{
