@@ -47,8 +47,14 @@ func Alertf(format string, args ...any) error {
 	return err
 }
 
-func Error(err error) error {
+func Traces(err error) error {
 	_, err = utility.Traces("Error", "red", err)
+
+	return err
+}
+
+func Error(err error) error {
+	printLn("Error", "red", err.Error())
 
 	return err
 }
