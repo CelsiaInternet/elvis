@@ -390,12 +390,12 @@ func (c *Client) Unsubscribe(channel string) {
 * @param channel string
 * @param message interface{}
 **/
-func (c *Client) Publish(channel string, message interface{}) {
+func (c *Client) Publish(channel string, message interface{}) error {
 	msg := NewMessage(c.From(), message, TpPublish)
 	msg.Ignored = []string{c.ClientId}
 	msg.Channel = channel
 
-	c.send(msg)
+	return c.send(msg)
 }
 
 /**

@@ -3,6 +3,7 @@ package cache
 import (
 	"context"
 	"log"
+	"sync"
 
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/logs"
@@ -31,11 +32,13 @@ func ConnectTo(host, password string, dbname int) (*Conn, error) {
 	logs.Logf("Redis", "Connected host:%s", host)
 
 	return &Conn{
-		Client: client,
-		_id:    utility.UUID(),
-		ctx:    context.Background(),
-		host:   host,
-		dbname: dbname,
+		Client:   client,
+		_id:      utility.UUID(),
+		ctx:      ctx,
+		host:     host,
+		dbname:   dbname,
+		channels: make(map[string]bool),
+		mutex:    &sync.RWMutex{},
 	}, nil
 }
 

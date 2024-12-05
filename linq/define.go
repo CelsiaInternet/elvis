@@ -17,7 +17,7 @@ func (c *Model) DefineColum(name, description, _type string, _default any) *Mode
 
 func (c *Model) DefineAtrib(name, description, _type string, _default any) *Model {
 	name = strs.Lowcase(name)
-	source := NewColumn(c, SourceField, "", "JSONB", "{}")
+	source := NewColumn(c, SourceField.Upp(), "", "JSONB", "{}")
 	result := NewColumn(c, name, description, _type, _default)
 	result.Tp = TpAtrib
 	result.Column = source

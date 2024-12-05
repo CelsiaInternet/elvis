@@ -159,7 +159,7 @@ func (c *Model) Model() et.Json {
 			for _, atr := range col.Atribs {
 				result.Set(atr.name, atr.Default)
 			}
-		} else if col.name == SourceField {
+		} else if col.Up() == SourceField.Upp() {
 			continue
 		} else if col.Type == "JSON" && col.Default == "[]" {
 			result.Set(col.name, []et.Json{})
@@ -341,7 +341,7 @@ func (c *Model) TitleIdx(name string) int {
 }
 
 func (c *Model) AtribIdx(name string) int {
-	source := c.Col(SourceField)
+	source := c.Col(SourceField.Upp())
 	if source == nil {
 		return -1
 	}

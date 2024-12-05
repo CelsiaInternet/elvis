@@ -389,7 +389,7 @@ func (c *Linq) query() (et.Items, error) {
 	}
 
 	if c.Tp == TpData {
-		result, err := c.db.Source(SourceField, c.sql)
+		result, err := c.db.Source(SourceField.Upp(), c.sql)
 		if err != nil {
 			return et.Items{}, err
 		}
@@ -411,7 +411,7 @@ func (c *Linq) queryOne() (et.Item, error) {
 	}
 
 	if c.Tp == TpData {
-		result, err := c.db.SourceOne(SourceField, c.sql)
+		result, err := c.db.SourceOne(SourceField.Upp(), c.sql)
 		if err != nil {
 			return et.Item{}, err
 		}

@@ -1,35 +1,22 @@
 package cache
 
 import (
-	"context"
-	"fmt"
+	"github.com/celsiainternet/elvis/et"
+	"github.com/redis/go-redis/v9"
 )
 
-func (s *Conn) pubCtx(ctx context.Context, channel string, message interface{}) error {
-	err := s.Publish(ctx, channel, message).Err()
-	if err != nil {
-		return err
-	}
-
-	return nil
+type Message struct {
+	ID      string `json:"id"`
+	Content string `json:"content"`
 }
 
-func (s *Conn) subCtx(ctx context.Context, channel string, f func(string)) {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
-	pubsub := s.Subscribe(ctx, channel)
-	s.chanels[channel] = pubsub
-
-	for {
-		msg, err := pubsub.ReceiveMessage(ctx)
-		if err != nil {
-			return
-		}
-
-		fmt.Println(msg.Channel, msg.Payload)
-		f(msg.Payload)
+func (s Message) ToJson() (et.Json, error) {
+	result, err := et.Object(s)
+	if err != nil {
+		return et.Json{}, err
 	}
+
+	return result, nil
 }
 
 /**
@@ -38,9 +25,13 @@ func (s *Conn) subCtx(ctx context.Context, channel string, f func(string)) {
 * @param message interface{}
 * @return error
 **/
-func (s *Conn) Pub(channel string, message interface{}) error {
-	ctx := context.Background()
-	return s.pubCtx(ctx, channel, message)
+func (s *Conn) Pub(channel string, message []byte) error {
+	err := s.Publish(s.ctx, channel, message).Err()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 /**
@@ -48,9 +39,30 @@ func (s *Conn) Pub(channel string, message interface{}) error {
 * @param channel string
 * @param f func(interface{})
 **/
-func (s *Conn) Sub(channel string, f func(string)) {
-	ctx := context.Background()
-	s.subCtx(ctx, channel, f)
+func (s *Conn) Sub(channel string, f func(*redis.Message)) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	if s.channels[channel] {
+		return
+	}
+
+	s.channels[channel] = true
+
+	go func() {
+		sub := s.Subscribe(s.ctx, channel)
+		defer sub.Close()
+
+		ch := sub.Channel()
+
+		for msg := range ch {
+			f(msg)
+		}
+
+		s.mutex.Lock()
+		delete(s.channels, channel)
+		s.mutex.Unlock()
+	}()
 }
 
 /**
@@ -59,13 +71,13 @@ func (s *Conn) Sub(channel string, f func(string)) {
 * @return error
 **/
 func (s *Conn) Unsub(channel string) error {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
+	sub := s.Subscribe(s.ctx, channel)
+	defer sub.Close()
 
-	pubsub := s.chanels[channel]
-	if pubsub == nil {
-		return nil
+	err := sub.Unsubscribe(s.ctx, channel)
+	if err != nil {
+		return err
 	}
 
-	return pubsub.Close()
+	return nil
 }

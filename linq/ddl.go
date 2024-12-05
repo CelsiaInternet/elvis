@@ -33,7 +33,7 @@ func ddlColumn(col *Column) string {
 
 func ddlIndex(col *Column) string {
 	result := jdb.SQLDDL(`CREATE INDEX IF NOT EXISTS $2_$3_$4_IDX ON $1($4);`, col.Model.Table, strs.Uppcase(col.Model.Schema.Name), col.Model.Name, strs.Uppcase(col.name))
-	if col.Low() == strs.Lowcase(SourceField) {
+	if col.Low() == SourceField.Low() {
 		result = jdb.SQLDDL(`CREATE INDEX IF NOT EXISTS $2_$3_$4_IDX ON $1 USING GIN($4);`, col.Model.Table, strs.Uppcase(col.Model.Schema.Name), col.Model.Name, strs.Uppcase(col.name))
 	}
 
@@ -42,7 +42,7 @@ func ddlIndex(col *Column) string {
 
 func ddlUniqueIndex(col *Column) string {
 	result := jdb.SQLDDL(`CREATE UNIQUE INDEX IF NOT EXISTS $2_$3_$4_IDX ON $1($4);`, col.Model.Table, strs.Uppcase(col.Model.Schema.Name), col.Model.Name, strs.Uppcase(col.name))
-	if col.Low() == strs.Lowcase(SourceField) {
+	if col.Low() == SourceField.Low() {
 		result = ""
 	}
 
@@ -141,7 +141,7 @@ func ddlSetSeries(model *Model) string {
 }
 
 func ddlTable(model *Model) string {
-	NewColumn(model, IdTFiled, "UUId", "VARCHAR(80)", "-1")
+	NewColumn(model, IdTFiled.Upp(), "UUId", "VARCHAR(80)", "-1")
 
 	var result string
 	var columnsDef string
@@ -200,7 +200,7 @@ func ddlTable(model *Model) string {
 }
 
 func ddlFunctions(model *Model) string {
-	NewColumn(model, IdTFiled, "UUId", "VARCHAR(80)", "-1")
+	NewColumn(model, IdTFiled.Upp(), "UUId", "VARCHAR(80)", "-1")
 
 	var result string
 	var indexs string

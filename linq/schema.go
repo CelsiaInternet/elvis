@@ -6,18 +6,32 @@ import (
 	"github.com/celsiainternet/elvis/strs"
 )
 
+type DefaultField string
+
 var (
-	SourceField     string    = "_DATA"
-	DateMakeField   string    = "DATE_MAKE"
-	DateUpdateField string    = "DATE_UPDATE"
-	SerieField      string    = "INDEX"
-	CodeField       string    = "CODE"
-	ProjectField    string    = "PROJECT_ID"
-	StateField      string    = "_STATE"
-	IdTFiled        string    = "_IDT"
-	schemas         []*Schema = []*Schema{}
-	models          []*Model  = []*Model{}
+	SourceField     DefaultField = "_DATA"
+	DateMakeField   DefaultField = "DATE_MAKE"
+	DateUpdateField DefaultField = "DATE_UPDATE"
+	SerieField      DefaultField = "INDEX"
+	CodeField       DefaultField = "CODE"
+	ProjectField    DefaultField = "PROJECT_ID"
+	StateField      DefaultField = "_STATE"
+	IdTFiled        DefaultField = "_IDT"
+	schemas         []*Schema    = []*Schema{}
+	models          []*Model     = []*Model{}
 )
+
+func (s DefaultField) Low() string {
+	return strs.Lowcase(string(s))
+}
+
+func (s DefaultField) Upp() string {
+	return strs.Uppcase(string(s))
+}
+
+func (s DefaultField) Origin() string {
+	return string(s)
+}
 
 type Schema struct {
 	db          *jdb.DB

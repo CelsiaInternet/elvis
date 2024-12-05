@@ -1,7 +1,6 @@
 package cache
 
 import (
-	"context"
 	"errors"
 	"net/http"
 	"strconv"
@@ -217,11 +216,10 @@ func Empty(match string) error {
 		return errors.New(msg.ERR_NOT_CACHE_SERVICE)
 	}
 
-	ctx := context.Background()
-	iter := conn.Scan(ctx, 0, match, 0).Iterator()
-	for iter.Next(ctx) {
+	iter := conn.Scan(conn.ctx, 0, match, 0).Iterator()
+	for iter.Next(conn.ctx) {
 		key := iter.Val()
-		DeleteCtx(ctx, key)
+		DeleteCtx(conn.ctx, key)
 	}
 
 	return nil
@@ -389,7 +387,6 @@ func AllCache(search string, page, rows int) (et.List, error) {
 		return et.List{}, errors.New(msg.ERR_NOT_CACHE_SERVICE)
 	}
 
-	ctx := context.Background()
 	var cursor uint64
 	var count int64
 	var items et.Items = et.Items{}
@@ -397,8 +394,8 @@ func AllCache(search string, page, rows int) (et.List, error) {
 	cursor = uint64(offset)
 	count = int64(rows)
 
-	iter := conn.Scan(ctx, cursor, search, count).Iterator()
-	for iter.Next(ctx) {
+	iter := conn.Scan(conn.ctx, cursor, search, count).Iterator()
+	for iter.Next(conn.ctx) {
 		key := iter.Val()
 		items.Result = append(items.Result, et.Json{"key": key})
 		items.Count++

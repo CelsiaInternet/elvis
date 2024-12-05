@@ -11,7 +11,8 @@ gofmt -w . && go run github.com/celsiainternet/elvis/cmd/create-go create
 gofmt -w . && go run ./cmd/rpc/server
 gofmt -w . && go run ./cmd/rpc/client
 
-gofmt -w . && go run ./cmd/gateway -port 3300 -rpc 4200
+gofmt -w . && go run ./cmd/ws -port 3000 -username test -password test
+gofmt -w . && go run ./cmd/ws -port 3100 -username test -password test
 
 go run github.com/celsiainternet/elvis/cmd/create-go create
 go run github.com/celsiainternet/elvis/cmd/apigateway

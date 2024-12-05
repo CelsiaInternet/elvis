@@ -5,11 +5,11 @@ import (
 
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
-	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/utility"
 )
 
 type AdapterWS struct {
+	hub  *Hub
 	conn *Client
 }
 
@@ -22,14 +22,14 @@ func NewWSAdapter() Adapter {
 * @param params et.Json
 * @return error
 **/
-func (s *AdapterWS) ConnectTo(params et.Json) error {
+func (s *AdapterWS) ConnectTo(hub *Hub, params et.Json) error {
 	if s.conn != nil {
 		return nil
 	}
 
 	url := params.Str("url")
 	if url == "" {
-		return nil
+		return utility.NewError("WS Adapter, url is required")
 	}
 
 	username := params.Str("username")
@@ -57,8 +57,8 @@ func (s *AdapterWS) ConnectTo(params et.Json) error {
 		return err
 	}
 
+	s.hub = hub
 	s.conn = result
-	logs.Debug("AdapterRedis:", params.ToString())
 
 	return nil
 }
@@ -74,11 +74,11 @@ func (s *AdapterWS) Close() {}
 **/
 func (s *AdapterWS) Subscribed(channel string) {
 	channel = clusterChannel(channel)
-	s.conn.Subscribe(channel, func(msg Message) {
-		if msg.tp == TpDirect {
-			s.conn.SendMessage(msg.Id, msg)
+	go s.conn.Subscribe(channel, func(msg Message) {
+		if msg.Tp == TpDirect {
+			s.hub.send(msg.Id, msg)
 		} else {
-			s.conn.Publish(msg.Channel, msg)
+			s.hub.publish(msg.Channel, msg.Queue, msg, msg.Ignored, msg.From)
 		}
 	})
 }
@@ -96,7 +96,7 @@ func (s *AdapterWS) UnSubscribed(channel string) {
 * Publish
 * @param sub channel string
 **/
-func (s *AdapterWS) Publish(channel string, msg Message) {
+func (s *AdapterWS) Publish(channel string, msg Message) error {
 	channel = clusterChannel(channel)
-	s.conn.Publish(channel, msg)
+	return s.conn.Publish(channel, msg)
 }

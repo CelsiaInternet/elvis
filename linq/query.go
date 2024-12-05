@@ -45,7 +45,7 @@ func (c *Linq) SqlColumDef(cols ...*Column) string {
 			n++
 			def := col.Def(c)
 
-			if col.name == SourceField {
+			if col.name == SourceField.Upp() {
 				data = col.As(c)
 			} else if _, exist := atribs[col.name]; !exist {
 				atribs[col.name] = col.name
@@ -323,7 +323,7 @@ func (c *Linq) SqlIndex() string {
 	var cols []*Column = []*Column{}
 	from := c.from[0].model
 	if from.UseSerie {
-		col := from.Col(SerieField)
+		col := from.Col(SerieField.Upp())
 		cols = append(cols, col)
 	} else {
 		for _, key := range from.PrimaryKeys {
@@ -407,8 +407,8 @@ func (c *Linq) SqlUpdate() string {
 		field := strs.Uppcase(key)
 		value := et.Unquote(val)
 
-		if model.UseSource && field == strs.Uppcase(SourceField) {
-			vals := strs.Uppcase(SourceField)
+		if model.UseSource && field == strs.Uppcase(SourceField.Upp()) {
+			vals := strs.Uppcase(SourceField.Upp())
 			atribs := c.new.Json(strs.Lowcase(field))
 
 			for ak, av := range atribs {

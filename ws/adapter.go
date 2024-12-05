@@ -7,14 +7,16 @@ import (
 )
 
 type Adapter interface {
-	ConnectTo(params et.Json) error
+	ConnectTo(hub *Hub, params et.Json) error
 	Close()
 	Subscribed(channel string)
 	UnSubscribed(channel string)
-	Publish(channel string, msg Message)
+	Publish(channel string, msg Message) error
 }
 
 func clusterChannel(channel string) string {
 	result := strs.Format(`cluster/%s`, channel)
-	return utility.ToBase64(result)
+	result = utility.ToBase64(result)
+
+	return result
 }

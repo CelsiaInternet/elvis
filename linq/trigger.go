@@ -10,16 +10,16 @@ func beforeInsert(model *Model, old, new *et.Json, data et.Json) error {
 	now := utility.Now()
 
 	if model.UseDateMake {
-		new.Set(DateMakeField, now)
+		new.Set(DateMakeField.Upp(), now)
 	}
 
 	if model.UseDateUpdate {
-		new.Set(DateUpdateField, now)
+		new.Set(DateUpdateField.Upp(), now)
 	}
 
 	if model.UseSerie {
 		index := jdb.NextSerie(model.db, model.Table)
-		new.Set(SerieField, index)
+		new.Set(SerieField.Upp(), index)
 	}
 
 	return nil
@@ -34,7 +34,7 @@ func beforeUpdate(model *Model, old, new *et.Json, data et.Json) error {
 	now := utility.Now()
 
 	if model.UseDateUpdate {
-		new.Set(DateUpdateField, now)
+		new.Set(DateUpdateField.Upp(), now)
 	}
 
 	return nil

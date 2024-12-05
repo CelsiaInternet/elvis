@@ -249,7 +249,7 @@ func (h *Hub) Unsubscribe(clientId string, channel, queue string) error {
 * @return error
 **/
 func (h *Hub) Publish(channel, queue string, msg Message, ignored []string, from et.Json) {
-	h.broadcast(channel, queue, msg, ignored, from)
+	h.publish(channel, queue, msg, ignored, from)
 	if h.adapter != nil {
 		h.adapter.Publish(channel, msg)
 	}
@@ -262,17 +262,12 @@ func (h *Hub) Publish(channel, queue string, msg Message, ignored []string, from
 * @return error
 **/
 func (h *Hub) SendMessage(clientId string, msg Message) error {
-	client := h.getClient(clientId)
-	if client == nil && h.adapter != nil {
-		h.adapter.Publish(clientId, msg)
-		return nil
+	err := h.send(clientId, msg)
+	if err != nil && h.adapter != nil {
+		return h.adapter.Publish(clientId, msg)
 	}
 
-	if client == nil {
-		return logs.Alertm(ERR_CLIENT_NOT_FOUND)
-	}
-
-	return client.sendMessage(msg)
+	return err
 }
 
 /**

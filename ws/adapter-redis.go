@@ -3,11 +3,12 @@ package ws
 import (
 	"github.com/celsiainternet/elvis/cache"
 	"github.com/celsiainternet/elvis/et"
-	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/utility"
+	"github.com/redis/go-redis/v9"
 )
 
 type AdapterRedis struct {
+	hub  *Hub
 	conn *cache.Conn
 }
 
@@ -20,7 +21,7 @@ func NewRedisAdapter() Adapter {
 * @param params et.Json
 * @return error
 **/
-func (s *AdapterRedis) ConnectTo(params et.Json) error {
+func (s *AdapterRedis) ConnectTo(hub *Hub, params et.Json) error {
 	if s.conn != nil {
 		return nil
 	}
@@ -37,6 +38,7 @@ func (s *AdapterRedis) ConnectTo(params et.Json) error {
 		return err
 	}
 
+	s.hub = hub
 	s.conn = result
 
 	return nil
@@ -53,16 +55,17 @@ func (s *AdapterRedis) Close() {}
 **/
 func (s *AdapterRedis) Subscribed(channel string) {
 	channel = clusterChannel(channel)
-	s.conn.Sub(channel, func(payload string) {
-		msg, err := DecodeMessage([]byte(payload))
-		if logs.Alert(err) != nil {
+	s.conn.Sub(channel, func(receive *redis.Message) {
+		data := []byte(receive.Payload)
+		msg, err := DecodeMessage(data)
+		if err != nil {
 			return
 		}
 
-		if msg.tp == TpDirect {
-			s.conn.Pub(msg.Id, msg)
+		if msg.Tp == TpDirect {
+			s.hub.send(msg.To, msg)
 		} else {
-			s.conn.Pub(msg.Channel, msg)
+			s.hub.publish(msg.Channel, msg.Queue, msg, msg.Ignored, msg.From)
 		}
 	})
 }
@@ -80,7 +83,12 @@ func (s *AdapterRedis) UnSubscribed(channel string) {
 * Publish
 * @param sub channel string
 **/
-func (s *AdapterRedis) Publish(channel string, msg Message) {
+func (s *AdapterRedis) Publish(channel string, msg Message) error {
 	channel = clusterChannel(channel)
-	s.conn.Pub(channel, msg)
+	bt, err := msg.Encode()
+	if err != nil {
+		return err
+	}
+
+	return s.conn.Pub(channel, bt)
 }

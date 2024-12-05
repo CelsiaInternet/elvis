@@ -243,7 +243,7 @@ func (c *Linq) insert() (et.Item, error) {
 
 func (c *Linq) update(current et.Json) (et.Item, error) {
 	model := c.from[0].model
-	c.idT = current.ValStr("-1", IdTFiled)
+	c.idT = current.ValStr("-1", IdTFiled.Low())
 
 	for _, trigger := range model.BeforeUpdate {
 		err := trigger(model, &current, c.new, c.data)
@@ -279,7 +279,7 @@ func (c *Linq) update(current et.Json) (et.Item, error) {
 
 func (c *Linq) delete(current et.Json) (et.Item, error) {
 	model := c.from[0].model
-	c.idT = current.ValStr("-1", IdTFiled)
+	c.idT = current.ValStr("-1", IdTFiled.Low())
 
 	for _, trigger := range model.BeforeDelete {
 		err := trigger(model, &current, nil, c.data)

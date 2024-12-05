@@ -75,7 +75,24 @@ func Now() string {
 **/
 func GetOTP(length int) string {
 	const charset = "0123456789"
-	var seededRand *rand.Rand = rand.New(rand.NewSource(timezone.NowTime().UnixNano()))
+	var seededRand = rand.New(rand.NewSource(timezone.NowTime().UnixNano()))
+
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = charset[seededRand.Intn(len(charset))]
+	}
+
+	return string(b)
+}
+
+/**
+* GetOTP return a random number
+* @param length int
+* @return string
+**/
+func GetPassword(length int) string {
+	const charset = "0123456789"
+	var seededRand = rand.New(rand.NewSource(timezone.NowTime().UnixNano()))
 
 	b := make([]byte, length)
 	for i := range b {

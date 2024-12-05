@@ -98,7 +98,24 @@ func GetQuery(r *http.Request) et.Json {
 	values := r.URL.Query()
 	for key, value := range values {
 		if len(value) > 0 {
-			result.Set(key, value[0])
+			result[key] = value[0]
+		}
+	}
+
+	return result
+}
+
+/**
+* GetHeader
+* @param r *http.Request
+* @return et.Json
+**/
+func GetHeader(r *http.Request) et.Json {
+	var result = et.Json{}
+	values := r.Header
+	for key, value := range values {
+		if len(value) > 0 {
+			result[key] = value[0]
 		}
 	}
 

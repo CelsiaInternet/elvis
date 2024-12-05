@@ -134,6 +134,10 @@ func (h *Hub) removeChannel(value *Channel) {
 }
 
 func (h *Hub) getQueue(name, queue string) *Queue {
+	if len(queue) == 0 {
+		return nil
+	}
+
 	h.mutex.RLock()
 	defer h.mutex.RUnlock()
 
@@ -176,20 +180,20 @@ func (h *Hub) onConnect(client *Subscriber) {
 	}
 
 	h.addClient(client)
+	logs.Logf(ServiceName, MSG_CLIENT_CONNECT, client.Id, client.Name, h.Id)
+
 	msg := NewMessage(h.From(), et.Json{
-		"ok":       true,
-		"message":  MSG_CONNECT_SUCCESSFULLY,
-		"clientId": client.Id,
-		"name":     client.Name,
+		"message":     MSG_CONNECT_SUCCESSFULLY,
+		"clientId":    client.Id,
+		"name":        client.Name,
+		"typeMessage": TypeMessages(),
 	}, TpConnect)
 	msg.Channel = "ws/connect"
-	client.sendMessage(msg)
+	client.send(msg)
 
 	if h.adapter != nil {
 		h.adapter.Subscribed(client.Id)
 	}
-
-	logs.Logf(ServiceName, MSG_CLIENT_CONNECT, client.Id, client.Name, h.Id)
 }
 
 func (h *Hub) onDisconnect(client *Subscriber) {
@@ -200,12 +204,11 @@ func (h *Hub) onDisconnect(client *Subscriber) {
 	clientId := client.Id
 	name := client.Name
 	h.removeClient(client)
+	logs.Logf(ServiceName, MSG_CLIENT_DISCONNECT, clientId, name, h.Id)
 
 	if h.adapter != nil {
 		h.adapter.UnSubscribed(clientId)
 	}
-
-	logs.Logf(ServiceName, MSG_CLIENT_DISCONNECT, clientId, name, h.Id)
 }
 
 func (h *Hub) connect(socket *websocket.Conn, clientId, name string) (*Subscriber, error) {
@@ -225,39 +228,28 @@ func (h *Hub) connect(socket *websocket.Conn, clientId, name string) (*Subscribe
 	return client, nil
 }
 
-func (h *Hub) streaming(socket *websocket.Conn, clientId, name string) (*Subscriber, error) {
-	client := h.getClient(clientId)
-	if client != nil {
-		return client, nil
-	}
-
-	client, isNew := newSubscriber(h, socket, clientId, name)
-	if isNew {
-		h.register <- client
-
-		go client.write()
-		go client.stream()
-	}
-
-	return client, nil
-}
-
-func (h *Hub) broadcast(channel, queue string, msg Message, ignored []string, from et.Json) {
+func (h *Hub) publish(channel, queue string, msg Message, ignored []string, from et.Json) {
 	msg.From = from
 	msg.Ignored = ignored
 
-	n := 0
 	_channel := h.getChannel(channel)
 	if _channel != nil {
-		n = _channel.broadcast(msg, ignored)
+		_channel.broadcast(msg, ignored)
 	}
 
 	_queue := h.getQueue(channel, queue)
 	if _queue != nil {
-		n = _queue.broadcast(msg, ignored)
+		_queue.broadcast(msg, ignored)
+	}
+}
+
+func (h *Hub) send(clientId string, msg Message) error {
+	client := h.getClient(clientId)
+	if client == nil {
+		return utility.NewError(ERR_CLIENT_NOT_FOUND)
 	}
 
-	logs.Logf(ServiceName, "Broadcast channel:%s sent:%d", channel, n)
+	return client.send(msg)
 }
 
 /**
@@ -275,12 +267,14 @@ func (h *Hub) JoinTo(master et.Json) error {
 	}
 
 	adapter := adapters[name]()
-	err := adapter.ConnectTo(master)
+	err := adapter.ConnectTo(h, master)
 	if err != nil {
 		return err
 	}
 
-	logs.Log(ServiceName, "Connected to master")
+	h.adapter = adapter
+
+	logs.Logf(ServiceName, `Connected to adapter (%s)`, name)
 
 	return nil
 }

@@ -13,12 +13,12 @@ var FromId string
 
 type Conn struct {
 	*redis.Client
-	_id     string
-	ctx     context.Context
-	host    string
-	dbname  int
-	chanels map[string]*redis.PubSub
-	mutex   *sync.RWMutex
+	_id      string
+	ctx      context.Context
+	host     string
+	dbname   int
+	channels map[string]bool
+	mutex    *sync.RWMutex
 }
 
 func Load() (*Conn, error) {

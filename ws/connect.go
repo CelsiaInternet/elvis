@@ -6,7 +6,6 @@ import (
 
 	"github.com/celsiainternet/elvis/claim"
 	"github.com/celsiainternet/elvis/envar"
-	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/response"
 	"github.com/celsiainternet/elvis/utility"
@@ -20,11 +19,6 @@ import (
 func (h *Hub) HttpLogin(w http.ResponseWriter, r *http.Request) {
 	username := r.Header.Get("username")
 	password := r.Header.Get("password")
-
-	logs.Debug(et.Json{
-		"username": username,
-		"password": password,
-	}.ToString())
 
 	ws_username := envar.GetStr("", "WS_USERNAME")
 	if !utility.ValidStr(ws_username, 0, []string{}) {
@@ -46,7 +40,7 @@ func (h *Hub) HttpLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	clientId := utility.UUID()
-	name := "Anonimo"
+	name := utility.GetOTP(6)
 	_, err = h.connect(conn, clientId, name)
 	if err != nil {
 		logs.Alert(err)
@@ -60,7 +54,7 @@ func (h *Hub) HttpLogin(w http.ResponseWriter, r *http.Request) {
 **/
 func (h *Hub) HttpConnect(w http.ResponseWriter, r *http.Request) {
 	query := response.GetQuery(r)
-	clientId := query.ValStr("", "clientId")
+	clientId := query.ValStr("", "clientid")
 	if clientId == "" {
 		clientId = utility.UUID()
 	}
@@ -80,38 +74,6 @@ func (h *Hub) HttpConnect(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_, err = h.connect(conn, clientId, name)
-	if err != nil {
-		logs.Alert(err)
-	}
-}
-
-/**
-* HttpStream connect to the server using the http
-* @param w http.ResponseWriter
-* @param r *http.Request
-**/
-func (h *Hub) HttpStream(w http.ResponseWriter, r *http.Request) {
-	query := response.GetQuery(r)
-	clientId := query.ValStr("", "clientId")
-	if clientId == "" {
-		clientId = utility.UUID()
-	}
-
-	name := query.ValStr("", "name")
-	if name == "" {
-		name = "Anonimo"
-	}
-
-	ctx := r.Context()
-	clientId = claim.ClientIdKey.String(ctx, clientId)
-	name = claim.NameKey.String(ctx, name)
-
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		response.HTTPError(w, r, http.StatusInternalServerError, err.Error())
-	}
-
-	_, err = h.streaming(conn, clientId, name)
 	if err != nil {
 		logs.Alert(err)
 	}

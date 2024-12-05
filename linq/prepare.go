@@ -45,7 +45,7 @@ func (c *Model) Consolidate(linq *Linq) *Linq {
 
 		if utility.ContainsInt([]int{TpField, TpFunction, TpDetail}, col.Tp) {
 			continue
-		} else if k == strs.Lowcase(SourceField) {
+		} else if k == SourceField.Low() {
 			atribs := linq.data.Json(k)
 
 			if c.integrityAtrib {
@@ -71,7 +71,7 @@ func (c *Model) Consolidate(linq *Linq) *Linq {
 	}
 
 	if c.UseSource && len(source) > 0 {
-		setValue(SourceField, source)
+		setValue(SourceField.Upp(), source)
 	}
 
 	linq.new = &new
@@ -107,7 +107,7 @@ func (c *Linq) PrepareInsert() (et.Items, error) {
 	model := c.from[0].model
 	model.Consolidate(c)
 	c.idT = "-1"
-	c.new.Set(IdTFiled, c.idT)
+	c.new.Set(IdTFiled.Upp(), c.idT)
 
 	for _, validate := range c.validates {
 		if err := validate.Col.Valid(validate.Value); err != nil {

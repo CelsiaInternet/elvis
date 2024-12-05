@@ -111,33 +111,33 @@ func NewColumn(model *Model, name, description, _type string, _default any) *Col
 		Hidden:      false,
 	}
 
-	if model.SourceField == nil && strs.Uppcase(SourceField) == strs.Uppcase(result.name) {
+	if model.SourceField == nil && SourceField.Upp() == strs.Uppcase(result.name) {
 		model.SourceField = result
 		result.Indexed = true
 		model.IndexAdd(result.name)
 	}
 
-	if !model.UseDateMake && strs.Uppcase(result.name) == strs.Uppcase(DateMakeField) {
+	if !model.UseDateMake && strs.Uppcase(result.name) == DateMakeField.Upp() {
 		model.DateMakeField = result
 		model.UseDateMake = true
 	}
 
-	if !model.UseDateUpdate && strs.Uppcase(result.name) == strs.Uppcase(DateUpdateField) {
+	if !model.UseDateUpdate && strs.Uppcase(result.name) == DateUpdateField.Upp() {
 		model.DateUpdateField = result
 		model.UseDateUpdate = true
 	}
 
-	if !model.UseState && strs.Uppcase(result.name) == strs.Uppcase(StateField) {
+	if !model.UseState && strs.Uppcase(result.name) == StateField.Upp() {
 		model.StateField = result
 		model.UseState = true
 	}
 
-	if !model.UseProject && strs.Uppcase(result.name) == strs.Uppcase(ProjectField) {
+	if !model.UseProject && strs.Uppcase(result.name) == ProjectField.Upp() {
 		model.ProjectField = result
 		model.UseProject = true
 	}
 
-	if !model.UseSerie && strs.Uppcase(result.name) == strs.Uppcase(SerieField) {
+	if !model.UseSerie && strs.Uppcase(result.name) == SerieField.Upp() {
 		model.UseSerie = true
 	}
 
