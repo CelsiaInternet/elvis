@@ -16,6 +16,7 @@ data
 build
 sql
 .vscode
+.tool-version
 
 # Test binary, built with `go test -c`
 *.test
