@@ -183,6 +183,12 @@ func ddlTable(model *Model) string {
 	result = strs.Append(result, indexsDef, "\n\n")
 	foreign := ddlForeignKeys(model)
 	result = strs.Append(result, foreign, "\n\n")
+	if !model.db.UseCore {
+		model.Ddl = result
+
+		return model.Ddl
+	}
+
 	sync := ddlSetSync(model)
 	result = strs.Append(result, sync, "\n\n")
 	if model.UseState {
@@ -230,6 +236,12 @@ func ddlFunctions(model *Model) string {
 
 	result = strs.Append(result, uniqueKeys, "\n")
 	result = strs.Append(result, indexs, "\n\n")
+	if !model.db.UseCore {
+		model.DdlIndex = result
+
+		return model.DdlIndex
+	}
+
 	sync := ddlSetSync(model)
 	result = strs.Append(result, sync, "\n\n")
 	if model.UseState {

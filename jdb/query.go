@@ -104,6 +104,10 @@ func exec(db *DB, id, sql string, args ...any) error {
 		return logs.Errorf(msg.ERR_SQL, err.Error(), sql)
 	}
 
+	if !db.UseCore {
+		return nil
+	}
+
 	err = db.upsertDDL(id, query)
 	if err != nil {
 		return err
