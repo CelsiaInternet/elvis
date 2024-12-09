@@ -93,6 +93,7 @@ elif [ "$CURRENT_VERSION" == "v0.0.0" ]; then
   NEW_VERSION="v1.0.0"
   update_version
 elif [ "$VERSION" == true ]; then
+  build_version
   version
 else
   build_version
