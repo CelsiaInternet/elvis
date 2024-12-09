@@ -142,7 +142,7 @@ func ConnectTo(params et.Json) (*DB, error) {
 		Port:       port,
 		Dbname:     dbname,
 		Connection: connStr,
-		db:         db,
 		UseCore:    false,
+		db:         db,
 	}, nil
 }

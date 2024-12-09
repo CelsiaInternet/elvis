@@ -22,8 +22,8 @@ func Load() (*DB, error) {
 	if err != nil {
 		return nil, err
 	}
-	conn.UseCore = envar.GetBool(true, "USE_CORE")
 
+	conn.UseCore = envar.GetBool(true, "USE_CORE")
 	if !conn.UseCore {
 		return conn, nil
 	}

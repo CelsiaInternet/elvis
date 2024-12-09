@@ -6,18 +6,10 @@ import (
 )
 
 /**
-* beforeListener handler listened
+* syncListener handler listened
 * @param res js.Json
 **/
-func commandListener(res et.Json) {
-
-}
-
-/**
-* beforeListener handler listened
-* @param res js.Json
-**/
-func beforeListener(res et.Json) {
+func syncListener(res et.Json) {
 	schema := res.Str("schema")
 	table := res.Str("table")
 	model := Table(schema, table)
@@ -27,10 +19,10 @@ func beforeListener(res et.Json) {
 }
 
 /**
-* afterListener handler listened
+* recyclingListener handler listened
 * @param res js.Json
 **/
-func afterListener(res et.Json) {
+func recyclingListener(res et.Json) {
 	schema := res.Str("schema")
 	table := res.Str("table")
 	model := Table(schema, table)
@@ -40,15 +32,14 @@ func afterListener(res et.Json) {
 }
 
 /**
-* setListener
+* SetListener
 * @param db *jdb.DB
 **/
-func setListener(db *jdb.DB) {
+func SetListener(db *jdb.DB) {
 	if !db.UseCore {
 		return
 	}
 
-	db.SetListen([]string{"before"}, beforeListener)
-	db.SetListen([]string{"after"}, afterListener)
-	db.SetListen([]string{"command"}, commandListener)
+	db.SetListen([]string{"sync"}, syncListener)
+	db.SetListen([]string{"recycling"}, recyclingListener)
 }
