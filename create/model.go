@@ -56,9 +56,9 @@ import (
 	"os"
 	"os/signal"
 
-	serv "$1/internal/service/$2"
 	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/envar"
+	serv "$1/internal/service/$2"	
 )
 
 func main() {
@@ -70,18 +70,18 @@ func main() {
 	envar.SetStr("dbuser", "", "Database user", "DB_USER")
 	envar.SetStr("dbpass", "", "Database password", "DB_PASSWORD")
 
-	serv, err := serv.New()
+	srv, err := serv.New()
 	if err != nil {
 		console.Fatal(err)
 	}
 
-	go serv.Start()
+	go srv.Start()
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	<-c
 
-	serv.Close()
+	srv.Close()
 }
 `
 
@@ -356,13 +356,12 @@ import (
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/jrpc"
-	"github.com/celsiainternet/elvis/module"
 )
 
 type Services struct{}
 
 func StartRpcServer() {
-	_, err := jrpc.Load(PackageName)
+	pkg, err := jrpc.Load(PackageName)
 	if err != nil {
 		console.Panic(err)
 	}
@@ -373,7 +372,7 @@ func StartRpcServer() {
 		console.Fatal(err)
 	}
 
-	go jrpc.Start()
+	go pkg.Start()
 }
 
 func (c *Services) Version(require et.Json, response *et.Item) error {
@@ -422,11 +421,10 @@ const modelConfig = `package $1
 
 import (
 	"github.com/celsiainternet/elvis/config"
-	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
-	"github.com/celsiainternet/elvis/utility"
 	"github.com/celsiainternet/elvis/jrpc"
+	"github.com/celsiainternet/elvis/utility"
 )
 
 func LoadConfig() error {
@@ -461,8 +459,8 @@ import (
 	"context"
 
 	"github.com/celsiainternet/elvis/envar"
-	"github.com/celsiainternet/elvis/jdb"
 	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/jdb"
 )
 
 type Controller struct {
@@ -502,9 +500,8 @@ import (
 	"context"
 
 	"github.com/celsiainternet/elvis/envar"
-	"github.com/celsiainternet/elvis/jdb"
 	"github.com/celsiainternet/elvis/et"
-	"github.com/celsiainternet/elvis/utility"
+	"github.com/celsiainternet/elvis/jdb"
 )
 
 type Controller struct {
@@ -810,29 +807,6 @@ func Get$2ById(id string) (et.Item, error) {
 }
 
 /**
-* Valida$2
-* @params id, name string
-* @return et.Item, error
-**/
-func Valida$2(id, name string) (et.Item, error) {
-	item, err := $2.Data("_state", "_id").
-		Where($2.Column("_id").Neg(id)).
-		And($2.Column("name").Eq(name)).
-		First()
-	if err != nil {
-		return et.Item{}, err
-	}
-
-	if item.Ok {
-		return item, utility.NewErrorf(msg.RECORD_DUPLICATE)
-	}
-
-	return et.Item{
-		Ok: true,
-	}, nil
-}
-
-/**
 * Insert$2
 * @params project_id, id, name, description string
 * @params data et.Json
@@ -851,20 +825,15 @@ func Insert$2(project_id, id, name, description string, data et.Json) (et.Item, 
 		return et.Item{}, utility.NewErrorf(msg.MSG_ATRIB_REQUIRED, "_id")
 	}
 
-	current, err := $2.Data("_state", "_id").
-		Where($2.Column("_id").Eq(id)).
+	current, err := Invoices.Data().
+		Where(Invoices.Column("_id").Eq(id)).
 		First()
 	if err != nil {
 		return et.Item{}, err
 	}
 
 	if current.Ok {
-		return et.Item{Ok: false, Result: item.Result}, nil
-	}
-
-	_, err = Valida$2(id, name)
-	if err != nil {
-		return et.Item{}, err
+		return et.Item{Ok: false, Result: current.Result}, nil
 	}
 
 	id = utility.GenKey(id)
@@ -875,7 +844,7 @@ func Insert$2(project_id, id, name, description string, data et.Json) (et.Item, 
 	data["_id"] = id
 	data["name"] = name
 	data["description"] = description
-	item, err = $2.Insert(data).
+	item, err := $2.Insert(data).
 		CommandOne()
 	if err != nil {
 		return et.Item{}, err
@@ -897,8 +866,8 @@ func UpSert$2(project_id, id, name, description string, data et.Json) (et.Item, 
 		return et.Item{}, err
 	}
 	
-	if !current.Ok {
-		return return et.Item{Ok: true, Result: current.Result}, nil
+	if current.Ok {
+		return current, nil
 	}
 
 	current_state := current.Key("_state")
