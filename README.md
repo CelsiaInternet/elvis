@@ -21,8 +21,6 @@ go build ./cmd/apigateway
 
 go get -u github.com/celsiainternet/elvis@v1.1.48
 go get github.com/celsiainternet/elvis@v1.1.48
-
-sed -i '' 's/v1.1.48/v1.1.48/g' README.md
 ```
 
 ## Create project

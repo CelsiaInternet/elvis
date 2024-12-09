@@ -65,6 +65,8 @@ update_version() {
   git push -u origin
   git tag "$NEW_VERSION"
   git push origin --tags
+  sed -i "" "s/$CURRENT_VERSION/$NEW_VERSION/g" README.md
+
   echo "Etiqueta creada y enviada a Git"
 }
 
@@ -72,6 +74,8 @@ version() {
   echo "Etiquetando con: $NEW_VERSION"
   git tag "$NEW_VERSION"
   git push -u origin --tags
+  sed -i "" "s/$CURRENT_VERSION/$NEW_VERSION/g" README.md
+  
   echo "Etiqueta creada y enviada a Git"
 }
 
