@@ -39,8 +39,17 @@ func (h *Hub) HttpLogin(w http.ResponseWriter, r *http.Request) {
 		response.HTTPError(w, r, http.StatusInternalServerError, err.Error())
 	}
 
-	clientId := utility.UUID()
-	name := utility.GetOTP(6)
+	query := response.GetQuery(r)
+	clientId := query.ValStr("", "clientid")
+	if clientId == "" {
+		clientId = utility.UUID()
+	}
+
+	name := query.ValStr("", "name")
+	if name == "" {
+		name = "Anonimo"
+	}
+
 	_, err = h.connect(conn, clientId, name)
 	if err != nil {
 		logs.Alert(err)

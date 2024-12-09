@@ -6,6 +6,7 @@ import (
 
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/logs"
+	"github.com/celsiainternet/elvis/strs"
 	"github.com/celsiainternet/elvis/utility"
 	"github.com/celsiainternet/elvis/ws"
 )
@@ -19,7 +20,7 @@ var FromId string
 * Load
 * @return erro
 **/
-func Load(name string) (*ws.Client, error) {
+func Load(id, name string) (*ws.Client, error) {
 	if conn != nil {
 		return conn, nil
 	}
@@ -40,9 +41,9 @@ func Load(name string) (*ws.Client, error) {
 	}
 
 	client, err := ws.Login(&ws.ClientConfig{
-		ClientId:  utility.UUID(),
+		ClientId:  id,
 		Name:      name,
-		Url:       url,
+		Url:       strs.Format(`%s?clientId=%s&name=%s`, url, id, name),
 		Reconnect: envar.GetInt(3, "RT_RECONCECT"),
 		Header: http.Header{
 			"username": []string{username},
