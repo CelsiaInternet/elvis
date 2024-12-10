@@ -97,6 +97,10 @@ func SnowflakeID() string {
 **/
 func PrefixId(prefix string) string {
 	id := ShortUUID()
+	if prefix == "" {
+		return id
+	}
+
 	return prefix + "-" + id
 }
 

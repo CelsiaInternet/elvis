@@ -192,6 +192,7 @@ func Source(channel string, f func(EvenMessage)) error {
 **/
 func Log(event string, data et.Json) {
 	go Publish("log", data)
+	go Publish(event, data)
 }
 
 /**
