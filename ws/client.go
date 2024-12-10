@@ -2,7 +2,6 @@ package ws
 
 import (
 	"net/http"
-	"strings"
 	"sync"
 	"time"
 
@@ -92,7 +91,7 @@ func Login(config *ClientConfig) (*Client, error) {
 		reconnect: config.Reconnect,
 	}
 
-	path := strs.Format(`%s`, result.url)
+	path := strs.Format(`%s?clientid=%s&name=%s`, result.url, result.ClientId, result.name)
 	err := result.ConnectTo(path)
 	if err != nil {
 		return nil, err
@@ -151,8 +150,7 @@ func (c *Client) ConnectTo(path string) error {
 * @return error
 **/
 func (c *Client) Connect() error {
-	name := strings.ReplaceAll(c.name, " ", "_")
-	path := strs.Format(`%s?clientId=%s&name=%s`, c.url, c.ClientId, name)
+	path := strs.Format(`%s?clientid=%s&name=%s`, c.url, c.ClientId, c.name)
 	err := c.ConnectTo(path)
 	if err != nil {
 		return err

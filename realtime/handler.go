@@ -145,7 +145,7 @@ func Work(event string, data et.Json) et.Json {
 	work := et.Json{
 		"created_at": timezone.Now(),
 		"_id":        utility.UUID(),
-		"from_id":    FromId,
+		"from_id":    conn.ClientId,
 		"event":      event,
 		"data":       data,
 	}

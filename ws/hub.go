@@ -180,7 +180,7 @@ func (h *Hub) onConnect(client *Subscriber) {
 	}
 
 	h.addClient(client)
-	logs.Logf(ServiceName, MSG_CLIENT_CONNECT, client.Id, client.Name, h.Id)
+	logs.Logf(ServiceName, MSG_CLIENT_CONNECT, client.Id, client.Name)
 
 	msg := NewMessage(h.From(), et.Json{
 		"message":     MSG_CONNECT_SUCCESSFULLY,
@@ -201,14 +201,13 @@ func (h *Hub) onDisconnect(client *Subscriber) {
 		return
 	}
 
-	clientId := client.Id
-	name := client.Name
-	h.removeClient(client)
-	logs.Logf(ServiceName, MSG_CLIENT_DISCONNECT, clientId, name, h.Id)
+	logs.Logf(ServiceName, MSG_CLIENT_DISCONNECT, client.Id, client.Name)
 
 	if h.adapter != nil {
-		h.adapter.UnSubscribed(clientId)
+		h.adapter.UnSubscribed(client.Id)
 	}
+
+	h.removeClient(client)
 }
 
 func (h *Hub) connect(socket *websocket.Conn, clientId, name string) (*Subscriber, error) {

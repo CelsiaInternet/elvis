@@ -6,7 +6,6 @@ import (
 
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/logs"
-	"github.com/celsiainternet/elvis/strs"
 	"github.com/celsiainternet/elvis/utility"
 	"github.com/celsiainternet/elvis/ws"
 )
@@ -14,7 +13,6 @@ import (
 const ServiceName = "Real Time"
 
 var conn *ws.Client
-var FromId string
 
 /**
 * Load
@@ -43,7 +41,7 @@ func Load(id, name string) (*ws.Client, error) {
 	client, err := ws.Login(&ws.ClientConfig{
 		ClientId:  id,
 		Name:      name,
-		Url:       strs.Format(`%s?clientId=%s&name=%s`, url, id, name),
+		Url:       url,
 		Reconnect: envar.GetInt(3, "RT_RECONCECT"),
 		Header: http.Header{
 			"username": []string{username},
@@ -55,7 +53,6 @@ func Load(id, name string) (*ws.Client, error) {
 	}
 
 	conn = client
-	FromId = client.ClientId
 
 	logs.Logf(ServiceName, `Connected host:%s`, url)
 
