@@ -221,7 +221,12 @@ func (c *Linq) insert() (et.Item, error) {
 
 	item, err := c.queryOne()
 	if err != nil {
-		event.Log("error/sql", et.Json{"action": "insert", "sql": c.sql, "error": err.Error()})
+		event.Log("error/sql", et.Json{
+			"model":  model.Name,
+			"action": "insert",
+			"sql":    c.sql,
+			"error":  err.Error(),
+		})
 		return et.Item{}, err
 	}
 
@@ -258,7 +263,12 @@ func (c *Linq) update(current et.Json) (et.Item, error) {
 
 	item, err := c.queryOne()
 	if err != nil {
-		event.Log("error/sql", et.Json{"action": "update", "sql": c.sql, "error": err.Error()})
+		event.Log("error/sql", et.Json{
+			"model":  model.Name,
+			"action": "insert",
+			"sql":    c.sql,
+			"error":  err.Error(),
+		})
 		return et.Item{}, err
 	}
 
@@ -295,7 +305,12 @@ func (c *Linq) delete(current et.Json) (et.Item, error) {
 
 	item, err := c.queryOne()
 	if err != nil {
-		event.Log("error/sql", et.Json{"action": "delete", "sql": c.sql, "error": err.Error()})
+		event.Log("error/sql", et.Json{
+			"model":  model.Name,
+			"action": "insert",
+			"sql":    c.sql,
+			"error":  err.Error(),
+		})
 		return et.Item{}, err
 	}
 
