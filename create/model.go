@@ -1202,7 +1202,7 @@ services:
     deploy:
       replicas: 1
     environment:
-      - "APP=Celsia Internet - Event Stack"
+      - "APP=Celsia Internet"
       - "PORT=3300"
       - "VERSION=1.0.1"
       - "COMPANY=Celsia Internet"

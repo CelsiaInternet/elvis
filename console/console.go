@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/celsiainternet/elvis/et"
-	"github.com/celsiainternet/elvis/realtime"
+	"github.com/celsiainternet/elvis/event"
 	"github.com/celsiainternet/elvis/stdrout"
 	"github.com/celsiainternet/elvis/strs"
 	"github.com/celsiainternet/elvis/utility"
@@ -17,12 +17,10 @@ import (
 func printLn(kind string, color string, args ...any) {
 	stdrout.Printl(kind, color, args...)
 
-	if realtime.Active() {
-		realtime.Publish("logs", et.Json{
-			"kind":    kind,
-			"message": fmt.Sprint(args...),
-		})
-	}
+	event.Publish("logs", et.Json{
+		"kind":    kind,
+		"message": fmt.Sprint(args...),
+	})
 }
 
 func LogK(kind string, args ...any) error {
