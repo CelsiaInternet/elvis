@@ -359,8 +359,6 @@ func GetVerify(device string, key string) (string, error) {
 		return "", err
 	}
 
-	Delete(key)
-
 	return result, nil
 }
 
