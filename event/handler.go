@@ -35,8 +35,14 @@ func publish(channel string, data et.Json) error {
 **/
 func Publish(channel string, data et.Json) error {
 	stage := envar.GetStr("local", "STAGE")
-	pipe := strs.Format("pipe:%s/%s", stage, channel)
-	publish(pipe, data)
+	pipe := et.Json{
+		"created_at": timezone.Now(),
+		"_id":        utility.UUID(),
+		"from_id":    FromId,
+		"channel":    channel,
+		"data":       data,
+	}
+	publish(strs.Format("pipe:%s", stage), pipe)
 
 	return publish(channel, data)
 }
