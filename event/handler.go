@@ -4,20 +4,16 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/response"
+	"github.com/celsiainternet/elvis/strs"
 	"github.com/celsiainternet/elvis/timezone"
 	"github.com/celsiainternet/elvis/utility"
 	"github.com/nats-io/nats.go"
 )
 
-/**
-* Publish
-* @param channel string
-* @param data et.Json
-* @return error
-**/
-func Publish(channel string, data et.Json) error {
+func publish(channel string, data et.Json) error {
 	if conn == nil {
 		return nil
 	}
@@ -29,6 +25,20 @@ func Publish(channel string, data et.Json) error {
 	}
 
 	return conn.Publish(msg.Channel, dt)
+}
+
+/**
+* Publish
+* @param channel string
+* @param data et.Json
+* @return error
+**/
+func Publish(channel string, data et.Json) error {
+	stage := envar.GetStr("local", "STAGE")
+	pipe := strs.Format("pipe:%s/%s", stage, channel)
+	publish(pipe, data)
+
+	return publish(channel, data)
 }
 
 /**
@@ -166,23 +176,28 @@ func WorkState(work_id string, status WorkStatus, data et.Json) {
 }
 
 /**
-* Data
-* @param string channel
-* @param func(Message) reciveFn
-* @return error
-**/
-func Data(channel string, data et.Json) error {
-	return Publish(channel, data)
-}
-
-/**
 * Source
 * @param string channel
-* @param func(Message) reciveFn
+* @param data et.Json
 * @return error
 **/
-func Source(channel string, f func(EvenMessage)) error {
-	return Subscribe(channel, f)
+func Source(model, action, err string, data et.Json) et.Json {
+	source := et.Json{
+		"created_at": timezone.Now(),
+		"_id":        utility.UUID(),
+		"from_id":    FromId,
+		"model":      model,
+		"action":     action,
+		"error":      err,
+		"data":       data,
+	}
+
+	go Publish("event/source", source)
+	if len(err) > 0 {
+		go Publish("event/source/error", source)
+	}
+
+	return source
 }
 
 /**

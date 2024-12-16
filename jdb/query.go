@@ -174,22 +174,6 @@ func (d *DB) Query(sql string, args ...any) (et.Items, error) {
 }
 
 /**
-* Bulck
-* @param sql string
-* @param args ...any
-* @return et.Items
-* @return error
-**/
-func (d *DB) Bulck(sql string, args ...any) error {
-	_, err := d.db.Exec(sql, args...)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-/**
 * QueryOne
 * @param db *DB
 * @param sql string
@@ -206,6 +190,22 @@ func (d *DB) QueryOne(sql string, args ...any) (et.Item, error) {
 	result := rowsItem(items)
 
 	return result, nil
+}
+
+/**
+* Bulck
+* @param sql string
+* @param args ...any
+* @return et.Items
+* @return error
+**/
+func (d *DB) Bulck(sql string, args ...any) error {
+	_, err := d.db.Exec(sql, args...)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 /**
