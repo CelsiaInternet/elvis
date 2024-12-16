@@ -9,6 +9,7 @@ import (
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/logs"
+	"github.com/celsiainternet/elvis/timezone"
 	"github.com/celsiainternet/elvis/utility"
 	"github.com/golang-jwt/jwt/v4"
 )
@@ -100,7 +101,7 @@ func NewToken(id, app, name string, username, device string, duration time.Durat
 	c.Device = device
 	c.Duration = duration
 	if c.Duration != 0 {
-		c.ExpiresAt = time.Now().Add(c.Duration).Unix()
+		c.ExpiresAt = timezone.Add(c.Duration).Unix()
 	}
 	_jwt := jwt.NewWithClaims(jwt.SigningMethodHS256, c)
 	token, err := _jwt.SignedString([]byte(secret))
