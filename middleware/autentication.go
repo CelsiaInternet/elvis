@@ -19,12 +19,12 @@ import (
 * @return string
 * @return error
 **/
-func tokenFromAuthorization(authorization string) (string, error) {
+func tokenFromAuthorization(authorization, prefix string) (string, error) {
 	if authorization == "" {
 		return "", logs.Alertm("Autorization is required")
 	}
 
-	if !strings.HasPrefix(authorization, "Bearer") {
+	if !strings.HasPrefix(authorization, prefix) {
 		return "", logs.Alertm("Invalid autorization format")
 	}
 
@@ -44,18 +44,23 @@ func tokenFromAuthorization(authorization string) (string, error) {
 * @return error
 **/
 func GetAuthorization(w http.ResponseWriter, r *http.Request) (string, error) {
-	cookie, err := r.Cookie("auth_token")
-	if err == nil {
-		return cookie.Value, nil
+	_, ok := r.Header["Authorization"]
+	if ok {
+		authorization := r.Header.Get("Authorization")
+		result, err := tokenFromAuthorization(authorization, "Bearer")
+		if err != nil {
+			return "", logs.Alert(err)
+		}
+
+		return result, nil
 	}
 
-	authorization := r.Header.Get("Authorization")
-	result, err := tokenFromAuthorization(authorization)
+	cookie, err := r.Cookie("auth_token")
 	if err != nil {
 		return "", logs.Alert(err)
 	}
 
-	return result, nil
+	return cookie.Value, nil
 }
 
 /**

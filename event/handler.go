@@ -7,7 +7,6 @@ import (
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/response"
-	"github.com/celsiainternet/elvis/strs"
 	"github.com/celsiainternet/elvis/timezone"
 	"github.com/celsiainternet/elvis/utility"
 	"github.com/nats-io/nats.go"
@@ -39,10 +38,11 @@ func Publish(channel string, data et.Json) error {
 		"created_at": timezone.Now(),
 		"_id":        utility.UUID(),
 		"from_id":    FromId,
+		"stage":      stage,
 		"channel":    channel,
 		"data":       data,
 	}
-	publish(strs.Format("pipe:%s", stage), pipe)
+	publish("pipe", pipe)
 
 	return publish(channel, data)
 }
