@@ -1,11 +1,11 @@
 package realtime
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/event"
-	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/response"
 	"github.com/celsiainternet/elvis/timezone"
 	"github.com/celsiainternet/elvis/utility"
@@ -29,7 +29,6 @@ func From() et.Json {
 **/
 func Ping() {
 	if conn == nil {
-		logs.Alertm(ERR_REALTIME_NOT_LOAD)
 		return
 	}
 
@@ -47,7 +46,7 @@ func Active() bool {
 **/
 func SetFrom(name string) error {
 	if conn == nil {
-		return logs.Alertm(ERR_REALTIME_NOT_LOAD)
+		return errors.New(ERR_REALTIME_NOT_LOAD)
 	}
 
 	return conn.SetFrom(name)
@@ -60,7 +59,7 @@ func SetFrom(name string) error {
 **/
 func Publish(channel string, message interface{}) error {
 	if conn == nil {
-		return logs.Alertm(ERR_REALTIME_NOT_LOAD)
+		return errors.New(ERR_REALTIME_NOT_LOAD)
 	}
 
 	conn.Publish(channel, message)
@@ -75,7 +74,7 @@ func Publish(channel string, message interface{}) error {
 **/
 func SendMessage(clientId string, message interface{}) error {
 	if conn == nil {
-		return logs.Alertm(ERR_REALTIME_NOT_LOAD)
+		return errors.New(ERR_REALTIME_NOT_LOAD)
 	}
 
 	return conn.SendMessage(clientId, message)
@@ -88,7 +87,7 @@ func SendMessage(clientId string, message interface{}) error {
 **/
 func Subscribe(channel string, reciveFn func(ws.Message)) error {
 	if conn == nil {
-		return logs.Alertm(ERR_REALTIME_NOT_LOAD)
+		return errors.New(ERR_REALTIME_NOT_LOAD)
 	}
 
 	conn.Subscribe(channel, reciveFn)
@@ -101,7 +100,6 @@ func Subscribe(channel string, reciveFn func(ws.Message)) error {
 **/
 func Unsubscribe(channel string) {
 	if conn == nil {
-		logs.Alertm(ERR_REALTIME_NOT_LOAD)
 		return
 	}
 
@@ -115,7 +113,6 @@ func Unsubscribe(channel string) {
 **/
 func Queue(channel, queue string, reciveFn func(ws.Message)) {
 	if conn == nil {
-		logs.Alertm(ERR_REALTIME_NOT_LOAD)
 		return
 	}
 
@@ -129,7 +126,6 @@ func Queue(channel, queue string, reciveFn func(ws.Message)) {
 **/
 func Stack(channel string, reciveFn func(ws.Message)) {
 	if conn == nil {
-		logs.Alertm(ERR_REALTIME_NOT_LOAD)
 		return
 	}
 
@@ -244,7 +240,6 @@ func TokenLastUse(data et.Json) {
 **/
 func SetDirectMessageCallback(reciveFn func(ws.Message)) {
 	if conn == nil {
-		logs.Alertm(ERR_REALTIME_NOT_LOAD)
 		return
 	}
 
@@ -257,7 +252,6 @@ func SetDirectMessageCallback(reciveFn func(ws.Message)) {
 **/
 func SetReconnectCallback(reciveFn func(c *ws.Client)) {
 	if conn == nil {
-		logs.Alertm(ERR_REALTIME_NOT_LOAD)
 		return
 	}
 

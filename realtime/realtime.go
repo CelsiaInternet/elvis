@@ -30,12 +30,12 @@ func Load(id, name string) (*ws.Client, error) {
 
 	username := envar.GetStr("", "WS_USERNAME")
 	if username == "" {
-		return nil, utility.NewError(ERR_WS_USERNAME_REQUIRED)
+		return nil, utility.NewError(MSG_WS_USERNAME_REQUIRED)
 	}
 
 	password := envar.GetStr("", "WS_PASSWORD")
 	if password == "" {
-		return nil, utility.NewError(ERR_WS_PASSWORD_REQUIRED)
+		return nil, utility.NewError(MSG_WS_PASSWORD_REQUIRED)
 	}
 
 	client, err := ws.Login(&ws.ClientConfig{
