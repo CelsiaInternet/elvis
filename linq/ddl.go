@@ -68,7 +68,7 @@ func ddlForeignKeys(model *Model) string {
 		key := strs.Replace(model.Table, ".", "_") + "_" + ref.Fkey
 		key = strs.Replace(key, "-", "_") + "_FKEY"
 		key = strs.Lowcase(key)
-		return strs.Format(`ALTER TABLE IF EXISTS %s ADD CONSTRAINT %s FOREIGN KEY (%s) %s;`, model.Table, strs.Uppcase(key), strs.Uppcase(ref.Fkey), ref.DDL())
+		result = strs.Format(`ALTER TABLE IF EXISTS %s ADD CONSTRAINT %s FOREIGN KEY (%s) %s;`, model.Table, strs.Uppcase(key), strs.Uppcase(ref.Fkey), ref.DDL())
 	}
 
 	return result
