@@ -294,9 +294,11 @@ func GetUser(r *http.Request) et.Json {
 	ctx := r.Context()
 	username := UsernameKey.String(ctx, "Anonimo")
 	fullName := NameKey.String(ctx, "Anonimo")
+	clientId := ClientIdKey.String(ctx, "-1")
 
 	return et.Json{
 		"date_at":   now,
+		"client_id": clientId,
 		"username":  username,
 		"full_name": fullName,
 	}
