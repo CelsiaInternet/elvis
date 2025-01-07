@@ -275,9 +275,9 @@ func SetToken(app, device, id, token string, duration time.Duration) error {
 }
 
 /**
-* GetUser
+* ClientId
 * @param r *http.Request
-* @return et.Json
+* @return string
 **/
 func ClientId(r *http.Request) string {
 	ctx := r.Context()
@@ -285,11 +285,11 @@ func ClientId(r *http.Request) string {
 }
 
 /**
-* GetUser
+* GetClient
 * @param r *http.Request
 * @return et.Json
 **/
-func GetUser(r *http.Request) et.Json {
+func GetClient(r *http.Request) et.Json {
 	now := utility.Now()
 	ctx := r.Context()
 	username := UsernameKey.String(ctx, "Anonimo")
