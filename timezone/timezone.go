@@ -3,7 +3,7 @@ package timezone
 import (
 	"time"
 
-	"github.com/cgalvisleon/et/envar"
+	"github.com/celsiainternet/elvis/envar"
 )
 
 var loc *time.Location

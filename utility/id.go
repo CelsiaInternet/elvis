@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/bwmarrin/snowflake"
-	"github.com/cgalvisleon/et/timezone"
+	"github.com/celsiainternet/elvis/timezone"
 	"github.com/google/uuid"
 	gonanoid "github.com/matoous/go-nanoid/v2"
 	"github.com/oklog/ulid"

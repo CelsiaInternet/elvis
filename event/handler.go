@@ -7,9 +7,9 @@ import (
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/response"
+	"github.com/celsiainternet/elvis/strs"
 	"github.com/celsiainternet/elvis/timezone"
 	"github.com/celsiainternet/elvis/utility"
-	"github.com/cgalvisleon/et/strs"
 	"github.com/nats-io/nats.go"
 )
 
