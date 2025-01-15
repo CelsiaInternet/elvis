@@ -825,8 +825,8 @@ func Insert$2(project_id, id, name, description string, data et.Json) (et.Item, 
 		return et.Item{}, utility.NewErrorf(msg.MSG_ATRIB_REQUIRED, "_id")
 	}
 
-	current, err := Invoices.Data().
-		Where(Invoices.Column("_id").Eq(id)).
+	current, err := $2.Data().
+		Where($2.Column("_id").Eq(id)).
 		First()
 	if err != nil {
 		return et.Item{}, err
