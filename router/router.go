@@ -263,10 +263,35 @@ func AuthorizationRoute(r *chi.Mux, method, path string, h http.HandlerFunc, pac
 	return r
 }
 
+func With(r *chi.Mux, method, path string, middlewares []func(http.Handler) http.Handler, h http.HandlerFunc, packageName, packagePath, host string) *chi.Mux {
+	switch method {
+	case "GET":
+		r.With(middlewares...).Get(path, h)
+	case "POST":
+		r.With(middlewares...).Post(path, h)
+	case "PUT":
+		r.With(middlewares...).Put(path, h)
+	case "PATCH":
+		r.With(middlewares...).Patch(path, h)
+	case "DELETE":
+		r.With(middlewares...).Delete(path, h)
+	case "HEAD":
+		r.With(middlewares...).Head(path, h)
+	case "OPTIONS":
+		r.With(middlewares...).Options(path, h)
+	case "HandlerFunc":
+		r.With(middlewares...).HandleFunc(path, h)
+	}
+
+	pushApiGateway(method, path, packagePath, host, packageName, true)
+
+	return r
+}
+
 func authorization(profile et.Json) (map[string]bool, error) {
 	method := envar.GetStr("Module.Services.GetPermissions", "AUTHORIZATION_METHOD")
 	if method == "" {
-		return map[string]bool{}, errors.New("Authorization method not found")
+		return map[string]bool{}, errors.New("authorization method not found")
 	}
 
 	result, err := jrpc.CallPermitios(method, profile)
