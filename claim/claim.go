@@ -335,6 +335,16 @@ func ClientId(r *http.Request) string {
 }
 
 /**
+* ClientName
+* @param r *http.Request
+* @return string
+**/
+func ClientName(r *http.Request) string {
+	ctx := r.Context()
+	return NameKey.String(ctx, "Anonimo")
+}
+
+/**
 * GetClient
 * @param r *http.Request
 * @return et.Json
