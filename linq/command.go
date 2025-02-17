@@ -227,6 +227,11 @@ func (c *Linq) insert() (et.Item, error) {
 			"sql":    c.sql,
 			"error":  err.Error(),
 		})
+
+		if model.OnResilience != nil {
+			model.OnResilience(model, c.sql)
+		}
+
 		return et.Item{}, err
 	}
 
@@ -265,10 +270,15 @@ func (c *Linq) update(current et.Json) (et.Item, error) {
 	if err != nil {
 		event.Log("error/sql", et.Json{
 			"model":  model.Name,
-			"action": "insert",
+			"action": "update",
 			"sql":    c.sql,
 			"error":  err.Error(),
 		})
+
+		if model.OnResilience != nil {
+			model.OnResilience(model, c.sql)
+		}
+
 		return et.Item{}, err
 	}
 
@@ -307,10 +317,15 @@ func (c *Linq) delete(current et.Json) (et.Item, error) {
 	if err != nil {
 		event.Log("error/sql", et.Json{
 			"model":  model.Name,
-			"action": "insert",
+			"action": "delete",
 			"sql":    c.sql,
 			"error":  err.Error(),
 		})
+
+		if model.OnResilience != nil {
+			model.OnResilience(model, c.sql)
+		}
+
 		return et.Item{}, err
 	}
 

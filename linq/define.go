@@ -166,3 +166,14 @@ func (c *Model) DefineRequired(names []string) *Model {
 
 	return c
 }
+
+/**
+* DefineResilience
+* @param fn Resilience
+* @return *Model
+**/
+func (c *Model) DefineResilience(fn Resilience) *Model {
+	c.OnResilience = fn
+
+	return c
+}

@@ -4,20 +4,16 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/response"
+	"github.com/celsiainternet/elvis/strs"
 	"github.com/celsiainternet/elvis/timezone"
 	"github.com/celsiainternet/elvis/utility"
 	"github.com/nats-io/nats.go"
 )
 
-/**
-* Publish
-* @param channel string
-* @param data et.Json
-* @return error
-**/
-func Publish(channel string, data et.Json) error {
+func publish(channel string, data et.Json) error {
 	if conn == nil {
 		return nil
 	}
@@ -29,6 +25,20 @@ func Publish(channel string, data et.Json) error {
 	}
 
 	return conn.Publish(msg.Channel, dt)
+}
+
+/**
+* Publish
+* @param channel string
+* @param data et.Json
+* @return error
+**/
+func Publish(channel string, data et.Json) error {
+	stage := envar.GetStr("local", "STAGE")
+	publish(strs.Format(`event:chanels:%s`, stage), et.Json{"channel": channel})
+	publish(strs.Format(`pipe:%s:%s`, stage, channel), data)
+
+	return publish(channel, data)
 }
 
 /**

@@ -55,6 +55,7 @@ type Model struct {
 	AfterUpdate        []Trigger
 	BeforeDelete       []Trigger
 	AfterDelete        []Trigger
+	OnResilience       Resilience
 	OnListener         Listener
 	Version            int
 	mutation           bool
