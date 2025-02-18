@@ -2,7 +2,6 @@ package linq
 
 import (
 	"github.com/celsiainternet/elvis/et"
-	"github.com/celsiainternet/elvis/event"
 )
 
 func (c *Linq) Debug() *Linq {
@@ -221,15 +220,13 @@ func (c *Linq) insert() (et.Item, error) {
 
 	item, err := c.queryOne()
 	if err != nil {
-		event.Log("error/sql", et.Json{
-			"model":  model.Name,
-			"action": "insert",
-			"sql":    c.sql,
-			"error":  err.Error(),
-		})
-
-		if model.OnResilience != nil {
-			model.OnResilience(model, c.sql)
+		if model.EventError != nil {
+			model.EventError(model, et.Json{
+				"model":  model.Name,
+				"action": "insert",
+				"sql":    c.sql,
+				"error":  err.Error(),
+			})
 		}
 
 		return et.Item{}, err
@@ -237,6 +234,10 @@ func (c *Linq) insert() (et.Item, error) {
 
 	if !item.Ok {
 		return item, nil
+	}
+
+	if model.EventInsert != nil {
+		model.EventInsert(model, item.Result)
 	}
 
 	new := &item.Result
@@ -268,15 +269,13 @@ func (c *Linq) update(current et.Json) (et.Item, error) {
 
 	item, err := c.queryOne()
 	if err != nil {
-		event.Log("error/sql", et.Json{
-			"model":  model.Name,
-			"action": "update",
-			"sql":    c.sql,
-			"error":  err.Error(),
-		})
-
-		if model.OnResilience != nil {
-			model.OnResilience(model, c.sql)
+		if model.EventError != nil {
+			model.EventError(model, et.Json{
+				"model":  model.Name,
+				"action": "update",
+				"sql":    c.sql,
+				"error":  err.Error(),
+			})
 		}
 
 		return et.Item{}, err
@@ -284,6 +283,10 @@ func (c *Linq) update(current et.Json) (et.Item, error) {
 
 	if !item.Ok {
 		return item, nil
+	}
+
+	if model.EventUpdate != nil {
+		model.EventUpdate(model, item.Result)
 	}
 
 	new := &item.Result
@@ -315,15 +318,13 @@ func (c *Linq) delete(current et.Json) (et.Item, error) {
 
 	item, err := c.queryOne()
 	if err != nil {
-		event.Log("error/sql", et.Json{
-			"model":  model.Name,
-			"action": "delete",
-			"sql":    c.sql,
-			"error":  err.Error(),
-		})
-
-		if model.OnResilience != nil {
-			model.OnResilience(model, c.sql)
+		if model.EventError != nil {
+			model.EventError(model, et.Json{
+				"model":  model.Name,
+				"action": "delete",
+				"sql":    c.sql,
+				"error":  err.Error(),
+			})
 		}
 
 		return et.Item{}, err
@@ -331,6 +332,10 @@ func (c *Linq) delete(current et.Json) (et.Item, error) {
 
 	if !item.Ok {
 		return item, nil
+	}
+
+	if model.EventDelete != nil {
+		model.EventDelete(model, item.Result)
 	}
 
 	for _, trigger := range model.AfterDelete {

@@ -168,12 +168,45 @@ func (c *Model) DefineRequired(names []string) *Model {
 }
 
 /**
-* DefineResilience
-* @param fn Resilience
+* DefineEventError
+* @param fn Event
 * @return *Model
 **/
-func (c *Model) DefineResilience(fn Resilience) *Model {
-	c.OnResilience = fn
+func (c *Model) DefineEventError(fn Event) *Model {
+	c.EventError = fn
+
+	return c
+}
+
+/**
+* DefineEventInsert
+* @param fn Event
+* @return *Model
+**/
+func (c *Model) DefineEventInsert(fn Event) *Model {
+	c.EventInsert = fn
+
+	return c
+}
+
+/**
+* DefineEventUpdate
+* @param fn Event
+* @return *Model
+**/
+func (c *Model) DefineEventUpdate(fn Event) *Model {
+	c.EventUpdate = fn
+
+	return c
+}
+
+/**
+* DefineEventDelete
+* @param fn Event
+* @return *Model
+**/
+func (c *Model) DefineEventDelete(fn Event) *Model {
+	c.EventDelete = fn
 
 	return c
 }
