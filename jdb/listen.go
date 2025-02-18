@@ -11,7 +11,7 @@ import (
 
 type HandlerListend func(res et.Json)
 
-func (db *DB) defineListend(channels []string, lited HandlerListend) {
+func (db *DB) defineListend(channels map[string]HandlerListend) {
 	reportProblem := func(ev pq.ListenerEventType, err error) {
 		if err != nil {
 			log.Fatal(err)
@@ -19,7 +19,7 @@ func (db *DB) defineListend(channels []string, lited HandlerListend) {
 	}
 
 	listener := pq.NewListener(db.Connection, 10*time.Second, time.Minute, reportProblem)
-	for _, channel := range channels {
+	for channel := range channels {
 		err := listener.Listen(channel)
 		if err != nil {
 			log.Fatal(err)
@@ -30,13 +30,17 @@ func (db *DB) defineListend(channels []string, lited HandlerListend) {
 		select {
 		case notification := <-listener.Notify:
 			if notification != nil {
+				if db.channels[notification.Channel] == nil {
+					continue
+				}
+
 				result, err := et.ToJson(notification.Extra)
 				if err != nil {
 					logs.Alertm("defineListend: Not conver to Json")
 				}
 
 				result.Set("channel", notification.Channel)
-				lited(result)
+				db.channels[notification.Channel](result)
 			}
 		case <-time.After(90 * time.Second):
 			go listener.Ping()
@@ -46,14 +50,8 @@ func (db *DB) defineListend(channels []string, lited HandlerListend) {
 
 /**
 * SetListen
-* @param channels []string
-* @param listen HandlerListend
+* @param channels map[string]HandlerListend
 **/
-func (db *DB) SetListen(channels []string, listen HandlerListend) {
-	for _, channel := range channels {
-		if !db.channels[channel] {
-			db.channels[channel] = true
-			go db.defineListend(channels, listen)
-		}
-	}
+func (db *DB) SetListen(channels map[string]HandlerListend) {
+	go db.defineListend(channels)
 }

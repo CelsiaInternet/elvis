@@ -40,6 +40,9 @@ func SetListener(db *jdb.DB) {
 		return
 	}
 
-	db.SetListen([]string{"sync"}, syncListener)
-	db.SetListen([]string{"recycling"}, recyclingListener)
+	channels := make(map[string]jdb.HandlerListend)
+	channels["sync"] = syncListener
+	channels["recycling"] = recyclingListener
+
+	db.SetListen(channels)
 }
