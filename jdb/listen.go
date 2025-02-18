@@ -11,8 +11,6 @@ import (
 
 type HandlerListend func(res et.Json)
 
-var _channels map[string]bool = map[string]bool{}
-
 func (db *DB) defineListend(channels []string, lited HandlerListend) {
 	reportProblem := func(ev pq.ListenerEventType, err error) {
 		if err != nil {
@@ -53,8 +51,8 @@ func (db *DB) defineListend(channels []string, lited HandlerListend) {
 **/
 func (db *DB) SetListen(channels []string, listen HandlerListend) {
 	for _, channel := range channels {
-		if !_channels[channel] {
-			_channels[channel] = true
+		if !db.channels[channel] {
+			db.channels[channel] = true
 			go db.defineListend(channels, listen)
 		}
 	}

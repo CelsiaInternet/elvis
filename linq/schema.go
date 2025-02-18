@@ -48,7 +48,6 @@ func NewSchema(db *jdb.DB, name string) *Schema {
 		Models: []*Model{},
 	}
 
-	SetListener(db)
 	result.Init()
 	schemas = append(schemas, result)
 

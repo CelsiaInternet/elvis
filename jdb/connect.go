@@ -27,6 +27,7 @@ type DB struct {
 	Dbname      string
 	Connection  string
 	UseCore     bool
+	channels    map[string]bool
 	db          *sql.DB
 	dm          *sql.DB
 }
@@ -143,6 +144,7 @@ func ConnectTo(params et.Json) (*DB, error) {
 		Dbname:     dbname,
 		Connection: connStr,
 		UseCore:    false,
+		channels:   map[string]bool{},
 		db:         db,
 	}, nil
 }
