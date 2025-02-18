@@ -134,7 +134,7 @@ func Work(event string, data et.Json) et.Json {
 	work := et.Json{
 		"created_at": timezone.Now(),
 		"_id":        utility.UUID(),
-		"from_id":    FromId,
+		"from_id":    conn.Id,
 		"event":      event,
 		"data":       data,
 	}
@@ -155,7 +155,7 @@ func WorkState(work_id string, status WorkStatus, data et.Json) {
 	work := et.Json{
 		"update_at": timezone.Now(),
 		"_id":       work_id,
-		"from_id":   FromId,
+		"from_id":   conn.Id,
 		"status":    status.String(),
 		"data":      data,
 	}
@@ -185,7 +185,7 @@ func Source(model, action, err string, data et.Json) et.Json {
 	source := et.Json{
 		"created_at": timezone.Now(),
 		"_id":        utility.UUID(),
-		"from_id":    FromId,
+		"from_id":    conn.Id,
 		"model":      model,
 		"action":     action,
 		"error":      err,
