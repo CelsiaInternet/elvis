@@ -121,14 +121,14 @@ func SendWhatsapp(project_id string, template_id int, contactNumbers []string, p
 func SendEmail(project_id string, to []et.Json, subject string, html_content string, params []et.Json, tp TpMessage, clientId string) et.Json {
 	service_id := GetId(clientId, "email", "Send Email")
 	result := event.Work("send/email", et.Json{
-		"project_id": project_id,
-		"service_id": service_id,
-		"to":         to,
-		"subject":    subject,
-		"content":    html_content,
-		"params":     params,
-		"type":       tp.String(),
-		"client_id":  clientId,
+		"project_id":   project_id,
+		"service_id":   service_id,
+		"to":           to,
+		"subject":      subject,
+		"html_content": html_content,
+		"params":       params,
+		"type":         tp.String(),
+		"client_id":    clientId,
 	})
 
 	result["service_id"] = service_id
