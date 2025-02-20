@@ -225,6 +225,7 @@ func (c *Linq) insert() (et.Item, error) {
 				"model":  model.Name,
 				"action": "insert",
 				"sql":    c.sql,
+				"data":   c.data,
 				"error":  err.Error(),
 			})
 		}
@@ -274,6 +275,7 @@ func (c *Linq) update(current et.Json) (et.Item, error) {
 				"model":  model.Name,
 				"action": "update",
 				"sql":    c.sql,
+				"data":   c.data,
 				"error":  err.Error(),
 			})
 		}
@@ -323,6 +325,7 @@ func (c *Linq) delete(current et.Json) (et.Item, error) {
 				"model":  model.Name,
 				"action": "delete",
 				"sql":    c.sql,
+				"where":  c.where,
 				"error":  err.Error(),
 			})
 		}
