@@ -10,6 +10,7 @@ import (
 	"github.com/celsiainternet/elvis/event"
 	"github.com/celsiainternet/elvis/jrpc"
 	"github.com/celsiainternet/elvis/middleware"
+	"github.com/celsiainternet/elvis/strs"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -39,7 +40,23 @@ const (
 	TpReplaceHeader
 )
 
-var router = make(map[string]et.Json)
+type TpRouter struct {
+	name   string
+	routes map[string]et.Json
+}
+
+var router *TpRouter
+
+func initRouter(name string) {
+	if router == nil {
+		router = &TpRouter{
+			name:   name,
+			routes: make(map[string]et.Json),
+		}
+
+		resetApigateway()
+	}
+}
 
 /**
 * String
@@ -92,16 +109,12 @@ func ToTpHeader(tp int) TpHeader {
 
 /**
 * PushApiGateway
-* @param method string
-* @param path string
-* @param resolve string
-* @params header et.Json
-* @param tpHeader TpHeader
-* @param private bool
-* @param packageName string
+* @param id, method, path, resolve string, header et.Json, tpHeader TpHeader, excludeHeader []string, private bool, packageName string
 **/
 func PushApiGateway(id, method, path, resolve string, header et.Json, tpHeader TpHeader, excludeHeader []string, private bool, packageName string) {
-	router[id] = et.Json{
+	initRouter(packageName)
+
+	router.routes[id] = et.Json{
 		"_id":            id,
 		"kind":           HTTP,
 		"method":         method,
@@ -114,15 +127,16 @@ func PushApiGateway(id, method, path, resolve string, header et.Json, tpHeader T
 		"package_name":   packageName,
 	}
 
-	event.Publish("apigateway/set/resolve", router[id])
+	event.Publish("apigateway/set/resolve", router.routes[id])
 }
 
 /**
 * DeleteApiGatewayById
-* @param id string
+* @param id, method, path string
 **/
 func DeleteApiGatewayById(id, method, path string) {
-	delete(router, id)
+	delete(router.routes, id)
+
 	event.Publish("apigateway/delete/resolve", et.Json{
 		"_id":    id,
 		"method": method,
@@ -135,17 +149,12 @@ func DeleteApiGatewayById(id, method, path string) {
 * @return map[string]et.Json
 **/
 func GetRoutes() map[string]et.Json {
-	return router
+	return router.routes
 }
 
 /**
-* PushApiGateway
-* @param method string
-* @param path string
-* @param packagePath string
-* @param host string
-* @param packageName string
-* @param private bool
+* pushApiGateway
+* @param method, path, packagePath, host, packageName string, private bool
 **/
 func pushApiGateway(method, path, packagePath, host, packageName string, private bool) {
 	path = packagePath + path
@@ -156,14 +165,20 @@ func pushApiGateway(method, path, packagePath, host, packageName string, private
 }
 
 /**
+* resetApigateway
+**/
+func resetApigateway() {
+	channel := strs.Format(`apigateway/reset/%s`, router.name)
+	event.Stack(channel, func(m event.EvenMessage) {
+		for _, r := range router.routes {
+			event.Publish("apigateway/delete/resolve", r)
+		}
+	})
+}
+
+/**
 * PublicRoute
-* @param r *chi.Mux
-* @param method string
-* @param path string
-* @param h http.HandlerFunc
-* @param packageName string
-* @param packagePath string
-* @param host string
+* @param r *chi.Mux, method, path string, h http.HandlerFunc, packageName, packagePath, host string
 * @return *chi.Mux
 **/
 func PublicRoute(r *chi.Mux, method, path string, h http.HandlerFunc, packageName, packagePath, host string) *chi.Mux {
@@ -193,13 +208,7 @@ func PublicRoute(r *chi.Mux, method, path string, h http.HandlerFunc, packageNam
 
 /**
 * ProtectRoute
-* @param r *chi.Mux
-* @param method string
-* @param path string
-* @param h http.HandlerFunc
-* @param packageName string
-* @param packagePath string
-* @param host string
+* @param r *chi.Mux, method, path string, h http.HandlerFunc, packageName, packagePath, host string
 * @return *chi.Mux
 **/
 func ProtectRoute(r *chi.Mux, method, path string, h http.HandlerFunc, packageName, packagePath, host string) *chi.Mux {
@@ -229,13 +238,7 @@ func ProtectRoute(r *chi.Mux, method, path string, h http.HandlerFunc, packageNa
 
 /**
 * AuthorizationRoute
-* @param r *chi.Mux
-* @param method string
-* @param path string
-* @param h http.HandlerFunc
-* @param packageName string
-* @param packagePath string
-* @param host string
+* @param r *chi.Mux, method, path string, h http.HandlerFunc, packageName, packagePath, host string
 * @return *chi.Mux
 **/
 func AuthorizationRoute(r *chi.Mux, method, path string, h http.HandlerFunc, packageName, packagePath, host string) *chi.Mux {
@@ -263,6 +266,11 @@ func AuthorizationRoute(r *chi.Mux, method, path string, h http.HandlerFunc, pac
 	return r
 }
 
+/**
+* With
+* @param r *chi.Mux, method, path string, middlewares []func(http.Handler) http.Handler, h http.HandlerFunc, packageName, packagePath, host string
+* @return *chi.Mux
+**/
 func With(r *chi.Mux, method, path string, middlewares []func(http.Handler) http.Handler, h http.HandlerFunc, packageName, packagePath, host string) *chi.Mux {
 	switch method {
 	case "GET":
@@ -288,6 +296,11 @@ func With(r *chi.Mux, method, path string, middlewares []func(http.Handler) http
 	return r
 }
 
+/**
+* authorization
+* @param profile et.Json
+* @return map[string]bool, error
+**/
 func authorization(profile et.Json) (map[string]bool, error) {
 	method := envar.GetStr("Module.Services.GetPermissions", "AUTHORIZATION_METHOD")
 	if method == "" {

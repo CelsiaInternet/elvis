@@ -76,7 +76,7 @@ func CallJson(method string, data et.Json) (et.Json, error) {
 
 	err = client.Call(solver.Method, data, &result)
 	if err != nil {
-		return result, logs.Alert(err)
+		return result, err
 	}
 
 	metric.DoneRpc(result.ToString())
@@ -111,7 +111,7 @@ func CallItem(method string, data et.Json) (et.Item, error) {
 
 	err = client.Call(solver.Method, data, &result)
 	if err != nil {
-		return result, logs.Alert(err)
+		return result, err
 	}
 
 	metric.DoneRpc(result.ToJson().ToString())
@@ -146,7 +146,7 @@ func CallItems(method string, data et.Json) (et.Items, error) {
 
 	err = client.Call(solver.Method, data, &result)
 	if err != nil {
-		return result, logs.Alert(err)
+		return result, err
 	}
 
 	metric.DoneRpc(result.ToJson().ToString())
@@ -181,7 +181,7 @@ func CallList(method string, data et.Json) (et.List, error) {
 
 	err = client.Call(solver.Method, data, &result)
 	if err != nil {
-		return result, logs.Alert(err)
+		return result, err
 	}
 
 	metric.DoneRpc(result.ToJson().ToString())
@@ -216,7 +216,7 @@ func CallPermitios(method string, data et.Json) (map[string]bool, error) {
 	var result map[string]bool
 	err = client.Call(solver.Method, data, &result)
 	if err != nil {
-		return map[string]bool{}, logs.Alert(err)
+		return map[string]bool{}, err
 	}
 
 	metric.DoneRpc(result)
