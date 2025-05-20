@@ -13,6 +13,11 @@ import (
 	"github.com/nats-io/nats.go"
 )
 
+/**
+* publish
+* @param channel string, data et.Json
+* @return error
+**/
 func publish(channel string, data et.Json) error {
 	if conn == nil {
 		return nil
@@ -23,14 +28,14 @@ func publish(channel string, data et.Json) error {
 	if err != nil {
 		return err
 	}
+	msg.FromId = conn.id
 
 	return conn.Publish(msg.Channel, dt)
 }
 
 /**
 * Publish
-* @param channel string
-* @param data et.Json
+* @param channel string, data et.Json
 * @return error
 **/
 func Publish(channel string, data et.Json) error {
@@ -43,8 +48,7 @@ func Publish(channel string, data et.Json) error {
 
 /**
 * Subscribe
-* @param channel string
-* @param f func(EvenMessage)
+* @param channel string, f func(EvenMessage)
 * @return error
 **/
 func Subscribe(channel string, f func(EvenMessage)) error {
@@ -63,6 +67,7 @@ func Subscribe(channel string, f func(EvenMessage)) error {
 				return
 			}
 
+			msg.MySelf = msg.FromId == conn.id
 			f(msg)
 		},
 	)
@@ -79,8 +84,7 @@ func Subscribe(channel string, f func(EvenMessage)) error {
 
 /**
 * Queue
-* @param string channel
-* @param func(EvenMessage) f
+* @param string channel, string queue, func(EvenMessage) f
 * @return error
 **/
 func Queue(channel, queue string, f func(EvenMessage)) error {
@@ -117,8 +121,7 @@ func Queue(channel, queue string, f func(EvenMessage)) error {
 
 /**
 * Stack
-* @param channel string
-* @param f func(EvenMessage)
+* @param channel string, f func(EvenMessage)
 * @return error
 **/
 func Stack(channel string, f func(EvenMessage)) error {
@@ -127,14 +130,12 @@ func Stack(channel string, f func(EvenMessage)) error {
 
 /**
 * Work
-* @param event string
-* @param data et.Json
+* @param event string, data et.Json
 **/
 func Work(event string, data et.Json) et.Json {
 	work := et.Json{
 		"created_at": timezone.Now(),
 		"_id":        utility.UUID(),
-		"from_id":    conn.Id,
 		"event":      event,
 		"data":       data,
 	}
@@ -147,15 +148,12 @@ func Work(event string, data et.Json) et.Json {
 
 /**
 * WorkState
-* @param work_id string
-* @param status WorkStatus
-* @param data et.Json
+* @param work_id string, status WorkStatus, data et.Json
 **/
 func WorkState(work_id string, status WorkStatus, data et.Json) {
 	work := et.Json{
 		"update_at": timezone.Now(),
 		"_id":       work_id,
-		"from_id":   conn.Id,
 		"status":    status.String(),
 		"data":      data,
 	}
@@ -177,15 +175,13 @@ func WorkState(work_id string, status WorkStatus, data et.Json) {
 
 /**
 * Source
-* @param string channel
-* @param data et.Json
+* @param string model, string action, string err, data et.Json
 * @return error
 **/
 func Source(model, action, err string, data et.Json) et.Json {
 	source := et.Json{
 		"created_at": timezone.Now(),
 		"_id":        utility.UUID(),
-		"from_id":    conn.Id,
 		"model":      model,
 		"action":     action,
 		"error":      err,
@@ -202,8 +198,7 @@ func Source(model, action, err string, data et.Json) et.Json {
 
 /**
 * Log
-* @param event string
-* @param data et.Json
+* @param event string, data et.Json
 **/
 func Log(event string, data et.Json) {
 	go Publish("log", data)
@@ -236,8 +231,7 @@ func TokenLastUse(data et.Json) {
 
 /**
 * HttpEventWork
-* @param w http.ResponseWriter
-* @param r *http.Request
+* @param w http.ResponseWriter, r *http.Request
 **/
 func HttpEventWork(w http.ResponseWriter, r *http.Request) {
 	body, _ := response.GetBody(r)

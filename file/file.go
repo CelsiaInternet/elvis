@@ -3,6 +3,7 @@ package file
 import (
 	"errors"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/celsiainternet/elvis/strs"
@@ -64,7 +65,7 @@ func MakeFolder(names ...string) (string, error) {
 		path = append(path, name, "/")
 
 		if !ExistPath(path) {
-			err := os.MkdirAll(path, os.ModePerm)
+			err := os.MkdirAll(filepath.Dir(path), 0755)
 			if err != nil {
 				return path, err
 			}

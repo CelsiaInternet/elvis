@@ -11,7 +11,7 @@ var conn *Conn
 
 type Conn struct {
 	*nats.Conn
-	Id              string
+	id              string
 	eventCreatedSub map[string]*nats.Subscription
 	mutex           *sync.RWMutex
 }
@@ -42,4 +42,16 @@ func Close() {
 	conn.Close()
 
 	logs.Log("Event", `Disconnect...`)
+}
+
+/**
+* Id
+* @return string
+**/
+func Id() string {
+	if conn == nil {
+		return ""
+	}
+
+	return conn.id
 }

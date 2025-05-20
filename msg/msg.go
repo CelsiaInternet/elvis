@@ -1,8 +1,8 @@
 package msg
 
 const (
-	MSG_ATRIB_REQUIRED      = "Atributo requerido (%s)"
-	MSG_VALUE_REQUIRED      = "Atributo requerido (%s) value:%s"
+	MSG_ATRIB_REQUIRED      = "atributo requerido (%s)"
+	MSG_VALUE_REQUIRED      = "atributo requerido (%s) value:%s"
 	MSG_USER_INVALID        = "Usuario no valido, atrib (%s)"
 	MSG_USER_NOT_FOUND      = "Usuario no encontrado"
 	MSG_MAIL_001            = "Verifica tu dirección de correo electrónico"

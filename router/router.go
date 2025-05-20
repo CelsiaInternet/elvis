@@ -2,6 +2,7 @@ package router
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/celsiainternet/elvis/cache"
@@ -19,6 +20,7 @@ type TypeRoute int
 const (
 	HTTP TypeRoute = iota
 	REST
+	PROXY
 )
 
 const (
@@ -30,6 +32,16 @@ const (
 	Head        = "HEAD"
 	Options     = "OPTIONS"
 	HandlerFunc = "HandlerFunc"
+	APIGATEWAY  = "apigateway"
+)
+
+var (
+	APIGATEWAY_GET_RESOLVE    = fmt.Sprintf("%s/get/resolve", APIGATEWAY)
+	APIGATEWAY_SET_RESOLVE    = fmt.Sprintf("%s/set/resolve", APIGATEWAY)
+	APIGATEWAY_DELETE_RESOLVE = fmt.Sprintf("%s/delete/resolve", APIGATEWAY)
+	APIGATEWAY_RESET          = fmt.Sprintf("%s/reset", APIGATEWAY)
+	APIGATEWAY_SET_PROXY      = fmt.Sprintf("%s/set/proxy", APIGATEWAY)
+	APIGATEWAY_DELETE_PROXY   = fmt.Sprintf("%s/delete/proxy", APIGATEWAY)
 )
 
 type TpHeader int
@@ -113,7 +125,6 @@ func ToTpHeader(tp int) TpHeader {
 **/
 func PushApiGateway(id, method, path, resolve string, header et.Json, tpHeader TpHeader, excludeHeader []string, private bool, packageName string) {
 	initRouter(packageName)
-
 	router.routes[id] = et.Json{
 		"_id":            id,
 		"kind":           HTTP,
@@ -127,7 +138,7 @@ func PushApiGateway(id, method, path, resolve string, header et.Json, tpHeader T
 		"package_name":   packageName,
 	}
 
-	event.Publish("apigateway/set/resolve", router.routes[id])
+	event.Publish(APIGATEWAY_SET_RESOLVE, router.routes[id])
 }
 
 /**
@@ -137,7 +148,7 @@ func PushApiGateway(id, method, path, resolve string, header et.Json, tpHeader T
 func DeleteApiGatewayById(id, method, path string) {
 	delete(router.routes, id)
 
-	event.Publish("apigateway/delete/resolve", et.Json{
+	event.Publish(APIGATEWAY_DELETE_RESOLVE, et.Json{
 		"_id":    id,
 		"method": method,
 		"path":   path,
@@ -157,10 +168,9 @@ func GetRoutes() map[string]et.Json {
 * @param method, path, packagePath, host, packageName string, private bool
 **/
 func pushApiGateway(method, path, packagePath, host, packageName string, private bool) {
+	id := cache.GenKey(method, path)
 	path = packagePath + path
 	resolve := host + path
-	id := cache.GenKey(method, path)
-
 	PushApiGateway(id, method, path, resolve, et.Json{}, TpReplaceHeader, []string{}, private, packageName)
 }
 
@@ -168,10 +178,10 @@ func pushApiGateway(method, path, packagePath, host, packageName string, private
 * resetApigateway
 **/
 func resetApigateway() {
-	channel := strs.Format(`apigateway/reset/%s`, router.name)
+	channel := strs.Format(`%s/%s`, APIGATEWAY_RESET, router.name)
 	event.Stack(channel, func(m event.EvenMessage) {
 		for _, r := range router.routes {
-			event.Publish("apigateway/delete/resolve", r)
+			event.Publish(APIGATEWAY_DELETE_RESOLVE, r)
 		}
 	})
 }

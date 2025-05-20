@@ -10,9 +10,14 @@ import (
 	"github.com/nats-io/nats.go"
 )
 
+/**
+* ConnectTo
+* @param host, user, password string
+* @return *Conn, error
+**/
 func ConnectTo(host, user, password string) (*Conn, error) {
 	if !utility.ValidStr(host, 0, []string{}) {
-		return nil, utility.NewErrorf(msg.MSG_ATRIB_REQUIRED, "nats_host")
+		return nil, utility.NewErrorf(msg.MSG_ATRIB_REQUIRED, "host")
 	}
 
 	connect, err := nats.Connect(host, nats.UserInfo(user, password))
@@ -24,31 +29,24 @@ func ConnectTo(host, user, password string) (*Conn, error) {
 
 	return &Conn{
 		Conn:            connect,
-		Id:              utility.UUID(),
+		id:              utility.UUID(),
 		eventCreatedSub: map[string]*nats.Subscription{},
 		mutex:           &sync.RWMutex{},
 	}, nil
 }
 
+/**
+* connect
+* @return *Conn, error
+**/
 func connect() (*Conn, error) {
 	host := envar.GetStr("", "NATS_HOST")
-	if host == "" {
-		return nil, logs.Alertf(msg.ERR_ENV_REQUIRED, "NATS_HOST")
-	}
-
 	user := envar.GetStr("", "NATS_USER")
 	password := envar.GetStr("", "NATS_PASSWORD")
-
-	connect, err := nats.Connect(host, nats.UserInfo(user, password))
+	result, err := ConnectTo(host, user, password)
 	if err != nil {
 		return nil, err
 	}
 
-	logs.Logf("NATS", `Connected host:%s`, host)
-
-	return &Conn{
-		Conn:            connect,
-		eventCreatedSub: map[string]*nats.Subscription{},
-		mutex:           &sync.RWMutex{},
-	}, nil
+	return result, nil
 }

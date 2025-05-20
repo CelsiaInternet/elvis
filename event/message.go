@@ -15,9 +15,11 @@ type Message interface {
 
 type EvenMessage struct {
 	Created_at time.Time `json:"created_at"`
+	FromId     string    `json:"from_id"`
 	Id         string    `json:"id"`
 	Channel    string    `json:"channel"`
 	Data       et.Json   `json:"data"`
+	MySelf     bool      `json:"my_self"`
 }
 
 /**
@@ -32,6 +34,7 @@ func NewEvenMessage(channel string, data et.Json) EvenMessage {
 		Id:         utility.UUID(),
 		Channel:    channel,
 		Data:       data,
+		MySelf:     false,
 	}
 }
 
