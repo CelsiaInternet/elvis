@@ -30,6 +30,7 @@ const (
 	ServiceIdKey ContextKey = "serviceId"
 	ClientIdKey  ContextKey = "clientId"
 	AppKey       ContextKey = "app"
+	DeviceKey    ContextKey = "device"
 	NameKey      ContextKey = "name"
 	SubjectKey   ContextKey = "subject"
 	UsernameKey  ContextKey = "username"
@@ -356,11 +357,15 @@ func GetClient(r *http.Request) et.Json {
 	fullName := NameKey.String(ctx, "Anonimo")
 	clientId := ClientIdKey.String(ctx, "-1")
 	tag := TagKey.String(ctx, "")
+	app := AppKey.String(ctx, "")
+	device := DeviceKey.String(ctx, "")
 
 	return et.Json{
 		"date_at":   now,
 		"client_id": clientId,
+		"app":       app,
 		"username":  username,
+		"device":    device,
 		"full_name": fullName,
 		"tag":       tag,
 	}

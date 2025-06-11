@@ -6,7 +6,7 @@
 git push origin --tags
 
 go build ./cmd/create-go
-gofmt -w . && go run ./cmd/create-go
+gofmt -w . && go run ./cmd/create-go create
 gofmt -w . && go run github.com/celsiainternet/elvis/cmd/create-go create
 gofmt -w . && go run ./cmd/rpc/server
 gofmt -w . && go run ./cmd/rpc/client

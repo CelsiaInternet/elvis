@@ -1,8 +1,11 @@
 package create
 
+/**
+* MkProject
+* @param packageName, name, author, schema string
+* @return error
+**/
 func MkProject(packageName, name, author, schema string) error {
-	ProgressNext(20)
-
 	ProgressNext(20)
 	err := MkMicroservice(packageName, name, schema)
 	if err != nil {
@@ -15,23 +18,28 @@ func MkProject(packageName, name, author, schema string) error {
 		return err
 	}
 
-	ProgressNext(10)
+	ProgressNext(20)
 	err = MakeEnv(name)
 	if err != nil {
 		return err
 	}
 
-	ProgressNext(10)
+	ProgressNext(20)
 	err = MakeGitignore(name)
 	if err != nil {
 		return err
 	}
 
-	ProgressNext(10)
+	ProgressNext(20)
 
 	return nil
 }
 
+/**
+* MkMicroservice
+* @param packageName, name, schema string
+* @return error
+**/
 func MkMicroservice(packageName, name, schema string) error {
 	ProgressNext(10)
 	err := MakeCmd(packageName, name)
@@ -74,6 +82,11 @@ func MkMicroservice(packageName, name, schema string) error {
 	return nil
 }
 
+/**
+* MkMolue
+* @param packageName, modelo, schema string
+* @return error
+**/
 func MkMolue(packageName, modelo, schema string) error {
 	ProgressNext(10)
 	err := MakeModel(packageName, modelo, schema)
@@ -86,6 +99,11 @@ func MkMolue(packageName, modelo, schema string) error {
 	return nil
 }
 
+/**
+* MkRpc
+* @param name, modelo string
+* @return error
+**/
 func MkRpc(name, modelo string) error {
 	ProgressNext(10)
 	err := MakeRpc(name, modelo)
@@ -99,7 +117,9 @@ func MkRpc(name, modelo string) error {
 }
 
 /**
-*
+* DeleteMicroservice
+* @param packageName string
+* @return error
 **/
 func DeleteMicroservice(packageName string) error {
 	ProgressNext(10)

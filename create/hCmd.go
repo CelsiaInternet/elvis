@@ -5,6 +5,11 @@ import (
 	"github.com/celsiainternet/elvis/strs"
 )
 
+/**
+* MakeCmd
+* @param packageName, name string
+* @return error
+**/
 func MakeCmd(packageName, name string) error {
 	path, err := file.MakeFolder("cmd", name)
 	if err != nil {
@@ -24,6 +29,11 @@ func MakeCmd(packageName, name string) error {
 	return nil
 }
 
+/**
+* DeleteCmd
+* @param packageName string
+* @return error
+**/
 func DeleteCmd(packageName string) error {
 	path := strs.Format(`./cmd/%s`, packageName)
 	_, err := file.RemoveFile(path)

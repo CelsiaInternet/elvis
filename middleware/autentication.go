@@ -91,6 +91,7 @@ func Autentication(next http.Handler) http.Handler {
 		ctx = context.WithValue(ctx, claim.ServiceIdKey, serviceId)
 		ctx = context.WithValue(ctx, claim.ClientIdKey, clm.ID)
 		ctx = context.WithValue(ctx, claim.AppKey, clm.App)
+		ctx = context.WithValue(ctx, claim.DeviceKey, clm.Device)
 		ctx = context.WithValue(ctx, claim.NameKey, clm.Name)
 		ctx = context.WithValue(ctx, claim.SubjectKey, clm.Subject)
 		ctx = context.WithValue(ctx, claim.UsernameKey, clm.Username)

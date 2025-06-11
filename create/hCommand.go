@@ -15,31 +15,31 @@ var CmdProject = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		packageName, err := utility.GoMod("module")
 		if err != nil {
-			fmt.Printf("Prompt failed %v\n", err)
+			fmt.Printf("\tPrompt failed: %v\n", err)
 			return
 		}
 
 		name, err := PrompStr("Name", true)
 		if err != nil {
-			fmt.Printf("Prompt failed %v\n", err)
+			fmt.Printf("\tPrompt failed: %v\n", err)
 			return
 		}
 
 		author, err := PrompStr("Author", true)
 		if err != nil {
-			fmt.Printf("Prompt failed %v\n", err)
+			fmt.Printf("\tPrompt failed: %v\n", err)
 			return
 		}
 
 		schema, err := PrompStr("Schema", false)
 		if err != nil {
-			fmt.Printf("Prompt failed %v\n", err)
+			fmt.Printf("\tPrompt failed: %v\n", err)
 			return
 		}
 
 		err = MkProject(packageName, name, author, schema)
 		if err != nil {
-			fmt.Printf("Command failed %v\n", err)
+			fmt.Printf("\tCommand failed: %v\n", err)
 			return
 		}
 	},
