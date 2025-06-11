@@ -239,5 +239,15 @@ func HttpEventWork(w http.ResponseWriter, r *http.Request) {
 	data := body.Json("data")
 	work := Work(event, data)
 
+	if len(event) == 0 {
+		response.JSON(w, r, http.StatusBadRequest, et.Json{"error": "event is required"})
+		return
+	}
+
+	if len(data) == 0 {
+		response.JSON(w, r, http.StatusBadRequest, et.Json{"error": "data is required"})
+		return
+	}
+
 	response.JSON(w, r, http.StatusOK, work)
 }
