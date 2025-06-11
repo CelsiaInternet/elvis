@@ -1,78 +1,102 @@
-# Elvis framework
+# Elvis - Framework para Microservicios en Go
 
-# Public
+## Descripción
 
-```
-git push origin --tags
+Elvis es un framework diseñado para facilitar el desarrollo de microservicios en Go, proporcionando herramientas y estructuras para crear aplicaciones robustas y escalables.
 
-go build ./cmd/create-go
-gofmt -w . && go run ./cmd/create-go create
-gofmt -w . && go run github.com/celsiainternet/elvis/cmd/create-go create
-gofmt -w . && go run ./cmd/rpc/server
-gofmt -w . && go run ./cmd/rpc/client
+## Requisitos Previos
 
-gofmt -w . && go run ./cmd/ws -port 3000 -username test -password test
-gofmt -w . && go run ./cmd/ws -port 3100 -username test -password test
+- Go 1.16 o superior
+- Git
 
-go run github.com/celsiainternet/elvis/cmd/create-go create
-go run github.com/celsiainternet/elvis/cmd/apigateway
+## Instalación
 
-go build ./cmd/apigateway
+### Inicializar el Proyecto
 
-go get -u github.com/celsiainternet/elvis@v1.1.81
-go get github.com/celsiainternet/elvis@v1.1.81
+```bash
+go mod init github.com/test/api
 ```
 
-## Create project
+### Instalar Dependencias
 
-go mod init github.com/apimanager/api
-
-## Dependencias
-
-```
-go get github.com/celsiainternet/elvis@v1.1.81
+```bash
+go get github.com/celsiainternet/elvis@v1.1.2
 ```
 
-## Crear projecto, microservicios, modelos
+## Uso
 
-```
+### Creación del Proyecto
+
+Para crear un nuevo proyecto con Elvis, ejecuta el siguiente comando:
+
+```bash
 go run github.com/celsiainternet/elvis/cmd/create-go create
 ```
 
-## Version
+Este comando generará:
 
-```
-go mod tidy &&
-gofmt -w . &&
-git update &&
-git tag v1.1.81 &&
-git push origin --tags
+- Estructura base del proyecto
+- Microservicios iniciales
+- Modelos de datos
+- Configuraciones necesarias
 
-```
+### Ejecutar el Proyecto
 
-## Run
+Para ejecutar el proyecto:
 
-```
-gofmt -w . && go run ./cmd/ws -port 3300 -rpc 4200
-gofmt -w . && go run ./cmd/ws -port 3500 -rpc 4500
-gofmt -w . && go run --race ./cmd/ws -port 3500
-gofmt -w . && go run --race ./cmd/ws -port 3600
-
-gofmt -w . && go run --race ./cmd/daemon -port 3600 -rpc 4600
-
-gofmt -w . && go build --race -a -v -o ./daemon ./cmd/daemon
-
-gofmt -w . && go build -race ./cmd/ws
+```bash
+gofmt -w . && go run ./cmd/test -port 3400 -rpc 4400
 ```
 
-# Build
+Donde:
+
+- `-port`: Puerto para el servidor HTTP (default: 3400)
+- `-rpc`: Puerto para el servidor gRPC (default: 4400)
+
+## Estructura del Proyecto
 
 ```
-docker system prune -a --volumes -f
-
-docker build --no-cache -t apigateway -f ./cmd/apigateway/Dockerfile .
-docker scout quickview local://apigateway:latest --org celsiainternet
-
-docker-compose -p apigateway -f ./cmd/apigateway/docker-compose.yml up -d
-docker-compose -p apigateway -f ./cmd/apigateway/docker-compose.yml down
+.
+├── cmd/
+│   └── test/
+├── internal/
+│   ├── models/
+│   └── services/
+├── pkg/
+└── go.mod
 ```
+
+## Contribución
+
+Las contribuciones son bienvenidas. Por favor, lee nuestras guías de contribución antes de enviar un pull request.
+
+## Licencia
+
+Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
+
+## Releases
+
+### v1.1.2
+
+- Mejoras en la generación de microservicios
+- Optimización del rendimiento en la creación de modelos
+- Corrección de bugs en la inicialización del proyecto
+
+### v1.1.1
+
+- Agregado soporte para configuración de puertos personalizados
+- Mejoras en la documentación
+- Actualización de dependencias
+
+### v1.1.0
+
+- Implementación de generador de microservicios
+- Soporte para modelos de datos
+- Integración con gRPC
+- Estructura base del proyecto
+
+### v1.0.0
+
+- Lanzamiento inicial del framework
+- Generador de proyectos básico
+- Configuración inicial de Go modules

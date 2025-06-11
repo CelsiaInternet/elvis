@@ -88,6 +88,7 @@ func main() {
 const modelService = `package module
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/celsiainternet/elvis/console"
@@ -108,30 +109,32 @@ func New() (*Server, error) {
 	server := Server{}
 
 	port := envar.EnvarInt(3300, "PORT")
-	if port != 0 {
-		r := chi.NewRouter()
-
-		r.Use(middleware.Logger)
-		r.Use(middleware.Recoverer)
-
-		latest := v1.New()
-
-		r.NotFound(func(w http.ResponseWriter, r *http.Request) {
-			response.HTTPError(w, r, http.StatusNotFound, "404 Not Found")
-		})
-
-		r.Mount("/", latest)
-		r.Mount("/v1", latest)
-
-		handler := cors.AllowAll().Handler(r)
-		addr := strs.Format(":%d", port)
-		serv := &http.Server{
-			Addr:    addr,
-			Handler: handler,
-		}
-
-		server.http = serv
+	if port == 0 {
+		return nil, errors.New("variable PORT es requerida")
 	}
+
+	r := chi.NewRouter()
+
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+
+	latest := v1.New()
+
+	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
+		response.HTTPError(w, r, http.StatusNotFound, "404 Not Found")
+	})
+
+	r.Mount("/", latest)
+	r.Mount("/v1", latest)
+
+	handler := cors.AllowAll().Handler(r)
+	addr := strs.Format(":%d", port)
+	serv := &http.Server{
+		Addr:    addr,
+		Handler: handler,
+	}
+
+	server.http = serv
 
 	return &server, nil
 }
@@ -183,9 +186,12 @@ import (
 func New() http.Handler {
 	r := chi.NewRouter()
 
-	pkg.LoadConfig()
+	err := pkg.LoadConfig()
+	if err != nil {
+		console.Panic(err)
+	}
 
-	_, err := cache.Load()
+	_, err = cache.Load()
 	if err != nil {
 		console.Panic(err)
 	}
@@ -247,9 +253,12 @@ import (
 func New() http.Handler {
 	r := chi.NewRouter()
 
-	pkg.LoadConfig()
+	err := pkg.LoadConfig()
+	if err != nil {
+		console.Panic(err)
+	}
 
-	_, err := cache.Load()
+	_, err = cache.Load()
 	if err != nil {
 		console.Panic(err)
 	}
