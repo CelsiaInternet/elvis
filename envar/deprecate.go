@@ -82,6 +82,20 @@ func EnvarInt64(_default int64, _var string) int64 {
 }
 
 /**
+* This function is deprecated, use GetDuration instead
+**/
+func EnvarNumber(_default float64, _var string) float64 {
+	result := EnvarStr(strconv.FormatFloat(float64(_default), 'f', -1, 64), _var)
+
+	val, err := strconv.ParseFloat(result, 64)
+	if err != nil {
+		return _default
+	}
+
+	return val
+}
+
+/**
 * This function is deprecated, use GetBool instead
 **/
 func EnvarBool(_default bool, _var string) bool {
