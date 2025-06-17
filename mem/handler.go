@@ -44,6 +44,15 @@ func Del(key string) bool {
 }
 
 /**
+* Delete
+* @param key string
+* @return bool
+**/
+func Delete(key string) bool {
+	return Del(key)
+}
+
+/**
 * More
 * @param key string
 * @param expiration time.Duration

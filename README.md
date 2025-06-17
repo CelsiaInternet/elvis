@@ -46,6 +46,7 @@ Para ejecutar el proyecto:
 
 ```bash
 gofmt -w . && go run ./cmd/test -port 3400 -rpc 4400
+gofmt -w . && go run ./cmd/resilence
 ```
 
 Donde:
