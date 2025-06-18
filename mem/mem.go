@@ -40,8 +40,6 @@ func init() {
 		logs.Alert(err)
 		return
 	}
-
-	logs.Logf("Mem", "Init memory cache")
 }
 
 /**

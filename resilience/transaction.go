@@ -1,12 +1,12 @@
 package resilience
 
 import (
-	"fmt"
 	"reflect"
 	"time"
 
 	"github.com/celsiainternet/elvis/cache"
 	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/mem"
 	"github.com/celsiainternet/elvis/utility"
 )
@@ -61,6 +61,7 @@ func (s *Transaction) Json() et.Json {
 		"store":           s.Store.String(),
 		"created_at":      s.CreatedAt,
 		"last_attempt_at": s.LastAttemptAt,
+		"result":          s.fnResult,
 	}
 }
 
@@ -126,12 +127,6 @@ func (s *Transaction) Done() error {
 **/
 func (s *Transaction) setStatus(status TransactionStatus) error {
 	s.Status = status
-	if status == StatusSuccess {
-		time.AfterFunc(time.Second*60, func() {
-			s.Done()
-		})
-	}
-
 	return s.save()
 }
 
@@ -147,7 +142,7 @@ func (s *Transaction) Run() ([]reflect.Value, error) {
 		})}, nil
 	}
 
-	s.LastAttemptAt = time.Now()
+	s.LastAttemptAt = utility.NowTime()
 	s.Attempts++
 	s.setStatus(StatusRunning)
 
@@ -156,25 +151,23 @@ func (s *Transaction) Run() ([]reflect.Value, error) {
 		argsValues[i] = reflect.ValueOf(arg)
 	}
 
+	var err error
+	var ok bool
 	fn := reflect.ValueOf(s.fn)
-	fnResult := fn.Call(argsValues)
-	for _, r := range fnResult {
+	s.fnResult = fn.Call(argsValues)
+	for _, r := range s.fnResult {
 		if r.Type().Implements(errorInterface) {
-			err, ok := r.Interface().(error)
+			err, ok = r.Interface().(error)
 			if ok && err != nil {
 				s.setStatus(StatusFailed)
-				return []reflect.Value{reflect.ValueOf(et.Item{
-					Ok:     false,
-					Result: s.Json(),
-				})}, fmt.Errorf(`error func:%s, step:%d - %s`, s.fn, s.Attempts, err.Error())
 			}
 		}
 	}
 
 	if s.Status != StatusFailed {
-		s.fnResult = fnResult
 		s.setStatus(StatusSuccess)
 	}
 
-	return fnResult, nil
+	logs.Log("resilience", "run:", s.Json().ToString())
+	return s.fnResult, err
 }

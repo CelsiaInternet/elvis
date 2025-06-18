@@ -10,42 +10,33 @@ import (
 
 var (
 	atems = map[string]int{}
-	total = 3
+	total = 6
 )
 
 func main() {
 	resilience.Load("test")
 
-	time.Sleep(10 * time.Second)
+	err := test("test")
+	if err != nil {
+		go resilience.Add("test", "test", test, "test")
+	}
+
+	time.Sleep(30 * 4 * time.Second)
 	logs.Log("resilience", "finish")
 }
 
-func test2(name string) error {
-	_, ok := atems["test2"]
-	if !ok {
-		atems["test2"] = 1
-		return errors.New("test2")
-	}
-	atems["test2"]++
-
-	if atems["test2"] == total {
-		return nil
-	}
-
-	return errors.New("test2")
-}
-
 func test(name string) error {
-	_, ok := atems["test"]
+	_, ok := atems[name]
 	if !ok {
-		atems["test"] = 1
-		return errors.New("test")
+		atems[name] = 1
+	} else {
+		atems[name]++
 	}
-	atems["test"]++
 
-	if atems["test"] == total {
+	logs.Ping(atems[name])
+	if atems[name] == total {
 		return nil
 	}
 
-	return errors.New("test")
+	return errors.New("error " + name)
 }

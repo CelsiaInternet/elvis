@@ -1,6 +1,7 @@
 package resilience
 
 import (
+	"net/http"
 	"slices"
 	"time"
 
@@ -9,6 +10,8 @@ import (
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/mem"
+	"github.com/celsiainternet/elvis/response"
+	"github.com/celsiainternet/elvis/service"
 	"github.com/celsiainternet/elvis/utility"
 )
 
@@ -45,6 +48,7 @@ var resilience *Resilence
 * @return *Resilience
  */
 func NewResilence(name string) *Resilence {
+	attempts := envar.EnvarInt(3, "RESILIENCE_ATTEMPTS")
 	timeAttempts := envar.EnvarNumber(30, "RESILIENCE_TIME_ATTEMPTS")
 
 	return &Resilence{
@@ -52,7 +56,7 @@ func NewResilence(name string) *Resilence {
 		Id:           utility.UUID(),
 		Name:         name,
 		Transactions: make([]*Transaction, 0),
-		Attempts:     3,
+		Attempts:     attempts,
 		TimeAttempts: time.Duration(timeAttempts) * time.Second,
 	}
 }
@@ -77,22 +81,63 @@ func Load(name string) *Resilence {
 }
 
 /**
-* Run
-* @param result *Transaction
+* Notify
+* @param transaction *Transaction
  */
-func (s *Resilence) Run(result *Transaction) {
-	logs.Log("resilience", "run", result.Json().ToString())
-	duration := s.TimeAttempts
-	if duration != 0 {
-		time.AfterFunc(duration, func() {
-			if result.Status != StatusSuccess && result.Attempts < s.Attempts {
-				result.Run()
-				if result.Attempts < s.Attempts {
-					s.Run(result)
+func (s *Resilence) Notify(transaction *Transaction) {
+	projectId := envar.EnvarStr("-1", "PROJECT_ID")
+	service.SendSms(projectId, []string{
+		"573160479724",
+		"573126280135",
+		"573188846951",
+		"573186841837",
+		"573332256907",
+	}, "Error al procesar la transacción {{tag}}, {{description}}", []et.Json{
+		{
+			"tag": transaction.Tag,
+		},
+		{
+			"description": transaction.Description,
+		},
+	}, service.TpTransactional, "resilience")
+}
+
+/**
+* Done
+* @param transaction *Transaction
+ */
+func (s *Resilence) Done(transaction *Transaction) {
+	idx := slices.IndexFunc(s.Transactions, func(t *Transaction) bool { return t.Id == transaction.Id })
+	if idx != -1 {
+		s.Transactions = append(s.Transactions[:idx], s.Transactions[idx+1:]...)
+	}
+
+	logs.Log("resilience", "done:", transaction.Json().ToString())
+}
+
+/**
+* Run
+* @param transaction *Transaction
+ */
+func (s *Resilence) Run(transaction *Transaction) {
+	if s.TimeAttempts == 0 {
+		return
+	}
+
+	time.AfterFunc(s.TimeAttempts, func() {
+		if transaction.Status != StatusSuccess && transaction.Attempts < s.Attempts {
+			_, err := transaction.Run()
+			if err == nil {
+				s.Done(transaction)
+			} else {
+				if transaction.Attempts == s.Attempts {
+					s.Notify(transaction)
+				} else {
+					s.Run(transaction)
 				}
 			}
-		})
-	}
+		}
+	})
 }
 
 /**
@@ -101,10 +146,16 @@ func (s *Resilence) Run(result *Transaction) {
 * @return *Transaction
  */
 func Add(tag, description string, fn interface{}, fnArgs ...interface{}) *Transaction {
+	if resilience == nil {
+		logs.Log("resilience", "resilience is nil")
+		return nil
+	}
+
 	result := NewTransaction(tag, description, fn, fnArgs...)
 	resilience.Transactions = append(resilience.Transactions, result)
+	logs.Log("resilience", "add:", result.Json().ToString())
+	resilience.Notify(result)
 	resilience.Run(result)
-	logs.Log("resilience", "add", result.Json().ToString())
 
 	return result
 }
@@ -135,4 +186,56 @@ func (s *Resilence) GetByTag(tag string) *Transaction {
 	}
 
 	return nil
+}
+
+/**
+* HttpGetResilience
+* @param w http.ResponseWriter, r *http.Request
+**/
+func HttpGetResilience(w http.ResponseWriter, r *http.Request) {
+	if resilience == nil {
+		response.JSON(w, r, http.StatusServiceUnavailable, et.Json{
+			"message": "resilience is not initialized",
+		})
+		return
+	}
+
+	data := resilience.Json()
+	response.JSON(w, r, http.StatusOK, data)
+}
+
+/**
+* HttpGetResilienceById
+* @param w http.ResponseWriter, r *http.Request
+**/
+func HttpGetResilienceById(w http.ResponseWriter, r *http.Request) {
+	body, _ := response.GetBody(r)
+	id := body.Str("id")
+	transaction := resilience.GetById(id)
+	if transaction == nil {
+		response.JSON(w, r, http.StatusNotFound, et.Json{
+			"message": "transaction not found",
+		})
+		return
+	}
+
+	response.JSON(w, r, http.StatusOK, transaction.Json())
+}
+
+/**
+* HttpGetResilienceByTag
+* @param w http.ResponseWriter, r *http.Request
+**/
+func HttpGetResilienceByTag(w http.ResponseWriter, r *http.Request) {
+	body, _ := response.GetBody(r)
+	tag := body.Str("tag")
+	transaction := resilience.GetByTag(tag)
+	if transaction == nil {
+		response.JSON(w, r, http.StatusNotFound, et.Json{
+			"message": "transaction not found",
+		})
+		return
+	}
+
+	response.JSON(w, r, http.StatusOK, transaction.Json())
 }
