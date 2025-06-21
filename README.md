@@ -77,7 +77,7 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más det
 
 ## Releases
 
-### v1.1.87
+### v1.1.88
 
 - Implementación de sistema de tareas programadas (Crontab)
   - Nuevo generador de tareas programadas
@@ -92,7 +92,7 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más det
   - Ajustes en el manejo de memoria
   - Actualización de dependencias
 
-### v1.1.87
+### v1.1.88
 
 - Mejoras en la estabilidad del framework
   - Optimización del sistema de generación de código

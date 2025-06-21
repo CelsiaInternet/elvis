@@ -10,13 +10,13 @@ import (
 
 var (
 	atems = map[string]int{}
-	total = 6
+	total = 4
 )
 
 func main() {
 	resilience.Load("test")
 
-	err := test("test")
+	err := test("Hola Cristian")
 	if err != nil {
 		go resilience.Add("test", "test", test, "test")
 	}
@@ -33,7 +33,7 @@ func test(name string) error {
 		atems[name]++
 	}
 
-	logs.Ping(atems[name])
+	logs.Ping(atems[name], name)
 	if atems[name] == total {
 		return nil
 	}
