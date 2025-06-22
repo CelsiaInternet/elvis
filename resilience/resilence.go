@@ -8,8 +8,8 @@ import (
 	"github.com/celsiainternet/elvis/cache"
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/event"
 	"github.com/celsiainternet/elvis/logs"
-	"github.com/celsiainternet/elvis/mem"
 	"github.com/celsiainternet/elvis/response"
 	"github.com/celsiainternet/elvis/service"
 	"github.com/celsiainternet/elvis/utility"
@@ -18,7 +18,6 @@ import (
 type Resilence struct {
 	CreatedAt    time.Time
 	Id           string
-	Name         string
 	Transactions []*Transaction
 	Attempts     int
 	TimeAttempts time.Duration
@@ -32,7 +31,6 @@ func (s *Resilence) Json() et.Json {
 
 	return et.Json{
 		"id":            s.Id,
-		"name":          s.Name,
 		"created_at":    s.CreatedAt,
 		"transactions":  transactions,
 		"attempts":      s.Attempts,
@@ -44,17 +42,15 @@ var resilience *Resilence
 
 /**
 * NewResilence
-* @param name string
 * @return *Resilience
  */
-func NewResilence(name string) *Resilence {
+func NewResilence() *Resilence {
 	attempts := envar.EnvarInt(3, "RESILIENCE_ATTEMPTS")
 	timeAttempts := envar.EnvarNumber(30, "RESILIENCE_TIME_ATTEMPTS")
 
 	return &Resilence{
 		CreatedAt:    time.Now(),
 		Id:           utility.UUID(),
-		Name:         name,
 		Transactions: make([]*Transaction, 0),
 		Attempts:     attempts,
 		TimeAttempts: time.Duration(timeAttempts) * time.Second,
@@ -63,21 +59,25 @@ func NewResilence(name string) *Resilence {
 
 /**
 * Load
-* @param name string
-* @return *Resilience
+* @return error
  */
-func Load(name string) *Resilence {
+func Load() error {
 	if resilience != nil {
-		return resilience
+		return nil
 	}
 
 	_, err := cache.Load()
 	if err != nil {
-		mem.Load()
+		return err
 	}
 
-	resilience = NewResilence(name)
-	return resilience
+	_, err = event.Load()
+	if err != nil {
+		return err
+	}
+
+	resilience = NewResilence()
+	return nil
 }
 
 /**

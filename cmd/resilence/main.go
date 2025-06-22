@@ -14,9 +14,13 @@ var (
 )
 
 func main() {
-	resilience.Load("test")
+	err := resilience.Load()
+	if err != nil {
+		logs.Log("resilience", "error", err)
+		return
+	}
 
-	err := test("Hola Cristian")
+	err = test("Hola Cristian")
 	if err != nil {
 		go resilience.Add("test", "test", test, "test")
 	}
