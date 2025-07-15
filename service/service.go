@@ -73,11 +73,11 @@ func GetStatus(serviceId string) (et.Json, error) {
 
 /**
 * SendSms
-* @param project_id string, contactNumbers []string, content string, params []et.Json, tp TpMessage, clientId string
+* @param project_id string, service_id string, contactNumbers []string, content string, params []et.Json, tp TpMessage, clientId string
 * @response et.Json
 **/
-func SendSms(project_id string, contactNumbers []string, content string, params []et.Json, tp TpMessage, clientId string) et.Json {
-	service_id := GetId(clientId, "sms", "Send SMS")
+func SendSms(project_id, service_id string, contactNumbers []string, content string, params []et.Json, tp TpMessage, clientId string) et.Json {
+	service_id = utility.GenId(service_id)
 	result := event.Work("send/sms", et.Json{
 		"project_id":      project_id,
 		"service_id":      service_id,
@@ -94,11 +94,11 @@ func SendSms(project_id string, contactNumbers []string, content string, params 
 
 /**
 * SendWhatsapp
-* @param project_id string, template_id int, contactNumbers []string, params []et.Json, tp TpMessage, clientId string
+* @param project_id string, service_id string, template_id int, contactNumbers []string, params []et.Json, tp TpMessage, clientId string
 * @response et.Json
 **/
-func SendWhatsapp(project_id string, template_id int, contactNumbers []string, params []et.Json, tp TpMessage, clientId string) et.Json {
-	service_id := GetId(clientId, "whatsapp", "Send Whatsapp")
+func SendWhatsapp(project_id, service_id string, template_id int, contactNumbers []string, params []et.Json, tp TpMessage, clientId string) et.Json {
+	service_id = utility.GenId(service_id)
 	result := event.Work("send/whatsapp", et.Json{
 		"project_id":      project_id,
 		"service_id":      service_id,
@@ -115,11 +115,11 @@ func SendWhatsapp(project_id string, template_id int, contactNumbers []string, p
 
 /**
 * SendEmail
-* @param project_id string, to []et.Json, subject string, html_content string, params []et.Json, tp TpMessage, clientId string
+* @param project_id string, service_id string, to []et.Json, subject string, html_content string, params []et.Json, tp TpMessage, clientId string
 * @response et.Json
 **/
-func SendEmail(project_id string, to []et.Json, subject string, html_content string, params []et.Json, tp TpMessage, clientId string) et.Json {
-	service_id := GetId(clientId, "email", "Send Email")
+func SendEmail(project_id, service_id string, to []et.Json, subject string, html_content string, params []et.Json, tp TpMessage, clientId string) et.Json {
+	service_id = utility.GenId(service_id)
 	result := event.Work("send/email", et.Json{
 		"project_id":   project_id,
 		"service_id":   service_id,

@@ -20,7 +20,7 @@ go mod init github.com/test/api
 ### Instalar Dependencias
 
 ```bash
-go get github.com/celsiainternet/elvis@v1.1.92
+go get github.com/celsiainternet/elvis@v1.1.93
 ```
 
 ## Uso
@@ -77,7 +77,7 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más det
 
 ## Releases
 
-### v1.1.92
+### v1.1.93
 
 - Implementación de sistema de tareas programadas (Crontab)
   - Nuevo generador de tareas programadas
@@ -92,7 +92,7 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más det
   - Ajustes en el manejo de memoria
   - Actualización de dependencias
 
-### v1.1.92
+### v1.1.93
 
 - Mejoras en la estabilidad del framework
   - Optimización del sistema de generación de código

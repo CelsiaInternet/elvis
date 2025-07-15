@@ -86,20 +86,24 @@ func Load() error {
  */
 func (s *Resilence) Notify(transaction *Transaction) {
 	projectId := envar.EnvarStr("-1", "PROJECT_ID")
-	service.SendSms(projectId, []string{
-		"573160479724",
-		"573126280135",
-		"573188846951",
-		"573186841837",
-		"573332256907",
-	}, "Error al procesar la transacción {{tag}}, {{description}}", []et.Json{
-		{
-			"tag": transaction.Tag,
-		},
-		{
-			"description": transaction.Description,
-		},
-	}, service.TpTransactional, "resilience")
+	serviceId := utility.UUID()
+	service.SendSms(
+		projectId,
+		serviceId,
+		[]string{
+			"573160479724",
+			"573126280135",
+			"573188846951",
+			"573186841837",
+			"573332256907",
+		}, "Error al procesar la transacción {{tag}}, {{description}}", []et.Json{
+			{
+				"tag": transaction.Tag,
+			},
+			{
+				"description": transaction.Description,
+			},
+		}, service.TpTransactional, "resilience")
 }
 
 /**
