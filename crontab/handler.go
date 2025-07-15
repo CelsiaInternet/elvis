@@ -4,8 +4,8 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/cgalvisleon/et/et"
-	"github.com/cgalvisleon/et/response"
+	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/response"
 )
 
 var crontab *Jobs

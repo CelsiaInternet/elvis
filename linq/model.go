@@ -313,7 +313,7 @@ func (c *Model) ColIdx(name string) int {
 	return -1
 }
 
-func (c *Model) Col(name string) *Column {
+func (c *Model) Column(name string) *Column {
 	idx := c.ColIdx(name)
 
 	if idx == -1 {
@@ -323,15 +323,19 @@ func (c *Model) Col(name string) *Column {
 	return c.Definition[idx]
 }
 
+func (c *Model) Col(name string) *Column {
+	return c.Column(name)
+}
+
+func (c *Model) C(names string) *Column {
+	return c.Column(names)
+}
+
 func (c *Model) As(as string) *FRom {
 	return &FRom{
 		model: c,
 		as:    as,
 	}
-}
-
-func (c *Model) Column(name string) *Column {
-	return c.Col(name)
 }
 
 func (c *Model) TitleIdx(name string) int {
@@ -366,6 +370,10 @@ func (c *Model) Atrib(name string) *Column {
 	}
 
 	return c.Definition[idx]
+}
+
+func (c *Model) A(names string) *Column {
+	return c.Atrib(names)
 }
 
 func (c *Model) IndexIdx(name string) int {

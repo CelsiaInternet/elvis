@@ -7,11 +7,11 @@ import (
 	"slices"
 	"time"
 
-	"github.com/cgalvisleon/et/cache"
-	"github.com/cgalvisleon/et/et"
-	"github.com/cgalvisleon/et/event"
-	"github.com/cgalvisleon/et/msg"
-	"github.com/cgalvisleon/et/utility"
+	"github.com/celsiainternet/elvis/cache"
+	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/event"
+	"github.com/celsiainternet/elvis/msg"
+	"github.com/celsiainternet/elvis/utility"
 	"github.com/robfig/cron/v3"
 )
 

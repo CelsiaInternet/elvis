@@ -92,11 +92,11 @@ type Telemetry struct {
 	TimeStamp         string
 	ServiceName       string
 	Key               string
-	RequestsPerSecond int
-	RequestsPerMinute int
-	RequestsPerHour   int
-	RequestsPerDay    int
-	RequestsLimit     int
+	RequestsPerSecond int64
+	RequestsPerMinute int64
+	RequestsPerHour   int64
+	RequestsPerDay    int64
+	RequestsLimit     int64
 }
 
 /**
@@ -226,11 +226,11 @@ func (m *Metrics) CallMetrics() Telemetry {
 		TimeStamp:         date,
 		ServiceName:       serviceName,
 		Key:               m.key,
-		RequestsPerSecond: cache.Count(cache.GenKey(m.key, second), 2*time.Second),
-		RequestsPerMinute: cache.Count(cache.GenKey(m.key, minute), 1*time.Minute+1*time.Second),
-		RequestsPerHour:   cache.Count(cache.GenKey(m.key, hour), 1*time.Hour+1*time.Second),
-		RequestsPerDay:    cache.Count(cache.GenKey(m.key, date), 24*time.Hour+1*time.Second),
-		RequestsLimit:     envar.GetInt(400, "LIMIT_REQUESTS"),
+		RequestsPerSecond: cache.Incr(cache.GenKey(m.key, second), 2*time.Second),
+		RequestsPerMinute: cache.Incr(cache.GenKey(m.key, minute), 1*time.Minute+1*time.Second),
+		RequestsPerHour:   cache.Incr(cache.GenKey(m.key, hour), 1*time.Hour+1*time.Second),
+		RequestsPerDay:    cache.Incr(cache.GenKey(m.key, date), 24*time.Hour+1*time.Second),
+		RequestsLimit:     envar.GetInt64(400, "LIMIT_REQUESTS"),
 	}
 }
 
@@ -266,7 +266,7 @@ func (m *Metrics) println() et.Json {
 	m.metrics = m.CallMetrics()
 	if m.metrics.RequestsPerSecond > m.metrics.RequestsLimit {
 		lg.CW(w, lg.NRed, " - Request:S:%vM:%vH:%vD:%vL:%v", m.metrics.RequestsPerSecond, m.metrics.RequestsPerMinute, m.metrics.RequestsPerHour, m.metrics.RequestsPerDay, m.metrics.RequestsLimit)
-	} else if m.metrics.RequestsPerSecond > int(float64(m.metrics.RequestsLimit)*0.6) {
+	} else if m.metrics.RequestsPerSecond > int64(float64(m.metrics.RequestsLimit)*0.6) {
 		lg.CW(w, lg.NYellow, " - Request:S:%vM:%vH:%vD:%vL:%v", m.metrics.RequestsPerSecond, m.metrics.RequestsPerMinute, m.metrics.RequestsPerHour, m.metrics.RequestsPerDay, m.metrics.RequestsLimit)
 	} else {
 		lg.CW(w, lg.NGreen, " - Request:S:%vM:%vH:%vD:%vL:%v", m.metrics.RequestsPerSecond, m.metrics.RequestsPerMinute, m.metrics.RequestsPerHour, m.metrics.RequestsPerDay, m.metrics.RequestsLimit)

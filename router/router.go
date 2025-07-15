@@ -36,7 +36,6 @@ const (
 )
 
 var (
-	APIGATEWAY_GET_RESOLVE    = fmt.Sprintf("%s/get/resolve", APIGATEWAY)
 	APIGATEWAY_SET_RESOLVE    = fmt.Sprintf("%s/set/resolve", APIGATEWAY)
 	APIGATEWAY_DELETE_RESOLVE = fmt.Sprintf("%s/delete/resolve", APIGATEWAY)
 	APIGATEWAY_RESET          = fmt.Sprintf("%s/reset", APIGATEWAY)

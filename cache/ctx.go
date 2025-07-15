@@ -32,6 +32,46 @@ func SetCtx(ctx context.Context, key, val string, second time.Duration) error {
 }
 
 /**
+* IncrCtx
+* @params ctx context.Context, key string, second time.Duration
+* @return int64
+**/
+func IncrCtx(ctx context.Context, key string, second time.Duration) int64 {
+	if conn == nil {
+		return 0
+	}
+
+	result, err := conn.Incr(ctx, key).Result()
+	if err != nil {
+		return 0
+	}
+
+	if result == 1 {
+		conn.Expire(ctx, key, second)
+	}
+
+	return result
+}
+
+/**
+* DecrCtx
+* @params ctx context.Context, key string
+* @return int64
+**/
+func DecrCtx(ctx context.Context, key string) int64 {
+	if conn == nil {
+		return 0
+	}
+
+	result, err := conn.Decr(ctx, key).Result()
+	if err != nil {
+		return 0
+	}
+
+	return result
+}
+
+/**
 * GetCtx
 * @params ctx context.Context
 * @params key string

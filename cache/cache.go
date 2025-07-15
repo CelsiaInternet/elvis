@@ -46,3 +46,7 @@ func Close() {
 
 	logs.Log("Cache", `Disconnect...`)
 }
+
+func IsLoad() bool {
+	return conn != nil
+}

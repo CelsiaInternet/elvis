@@ -128,33 +128,26 @@ func Delete(key string) (int64, error) {
 }
 
 /**
-* Count
-* @params key string
-* @params expiration time.Duration (second)
+* Incr
+* @params key string, second time.Duration (second)
 * @return int64
 **/
-func Count(key string, expiration time.Duration) int {
+func Incr(key string, second time.Duration) int64 {
+	result := IncrCtx(conn.ctx, key, second)
+	return result
+}
+
+/**
+* Decr
+* @params key string
+* @return int64
+**/
+func Decr(key string) int64 {
 	if conn == nil {
 		return 0
 	}
 
-	val, err := Get(key, "0")
-	if err != nil {
-		return 0
-	}
-
-	result, err := strconv.Atoi(val)
-	if err != nil {
-		return 0
-	}
-
-	result++
-	err = Set(key, result, expiration)
-	if err != nil {
-		return 0
-	}
-
-	return result
+	return DecrCtx(conn.ctx, key)
 }
 
 /**
