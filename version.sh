@@ -67,7 +67,7 @@ update_version() {
   git commit -m 'Update'
   git push -u origin
   git tag "$NEW_VERSION"
-  git push origin --tags  
+  git push origin --tags
 
   echo "Etiqueta creada y enviada a Git"
 }
