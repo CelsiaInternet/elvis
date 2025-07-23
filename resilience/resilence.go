@@ -143,6 +143,12 @@ func (s *Resilence) SetContentEmail(subject string, htmlMessage string, params [
 func (s *Resilence) Notify(transaction *Transaction) {
 	projectId := envar.EnvarStr("-1", "PROJECT_ID")
 	serviceId := utility.UUID()
+	params := append(s.Params, et.Json{
+		"project_id": projectId,
+	})
+	params = append(params, et.Json{
+		"service_id": serviceId,
+	})
 
 	if s.NotifyType == TpNotifySms {
 		service.SendSms(
@@ -150,7 +156,7 @@ func (s *Resilence) Notify(transaction *Transaction) {
 			serviceId,
 			s.ContactNumbers,
 			s.Content,
-			s.Params,
+			params,
 			service.TpTransactional,
 			"resilience",
 		)
@@ -163,7 +169,7 @@ func (s *Resilence) Notify(transaction *Transaction) {
 			serviceId,
 			s.TemplateId,
 			s.ContactNumbers,
-			s.Params,
+			params,
 			service.TpTransactional,
 			"resilience",
 		)
@@ -176,7 +182,7 @@ func (s *Resilence) Notify(transaction *Transaction) {
 		s.Emails,
 		s.Subject,
 		s.HtmlMessage,
-		s.Params,
+		params,
 		service.TpTransactional,
 		"resilience",
 	)
