@@ -1,27 +1,27 @@
 package resilience
 
 import (
-	"net/http"
 	"slices"
 	"time"
 
-	"github.com/celsiainternet/elvis/cache"
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
-	"github.com/celsiainternet/elvis/event"
 	"github.com/celsiainternet/elvis/logs"
-	"github.com/celsiainternet/elvis/response"
 	"github.com/celsiainternet/elvis/service"
 	"github.com/celsiainternet/elvis/utility"
 )
 
-type TpNotify string
+type TpNotify int
 
 const (
-	TpNotifySms      TpNotify = "sms"
-	TpNotifyEmail    TpNotify = "email"
-	TpNotifyWhatsapp TpNotify = "whatsapp"
+	TpNotifySms TpNotify = iota
+	TpNotifyEmail
+	TpNotifyWhatsapp
 )
+
+func (s TpNotify) String() string {
+	return []string{"sms", "email", "whatsapp"}[s]
+}
 
 type Resilence struct {
 	CreatedAt      time.Time
@@ -89,29 +89,6 @@ func NewResilence() *Resilence {
 	}
 }
 
-/**
-* Load
-* @return error
- */
-func Load() error {
-	if resilience != nil {
-		return nil
-	}
-
-	_, err := cache.Load()
-	if err != nil {
-		return err
-	}
-
-	_, err = event.Load()
-	if err != nil {
-		return err
-	}
-
-	resilience = NewResilence()
-	return nil
-}
-
 func (s *Resilence) SetNotifyType(notifyType TpNotify) {
 	s.NotifyType = notifyType
 }
@@ -141,10 +118,10 @@ func (s *Resilence) SetTemplateId(templateId int) {
 }
 
 /**
-* SetContentMessage
+* SetContentSMS
 * @param content string, params []et.Json
  */
-func (s *Resilence) SetContentMessage(content string, params []et.Json) {
+func (s *Resilence) SetContentSMS(content string, params []et.Json) {
 	s.Content = content
 	s.Params = params
 }
@@ -153,7 +130,7 @@ func (s *Resilence) SetContentMessage(content string, params []et.Json) {
 * SetSubject
 * @param subject string
  */
-func (s *Resilence) SetContentHtml(subject string, htmlMessage string, params []et.Json) {
+func (s *Resilence) SetContentEmail(subject string, htmlMessage string, params []et.Json) {
 	s.Subject = subject
 	s.HtmlMessage = htmlMessage
 	s.Params = params
@@ -174,7 +151,9 @@ func (s *Resilence) Notify(transaction *Transaction) {
 			s.ContactNumbers,
 			s.Content,
 			s.Params,
-			service.TpTransactional, "resilience")
+			service.TpTransactional,
+			"resilience",
+		)
 		return
 	}
 
@@ -242,26 +221,6 @@ func (s *Resilence) Run(transaction *Transaction) {
 }
 
 /**
-* Add
-* @param tag, description string, fn interface{}, fnArgs ...interface{}
-* @return *Transaction
- */
-func Add(tag, description string, fn interface{}, fnArgs ...interface{}) *Transaction {
-	if resilience == nil {
-		logs.Log("resilience", "resilience is nil")
-		return nil
-	}
-
-	result := NewTransaction(tag, description, fn, fnArgs...)
-	resilience.Transactions = append(resilience.Transactions, result)
-	logs.Log("resilience", "add:", result.Json().ToString())
-	resilience.Notify(result)
-	resilience.Run(result)
-
-	return result
-}
-
-/**
 * GetById
 * @param id string
 * @return *Transaction
@@ -287,56 +246,4 @@ func (s *Resilence) GetByTag(tag string) *Transaction {
 	}
 
 	return nil
-}
-
-/**
-* HttpGetResilience
-* @param w http.ResponseWriter, r *http.Request
-**/
-func HttpGetResilience(w http.ResponseWriter, r *http.Request) {
-	if resilience == nil {
-		response.JSON(w, r, http.StatusServiceUnavailable, et.Json{
-			"message": "resilience is not initialized",
-		})
-		return
-	}
-
-	data := resilience.Json()
-	response.JSON(w, r, http.StatusOK, data)
-}
-
-/**
-* HttpGetResilienceById
-* @param w http.ResponseWriter, r *http.Request
-**/
-func HttpGetResilienceById(w http.ResponseWriter, r *http.Request) {
-	body, _ := response.GetBody(r)
-	id := body.Str("id")
-	transaction := resilience.GetById(id)
-	if transaction == nil {
-		response.JSON(w, r, http.StatusNotFound, et.Json{
-			"message": "transaction not found",
-		})
-		return
-	}
-
-	response.JSON(w, r, http.StatusOK, transaction.Json())
-}
-
-/**
-* HttpGetResilienceByTag
-* @param w http.ResponseWriter, r *http.Request
-**/
-func HttpGetResilienceByTag(w http.ResponseWriter, r *http.Request) {
-	body, _ := response.GetBody(r)
-	tag := body.Str("tag")
-	transaction := resilience.GetByTag(tag)
-	if transaction == nil {
-		response.JSON(w, r, http.StatusNotFound, et.Json{
-			"message": "transaction not found",
-		})
-		return
-	}
-
-	response.JSON(w, r, http.StatusOK, transaction.Json())
 }
