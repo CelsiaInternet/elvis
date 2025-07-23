@@ -16,11 +16,14 @@ import (
 )
 
 type Resilence struct {
-	CreatedAt    time.Time
-	Id           string
-	Transactions []*Transaction
-	Attempts     int
-	TimeAttempts time.Duration
+	CreatedAt      time.Time
+	Id             string
+	Transactions   []*Transaction
+	Attempts       int
+	TimeAttempts   time.Duration
+	ContactNumbers []string
+	Content        string
+	Params         []et.Json
 }
 
 func (s *Resilence) Json() et.Json {
@@ -81,6 +84,23 @@ func Load() error {
 }
 
 /**
+* SetContactNumbers
+* @param contactNumbers []string
+ */
+func (s *Resilence) SetContactNumbers(contactNumbers []string) {
+	s.ContactNumbers = contactNumbers
+}
+
+/**
+* SetContentMessage
+* @param content string, params []et.Json
+ */
+func (s *Resilence) SetContentMessage(content string, params []et.Json) {
+	s.Content = content
+	s.Params = params
+}
+
+/**
 * Notify
 * @param transaction *Transaction
  */
@@ -90,20 +110,10 @@ func (s *Resilence) Notify(transaction *Transaction) {
 	service.SendSms(
 		projectId,
 		serviceId,
-		[]string{
-			"573160479724",
-			"573126280135",
-			"573188846951",
-			"573186841837",
-			"573332256907",
-		}, "Error al procesar la transacción {{tag}}, {{description}}", []et.Json{
-			{
-				"tag": transaction.Tag,
-			},
-			{
-				"description": transaction.Description,
-			},
-		}, service.TpTransactional, "resilience")
+		s.ContactNumbers,
+		s.Content,
+		s.Params,
+		service.TpTransactional, "resilience")
 }
 
 /**
