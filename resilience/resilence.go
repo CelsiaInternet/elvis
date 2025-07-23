@@ -15,14 +15,27 @@ import (
 	"github.com/celsiainternet/elvis/utility"
 )
 
+type TpNotify string
+
+const (
+	TpNotifySms      TpNotify = "sms"
+	TpNotifyEmail    TpNotify = "email"
+	TpNotifyWhatsapp TpNotify = "whatsapp"
+)
+
 type Resilence struct {
 	CreatedAt      time.Time
 	Id             string
 	Transactions   []*Transaction
 	Attempts       int
 	TimeAttempts   time.Duration
+	NotifyType     TpNotify
 	ContactNumbers []string
+	Emails         []et.Json
+	TemplateId     int
 	Content        string
+	Subject        string
+	HtmlMessage    string
 	Params         []et.Json
 }
 
@@ -33,11 +46,19 @@ func (s *Resilence) Json() et.Json {
 	}
 
 	return et.Json{
-		"id":            s.Id,
-		"created_at":    s.CreatedAt,
-		"transactions":  transactions,
-		"attempts":      s.Attempts,
-		"time_attempts": s.TimeAttempts,
+		"id":              s.Id,
+		"created_at":      s.CreatedAt,
+		"transactions":    transactions,
+		"attempts":        s.Attempts,
+		"time_attempts":   s.TimeAttempts,
+		"notify_type":     s.NotifyType,
+		"contact_numbers": s.ContactNumbers,
+		"emails":          s.Emails,
+		"template_id":     s.TemplateId,
+		"content":         s.Content,
+		"subject":         s.Subject,
+		"html_message":    s.HtmlMessage,
+		"params":          s.Params,
 	}
 }
 
@@ -52,11 +73,19 @@ func NewResilence() *Resilence {
 	timeAttempts := envar.EnvarNumber(30, "RESILIENCE_TIME_ATTEMPTS")
 
 	return &Resilence{
-		CreatedAt:    time.Now(),
-		Id:           utility.UUID(),
-		Transactions: make([]*Transaction, 0),
-		Attempts:     attempts,
-		TimeAttempts: time.Duration(timeAttempts) * time.Second,
+		CreatedAt:      time.Now(),
+		Id:             utility.UUID(),
+		Transactions:   make([]*Transaction, 0),
+		Attempts:       attempts,
+		TimeAttempts:   time.Duration(timeAttempts) * time.Second,
+		NotifyType:     TpNotifySms,
+		ContactNumbers: make([]string, 0),
+		Emails:         make([]et.Json, 0),
+		TemplateId:     0,
+		Content:        "",
+		Subject:        "",
+		HtmlMessage:    "",
+		Params:         make([]et.Json, 0),
 	}
 }
 
@@ -83,12 +112,32 @@ func Load() error {
 	return nil
 }
 
+func (s *Resilence) SetNotifyType(notifyType TpNotify) {
+	s.NotifyType = notifyType
+}
+
 /**
 * SetContactNumbers
 * @param contactNumbers []string
  */
 func (s *Resilence) SetContactNumbers(contactNumbers []string) {
 	s.ContactNumbers = contactNumbers
+}
+
+/**
+* SetEmails
+* @param emails []et.Json
+ */
+func (s *Resilence) SetEmails(emails []et.Json) {
+	s.Emails = emails
+}
+
+/**
+* SetTemplateId
+* @param templateId int
+ */
+func (s *Resilence) SetTemplateId(templateId int) {
+	s.TemplateId = templateId
 }
 
 /**
@@ -101,19 +150,57 @@ func (s *Resilence) SetContentMessage(content string, params []et.Json) {
 }
 
 /**
+* SetSubject
+* @param subject string
+ */
+func (s *Resilence) SetContentHtml(subject string, htmlMessage string, params []et.Json) {
+	s.Subject = subject
+	s.HtmlMessage = htmlMessage
+	s.Params = params
+}
+
+/**
 * Notify
 * @param transaction *Transaction
  */
 func (s *Resilence) Notify(transaction *Transaction) {
 	projectId := envar.EnvarStr("-1", "PROJECT_ID")
 	serviceId := utility.UUID()
-	service.SendSms(
+
+	if s.NotifyType == TpNotifySms {
+		service.SendSms(
+			projectId,
+			serviceId,
+			s.ContactNumbers,
+			s.Content,
+			s.Params,
+			service.TpTransactional, "resilience")
+		return
+	}
+
+	if s.NotifyType == TpNotifyWhatsapp {
+		service.SendWhatsapp(
+			projectId,
+			serviceId,
+			s.TemplateId,
+			s.ContactNumbers,
+			s.Params,
+			service.TpTransactional,
+			"resilience",
+		)
+		return
+	}
+
+	service.SendEmail(
 		projectId,
 		serviceId,
-		s.ContactNumbers,
-		s.Content,
+		s.Emails,
+		s.Subject,
+		s.HtmlMessage,
 		s.Params,
-		service.TpTransactional, "resilience")
+		service.TpTransactional,
+		"resilience",
+	)
 }
 
 /**
