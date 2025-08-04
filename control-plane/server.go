@@ -21,6 +21,7 @@ type NodeInfo struct {
 	ID         int
 	InstanceID string
 	LastSeen   time.Time
+	Service    string
 	Host       string
 	Port       int
 }
@@ -33,10 +34,10 @@ type ControlPlane struct {
 
 /**
 * getNodeID
-* @param name string, maxNodes int, host string, port int, instanceID string
+* @param name string, maxNodes int, host string, port int, service, instanceID string
 * @return int, error
 **/
-func getNodeID(name string, maxNodes int, host string, port int, instanceID string) (int, error) {
+func getNodeID(name string, maxNodes int, host string, port int, service, instanceID string) (int, error) {
 	cp, err := load(name)
 	if err != nil {
 		return 0, err
@@ -57,6 +58,7 @@ func getNodeID(name string, maxNodes int, host string, port int, instanceID stri
 		ID:         id,
 		InstanceID: instanceID,
 		LastSeen:   time.Now(),
+		Service:    service,
 		Host:       host,
 		Port:       port,
 	}
@@ -77,7 +79,7 @@ func getNodeID(name string, maxNodes int, host string, port int, instanceID stri
 **/
 func lifeProof(cp *ControlPlane) (int, error) {
 	for _, node := range cp.Nodes {
-		id, err := ping(node.Host, node.Port)
+		id, err := ping(node.Host, node.Service, node.Port)
 		if err != nil {
 			return node.ID, err
 		}
@@ -93,11 +95,11 @@ func lifeProof(cp *ControlPlane) (int, error) {
 
 /**
 * ping
-* @param host string
+* @param host, service string, port int
 * @return string, error
 **/
-func ping(host string, port int) (string, error) {
-	address := fmt.Sprintf("%s:%d", host, port)
+func ping(host, service string, port int) (string, error) {
+	address := fmt.Sprintf("%s.%s:%d", host, service, port)
 	client, err := rpc.Dial("tcp", address)
 	if err != nil {
 		return "", err
@@ -143,7 +145,8 @@ func (s *Server) GetNodeID(args et.Json, reply *int) error {
 	host := args.Str("host")
 	port := args.Int("port")
 	instanceID := args.Str("instance_id")
-	id, err := getNodeID(name, maxNodes, host, port, instanceID)
+	service := args.Str("service")
+	id, err := getNodeID(name, maxNodes, host, port, service, instanceID)
 	if err != nil {
 		return err
 	}

@@ -29,6 +29,7 @@ func NewNodeID() *NodeInfo {
 		ID:         0,
 		InstanceID: utility.UUID(),
 		LastSeen:   time.Now(),
+		Service:    envar.GetStr("Service", "CP_SERVICE"),
 		Host:       host,
 		Port:       envar.GetInt(4800, "CP_PORT"),
 	}
@@ -97,6 +98,7 @@ func GetNodeID(name string, maxNodes int, serverHost string, serverPort int) (in
 		"name":        name,
 		"instance_id": nodeID.InstanceID,
 		"max_nodes":   maxNodes,
+		"service":     nodeID.Service,
 		"host":        nodeID.Host,
 		"port":        nodeID.Port,
 	}
