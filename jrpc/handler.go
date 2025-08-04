@@ -50,11 +50,31 @@ func GetRouters() (et.Items, error) {
 }
 
 /**
+* Call
+* @param host string, port int, method string, data et.Json
+* @return et.Json, error
+**/
+func Call(host string, port int, method string, data et.Json) (et.Json, error) {
+	address := strs.Format(`%s:%d`, host, port)
+	client, err := rpc.Dial("tcp", address)
+	if err != nil {
+		return et.Json{}, err
+	}
+	defer client.Close()
+
+	var result et.Json
+	err = client.Call(method, data, &result)
+	if err != nil {
+		return et.Json{}, err
+	}
+
+	return result, nil
+}
+
+/**
 * CallJson
-* @param method string
-* @param data et.Json
-* @return et.Json
-* @return error
+* @param method string, data et.Json
+* @return et.Json, error
 **/
 func CallJson(method string, data et.Json) (et.Json, error) {
 	var result et.Json
@@ -86,10 +106,8 @@ func CallJson(method string, data et.Json) (et.Json, error) {
 
 /**
 * CallItem
-* @param method string
-* @param data et.Json
-* @return et.Item
-* @return error
+* @param method string, data et.Json
+* @return et.Item, error
 **/
 func CallItem(method string, data et.Json) (et.Item, error) {
 	var result et.Item
@@ -121,10 +139,8 @@ func CallItem(method string, data et.Json) (et.Item, error) {
 
 /**
 * CallItems
-* @param method string
-* @param data et.Json
-* @return et.Item
-* @return error
+* @param method string, data et.Json
+* @return et.Items, error
 **/
 func CallItems(method string, data et.Json) (et.Items, error) {
 	var result et.Items
@@ -156,10 +172,8 @@ func CallItems(method string, data et.Json) (et.Items, error) {
 
 /**
 * CallList
-* @param method string
-* @param data et.Json
-* @return et.List
-* @return error
+* @param method string, data et.Json
+* @return et.List, error
 **/
 func CallList(method string, data et.Json) (et.List, error) {
 	var result et.List
@@ -191,10 +205,8 @@ func CallList(method string, data et.Json) (et.List, error) {
 
 /**
 * CallPermitios
-* @param method string
-* @param data et.Json
-* @return map[string]bool
-* @return error
+* @param method string, data et.Json
+* @return map[string]bool, error
 **/
 func CallPermitios(method string, data et.Json) (map[string]bool, error) {
 	metric := middleware.NewRpcMetric(method)
@@ -226,10 +238,8 @@ func CallPermitios(method string, data et.Json) (map[string]bool, error) {
 
 /**
 * DeleteRouters
-* @param host string
-* @param packageName string
-* @return et.Item
-* @return error
+* @param host string, packageName string
+* @return et.Item, error
 **/
 func DeleteRouters(host, packageName string) (et.Item, error) {
 	routers, err := getRouters()

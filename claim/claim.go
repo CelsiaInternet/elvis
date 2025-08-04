@@ -73,9 +73,7 @@ func (c *Claim) ToJson() et.Json {
 
 /**
 * GetTokenKey
-* @param app string
-* @param device string
-* @param id string
+* @param app, device, id string
 * @return string
 **/
 func GetTokenKey(app, device, id string) string {
@@ -83,16 +81,11 @@ func GetTokenKey(app, device, id string) string {
 }
 
 /**
-* newClaim
-* @param id string
-* @param app string
-* @param name string
-* @param username string
-* @param device string
-* @param duration time.Duration
+* NewClaim
+* @param id, app, name, username, device, tag string, duration time.Duration
 * @return Claim
 **/
-func newClaim(id, app, name string, username, device, tag string, duration time.Duration) Claim {
+func NewClaim(id, app, name string, username, device, tag string, duration time.Duration) Claim {
 	c := Claim{}
 	c.Salt = utility.GetOTP(6)
 	c.ID = id
@@ -110,67 +103,64 @@ func newClaim(id, app, name string, username, device, tag string, duration time.
 }
 
 /**
-* newToken
+* GenToken
 * @param c Claim
-* @return string
-* @return error
+* @return string, error
 **/
-func newToken(c Claim) (string, error) {
-	secret := envar.GetStr("1977", "SECRET")
+func GenToken(c Claim, secret string) (string, error) {
 	_jwt := jwt.NewWithClaims(jwt.SigningMethodHS256, c)
-	token, err := _jwt.SignedString([]byte(secret))
+	result, err := _jwt.SignedString([]byte(secret))
+	if err != nil {
+		return "", err
+	}
+
+	return result, nil
+}
+
+/**
+* newTokenKey
+* @param c Claim
+* @return string, error
+**/
+func newTokenKey(c Claim) (string, error) {
+	secret := envar.GetStr("1977", "SECRET")
+	result, err := GenToken(c, secret)
 	if err != nil {
 		return "", err
 	}
 
 	key := GetTokenKey(c.App, c.Device, c.ID)
-	err = cache.Set(key, token, c.Duration)
+	err = cache.Set(key, result, c.Duration)
 	if err != nil {
 		return "", err
 	}
 
-	return token, nil
-}
-
-/**
-* NewToken
-* @param id string
-* @param app string
-* @param name string
-* @param username string
-* @param device string
-* @param duration time.Duration
-* @return token string
-* @return key string
-* @return err error
-**/
-func NewToken(id, app, name string, username, device string, duration time.Duration) (string, error) {
-	c := newClaim(id, app, name, username, device, "", duration)
-	return newToken(c)
+	return result, nil
 }
 
 /**
 * NewAutorization
-* @param id string
-* @param app string
-* @param name string
-* @param username string
-* @param device string
-* @param tag string
-* @param duration time.Duration
-* @return token string
-* @return err error
+* @param id, app, name, username, device, tag string, duration time.Duration
+* @return string, error
 **/
 func NewAutorization(id, app, name, username, device, tag string, duration time.Duration) (string, error) {
-	c := newClaim(id, app, name, username, device, tag, duration)
-	return newToken(c)
+	c := NewClaim(id, app, name, username, device, tag, duration)
+	return newTokenKey(c)
+}
+
+/**
+* NewToken
+* @param id, app, name, username, device string, duration time.Duration
+* @return string, string, error
+**/
+func NewToken(id, app, name string, username, device string, duration time.Duration) (string, error) {
+	return NewAutorization(id, app, name, username, device, "", duration)
 }
 
 /**
 * GetToken
 * @param key string
-* @return string
-* @return error
+* @return string, error
 **/
 func GetToken(key string) (string, error) {
 	return cache.Get(key, "")
@@ -178,9 +168,7 @@ func GetToken(key string) (string, error) {
 
 /**
 * DeleteToken
-* @param app string
-* @param device string
-* @param id string
+* @param app, device, id string
 * @return error
 **/
 func DeleteToken(app, device, id string) error {
@@ -210,8 +198,7 @@ func DeleteTokeByToken(token string) error {
 /**
 * ParceToken
 * @param token string
-* @return *Claim
-* @return error
+* @return *Claim, error
 **/
 func ParceToken(token string) (*Claim, error) {
 	secret := envar.GetStr("1977", "SECRET")
@@ -284,8 +271,7 @@ func ParceToken(token string) (*Claim, error) {
 /**
 * ValidToken
 * @param token string
-* @return *Claim
-* @return error
+* @return *Claim, error
 **/
 func ValidToken(token string) (*Claim, error) {
 	result, err := ParceToken(token)
@@ -309,10 +295,7 @@ func ValidToken(token string) (*Claim, error) {
 
 /**
 * SetToken
-* @param app string
-* @param device string
-* @param id string
-* @param token string
+* @param app, device, id, token string, duration time.Duration
 * @return error
 **/
 func SetToken(app, device, id, token string, duration time.Duration) error {

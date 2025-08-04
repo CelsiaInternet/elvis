@@ -246,6 +246,36 @@ func ProtectRoute(r *chi.Mux, method, path string, h http.HandlerFunc, packageNa
 }
 
 /**
+* EphemeralRoute
+* @param r *chi.Mux, method, path string, h http.HandlerFunc, packageName, packagePath, host string
+* @return *chi.Mux
+**/
+func EphemeralRoute(r *chi.Mux, method, path string, h http.HandlerFunc, packageName, packagePath, host string) *chi.Mux {
+	switch method {
+	case "GET":
+		r.With(middleware.Ephemeral).Get(path, h)
+	case "POST":
+		r.With(middleware.Ephemeral).Post(path, h)
+	case "PUT":
+		r.With(middleware.Ephemeral).Put(path, h)
+	case "PATCH":
+		r.With(middleware.Ephemeral).Patch(path, h)
+	case "DELETE":
+		r.With(middleware.Ephemeral).Delete(path, h)
+	case "HEAD":
+		r.With(middleware.Ephemeral).Head(path, h)
+	case "OPTIONS":
+		r.With(middleware.Ephemeral).Options(path, h)
+	case "HandlerFunc":
+		r.With(middleware.Ephemeral).HandleFunc(path, h)
+	}
+
+	pushApiGateway(method, path, packagePath, host, packageName, true)
+
+	return r
+}
+
+/**
 * AuthorizationRoute
 * @param r *chi.Mux, method, path string, h http.HandlerFunc, packageName, packagePath, host string
 * @return *chi.Mux

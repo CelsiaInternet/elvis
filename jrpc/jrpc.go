@@ -28,13 +28,7 @@ func Load(name string) (*Package, error) {
 	host = envar.GetStr(host, "RPC_HOST")
 	port := envar.GetInt(4200, "RPC_PORT")
 	name = strs.DaskSpace(name)
-
-	pkg = &Package{
-		Name:    name,
-		Host:    host,
-		Port:    port,
-		Solvers: make(map[string]*Solver),
-	}
+	pkg = NewPackage(name, host, port)
 
 	return pkg, nil
 }

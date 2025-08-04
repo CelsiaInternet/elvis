@@ -3,66 +3,19 @@ package middleware
 import (
 	"context"
 	"net/http"
-	"strings"
 
 	"github.com/celsiainternet/elvis/claim"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/event"
-	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/response"
 	"github.com/celsiainternet/elvis/utility"
 )
 
 /**
-* tokenFromAuthorization
-* @param authorization string
-* @return string
-* @return error
-**/
-func tokenFromAuthorization(authorization, prefix string) (string, error) {
-	if authorization == "" {
-		return "", logs.Alertm("Autorization is required")
-	}
-
-	if !strings.HasPrefix(authorization, prefix) {
-		return "", logs.Alertm("Invalid autorization format")
-	}
-
-	l := strings.Split(authorization, " ")
-	if len(l) != 2 {
-		return "", logs.Alertm("Invalid autorization format")
-	}
-
-	return l[1], nil
-}
-
-/**
-* GetAuthorization
-* @param w http.ResponseWriter
-* @param r *http.Request
-* @return string
-* @return error
-**/
-func GetAuthorization(w http.ResponseWriter, r *http.Request) (string, error) {
-	_, ok := r.Header["Authorization"]
-	if ok {
-		authorization := r.Header.Get("Authorization")
-		result, err := tokenFromAuthorization(authorization, "Bearer")
-		if err != nil {
-			return "", logs.Alert(err)
-		}
-
-		return result, nil
-	}
-
-	return "", logs.Alertm("Autorization is required")
-}
-
-/**
-* Autentication
+* Ephemeral
 * @param next http.Handler
 **/
-func Autentication(next http.Handler) http.Handler {
+func Ephemeral(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token, err := GetAuthorization(w, r)
 		if err != nil {
@@ -70,23 +23,18 @@ func Autentication(next http.Handler) http.Handler {
 			return
 		}
 
-		clm, err := claim.ValidToken(token)
+		clm, err := claim.ParceToken(token)
 		if err != nil {
 			response.Unauthorized(w, r)
 			return
 		}
 
-		if clm == nil {
+		if clm.ExpiresAt < utility.NowTime().Unix() {
 			response.Unauthorized(w, r)
 			return
 		}
 
 		serviceId := utility.UUID()
-		_, ok := r.Header["service_id"]
-		if ok {
-			serviceId = r.Header.Get("service_id")
-		}
-
 		ctx := r.Context()
 		ctx = context.WithValue(ctx, claim.ServiceIdKey, serviceId)
 		ctx = context.WithValue(ctx, claim.ClientIdKey, clm.ID)

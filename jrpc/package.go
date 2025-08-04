@@ -19,6 +19,20 @@ type Package struct {
 }
 
 /**
+* NewPackage
+* @param name string, host string, port int
+* @return *Package
+**/
+func NewPackage(name string, host string, port int) *Package {
+	return &Package{
+		Name:    name,
+		Host:    host,
+		Port:    port,
+		Solvers: make(map[string]*Solver),
+	}
+}
+
+/**
 * Start
 **/
 func (s *Package) Start() error {
