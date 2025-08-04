@@ -12,6 +12,7 @@ import (
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/response"
+	"github.com/celsiainternet/elvis/utility"
 )
 
 type Client int
@@ -25,10 +26,11 @@ func NewNodeID() *NodeInfo {
 	}
 
 	return &NodeInfo{
-		ID:       0,
-		LastSeen: time.Now(),
-		Host:     host,
-		Port:     envar.GetInt(4800, "CP_PORT"),
+		ID:         0,
+		InstanceID: utility.UUID(),
+		LastSeen:   time.Now(),
+		Host:       host,
+		Port:       envar.GetInt(4800, "CP_PORT"),
 	}
 }
 
@@ -42,15 +44,15 @@ func init() {
 
 /**
 * Ping
-* @param args et.Json, reply *int
+* @param args et.Json, reply *string
 * @return error
 **/
-func (s *Client) Ping(args et.Json, reply *int) error {
+func (s *Client) Ping(args et.Json, reply *string) error {
 	if nodeID == nil {
 		nodeID = NewNodeID()
 	}
 
-	*reply = nodeID.ID
+	*reply = nodeID.InstanceID
 	return nil
 }
 
@@ -92,10 +94,11 @@ func GetNodeID(name string, maxNodes int, serverHost string, serverPort int) (in
 	defer client.Close()
 
 	args := et.Json{
-		"name":      name,
-		"max_nodes": maxNodes,
-		"host":      nodeID.Host,
-		"port":      nodeID.Port,
+		"name":        name,
+		"instance_id": nodeID.InstanceID,
+		"max_nodes":   maxNodes,
+		"host":        nodeID.Host,
+		"port":        nodeID.Port,
 	}
 	var result int
 

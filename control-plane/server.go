@@ -18,10 +18,11 @@ import (
 
 // Control Plane Structs
 type NodeInfo struct {
-	ID       int
-	LastSeen time.Time
-	Host     string
-	Port     int
+	ID         int
+	InstanceID string
+	LastSeen   time.Time
+	Host       string
+	Port       int
 }
 
 type ControlPlane struct {
@@ -32,10 +33,10 @@ type ControlPlane struct {
 
 /**
 * getNodeID
-* @param name string, maxNodes int, host string
+* @param name string, maxNodes int, host string, port int, instanceID string
 * @return int, error
 **/
-func getNodeID(name string, maxNodes int, host string, port int) (int, error) {
+func getNodeID(name string, maxNodes int, host string, port int, instanceID string) (int, error) {
 	cp, err := load(name)
 	if err != nil {
 		return 0, err
@@ -53,10 +54,11 @@ func getNodeID(name string, maxNodes int, host string, port int) (int, error) {
 	}
 
 	cp.Nodes[id] = &NodeInfo{
-		ID:       id,
-		LastSeen: time.Now(),
-		Host:     host,
-		Port:     port,
+		ID:         id,
+		InstanceID: instanceID,
+		LastSeen:   time.Now(),
+		Host:       host,
+		Port:       port,
 	}
 
 	if err := save(name, cp); err != nil {
@@ -75,9 +77,12 @@ func getNodeID(name string, maxNodes int, host string, port int) (int, error) {
 **/
 func lifeProof(cp *ControlPlane) (int, error) {
 	for _, node := range cp.Nodes {
-		_, err := ping(node.Host, node.Port)
+		id, err := ping(node.Host, node.Port)
 		if err != nil {
 			return node.ID, err
+		}
+		if id != node.InstanceID {
+			return node.ID, nil
 		}
 	}
 
@@ -89,22 +94,22 @@ func lifeProof(cp *ControlPlane) (int, error) {
 /**
 * ping
 * @param host string
-* @return int, error
+* @return string, error
 **/
-func ping(host string, port int) (int, error) {
+func ping(host string, port int) (string, error) {
 	address := fmt.Sprintf("%s:%d", host, port)
 	client, err := rpc.Dial("tcp", address)
 	if err != nil {
-		return 0, err
+		return "", err
 	}
 	defer client.Close()
 
 	args := et.Json{}
-	var result int
+	var result string
 
 	err = client.Call("Client.Ping", args, &result)
 	if err != nil {
-		return 0, err
+		return "", err
 	}
 
 	return result, nil
@@ -137,7 +142,8 @@ func (s *Server) GetNodeID(args et.Json, reply *int) error {
 	maxNodes := args.Int("max_nodes")
 	host := args.Str("host")
 	port := args.Int("port")
-	id, err := getNodeID(name, maxNodes, host, port)
+	instanceID := args.Str("instance_id")
+	id, err := getNodeID(name, maxNodes, host, port, instanceID)
 	if err != nil {
 		return err
 	}
