@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"net/rpc"
+	"os"
 	"sync"
 	"time"
 
@@ -156,13 +157,18 @@ func LoadServer() error {
 		return err
 	}
 
+	host, err := os.Hostname()
+	if err != nil {
+		host = "localhost"
+	}
+
 	port := envar.GetInt(4800, "CP_PORT")
 	address := fmt.Sprintf(":%d", port)
 	listener, err := net.Listen("tcp", address)
 	if err != nil {
 		return err
 	}
-	console.LogKF("Control Plane", "Server initialized: %s", address)
+	console.LogKF("Control Plane", "Server initialized: %s:%d", host, port)
 
 	go startRPC(listener)
 

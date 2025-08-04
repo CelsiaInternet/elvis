@@ -71,7 +71,7 @@ func LoadClient() error {
 	if err != nil {
 		return err
 	}
-	console.LogKF("Control Plane", "Client initialized: %s", address)
+	console.LogKF("Control Plane", "Client initialized: %s:%d", nodeID.Host, nodeID.Port)
 
 	go startRPC(listener)
 
