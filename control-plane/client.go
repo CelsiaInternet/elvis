@@ -3,6 +3,7 @@ package controlplane
 import (
 	"fmt"
 	"net"
+	"net/http"
 	"net/rpc"
 	"os"
 	"time"
@@ -10,6 +11,7 @@ import (
 	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/response"
 )
 
 type Client int
@@ -107,4 +109,20 @@ func GetNodeID(name string, maxNodes int, serverHost string, serverPort int) (in
 	nodeID.LastSeen = time.Now()
 
 	return result, nil
+}
+
+/**
+* HTTPClient
+* @param w http.ResponseWriter
+* @param r *http.Request
+**/
+func HTTPClient(w http.ResponseWriter, r *http.Request) {
+	response.ITEM(w, r, http.StatusOK, et.Item{
+		Ok: true,
+		Result: et.Json{
+			"id":   nodeID.ID,
+			"host": nodeID.Host,
+			"port": nodeID.Port,
+		},
+	})
 }
