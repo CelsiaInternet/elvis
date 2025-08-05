@@ -204,3 +204,46 @@ func HTTPReset(w http.ResponseWriter, r *http.Request) {
 		},
 	})
 }
+
+/**
+* HTTPReset
+* @param w http.ResponseWriter
+* @param r *http.Request
+**/
+func HTTPPing(w http.ResponseWriter, r *http.Request) {
+	body, _ := response.GetBody(r)
+	name := body.ValStr("", "name")
+	cp, err := load(name)
+	if err != nil {
+		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	result := et.Items{}
+	for _, node := range cp.Nodes {
+		id, err := ping(node.Host, node.Service, node.Port)
+		if err != nil {
+			result.Add(et.Json{
+				"id":          node.ID,
+				"host":        node.Host,
+				"port":        node.Port,
+				"service":     node.Service,
+				"instance_id": node.InstanceID,
+				"error":       err.Error(),
+			})
+			continue
+		}
+
+		if id != node.InstanceID {
+			result.Add(et.Json{
+				"id":          node.ID,
+				"host":        node.Host,
+				"port":        node.Port,
+				"service":     node.Service,
+				"instance_id": node.InstanceID,
+			})
+		}
+	}
+
+	response.ITEMS(w, r, http.StatusOK, result)
+}
