@@ -62,10 +62,7 @@ update_version() {
   echo "Etiquetando con: $NEW_VERSION"
 
   sed -i "" "s/$CURRENT_VERSION/$NEW_VERSION/g" README.md
-
-  git add .
-  git commit -m 'Update'
-  git push -u origin
+  
   git tag "$NEW_VERSION"
   git push origin --tags
 
