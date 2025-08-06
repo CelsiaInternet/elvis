@@ -8,8 +8,6 @@ import (
 /**
 * Created database component
 **/
-
-// Crate database
 func CreateDatabase(db *DB, name string) error {
 	name = strs.Lowcase(name)
 	exists, err := ExistDatabase(db, name)
