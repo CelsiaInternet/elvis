@@ -151,6 +151,48 @@ func WriteResponse(w http.ResponseWriter, statusCode int, e []byte) error {
 }
 
 /**
+* RESULT
+* @param w http.ResponseWriter
+* @param r *http.Request
+* @param statusCode int
+* @param data interface{}
+* @return error
+**/
+func RESULT(w http.ResponseWriter, r *http.Request, statusCode int, data interface{}) error {
+	if data == nil {
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(statusCode)
+		return nil
+	}
+
+	e, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+
+	return WriteResponse(w, statusCode, e)
+}
+
+/**
+* ANY
+* @param w http.ResponseWriter
+* @param r *http.Request
+* @param statusCode int
+* @param result interface{}
+* @return error
+**/
+func ANY(w http.ResponseWriter, r *http.Request, statusCode int, result interface{}) error {
+	switch v := result.(type) {
+	case et.Item:
+		return ITEM(w, r, statusCode, v)
+	case et.Items:
+		return ITEMS(w, r, statusCode, v)
+	default:
+		return JSON(w, r, statusCode, result)
+	}
+}
+
+/**
 * JSON
 * @param w http.ResponseWriter
 * @param r *http.Request

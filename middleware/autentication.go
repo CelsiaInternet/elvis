@@ -7,7 +7,6 @@ import (
 
 	"github.com/celsiainternet/elvis/claim"
 	"github.com/celsiainternet/elvis/et"
-	"github.com/celsiainternet/elvis/event"
 	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/response"
 	"github.com/celsiainternet/elvis/utility"
@@ -106,7 +105,7 @@ func Autentication(next http.Handler) http.Handler {
 			"token":     token,
 		}
 
-		event.TokenLastUse(data)
+		PushTokenLastUse(data)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

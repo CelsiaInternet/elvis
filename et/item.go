@@ -152,6 +152,10 @@ func (it *Item) Bool(atribs ...string) bool {
 	return it.Result.Bool(atribs...)
 }
 
+func (s Item) Byte(atribs ...string) ([]byte, error) {
+	return s.Result.Byte(atribs...)
+}
+
 func (it *Item) Time(atribs ...string) time.Time {
 	return it.Result.Time(atribs...)
 }
@@ -174,8 +178,12 @@ func (it *Item) Json(atribs ...string) Json {
 	}
 }
 
-func (it *Item) Array(atrib string) []Json {
+func (it *Item) Array(atrib string) []interface{} {
 	return it.Result.Array(atrib)
+}
+
+func (it *Item) ArrayJson(atrib string) []Json {
+	return it.Result.ArrayJson(atrib)
 }
 
 func (it *Item) ArrayStr(atrib string) []string {

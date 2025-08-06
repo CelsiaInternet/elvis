@@ -7,6 +7,11 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+func Validate(expr, val string) bool {
+	re := regexp.MustCompile(expr)
+	return re.MatchString(val)
+}
+
 func ValidStr(val string, min int, notIn []string) bool {
 	v := strs.Replace(val, " ", "")
 	ok := len(v) >= min
@@ -76,12 +81,13 @@ func ValidUUID(val string) bool {
 }
 
 func ValidCode(val string, length int) bool {
-	regex := `^-?\d+$`
-	pattern := regexp.MustCompile(regex)
-	ok := len(val) >= length && pattern.MatchString(val)
-	return ok
+	return Validate(`^\d{6,}$`, val)
 }
 
 func ValidNil(val string) bool {
 	return val == ""
+}
+
+func ValidWord(word string) bool {
+	return Validate(`^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9]+$`, word)
 }

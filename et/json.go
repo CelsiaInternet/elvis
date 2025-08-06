@@ -3,6 +3,7 @@ package et
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"log"
 	"reflect"
 	"strconv"
@@ -350,6 +351,75 @@ func (s Json) ValJson(_default Json, atribs ...string) Json {
 		return _default
 	}
 }
+
+func (s Json) ValArray(defaultVal []interface{}, atribs ...string) []interface{} {
+	var result []interface{}
+	val := s.ValAny(defaultVal, atribs...)
+
+	switch v := val.(type) {
+	case []interface{}:
+		return v
+	case []Json:
+		for _, item := range v {
+			result = append(result, item)
+		}
+
+		return result
+	case []map[string]interface{}:
+		for _, item := range v {
+			result = append(result, item)
+		}
+
+		return result
+	case []string:
+		for _, item := range v {
+			result = append(result, item)
+		}
+
+		return result
+	case []int:
+		for _, item := range v {
+			result = append(result, item)
+		}
+
+		return result
+	case []int64:
+		for _, item := range v {
+			result = append(result, item)
+		}
+
+		return result
+	case []float64:
+		for _, item := range v {
+			result = append(result, item)
+		}
+
+		return result
+	case []float32:
+		for _, item := range v {
+			result = append(result, item)
+		}
+
+		return result
+	case []bool:
+		for _, item := range v {
+			result = append(result, item)
+		}
+
+		return result
+	default:
+		src := fmt.Sprintf(`%v`, v)
+		err := json.Unmarshal([]byte(src), &result)
+		if err != nil {
+			err := fmt.Errorf(`valor: %v error:%v type:%T`, val, err.Error(), val)
+			logs.Alert(err)
+			return defaultVal
+		}
+
+		return result
+	}
+}
+
 func (s Json) Any(_default any, atribs ...string) *Any {
 	result := Val(s, _default, atribs...)
 	return NewAny(result)
@@ -397,6 +467,16 @@ func (s Json) Num(atribs ...string) float64 {
 
 func (s Json) Bool(atribs ...string) bool {
 	return s.ValBool(false, atribs...)
+}
+
+func (s Json) Byte(atribs ...string) ([]byte, error) {
+	value := s.ValAny("", atribs...)
+	bytes, err := json.Marshal(value)
+	if err != nil {
+		return nil, err
+	}
+
+	return bytes, nil
 }
 
 func (s Json) Time(atribs ...string) time.Time {
@@ -466,7 +546,21 @@ func (s Json) Json(atrib string) Json {
 	}
 }
 
-func (s Json) Array(atrib string) []Json {
+/**
+* Array
+* @param atrib ...string
+* @return []interface{}
+**/
+func (s Json) Array(atrib ...string) []interface{} {
+	return s.ValArray([]interface{}{}, atrib...)
+}
+
+/**
+* ArrayJson
+* @param atrib string
+* @return []Json
+**/
+func (s Json) ArrayJson(atrib string) []Json {
 	val := Val(s, nil, atrib)
 	if val == nil {
 		return []Json{}
@@ -528,12 +622,24 @@ func (s Json) IsDiferent(new Json) bool {
 	return IsDiferent(s, new)
 }
 
-func (s Json) IsChange(new Json) bool {
-	return IsChange(s, new)
+func (s Json) IsChanged(from Json) bool {
+	for key, fromValue := range from {
+		if s[key] == nil {
+			return true
+		}
+
+		if strings.EqualFold(fmt.Sprintf(`%v`, s[key]), fmt.Sprintf(`%v`, fromValue)) {
+			return true
+		}
+	}
+
+	return false
 }
 
 /**
-*
+* Get
+* @param key string
+* @return interface{}
 **/
 func (s Json) Get(key string) interface{} {
 	v, ok := s[key]

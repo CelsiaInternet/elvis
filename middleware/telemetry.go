@@ -19,6 +19,13 @@ import (
 var hostName, _ = os.Hostname()
 var serviceName = "telemetry"
 
+const (
+	TELEMETRY                = "telemetry"
+	TELEMETRY_SERVICE_STATUS = "telemetry:service:status"
+	TELEMETRY_TOKEN_LAST_USE = "telemetry:token:last_use"
+	TELEMETRY_OVERFLOW       = "telemetry:overflow"
+)
+
 type Result struct {
 	Ok     bool        `json:"ok"`
 	Result interface{} `json:"result"`
@@ -52,7 +59,8 @@ type Metrics struct {
 	TimeStamp    time.Time     `json:"timestamp"`
 	ServiceName  string        `json:"service_name"`
 	ReqID        string        `json:"req_id"`
-	ClientIP     string        `json:"client_ip"`
+	RemoteAddr   string        `json:"remote_addr"`
+	Token        string        `json:"token"`
 	Scheme       string        `json:"scheme"`
 	Host         string        `json:"host"`
 	Method       string        `json:"method"`
@@ -75,7 +83,8 @@ func (m *Metrics) ToJson() et.Json {
 	return et.Json{
 		"timestamp":     strs.FormatDateTime("02/01/2006 03:04:05 PM", m.TimeStamp),
 		"req_id":        m.ReqID,
-		"client_ip":     m.ClientIP,
+		"remote_addr":   m.RemoteAddr,
+		"token":         m.Token,
 		"scheme":        m.Scheme,
 		"host":          m.Host,
 		"method":        m.Method,
@@ -117,12 +126,47 @@ func (m *Telemetry) ToJson() et.Json {
 }
 
 /**
+* PushTelemetry
+* @param data et.Json
+**/
+func PushTelemetry(data et.Json) {
+	go event.Publish(TELEMETRY, data)
+}
+
+/**
+* PushTelemetry
+* @param data et.Json
+**/
+func PushTelemetryStatus(data et.Json) {
+	go event.Publish(TELEMETRY_SERVICE_STATUS, data)
+}
+
+/**
+* PushTelemetryOverflow
+* @param data et.Json
+**/
+func PushTelemetryOverflow(data et.Json) {
+	go event.Publish(TELEMETRY_OVERFLOW, data)
+}
+
+/**
+* TokenLastUse
+* @param data et.Json
+**/
+func PushTokenLastUse(data et.Json) {
+	go event.Publish(TELEMETRY_TOKEN_LAST_USE, data)
+}
+
+/**
 * NewMetric
 * @params r *http.Request
 * @return *Metrics
 **/
 func NewMetric(r *http.Request) *Metrics {
 	remoteAddr := r.RemoteAddr
+	if remoteAddr == "" {
+		remoteAddr = r.Header.Get("Origin")
+	}
 	if remoteAddr == "" {
 		remoteAddr = r.Header.Get("X-Forwarded-For")
 	}
@@ -137,11 +181,13 @@ func NewMetric(r *http.Request) *Metrics {
 		scheme = "https"
 	}
 
+	token := r.Header.Get("Authorization")
 	result := &Metrics{
 		TimeStamp:   timezone.NowTime(),
 		ServiceName: serviceName,
 		ReqID:       utility.UUID(),
-		ClientIP:    remoteAddr,
+		RemoteAddr:  remoteAddr,
+		Token:       token,
 		Host:        hostName,
 		Method:      r.Method,
 		Path:        r.URL.Path,
@@ -239,10 +285,10 @@ func (m *Metrics) CallMetrics() Telemetry {
 * @return et.Json
 **/
 func (m *Metrics) println() et.Json {
-	w := lg.Color(lg.NMagenta, "service_id: %s", m.ReqID)
+	w := lg.Color(lg.NMagenta, " [service_id]:%s", m.ReqID)
 	lg.CW(w, lg.NMagenta, " [%s]: ", m.Method)
 	lg.CW(w, lg.NCyan, "%s", m.Path)
-	lg.CW(w, lg.NWhite, " from:%s", m.ClientIP)
+	lg.CW(w, lg.NWhite, " from:%s", m.RemoteAddr)
 	if m.StatusCode >= 500 {
 		lg.CW(w, lg.NRed, " - %s", http.StatusText(m.StatusCode))
 	} else if m.StatusCode >= 400 {
@@ -274,11 +320,12 @@ func (m *Metrics) println() et.Json {
 	}
 	lg.Println(w)
 
-	event.Work("services/status", et.Json{
-		"service_id": m.ReqID,
-		"method":     m.Method,
-		"path":       m.Path,
-		"client_ip":  m.ClientIP,
+	PushTelemetryStatus(et.Json{
+		"service_id":  m.ReqID,
+		"method":      m.Method,
+		"path":        m.Path,
+		"remote_addr": m.RemoteAddr,
+		"token":       m.Token,
 	})
 
 	return m.ToJson()
@@ -292,13 +339,13 @@ func (m *Metrics) telemetry() et.Json {
 	result := m.ToJson()
 	result["metric"] = m.metrics.ToJson()
 
-	event.Telemetry(et.Json{
+	PushTelemetry(et.Json{
 		"response": m,
 		"metric":   m.metrics.ToJson(),
 	})
 
 	if m.metrics.RequestsPerSecond > m.metrics.RequestsLimit {
-		event.Overflow(et.Json{
+		PushTelemetryOverflow(et.Json{
 			"response": m,
 			"metric":   m.metrics.ToJson(),
 		})
@@ -359,10 +406,7 @@ func (m *Metrics) DoneRpc(r any) et.Json {
 
 /**
 * WriteResponse
-* @params w http.ResponseWriter
-* @params r *http.Request
-* @params statusCode int
-* @params e []byte
+* @params w http.ResponseWriter, r *http.Request, statusCode int, e []byte
 **/
 func (m *Metrics) WriteResponse(w http.ResponseWriter, r *http.Request, statusCode int, e []byte) error {
 	rw := &ResponseWriterWrapper{ResponseWriter: w, StatusCode: statusCode}
@@ -376,10 +420,7 @@ func (m *Metrics) WriteResponse(w http.ResponseWriter, r *http.Request, statusCo
 
 /**
 * JSON
-* @params w http.ResponseWriter
-* @params r *http.Request
-* @params statusCode int
-* @params dt interface{}
+* @params w http.ResponseWriter, r *http.Request, statusCode int, dt interface{}
 **/
 func (m *Metrics) JSON(w http.ResponseWriter, r *http.Request, statusCode int, dt interface{}) error {
 	if dt == nil {
@@ -403,10 +444,7 @@ func (m *Metrics) JSON(w http.ResponseWriter, r *http.Request, statusCode int, d
 
 /**
 * ITEM
-* @params w http.ResponseWriter
-* @params r *http.Request
-* @params statusCode int
-* @params dt et.Item
+* @params w http.ResponseWriter, r *http.Request, statusCode int, dt et.Item
 **/
 func (m *Metrics) ITEM(w http.ResponseWriter, r *http.Request, statusCode int, dt et.Item) error {
 	if &dt == (&et.Item{}) {
@@ -425,10 +463,7 @@ func (m *Metrics) ITEM(w http.ResponseWriter, r *http.Request, statusCode int, d
 
 /**
 * ITEMS
-* @params w http.ResponseWriter
-* @params r *http.Request
-* @params statusCode int
-* @params dt et.Items
+* @params w http.ResponseWriter, r *http.Request, statusCode int, dt et.Items
 **/
 func (m *Metrics) ITEMS(w http.ResponseWriter, r *http.Request, statusCode int, dt et.Items) error {
 	if &dt == (&et.Items{}) {
@@ -447,10 +482,7 @@ func (m *Metrics) ITEMS(w http.ResponseWriter, r *http.Request, statusCode int, 
 
 /**
 * HTTPError
-* @params w http.ResponseWriter
-* @params r *http.Request
-* @params statusCode int
-* @params message string
+* @params w http.ResponseWriter, r *http.Request, statusCode int, message string
 **/
 func (m *Metrics) HTTPError(w http.ResponseWriter, r *http.Request, statusCode int, message string) error {
 	msg := et.Json{
@@ -462,8 +494,7 @@ func (m *Metrics) HTTPError(w http.ResponseWriter, r *http.Request, statusCode i
 
 /**
 * Unauthorized
-* @params w http.ResponseWriter
-* @params r *http.Request
+* @params w http.ResponseWriter, r *http.Request
 **/
 func (m *Metrics) Unauthorized(w http.ResponseWriter, r *http.Request) {
 	m.HTTPError(w, r, http.StatusUnauthorized, "401 Unauthorized")

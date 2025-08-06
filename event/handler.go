@@ -206,27 +206,11 @@ func Log(event string, data et.Json) {
 }
 
 /**
-* Telemetry
-* @param data et.Json
-**/
-func Telemetry(data et.Json) {
-	go Publish("telemetry", data)
-}
-
-/**
 * Overflow
 * @param data et.Json
 **/
 func Overflow(data et.Json) {
 	go Publish("requests/overflow", data)
-}
-
-/**
-* TokenLastUse
-* @param data et.Json
-**/
-func TokenLastUse(data et.Json) {
-	go Publish("telemetry.token.last_use", data)
 }
 
 /**

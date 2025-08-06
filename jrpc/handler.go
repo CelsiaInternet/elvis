@@ -86,7 +86,7 @@ func CallJson(method string, data et.Json) (et.Json, error) {
 
 	address := strs.Format(`%s:%d`, solver.Host, solver.Port)
 	metric.CallSearchTime()
-	metric.ClientIP = address
+	metric.RemoteAddr = address
 
 	client, err := rpc.Dial("tcp", address)
 	if err != nil {
@@ -119,7 +119,7 @@ func CallItem(method string, data et.Json) (et.Item, error) {
 
 	address := strs.Format(`%s:%d`, solver.Host, solver.Port)
 	metric.CallSearchTime()
-	metric.ClientIP = address
+	metric.RemoteAddr = address
 
 	client, err := rpc.Dial("tcp", address)
 	if err != nil {
@@ -152,7 +152,7 @@ func CallItems(method string, data et.Json) (et.Items, error) {
 
 	address := strs.Format(`%s:%d`, solver.Host, solver.Port)
 	metric.CallSearchTime()
-	metric.ClientIP = address
+	metric.RemoteAddr = address
 
 	client, err := rpc.Dial("tcp", address)
 	if err != nil {
@@ -185,7 +185,7 @@ func CallList(method string, data et.Json) (et.List, error) {
 
 	address := strs.Format(`%s:%d`, solver.Host, solver.Port)
 	metric.CallSearchTime()
-	metric.ClientIP = address
+	metric.RemoteAddr = address
 
 	client, err := rpc.Dial("tcp", address)
 	if err != nil {
@@ -217,7 +217,7 @@ func CallPermitios(method string, data et.Json) (map[string]bool, error) {
 
 	address := strs.Format(`%s:%d`, solver.Host, solver.Port)
 	metric.CallSearchTime()
-	metric.ClientIP = address
+	metric.RemoteAddr = address
 
 	client, err := rpc.Dial("tcp", address)
 	if err != nil {

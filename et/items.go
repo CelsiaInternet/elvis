@@ -60,6 +60,12 @@ func (it *Items) Add(item Json) *Items {
 	return it
 }
 
+func (s *Items) AddMany(items []Json) {
+	(*s).Result = append((*s).Result, items...)
+	(*s).Count = len((*s).Result)
+	(*s).Ok = (*s).Count > 0
+}
+
 func (it *Items) ValAny(idx int, _default any, atribs ...string) any {
 	if it.Result[idx] == nil {
 		return _default

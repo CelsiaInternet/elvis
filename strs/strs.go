@@ -160,6 +160,10 @@ func Lowcase(s string) string {
 	return strings.ToLower(s)
 }
 
+func Same(str1, str2 string) bool {
+	return strings.EqualFold(str1, str2)
+}
+
 /**
 * Titlecase
 * @param str string
