@@ -3,6 +3,13 @@
     "statusBar.background": "#0e73e6"
   },
   "gopls": {
-    "staticcheck": false
-  }
+    "staticcheck": false,
+    "analyses": {
+      "ST1020": false,
+      "staticcheck": false
+    }
+  },
+  "go.lintTool": "golint",
+  "go.lintOnSave": "off",
+  "go.vetOnSave": "off"
 }
