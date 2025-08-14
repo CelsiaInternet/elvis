@@ -14,7 +14,9 @@ require (
 	github.com/matoous/go-nanoid/v2 v2.1.0
 	github.com/nats-io/nats.go v1.41.2
 	github.com/oklog/ulid v1.3.1
-	github.com/redis/go-redis/v9 v9.7.3
+	github.com/oklog/ulid/v2 v2.1.1
+	github.com/redis/go-redis/v9 v9.12.1
+	github.com/rs/xid v1.6.0
 	github.com/schollz/progressbar/v3 v3.18.0
 	golang.org/x/crypto v0.37.0
 	golang.org/x/exp v0.0.0-20250408133849-7e4ce0ab07d0
