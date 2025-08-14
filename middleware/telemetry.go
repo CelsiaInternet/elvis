@@ -317,7 +317,7 @@ func (m *Metrics) println() et.Json {
 	} else {
 		lg.CW(w, lg.NGreen, " - Request:S:%vM:%vH:%vD:%vL:%v", m.metrics.RequestsPerSecond, m.metrics.RequestsPerMinute, m.metrics.RequestsPerHour, m.metrics.RequestsPerDay, m.metrics.RequestsLimit)
 	}
-	lg.CW(w, lg.NMagenta, " [service_id]: ", m.ReqID)
+	lg.CW(w, lg.NMagenta, " [service_id]:%s", m.ReqID)
 	lg.Println(w)
 
 	PushTelemetryStatus(et.Json{

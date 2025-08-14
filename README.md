@@ -2,7 +2,7 @@
 
 [![Go Version](https://img.shields.io/badge/Go-1.23+-blue.svg)](https://golang.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-v1.1.111-orange.svg)](https://github.com/celsiainternet/elvis/releases)
+[![Version](https://img.shields.io/badge/Version-v1.1.112-orange.svg)](https://github.com/celsiainternet/elvis/releases)
 [![Build Status](https://img.shields.io/badge/Build-Passing-brightgreen.svg)]()
 [![Go Report Card](https://img.shields.io/badge/Go%20Report%20Card-A+-brightgreen.svg)]()
 
@@ -55,7 +55,7 @@ go mod init github.com/tu-usuario/tu-proyecto
 ### 2. Instalar Elvis
 
 ```bash
-go get github.com/celsiainternet/elvis@v1.1.111
+go get github.com/celsiainternet/elvis@v1.1.112
 ```
 
 ### 3. Crear Proyecto con Elvis
@@ -547,7 +547,7 @@ _Desarrollado con ❤️ en Colombia_
 
 ## Releases
 
-### v1.1.111
+### v1.1.112
 
 - **Sistema de Comunicación en Tiempo Real**
 
