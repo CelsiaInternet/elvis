@@ -6,6 +6,7 @@ import (
 )
 
 func MakeInternal(packageName, name, schema string) error {
+	name = strs.Lowcase(name)
 	modelsPath, err := file.MakeFolder("internal", "models", name)
 	if err != nil {
 		return err
@@ -17,21 +18,20 @@ func MakeInternal(packageName, name, schema string) error {
 	}
 
 	if len(schema) > 0 {
-		schemaVar := strs.Append("schema", strs.Titlecase(schema), "")
-		_, err = file.MakeFile(modelsPath, "schema.go", modelSchema, name, schemaVar, schema)
+		_, err = file.MakeFile(modelsPath, "schema.go", modelSchema, name, "schema")
 		if err != nil {
 			return err
 		}
 
 		modelo := strs.Titlecase(name)
-		modelFileName := strs.Format(`%s.go`, modelo)
-		_, err = file.MakeFile(modelsPath, modelFileName, modelModel, name, modelo)
+		modelFileName := strs.Format(`%s.go`, name)
+		_, err = file.MakeFile(modelsPath, modelFileName, modelData, name, modelo)
 		if err != nil {
 			return err
 		}
 	}
 
-	servicePath, err := file.MakeFolder("internal", "service", name)
+	servicePath, err := file.MakeFolder("internal", "services", name)
 	if err != nil {
 		return err
 	}
@@ -41,7 +41,7 @@ func MakeInternal(packageName, name, schema string) error {
 		return err
 	}
 
-	v1Path, err := file.MakeFolder("internal", "service", name, "v1")
+	v1Path, err := file.MakeFolder("internal", "services", name, "v1")
 	if err != nil {
 		return err
 	}

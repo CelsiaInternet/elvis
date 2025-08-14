@@ -1,4 +1,4 @@
-package createjdb
+package main
 
 import (
 	"github.com/celsiainternet/elvis/create/v2"

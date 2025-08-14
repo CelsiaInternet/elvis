@@ -58,7 +58,7 @@ import (
 
 	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/envar"
-	serv "$1/internal/service/$2"	
+	serv "$1/internal/services/$2"	
 )
 
 func main() {
@@ -97,8 +97,8 @@ import (
 	"github.com/celsiainternet/elvis/response"
 	"github.com/celsiainternet/elvis/strs"
 	"github.com/go-chi/chi/v5"
-	"github.com/rs/cors"
-	v1 "$1/internal/service/$2/v1"
+	v1 "$1/internal/services/$2/v1"
+	"github.com/rs/cors"	
 )
 
 type Server struct {
@@ -174,9 +174,9 @@ import (
 	"github.com/celsiainternet/elvis/cache"
 	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/event"
-	"github.com/celsiainternet/elvis/jdb"
 	"github.com/celsiainternet/elvis/jrpc"
 	"github.com/celsiainternet/elvis/utility"
+	"github.com/celsiainternet/jdb/jdb"
 	"github.com/dimiro1/banner"
 	"github.com/go-chi/chi/v5"
 	"github.com/mattn/go-colorable"
@@ -324,15 +324,273 @@ func eventAction(m event.EvenMessage) {
 }
 `
 
+const modelData = `package $1
+
+import (
+	"errors"
+	"fmt"
+
+	"github.com/celsiainternet/elvis/console"
+	"github.com/celsiainternet/elvis/dt"
+	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/msg"
+	"github.com/celsiainternet/elvis/utility"
+	"github.com/celsiainternet/jdb/jdb"
+)
+
+var $2 *jdb.Model
+
+func Define$2(db *jdb.DB) error {
+	if err := defineSchema(db); err != nil {
+		return console.Panic(err)
+	}
+
+	if $2 != nil {
+		return nil
+	}
+
+	$2 = jdb.NewModel(schema, "$1", 1)
+	$2.DefineModel()
+	$2.DefineAtribute("name", jdb.TypeDataText)
+	$2.DefineIndex(true,
+		"name",
+	)
+	$2.DefineEvent(jdb.EventInsert, func(tx *jdb.Tx, model *jdb.Model, before et.Json, after et.Json) error {
+		return nil
+	})
+	$2.DefineEvent(jdb.EventUpdate, func(tx *jdb.Tx, model *jdb.Model, before et.Json, after et.Json) error {
+		return nil
+	})
+	$2.DefineEvent(jdb.EventDelete, func(tx *jdb.Tx, model *jdb.Model, before et.Json, after et.Json) error {
+		return nil
+	})
+
+	if err := $2.Init(); err != nil {
+		return console.Panic(err)
+	}
+
+	return nil
+}
+
+/**
+* Get$2ById
+* @param id string
+* @return dt.Object, error
+**/
+func Get$2ById(id string) (dt.Object, error) {
+	result := dt.Get(id)
+	if result.Ok {
+		return result, nil
+	}
+
+	return up$2ById(id)
+}
+
+/**
+* up$2ById
+* @param id string
+* @return dt.Object, error
+**/
+func up$2ById(id string) (dt.Object, error) {
+	item, err := $2.
+		Where(jdb.KEY).Eq(id).
+		One()
+	if err != nil {
+		return dt.Object{}, err
+	}
+
+	return dt.Up(id, item), nil
+}
+
+/**
+* insert$2
+* @param projectId, statusId, id, name, description string, data et.Json, createdBy string
+* @return dt.Object, error
+**/
+func insert$2(projectId, statusId, id, name, description string, data et.Json, createdBy string) (dt.Object, error) {
+	if !utility.ValidStr(projectId, 0, []string{""}) {
+		return dt.Object{}, fmt.Errorf(msg.MSG_ATRIB_REQUIRED, jdb.PROJECT_ID)
+	}
+
+	if !utility.ValidStr(id, 0, []string{""}) {
+		return dt.Object{}, fmt.Errorf(msg.MSG_ATRIB_REQUIRED, jdb.KEY)
+	}
+
+	if !utility.ValidStr(name, 0, []string{""}) {
+		return dt.Object{}, fmt.Errorf(msg.MSG_ATRIB_REQUIRED, "name")
+	}
+
+	id = $2.GetId(id)
+	now := utility.Now()
+	data[jdb.PROJECT_ID] = projectId
+	data[jdb.KEY] = id
+	data["name"] = name
+	data["description"] = description
+	_, err := $2.
+		Insert(data).
+		BeforeInsert(func(tx *jdb.Tx, data et.Json) error {
+			exists, err := $2.
+				Where(jdb.PROJECT_ID).Eq(projectId).
+				And("name").Eq(name).
+				And(jdb.KEY).Neg(id).
+				ItExistsTx(tx)
+			if err != nil {
+				return err
+			}
+
+			if exists {
+				return errors.New(msg.RECORD_NOT_FOUND)
+			}
+
+			data[jdb.CREATED_AT] = now
+			data[jdb.UPDATED_AT] = now
+			data[jdb.STATUS_ID] = statusId
+			data["created_by"] = createdBy
+			return nil
+		}).		
+		Exec()
+	if err != nil {
+		return dt.Object{}, err
+	}
+
+	return up$2ById(id)
+}
+
+/**
+* Upsert$2
+* @param projectId, id, name, description string, data et.Json, createdBy string
+* @return dt.Object, error
+**/
+func Upsert$2(projectId, id, name, description string, data et.Json, createdBy string) (dt.Object, error) {
+	if !utility.ValidStr(projectId, 0, []string{""}) {
+		return dt.Object{}, fmt.Errorf(msg.MSG_ATRIB_REQUIRED, jdb.PROJECT_ID)
+	}
+
+	if !utility.ValidStr(id, 0, []string{""}) {
+		return dt.Object{}, fmt.Errorf(msg.MSG_ATRIB_REQUIRED, jdb.KEY)
+	}
+
+	if !utility.ValidStr(name, 0, []string{""}) {
+		return dt.Object{}, fmt.Errorf(msg.MSG_ATRIB_REQUIRED, "name")
+	}
+
+	id = $2.GetId(id)
+	now := utility.Now()
+	data[jdb.PROJECT_ID] = projectId
+	data[jdb.KEY] = id
+	data["name"] = name
+	data["description"] = description
+	_, err := $2.
+		Upsert(data).
+		BeforeInsert(func(tx *jdb.Tx, data et.Json) error {
+			exists, err := $2.
+				Where(jdb.PROJECT_ID).Eq(projectId).
+				And("name").Eq(name).
+				And(jdb.KEY).Neg(id).
+				ItExistsTx(tx)
+			if err != nil {
+				return err
+			}
+
+			if exists {
+				return errors.New(msg.RECORD_NOT_FOUND)
+			}
+
+			data[jdb.CREATED_AT] = now
+			data[jdb.UPDATED_AT] = now
+			data[jdb.STATUS_ID] = utility.ACTIVE
+			data["created_by"] = createdBy
+			return nil
+		}).
+		BeforeUpdate(func(tx *jdb.Tx, data et.Json) error {
+			exists, err := $2.
+				Where(jdb.PROJECT_ID).Eq(projectId).
+				And("name").Eq(name).
+				And(jdb.KEY).Neg(id).
+				ItExistsTx(tx)
+			if err != nil {
+				return err
+			}
+
+			if exists {
+				return errors.New(msg.RECORD_NOT_FOUND)
+			}
+
+			data[jdb.UPDATED_AT] = now
+			data["updated_by"] = createdBy
+			return nil
+		}).
+		Where(jdb.STATUS_ID).Eq(utility.ACTIVE).
+		Exec()
+	if err != nil {
+		return dt.Object{}, err
+	}
+
+	return up$2ById(id)
+}
+
+/**
+* State$2
+* @param id, stateId, createdBy string
+* @return et.Item, error
+**/
+func State$2(id, stateId, createdBy string) (et.Item, error) {
+	if !utility.ValidStr(stateId, 0, []string{""}) {
+		return et.Item{}, fmt.Errorf(msg.MSG_ATRIB_REQUIRED, jdb.STATUS_ID)
+	}
+
+	if !utility.ValidStr(id, 0, []string{""}) {
+		return et.Item{}, fmt.Errorf(msg.MSG_ATRIB_REQUIRED, jdb.KEY)
+	}
+
+	result, err := $2.
+		Update(et.Json{
+			jdb.STATUS_ID: stateId,
+			"updated_by":  createdBy,
+		}).
+		Where(jdb.KEY).Eq(id).
+		And(jdb.STATUS_ID).Neg(stateId).
+		One()
+	if err != nil {
+		return et.Item{}, err
+	}
+
+	dt.Drop(id)
+
+	return et.Item{
+		Ok: result.Ok,
+		Result: et.Json{
+			"message": msg.RECORD_UPDATE,
+		},
+	}, nil
+}
+
+/**
+* Query$2
+* @param query et.Json
+* @return interface{}, error
+**/
+func Query$2(query et.Json) (interface{}, error) {
+	result, err := jdb.From($2).
+		Query(query)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+`
+
 const modelModel = `package $1
 
 import (
 	"github.com/celsiainternet/elvis/console"
-	"github.com/celsiainternet/elvis/jdb"
+	"github.com/celsiainternet/jdb/jdb"
+	"github.com/octopus/internal/models/$1"
 )
 
 func initModels(db *jdb.DB) error {
-	if err := Define$2(db); err != nil {
+	if err := $1.Define$2(db); err != nil {
 		return console.Panic(err)
 	}
 
@@ -343,15 +601,14 @@ func initModels(db *jdb.DB) error {
 const modelSchema = `package $1
 
 import (
-	"github.com/celsiainternet/elvis/jdb"
-	"github.com/celsiainternet/elvis/linq"	
+	"github.com/celsiainternet/jdb/jdb"
 )
 
-var $2 *linq.Schema
+var $2 *jdb.Schema
 
 func defineSchema(db *jdb.DB) error {
 	if $2 == nil {
-		$2 = linq.NewSchema(db, "$3")
+		$2 = jdb.NewSchema(db, "$3")
 	}
 
 	return nil
@@ -365,6 +622,7 @@ import (
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/jrpc"
+	"github.com/octopus/internal/models/$1"
 )
 
 type Services struct{}
@@ -406,12 +664,12 @@ func (c *Services) Version(require et.Json, response *et.Item) error {
 func (c *Services) Get$2ById(require et.Json, response *et.Item) error {
 	id := require.Str("id")
 
-	result, err := Get$2ById(id)
+	result, err := $1.Get$2ById(id)
 	if err != nil {
 		return err
 	}
 
-	*response = result
+	*response = result.Item
 
 	return console.Rpc(response)
 }	
@@ -469,37 +727,39 @@ import (
 
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
-	"github.com/celsiainternet/elvis/jdb"
+	"github.com/celsiainternet/jdb/jdb"
 )
+
+type Repository interface {
+	Version(ctx context.Context) (et.Json, error)
+	Init(ctx context.Context)
+}
 
 type Controller struct {
 	Db *jdb.DB
 }
 
-func (c *Controller) Version(ctx context.Context) (et.Json, error) {
-	company := envar.GetStr("", "COMPANY")
-	web := envar.GetStr("", "WEB")
-	version := envar.EnvarStr("0.0.1", "VERSION")
-  service := et.Json{
-		"version": version,
-		"service": PackageName,
-		"host":    HostName,
-		"company": company,
-		"web":     web,
-		"help":    "",
+func (s *Controller) Version(ctx context.Context) (et.Json, error) {
+	company := envar.EnvarStr("", "COMPANY")
+	web := envar.EnvarStr("", "WEB")
+	version := envar.EnvarStr("", "VERSION")
+	service := et.Json{
+		"version":      version,
+		"service":      PackageName,
+		"host":         HostName,
+		"company":      company,
+		"web":          web,
+		"serviceSMS":   "Brevo",
+		"serviceEmail": "Go4clients",
+		"help":         "",
 	}
 
 	return service, nil
 }
 
-func (c *Controller) Init(ctx context.Context) {
-	initModels(c.Db)
+func (s *Controller) Init(ctx context.Context) {
+	initModels(s.Db)
 	initEvents()
-}
-
-type Repository interface {
-	Version(ctx context.Context) (et.Json, error)
-	Init(ctx context.Context)
 }
 `
 
@@ -580,10 +840,10 @@ func (rt *Router) Routes() http.Handler {
 	er.ProtectRoute(r, er.Get, "/routes", rt.routes, PackageName, PackagePath, host)
 	// $2
 	er.ProtectRoute(r, er.Get, "/{id}", rt.get$2ById, PackageName, PackagePath, host)
-	er.ProtectRoute(r, er.Post, "/", rt.upSert$2, PackageName, PackagePath, host)
+	er.ProtectRoute(r, er.Post, "/", rt.upsert$2, PackageName, PackagePath, host)
 	er.ProtectRoute(r, er.Put, "/state/{id}", rt.state$2, PackageName, PackagePath, host)
 	er.ProtectRoute(r, er.Delete, "/{id}", rt.delete$2, PackageName, PackagePath, host)
-	er.ProtectRoute(r, er.Get, "/", rt.all$2, PackageName, PackagePath, host)
+	er.ProtectRoute(r, er.Get, "/", rt.query$2, PackageName, PackagePath, host)
 
 	ctx := context.Background()
 	rt.Repository.Init(ctx)
@@ -720,273 +980,6 @@ Content-Length: 227
 }
 `
 
-const modelDbHandler = `package $1
-
-import (
-	"net/http"
-
-	"github.com/celsiainternet/elvis/console"
-	"github.com/celsiainternet/elvis/et"
-	"github.com/celsiainternet/elvis/jdb"
-	"github.com/celsiainternet/elvis/linq"
-	"github.com/celsiainternet/elvis/msg"
-	"github.com/celsiainternet/elvis/response"
-	"github.com/celsiainternet/elvis/utility"
-	"github.com/go-chi/chi/v5"
-)
-
-var $2 *linq.Model
-
-func Define$2(db *jdb.DB) error {
-	if err := defineSchema(db); err != nil {
-		return console.Panic(err)
-	}
-
-	if $2 != nil {
-		return nil
-	}
-
-	$2 = linq.NewModel($3, "$4", "Tabla", 1)
-	$2.DefineColum("date_make", "", "TIMESTAMP", "NOW()")
-	$2.DefineColum("date_update", "", "TIMESTAMP", "NOW()")
-	$2.DefineColum("_state", "", "VARCHAR(80)", utility.ACTIVE)
-	$2.DefineColum("_id", "", "VARCHAR(80)", "-1")
-	$2.DefineColum("project_id", "", "VARCHAR(80)", "-1")
-	$2.DefineColum("name", "", "VARCHAR(250)", "")
-	$2.DefineColum("description", "", "TEXT", "")
-	$2.DefineColum("_data", "", "JSONB", "{}")
-	$2.DefineColum("index", "", "INTEGER", 0)
-	$2.DefinePrimaryKey([]string{"_id"})
-	$2.DefineIndex([]string{
-		"date_make",
-		"date_update",
-		"_state",
-		"project_id",
-		"name",
-		"index",
-	})
-	$2.DefineRequired([]string{
-		"name:Atributo requerido (name)",
-	})
-	$2.IntegrityAtrib(true)
-	$2.IndexSource(true)
-	$2.Trigger(linq.BeforeInsert, func(model *linq.Model, old, new *et.Json, data et.Json) error {
-		return nil
-	})
-	$2.Trigger(linq.AfterInsert, func(model *linq.Model, old, new *et.Json, data et.Json) error {
-		return nil
-	})
-	$2.Trigger(linq.BeforeUpdate, func(model *linq.Model, old, new *et.Json, data et.Json) error {
-		return nil
-	})
-	$2.Trigger(linq.AfterUpdate, func(model *linq.Model, old, new *et.Json, data et.Json) error {
-		return nil
-	})
-	$2.Trigger(linq.BeforeDelete, func(model *linq.Model, old, new *et.Json, data et.Json) error {
-		return nil
-	})
-	$2.Trigger(linq.AfterDelete, func(model *linq.Model, old, new *et.Json, data et.Json) error {
-		return nil
-	})
-	$2.OnListener = func(data et.Json) {
-		console.Debug(data.ToString())
-	}
-	
-	if err := $2.Init(); err != nil {
-		return console.Panic(err)
-	}
-
-	return nil
-}
-
-/**
-*	Get$2ById
-* @param id string
-* @return et.Item, error
-**/
-func Get$2ById(id string) (et.Item, error) {
-	result, err := $2.Data().
-		Where($2.Column("_id").Eq(id)).
-		First()
-	if err != nil {
-		return et.Item{}, err
-	}
-
-	return result, nil	
-}
-
-/**
-* Insert$2
-* @params project_id, id, name, description string
-* @params data et.Json
-* @return et.Item, error
-**/
-func Insert$2(project_id, id, name, description string, data et.Json) (et.Item, error) {
-	if !utility.ValidId(project_id) {
-		return et.Item{}, utility.NewErrorf(msg.MSG_ATRIB_REQUIRED, "project_id")
-	}
-
-	if !utility.ValidStr(name, 0, []string{""}) {
-		return et.Item{}, utility.NewErrorf(msg.MSG_ATRIB_REQUIRED, "name")
-	}
-
-	if !utility.ValidId(id) {
-		return et.Item{}, utility.NewErrorf(msg.MSG_ATRIB_REQUIRED, "_id")
-	}
-
-	current, err := $2.Data().
-		Where($2.Column("_id").Eq(id)).
-		First()
-	if err != nil {
-		return et.Item{}, err
-	}
-
-	if current.Ok {
-		return et.Item{Ok: false, Result: current.Result}, nil
-	}
-
-	id = utility.GenKey(id)
-	now := utility.Now()
-	data["date_make"] = now
-	data["date_update"] = now
-	data["project_id"] = project_id
-	data["_id"] = id
-	data["name"] = name
-	data["description"] = description
-	item, err := $2.Insert(data).
-		CommandOne()
-	if err != nil {
-		return et.Item{}, err
-	}
-
-	return item, nil
-}
-
-/**
-* UpSert$2
-* @param project_id string
-* @param id string
-* @param data et.Json
-* @return et.Item, error
-**/
-func UpSert$2(project_id, id, name, description string, data et.Json) (et.Item, error) {
-	current, err := Insert$2(project_id, id, name, description, data)
-	if err != nil {
-		return et.Item{}, err
-	}
-	
-	if current.Ok {
-		return current, nil
-	}
-
-	current_state := current.Key("_state")
-	if current_state != utility.ACTIVE {
-		return et.Item{}, console.AlertF(msg.RECORD_NOT_UPDATE)
-	}
-
-	id = current.Str("_id")
-	now := utility.Now()
-	data["date_update"] = now
-	data["project_id"] = project_id
-	data["_id"] = id
-	data["name"] = name
-	data["description"] = description
-	result, err := $2.Update(data).
-		Where($2.Column("_id").Eq(id)).
-		CommandOne()
-	if err != nil {
-		return et.Item{}, err
-	}
-
-	return result, nil
-}
-
-/**
-* State$2
-* @param id, state string
-* @return et.Item, error
-**/
-func State$2(id, state string) (et.Item, error) {
-	if !utility.ValidId(state) {
-		return et.Item{}, utility.NewErrorf(msg.MSG_ATRIB_REQUIRED, "state")
-	}
-
-	current, err := $2.Data("_state").
-		Where($2.Column("_id").Eq(id)).
-		First()
-	if err != nil {
-		return et.Item{}, err
-	}
-
-	if !current.Ok {
-		return et.Item{}, console.AlertF(msg.RECORD_NOT_FOUND)
-	}
-
-	old_state := current.Key("_state")
-	if old_state == state {
-		return et.Item{}, console.AlertF(msg.RECORD_NOT_CHANGE)		
-	}
-
-	return $2.Update(et.Json{
-		"_state":   state,
-	}).
-		Where($2.Column("_id").Eq(id)).
-		CommandOne()	
-}
-
-/**
-* Delete$2
-* @param id string
-* @return et.Item, error
-**/
-func Delete$2(id string) (et.Item, error) {
-	return State$2(id, utility.FOR_DELETE)
-}
-
-/**
-* All$2
-* @param project_id, state, search string
-* @param page, rows int
-* @param _select string
-* @return et.List, error
-**/
-func All$2(project_id, state, search string, page, rows int, _select string) (et.List, error) {	
-	if state == "" {
-		state = utility.ACTIVE
-	}
-
-	auxState := state
-
-	if search != "" {
-		return $2.Data(_select).
-			Where($2.Column("project_id").In("-1", project_id)).
-			And($2.Concat("NAME:", $2.Column("name"), "DESCRIPTION:", $2.Column("description"), "DATA:", $2.Column("_data"), ":").Like("%"+search+"%")).
-			OrderBy($2.Column("name"), true).
-			List(page, rows)
-	} else if auxState == "*" {
-		state = utility.FOR_DELETE
-
-		return $2.Data(_select).
-			Where($2.Column("_state").Neg(state)).
-			And($2.Column("project_id").In("-1", project_id)).
-			OrderBy($2.Column("name"), true).
-			List(page, rows)
-	} else if auxState == "0" {
-		return $2.Data(_select).
-			Where($2.Column("_state").In("-1", state)).
-			And($2.Column("project_id").In("-1", project_id)).
-			OrderBy($2.Column("name"), true).
-			List(page, rows)
-	} else {
-		return $2.Data(_select).
-			Where($2.Column("_state").Eq(state)).
-			And($2.Column("project_id").In("-1", project_id)).
-			OrderBy($2.Column("name"), true).
-			List(page, rows)
-	}
-}
-`
-
 const modelDbModelRouter = `package $1
 
 import (
@@ -1012,7 +1005,7 @@ func (rt *Router) upsert$2(w http.ResponseWriter, r *http.Request) {
 	name := body.Str("name")
 	description := body.Str("description")
 	clientName := claim.ClientName(r)
-	result, err := $1.Upsert$1(projectId, id, name, description, body, clientName)
+	result, err := $1.Upsert$2(projectId, id, name, description, body, clientName)
 	if err != nil {
 		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
@@ -1028,7 +1021,7 @@ func (rt *Router) upsert$2(w http.ResponseWriter, r *http.Request) {
 **/
 func (rt *Router) get$2ById(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	result, err := $1.Get$1ById(id)
+	result, err := $1.Get$2ById(id)
 	if err != nil {
 		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
@@ -1047,7 +1040,7 @@ func (rt *Router) state$2(w http.ResponseWriter, r *http.Request) {
 	body, _ := response.GetBody(r)
 	statusId := body.Str(jdb.STATUS_ID)
 	clientName := claim.ClientName(r)
-	result, err := $1.State$1(id, statusId, clientName)
+	result, err := $1.State$2(id, statusId, clientName)
 	if err != nil {
 		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
@@ -1064,7 +1057,7 @@ func (rt *Router) state$2(w http.ResponseWriter, r *http.Request) {
 func (rt *Router) delete$2(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	clientName := claim.ClientName(r)
-	result, err := $1.State$1(id, utility.FOR_DELETE, clientName)
+	result, err := $1.State$2(id, utility.FOR_DELETE, clientName)
 	if err != nil {
 		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
@@ -1081,7 +1074,7 @@ func (rt *Router) delete$2(w http.ResponseWriter, r *http.Request) {
 func (rt *Router) query$2(w http.ResponseWriter, r *http.Request) {
 	body, _ := response.GetBody(r)
 	query := body.Json("query")
-	result, err := $1.Query$1(query)
+	result, err := $1.Query$2(query)
 	if err != nil {
 		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
@@ -1091,56 +1084,18 @@ func (rt *Router) query$2(w http.ResponseWriter, r *http.Request) {
 }
 
 /** Copy this code to router.go
-	// $2
-	router.Protect(r, router.Get, "/$2/{id}", rt.get$2ById, PackageName, PackagePath, host)
-	router.Protect(r, router.Post, "/$2", rt.upsert$2, PackageName, PackagePath, host)
-	router.Protect(r, router.Put, "/$2/{id}", rt.state$2, PackageName, PackagePath, host)
-	router.Protect(r, router.Delete, "/$2/{id}", rt.delete$2, PackageName, PackagePath, host)
-	router.Protect(r, router.Get, "/$2/query", rt.query$2, PackageName, PackagePath, host)
+	// $4
+	er.ProtectRoute(r, er.Get, "/$4/{id}", rt.get$2ById, PackageName, PackagePath, host)
+	er.ProtectRoute(r, er.Post, "/$4", rt.upsert$2, PackageName, PackagePath, host)
+	er.ProtectRoute(r, er.Put, "/$4/{id}", rt.state$2, PackageName, PackagePath, host)
+	er.ProtectRoute(r, er.Delete, "/$4/{id}", rt.delete$2, PackageName, PackagePath, host)
+	er.ProtectRoute(r, er.Get, "/$4/query", rt.query$2, PackageName, PackagePath, host)
 **/
 
 /** Copy this code to func initModel in model.go
-	if err := Define$2(db); err != nil {
+	if err := %1.Define$2(db); err != nil {
 		return console.Panic(err)
 	}
-**/
-`
-
-const modelHandler = `package $1
-
-import (
-	"net/http"
-
-	"github.com/celsiainternet/elvis/et"
-	"github.com/celsiainternet/elvis/response"
-)
-
-func $2(project_id, id string, params et.Json) (et.Item, error) {
-
-	return et.Item{}, nil
-}
-
-
-/**
-* Router
-**/
-func (rt *Router) $3(w http.ResponseWriter, r *http.Request) {
-	body, _ := response.GetBody(r)
-	project_id := body.Str("project_id")
-	id := body.Str("id")	
-
-	result, err := $2(project_id, id, body)
-	if err != nil {
-		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	response.ITEM(w, r, http.StatusOK, result)
-}
-
-/** Copy this code to router.go
-	// $2
-	er.ProtectRoute(r, er.Post, "/$3", rt.$2, PackageName, PackagePath, Host)	
 **/
 `
 

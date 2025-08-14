@@ -6,6 +6,8 @@ import (
 )
 
 func MakePkg(name, schema string) error {
+	name = strs.Lowcase(name)
+	modelo := strs.Titlecase(name)
 	pkgPath, err := file.MakeFolder("pkg", name)
 	if err != nil {
 		return err
@@ -27,15 +29,7 @@ func MakePkg(name, schema string) error {
 			return err
 		}
 
-		modelo := strs.Titlecase(name)
-		routerFileName := strs.Format(`router-%s.go`, modelo)
-		_, err = file.MakeFile(pkgPath, routerFileName, modelDbModelRouter, name, modelo, strs.Uppcase(modelo), strs.Lowcase(modelo))
-		if err != nil {
-			return err
-		}
-
-		modelo = strs.Titlecase(modelo)
-		_, err = file.MakeFile(pkgPath, "rpc.go", modelhRpc, name, modelo)
+		_, err = file.MakeFile(pkgPath, "model.go", modelModel, name, modelo)
 		if err != nil {
 			return err
 		}
@@ -45,15 +39,13 @@ func MakePkg(name, schema string) error {
 		if err != nil {
 			return err
 		}
-	} else {
-		_, err = file.MakeFile(pkgPath, "controller.go", modelController, name)
+
+		_, err = file.MakeFile(pkgPath, "rpc.go", modelhRpc, name, modelo)
 		if err != nil {
 			return err
 		}
-
-		modelo := strs.Titlecase(name)
-		routerFileName := strs.Format(`router-%s.go`, modelo)
-		_, err = file.MakeFile(pkgPath, routerFileName, modelDbModelRouter, name, modelo, strs.Uppcase(modelo), strs.Lowcase(modelo))
+	} else {
+		_, err = file.MakeFile(pkgPath, "controller.go", modelController, name)
 		if err != nil {
 			return err
 		}
@@ -64,32 +56,32 @@ func MakePkg(name, schema string) error {
 		}
 	}
 
+	routerFileName := strs.Format(`router-%s.go`, name)
+	_, err = file.MakeFile(pkgPath, routerFileName, modelDbModelRouter, name, modelo, strs.Uppcase(modelo), strs.Lowcase(modelo))
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func MakeModel(packageName, modelo, schema string) error {
-	path := strs.Format(`./pkg/%s`, packageName)
+	modelo = strs.Lowcase(modelo)
+	modelPath := strs.Format(`./internal/models/%s`, packageName)
 
 	if len(schema) > 0 {
-		schemaVar := strs.Append("schema", strs.Titlecase(schema), "")
-		_, _ = file.MakeFile(path, "schema.go", modelSchema, packageName, schemaVar, schema)
+		_, _ = file.MakeFile(modelPath, "schema.go", modelSchema, packageName, "schema")
 
-		modelo := strs.Titlecase(modelo)
-		_, _ = file.MakeFile(path, "model.go", modelModel, packageName, modelo)
+		modelFileName := strs.Format(`%s.go`, modelo)
+		_, _ = file.MakeFile(modelPath, modelFileName, modelData, packageName, modelo)
+	}
 
-		modelo = strs.Titlecase(modelo)
-		fileName := strs.Format(`h%s.go`, modelo)
-		_, err := file.MakeFile(path, fileName, modelDbHandler, packageName, modelo, schemaVar, strs.Uppcase(modelo), strs.Lowcase(modelo))
-		if err != nil {
-			return err
-		}
-	} else {
-		modelo = strs.Titlecase(modelo)
-		fileName := strs.Format(`h%s.go`, modelo)
-		_, err := file.MakeFile(path, fileName, modelHandler, packageName, modelo, strs.Lowcase(modelo))
-		if err != nil {
-			return err
-		}
+	pkgPath := strs.Format(`./pkg/%s`, packageName)
+
+	routerFileName := strs.Format(`router-%s.go`, modelo)
+	_, err := file.MakeFile(pkgPath, routerFileName, modelDbModelRouter, packageName, modelo, strs.Uppcase(modelo), strs.Lowcase(modelo))
+	if err != nil {
+		return err
 	}
 
 	return nil

@@ -1,8 +1,40 @@
-# Elvis - Framework para Microservicios en Go
+# 🎸 Elvis - Framework para Microservicios en Go
 
-## Descripción
+[![Go Version](https://img.shields.io/badge/Go-1.23+-blue.svg)](https://golang.org)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/Version-v1.1.110-orange.svg)](https://github.com/celsiainternet/elvis/releases)
+[![Build Status](https://img.shields.io/badge/Build-Passing-brightgreen.svg)]()
+[![Go Report Card](https://img.shields.io/badge/Go%20Report%20Card-A+-brightgreen.svg)]()
 
-Elvis es un framework diseñado para facilitar el desarrollo de microservicios en Go, proporcionando herramientas y estructuras para crear aplicaciones robustas y escalables con capacidades de comunicación en tiempo real, resiliencia y gestión de transacciones.
+## 📑 Tabla de Contenidos
+
+- [📖 Descripción](#-descripción)
+- [Requisitos Previos](#requisitos-previos)
+- [🚀 Instalación Rápida](#-instalación-rápida)
+- [⚙️ Configuración de Desarrollo](#️-configuración-de-desarrollo)
+- [🚀 Quick Start](#-quick-start)
+- [Características Principales](#características-principales)
+- [📁 Estructura del Proyecto](#-estructura-del-proyecto)
+- [🔧 Comandos Disponibles](#-comandos-disponibles)
+- [Configuración de Variables de Entorno](#configuración-de-variables-de-entorno)
+- [💡 FAQ y Mejores Prácticas](#-faq-y-mejores-prácticas)
+- [🤝 Contribución](#-contribución)
+- [📄 Licencia](#-licencia)
+- [Releases](#releases)
+- [Versionamiento](#versionamiento)
+
+## 📖 Descripción
+
+Elvis es un framework moderno y robusto diseñado para facilitar el desarrollo de microservicios en Go. Proporciona un conjunto completo de herramientas y estructuras para crear aplicaciones escalables con capacidades avanzadas de:
+
+- 🔄 **Comunicación en tiempo real** (WebSocket)
+- 🛡️ **Sistema de resiliencia** y recuperación automática
+- 📅 **Tareas programadas** (Crontab)
+- 🗄️ **Base de datos avanzada** con triggers automáticos
+- 🔄 **Sistema de eventos** distribuidos
+- 💾 **Cache inteligente** multi-backend
+- 🔐 **Middleware de seguridad** integrado
+- 📊 **Telemetría y monitoreo** en tiempo real
 
 ## Requisitos Previos
 
@@ -12,18 +44,55 @@ Elvis es un framework diseñado para facilitar el desarrollo de microservicios e
 - Redis (para cache y comunicación en tiempo real)
 - NATS (para eventos)
 
-## Instalación
+## 🚀 Instalación Rápida
 
-### Inicializar el Proyecto
+### 1. Inicializar el Proyecto
 
 ```bash
-go mod init github.com/test/api
+go mod init github.com/tu-usuario/tu-proyecto
 ```
 
-### Instalar Dependencias
+### 2. Instalar Elvis
 
 ```bash
-go get github.com/celsiainternet/elvis@v1.1.109
+go get github.com/celsiainternet/elvis@v1.1.110
+```
+
+### 3. Crear Proyecto con Elvis
+
+```bash
+go run github.com/celsiainternet/elvis/cmd/create-go create
+```
+
+### 4. Configurar Variables de Entorno
+
+Copia el archivo `.env.example` a `.env` y ajusta los valores según tu entorno:
+
+```bash
+cp .env.example .env
+```
+
+## ⚙️ Configuración de Desarrollo
+
+### IDE Configuration (Cursor/VSCode)
+
+El proyecto incluye configuración optimizada para Cursor y VSCode:
+
+- **`.vscode/settings.json`**: Configuración del workspace con staticcheck deshabilitado
+- **`staticcheck.conf`**: Configuración específica de staticcheck para evitar warnings molestos
+- **Linting**: ST1020 y otras reglas de documentación están deshabilitadas para mayor comodidad
+
+### Ejecutar en Modo Desarrollo
+
+```bash
+# Servidor principal
+gofmt -w . && go run ./cmd/test -port 3400 -rpc 4400
+
+# Servidor de resiliencia (en otra terminal)
+go run ./cmd/resilence
+
+# Servidor WebSocket (opcional)
+go run ./cmd/ws -port 3300 -username admin -password secret
 ```
 
 ## Uso
@@ -217,47 +286,128 @@ logs.Log("user-service", "Usuario creado exitosamente")
 logs.Alert(errors.New("Error de conexión"))
 ```
 
-## Estructura del Proyecto
+## 📁 Estructura del Proyecto
 
 ```
-.
-├── cmd/
-│   ├── test/
-│   ├── ws/
-│   ├── daemon/
-│   └── resilence/
-├── internal/
-│   ├── models/
-│   └── services/
-├── pkg/
-├── cache/
-├── event/
-├── ws/
-├── realtime/
-├── resilience/
-├── crontab/
-└── go.mod
+elvis/
+├── 📂 cmd/                    # Comandos ejecutables
+│   ├── cmd/                   # Servidor principal
+│   ├── create-go/            # Generador de proyectos
+│   ├── daemon/               # Daemon del sistema
+│   ├── resilence/            # Servidor de resiliencia
+│   ├── rpc/                  # Servidores RPC (cliente/servidor)
+│   └── ws/                   # Servidor WebSocket
+├── 📂 cache/                 # Sistema de cache
+├── 📂 claim/                 # Manejo de claims/tokens
+├── 📂 config/                # Configuración global
+├── 📂 console/               # Utilidades de consola
+├── 📂 create/                # Generación de código
+│   └── template/             # Plantillas de código
+├── 📂 crontab/               # Tareas programadas
+├── 📂 envar/                 # Variables de entorno
+├── 📂 et/                    # Tipos y utilidades
+├── 📂 event/                 # Sistema de eventos
+├── 📂 file/                  # Manejo de archivos
+├── 📂 jdb/                   # Database abstraction layer
+├── 📂 jrpc/                  # JSON-RPC implementation
+├── 📂 linq/                  # Query builder
+├── 📂 logs/                  # Sistema de logging
+├── 📂 mem/                   # Cache en memoria
+├── 📂 middleware/            # Middleware HTTP
+├── 📂 msg/                   # Mensajería
+├── 📂 race/                  # Control de concurrencia
+├── 📂 realtime/              # Comunicación en tiempo real
+├── 📂 resilience/            # Sistema de resiliencia
+├── 📂 response/              # Manejo de respuestas HTTP
+├── 📂 router/                # Enrutamiento HTTP
+├── 📂 service/               # Servicios base
+├── 📂 stdrout/               # Salida estándar
+├── 📂 strs/                  # Utilidades de strings
+├── 📂 timezone/              # Manejo de zonas horarias
+├── 📂 utility/               # Utilidades generales
+├── 📂 ws/                    # WebSocket implementation
+├── 📂 .vscode/               # Configuración IDE
+│   ├── settings.json         # Configuración optimizada
+│   └── launch.json           # Configuración debug
+├── 📄 staticcheck.conf       # Configuración linting
+├── 📄 go.mod                 # Dependencias Go
+├── 📄 go.sum                 # Checksums dependencias
+├── 📄 version.sh             # Script versionamiento
+└── 📄 README.md              # Documentación
 ```
 
-## Comandos Disponibles
+## 🚀 Quick Start
 
-### Servidor WebSocket
+### Ejemplo Básico
+
+```go
+package main
+
+import (
+    "github.com/celsiainternet/elvis/router"
+    "github.com/celsiainternet/elvis/middleware"
+    "github.com/celsiainternet/elvis/response"
+)
+
+func main() {
+    // Crear router
+    r := router.New()
+
+    // Agregar middleware
+    r.Use(middleware.CORS)
+    r.Use(middleware.Logger)
+
+    // Definir rutas
+    r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+        response.JSON(w, r, 200, map[string]string{
+            "status": "ok",
+            "message": "Elvis está funcionando!",
+        })
+    })
+
+    // Iniciar servidor
+    r.Listen(":3400")
+}
+```
+
+## 🔧 Comandos Disponibles
+
+### Desarrollo Local
 
 ```bash
+# Servidor principal con hot reload
+gofmt -w . && go run ./cmd/test -port 3400 -rpc 4400
+
+# Generar nuevo proyecto
+go run github.com/celsiainternet/elvis/cmd/create-go create
+```
+
+### Servicios Adicionales
+
+```bash
+# Servidor WebSocket
 go run ./cmd/ws -port 3300 -username admin -password secret
-```
 
-### Servidor de Resiliencia
-
-```bash
+# Servidor de Resiliencia
 go run ./cmd/resilence
+
+# Cliente RPC
+go run ./cmd/rpc/client
+
+# Servidor RPC
+go run ./cmd/rpc/server
 ```
 
-### Daemon del Sistema
+### Herramientas de Sistema
 
 ```bash
+# Daemon del sistema
 go run ./cmd/daemon --status
 go run ./cmd/daemon --restart
+go run ./cmd/daemon --stop
+
+# Verificar versión
+./version.sh
 ```
 
 ## Configuración de Variables de Entorno
@@ -288,17 +438,116 @@ RESILIENCE_ATTEMPTS=3
 RESILIENCE_TIME_ATTEMPTS=30
 ```
 
-## Contribución
+## 💡 FAQ y Mejores Prácticas
 
-Las contribuciones son bienvenidas. Por favor, lee nuestras guías de contribución antes de enviar un pull request.
+### ¿Cómo deshabilitar warnings de linting?
 
-## Licencia
+El proyecto ya incluye configuración para deshabilitar warnings molestos como ST1020:
 
-Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
+- Verifica que tu IDE esté usando la configuración en `.vscode/settings.json`
+- El archivo `staticcheck.conf` excluye las reglas problemáticas
+- Reinicia tu IDE después de clonar el proyecto
+
+### ¿Cómo agregar un nuevo microservicio?
+
+```bash
+# Usar el generador incluido
+go run github.com/celsiainternet/elvis/cmd/create-go create
+
+# Seguir las convenciones de nombres
+# - Servicios en cmd/nombre-servicio/
+# - Modelos en internal/models/
+# - Lógica de negocio en pkg/
+```
+
+### ¿Cómo manejar bases de datos?
+
+```go
+// Usar el sistema linq incluido
+model := linq.NewModel(db, "table_name", "Display Name", 1)
+model.DefineColum("id", "", "VARCHAR(80)", "-1")
+
+// Los triggers se configuran automáticamente
+model.Trigger(linq.BeforeInsert, func(model *linq.Model, old, new *et.Json, data et.Json) error {
+    // Tu lógica aquí
+    return nil
+})
+```
+
+### ¿Cómo configurar WebSocket?
+
+```go
+// Servidor
+hub := ws.ServerHttp(3300, "username", "password")
+
+// Cliente
+client, err := ws.Login(&ws.ClientConfig{
+    ClientId: "unique-id",
+    Url:      "ws://localhost:3300/ws",
+})
+```
+
+## 🤝 Contribución
+
+¡Las contribuciones son bienvenidas! Para contribuir:
+
+1. **Fork** el proyecto
+2. **Crea** una rama feature (`git checkout -b feature/nueva-funcionalidad`)
+3. **Commit** tus cambios (`git commit -am 'Agregar nueva funcionalidad'`)
+4. **Push** a la rama (`git push origin feature/nueva-funcionalidad`)
+5. **Abre** un Pull Request
+
+### Guías de Contribución
+
+- Sigue las convenciones de Go (gofmt, golint)
+- Agrega tests para nuevas funcionalidades
+- Actualiza la documentación
+- Usa conventional commits
+- Asegúrate de que todos los tests pasen
+
+### Reportar Bugs
+
+Usa los [GitHub Issues](https://github.com/celsiainternet/elvis/issues) para reportar bugs:
+
+- Describe el problema claramente
+- Incluye pasos para reproducir
+- Especifica tu versión de Go y OS
+- Adjunta logs si es posible
+
+## 📄 Licencia
+
+Este proyecto está bajo la **Licencia MIT**. Ver el archivo [LICENSE](LICENSE) para más detalles.
+
+### Resumen de la Licencia
+
+- ✅ **Uso comercial** permitido
+- ✅ **Modificación** permitida
+- ✅ **Distribución** permitida
+- ✅ **Uso privado** permitido
+- ❌ **Sin garantía**
+- ❌ **Sin responsabilidad**
+
+---
+
+## 👨‍💻 Autor
+
+**César Galvis León**
+
+- 📧 Email: [cesar@celsiainternet.com](mailto:cesar@celsiainternet.com)
+- 🌐 Website: [celsiainternet.com](https://celsiainternet.com)
+- 💼 LinkedIn: [César Galvis León](https://linkedin.com/in/cesargalvisleon)
+
+---
+
+**⭐ Si te gusta Elvis, ¡no olvides darle una estrella al repositorio!**
+
+---
+
+_Desarrollado con ❤️ en Colombia_
 
 ## Releases
 
-### v1.1.109
+### v1.1.110
 
 - **Sistema de Comunicación en Tiempo Real**
 
