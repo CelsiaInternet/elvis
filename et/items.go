@@ -67,27 +67,30 @@ func (s *Items) AddMany(items []Json) {
 }
 
 func (it *Items) ValAny(idx int, _default any, atribs ...string) any {
-	if it.Result[idx] == nil {
+	item := it.Result[idx]
+	if item == nil {
 		return _default
 	}
 
-	return it.Result[idx].ValAny(_default, atribs...)
+	return item.ValAny(_default, atribs...)
 }
 
 func (it *Items) ValStr(idx int, _default string, atribs ...string) string {
-	if it.Result[idx] == nil {
+	item := it.Result[idx]
+	if item == nil {
 		return _default
 	}
 
-	return it.Result[idx].ValStr(_default, atribs...)
+	return item.ValStr(_default, atribs...)
 }
 
 func (it *Items) Uppcase(idx int, _default string, atribs ...string) string {
-	if it.Result[idx] == nil {
+	item := it.Result[idx]
+	if item == nil {
 		return _default
 	}
 
-	result := Val(it.Result[idx], _default, atribs...)
+	result := Val(item, _default, atribs...)
 
 	switch v := result.(type) {
 	case string:
@@ -98,11 +101,12 @@ func (it *Items) Uppcase(idx int, _default string, atribs ...string) string {
 }
 
 func (it *Items) Lowcase(idx int, _default string, atribs ...string) string {
-	if it.Result[idx] == nil {
+	item := it.Result[idx]
+	if item == nil {
 		return _default
 	}
 
-	result := Val(it.Result[idx], _default, atribs...)
+	result := Val(item, _default, atribs...)
 
 	switch v := result.(type) {
 	case string:
@@ -113,7 +117,8 @@ func (it *Items) Lowcase(idx int, _default string, atribs ...string) string {
 }
 
 func (it *Items) Titlecase(idx int, _default string, atribs ...string) string {
-	if it.Result[idx] == nil {
+	item := it.Result[idx]
+	if item == nil {
 		return _default
 	}
 
@@ -128,7 +133,8 @@ func (it *Items) Titlecase(idx int, _default string, atribs ...string) string {
 }
 
 func (it *Items) Get(idx int, key string) interface{} {
-	if it.Result[idx] == nil {
+	item := it.Result[idx]
+	if item == nil {
 		return nil
 	}
 
@@ -136,55 +142,93 @@ func (it *Items) Get(idx int, key string) interface{} {
 }
 
 func (it *Items) Set(idx int, key string, val interface{}) bool {
-	if it.Result[idx] == nil {
+	item := it.Result[idx]
+	if item == nil {
 		return false
 	}
 
-	return it.Result[idx].Set(key, val)
+	return item.Set(key, val)
 }
 
 func (it *Items) Del(idx int, key string) bool {
-	if it.Result[idx] == nil {
+	item := it.Result[idx]
+	if item == nil {
 		return false
 	}
 
-	return it.Result[idx].Del(key)
+	return item.Del(key)
 }
 
 func (it *Items) Id(idx int) string {
-	return it.Result[idx].Id()
+	item := it.Result[idx]
+	if item == nil {
+		return ""
+	}
+
+	return item.Id()
 }
 
 func (it *Items) IdT(idx int) string {
-	return it.Result[idx].IdT()
+	item := it.Result[idx]
+	if item == nil {
+		return ""
+	}
+
+	return item.IdT()
 }
 
 func (it *Items) Key(idx int, atribs ...string) string {
-	return it.Result[idx].Key()
+	item := it.Result[idx]
+	if item == nil {
+		return ""
+	}
+
+	return item.Key(atribs...)
 }
 
 func (it *Items) Str(idx int, atribs ...string) string {
-	return it.Result[idx].Str()
+	item := it.Result[idx]
+	if item == nil {
+		return ""
+	}
+
+	return item.Str(atribs...)
 }
 
 func (it *Items) Int(idx int, atribs ...string) int {
-	return it.Result[idx].Int()
+	item := it.Result[idx]
+	if item == nil {
+		return 0
+	}
+
+	return item.Int(atribs...)
 }
 
 func (it *Items) Num(idx int, atribs ...string) float64 {
-	return it.Result[idx].Num()
+	item := it.Result[idx]
+	if item == nil {
+		return 0
+	}
+
+	return item.Num(atribs...)
 }
 
 func (it *Items) Bool(idx int, atribs ...string) bool {
-	return it.Result[idx].Bool()
+	item := it.Result[idx]
+	if item == nil {
+		return false
+	}
+
+	return item.Bool(atribs...)
 }
 
 func (it *Items) Json(idx int, atribs ...string) Json {
-	if it.Result[idx] == nil {
+	item := it.Result[idx]
+	if item == nil {
 		return Json{}
 	}
 
-	val := Val(it.Result[idx], Json{}, atribs...)
+	val := Val(item, Json{}, atribs...)
 
 	switch v := val.(type) {
 	case Json:

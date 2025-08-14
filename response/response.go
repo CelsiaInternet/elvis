@@ -128,9 +128,8 @@ func GetHeader(r *http.Request) et.Json {
 * @param key string
 * @return *et.Any
 **/
-func GetParam(r *http.Request, key string) *et.Any {
-	val := chi.URLParam(r, key)
-	result := et.NewAny(val)
+func GetParam(r *http.Request, key string) string {
+	result := chi.URLParam(r, key)
 
 	return result
 }

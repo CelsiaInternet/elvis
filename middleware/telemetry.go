@@ -285,8 +285,7 @@ func (m *Metrics) CallMetrics() Telemetry {
 * @return et.Json
 **/
 func (m *Metrics) println() et.Json {
-	w := lg.Color(lg.NMagenta, " [service_id]:%s", m.ReqID)
-	lg.CW(w, lg.NMagenta, " [%s]: ", m.Method)
+	w := lg.Color(lg.NMagenta, " [%s] ", m.Method)
 	lg.CW(w, lg.NCyan, "%s", m.Path)
 	lg.CW(w, lg.NWhite, " from:%s", m.RemoteAddr)
 	if m.StatusCode >= 500 {
@@ -318,6 +317,7 @@ func (m *Metrics) println() et.Json {
 	} else {
 		lg.CW(w, lg.NGreen, " - Request:S:%vM:%vH:%vD:%vL:%v", m.metrics.RequestsPerSecond, m.metrics.RequestsPerMinute, m.metrics.RequestsPerHour, m.metrics.RequestsPerDay, m.metrics.RequestsLimit)
 	}
+	lg.CW(w, lg.NMagenta, " [service_id]: ", m.ReqID)
 	lg.Println(w)
 
 	PushTelemetryStatus(et.Json{
