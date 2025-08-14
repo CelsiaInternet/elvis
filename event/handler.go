@@ -13,6 +13,14 @@ import (
 	"github.com/nats-io/nats.go"
 )
 
+const QUEUE_STACK = "stack"
+const EVENT_LOG = "log"
+const EVENT_OVERFLOW = "requests:overflow"
+const EVENT_WORK = "event:worker"
+const EVENT_WORK_STATE = "event:worker:state"
+const EVENT_SUBSCRIBED = "event:subscribed"
+const EVENT_SOURCE = "event:source"
+
 /**
 * publish
 * @param channel string, data et.Json
@@ -39,9 +47,17 @@ func publish(channel string, data et.Json) error {
 * @return error
 **/
 func Publish(channel string, data et.Json) error {
+	if conn == nil {
+		return nil
+	}
+
 	stage := envar.GetStr("local", "STAGE")
-	publish(strs.Format(`event:chanels:%s`, stage), et.Json{"channel": channel})
 	publish(strs.Format(`pipe:%s:%s`, stage, channel), data)
+
+	_, err := conn.Add(channel)
+	if err != nil {
+		return err
+	}
 
 	return publish(channel, data)
 }
@@ -58,6 +74,15 @@ func Subscribe(channel string, f func(EvenMessage)) error {
 
 	if len(channel) == 0 {
 		return errors.New(ERR_CHANNEL_REQUIRED)
+	}
+
+	ok, err := conn.Add(channel)
+	if err != nil {
+		return err
+	}
+
+	if ok {
+		publish(EVENT_SUBSCRIBED, et.Json{"channel": channel})
 	}
 
 	subscribe, err := conn.Subscribe(channel,
@@ -94,6 +119,15 @@ func Queue(channel, queue string, f func(EvenMessage)) error {
 
 	if len(channel) == 0 {
 		return errors.New(ERR_CHANNEL_REQUIRED)
+	}
+
+	ok, err := conn.Add(channel)
+	if err != nil {
+		return err
+	}
+
+	if ok {
+		publish(EVENT_SUBSCRIBED, et.Json{"channel": channel})
 	}
 
 	subscribe, err := conn.QueueSubscribe(
@@ -140,7 +174,7 @@ func Work(event string, data et.Json) et.Json {
 		"data":       data,
 	}
 
-	go Publish("event/worker", work)
+	go Publish(EVENT_WORK, work)
 	go Publish(event, work)
 
 	return work
@@ -170,7 +204,7 @@ func WorkState(work_id string, status WorkStatus, data et.Json) {
 		work["failed_at"] = utility.Now()
 	}
 
-	go Publish("event/worker/state", work)
+	go Publish(EVENT_WORK_STATE, work)
 }
 
 /**
@@ -178,20 +212,16 @@ func WorkState(work_id string, status WorkStatus, data et.Json) {
 * @param string model, string action, string err, data et.Json
 * @return error
 **/
-func Source(model, action, err string, data et.Json) et.Json {
+func Source(model, action string, data et.Json) et.Json {
 	source := et.Json{
 		"created_at": timezone.Now(),
 		"_id":        utility.UUID(),
 		"model":      model,
 		"action":     action,
-		"error":      err,
 		"data":       data,
 	}
 
-	go Publish("event/source", source)
-	if len(err) > 0 {
-		go Publish("event/source/error", source)
-	}
+	go Publish(EVENT_SOURCE, source)
 
 	return source
 }
@@ -210,7 +240,7 @@ func Log(event string, data et.Json) {
 * @param data et.Json
 **/
 func Overflow(data et.Json) {
-	go Publish("requests/overflow", data)
+	go Publish(EVENT_OVERFLOW, data)
 }
 
 /**

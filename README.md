@@ -23,7 +23,7 @@ go mod init github.com/test/api
 ### Instalar Dependencias
 
 ```bash
-go get github.com/celsiainternet/elvis@v1.1.106
+go get github.com/celsiainternet/elvis@v1.1.107
 ```
 
 ## Uso
@@ -298,7 +298,7 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más det
 
 ## Releases
 
-### v1.1.106
+### v1.1.107
 
 - **Sistema de Comunicación en Tiempo Real**
 
