@@ -416,7 +416,7 @@ go run ./cmd/daemon --stop
 # Base de datos
 DB_HOST=localhost
 DB_PORT=5432
-DB_NAME=elvis_db
+DB_NAME=postgres
 DB_USER=postgres
 DB_PASSWORD=password
 
