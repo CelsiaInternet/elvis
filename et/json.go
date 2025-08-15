@@ -310,9 +310,11 @@ func (s Json) ValBool(_default bool, atribs ...string) bool {
 		case "false":
 			return false
 		default:
+			log.Println("ValBool value is not bool, type:", reflect.TypeOf(v), "value:", v)
 			return _default
 		}
 	default:
+		log.Println("ValBool value is not bool, type:", reflect.TypeOf(v), "value:", v)
 		return _default
 	}
 }
