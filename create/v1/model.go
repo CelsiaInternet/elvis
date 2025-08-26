@@ -454,7 +454,7 @@ func defaultConfig(stage string) error {
 	}
 
 	if !result.Ok {
-		return utility.NewErrorf(jrpc.MSG_NOT_LOAD_CONFIG, stage, name)
+		return fmt.Errorf(jrpc.MSG_NOT_LOAD_CONFIG, stage, name)
 	}
 
 	cfg := result.Json("config")
@@ -823,15 +823,15 @@ func Get$2ById(id string) (et.Item, error) {
 **/
 func Insert$2(project_id, id, name, description string, data et.Json) (et.Item, error) {
 	if !utility.ValidId(project_id) {
-		return et.Item{}, utility.NewErrorf(msg.MSG_ATRIB_REQUIRED, "project_id")
+		return et.Item{}, fmt.Errorf(msg.MSG_ATRIB_REQUIRED, "project_id")
 	}
 
 	if !utility.ValidStr(name, 0, []string{""}) {
-		return et.Item{}, utility.NewErrorf(msg.MSG_ATRIB_REQUIRED, "name")
+		return et.Item{}, fmt.Errorf(msg.MSG_ATRIB_REQUIRED, "name")
 	}
 
 	if !utility.ValidId(id) {
-		return et.Item{}, utility.NewErrorf(msg.MSG_ATRIB_REQUIRED, "_id")
+		return et.Item{}, fmt.Errorf(msg.MSG_ATRIB_REQUIRED, "_id")
 	}
 
 	current, err := $2.Data().
@@ -908,7 +908,7 @@ func UpSert$2(project_id, id, name, description string, data et.Json) (et.Item, 
 **/
 func State$2(id, state string) (et.Item, error) {
 	if !utility.ValidId(state) {
-		return et.Item{}, utility.NewErrorf(msg.MSG_ATRIB_REQUIRED, "state")
+		return et.Item{}, fmt.Errorf(msg.MSG_ATRIB_REQUIRED, "state")
 	}
 
 	current, err := $2.Data("_state").
@@ -1167,7 +1167,7 @@ PRODUCTION=false
 HOST=localhost
 
 # DB
-DB_DRIVE=postgres
+DB_DRIVER=postgres
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=test
@@ -1220,7 +1220,7 @@ services:
       - "PRODUCTION=true"
       - "HOST=stack"
       # DB
-      - "DB_DRIVE=postgres"
+      - "DB_DRIVER=postgres"
       - "DB_HOST="
       - "DB_PORT=5432"
       - "DB_NAME=internet"

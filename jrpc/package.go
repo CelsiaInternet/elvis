@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"net"
 	"net/rpc"
+	"reflect"
 	"slices"
+	"strings"
 
 	"github.com/celsiainternet/elvis/cache"
 	"github.com/celsiainternet/elvis/logs"
@@ -30,6 +32,51 @@ func NewPackage(name string, host string, port int) *Package {
 		Port:    port,
 		Solvers: make(map[string]*Solver),
 	}
+}
+
+/**
+* AddSolver
+* @param method string, solver *Solver
+* @return error
+**/
+func (s *Package) Mount(services any) error {
+	tipoStruct := reflect.TypeOf(services)
+	structName := tipoStruct.String()
+	list := strings.Split(structName, ".")
+	structName = list[len(list)-1]
+	for i := 0; i < tipoStruct.NumMethod(); i++ {
+		metodo := tipoStruct.Method(i)
+		numInputs := metodo.Type.NumIn()
+		numOutputs := metodo.Type.NumOut()
+
+		inputs := []string{}
+		for i := 0; i < numInputs; i++ {
+			inputs = append(inputs, metodo.Type.In(i).String())
+		}
+
+		outputs := []string{}
+		for o := 0; o < numOutputs; o++ {
+			outputs = append(outputs, metodo.Type.Out(o).String())
+		}
+
+		structName = strs.DaskSpace(structName)
+		name := strs.DaskSpace(metodo.Name)
+		method := strs.Format(`%s.%s`, structName, name)
+		key := strs.Format(`%s.%s.%s`, s.Name, structName, name)
+		solver := &Solver{
+			PackageName: s.Name,
+			Host:        s.Host,
+			Port:        s.Port,
+			Method:      method,
+			Inputs:      inputs,
+			Output:      outputs,
+		}
+		s.Solvers[key] = solver
+	}
+
+	rpc.Register(services)
+
+	return s.Save()
 }
 
 /**

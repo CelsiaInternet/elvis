@@ -73,8 +73,7 @@ func DecrCtx(ctx context.Context, key string) int64 {
 
 /**
 * GetCtx
-* @params ctx context.Context
-* @params key string
+* @params ctx context.Context, key string
 * @params def string
 * @return string, error
 **/
@@ -95,8 +94,7 @@ func GetCtx(ctx context.Context, key, def string) (string, error) {
 
 /**
 * ExistsCtx
-* @params ctx context.Context
-* @params key string
+* @params ctx context.Context, key string
 * @return bool
 **/
 func ExistsCtx(ctx context.Context, key string) bool {
@@ -116,8 +114,7 @@ func ExistsCtx(ctx context.Context, key string) bool {
 
 /**
 * DeleteCtx
-* @params ctx context.Context
-* @params key string
+* @params ctx context.Context, key string
 * @return int64, error
 **/
 func DeleteCtx(ctx context.Context, key string) (int64, error) {
@@ -131,10 +128,77 @@ func DeleteCtx(ctx context.Context, key string) (int64, error) {
 }
 
 /**
+* LPushCtx
+* @params ctx context.Context, key string, val string
+* @return error
+**/
+func LPushCtx(ctx context.Context, key string, val string) error {
+	if conn == nil {
+		return errors.New(msg.ERR_NOT_CACHE_SERVICE)
+	}
+
+	err := conn.RPush(ctx, key, val).Err()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+/**
+* LPushCtx
+* @params ctx context.Context, key string, val string
+* @return error
+**/
+func LRemCtx(ctx context.Context, key string, val string) error {
+	if conn == nil {
+		return errors.New(msg.ERR_NOT_CACHE_SERVICE)
+	}
+
+	err := conn.LRem(ctx, key, 1, val).Err()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+/**
+* LRangeCtx
+* @params ctx context.Context, key string, start int64, stop int64
+* @return []string, error
+**/
+func LRangeCtx(ctx context.Context, key string, start int64, stop int64) ([]string, error) {
+	if conn == nil {
+		return []string{}, errors.New(msg.ERR_NOT_CACHE_SERVICE)
+	}
+
+	result, err := conn.LRange(ctx, key, start, stop).Result()
+
+	return result, err
+}
+
+/**
+* LTrimCtx
+* @params ctx context.Context, key string, start int64, stop int64
+* @return error
+**/
+func LTrimCtx(ctx context.Context, key string, start int64, stop int64) error {
+	if conn == nil {
+		return errors.New(msg.ERR_NOT_CACHE_SERVICE)
+	}
+
+	err := conn.LTrim(ctx, key, start, stop).Err()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+/**
 * HSetCtx
-* @params ctx context.Context
-* @params key string
-* @params val map[string]string
+* @params ctx context.Context, key string, val map[string]string
 * @return error
 **/
 func HSetCtx(ctx context.Context, key string, val map[string]string) error {
@@ -152,8 +216,7 @@ func HSetCtx(ctx context.Context, key string, val map[string]string) error {
 
 /**
 * HGetCtx
-* @params ctx context.Context
-* @params key string
+* @params ctx context.Context, key string
 * @return map[string]string, error
 **/
 func HGetCtx(ctx context.Context, key string) (map[string]string, error) {
@@ -168,8 +231,7 @@ func HGetCtx(ctx context.Context, key string) (map[string]string, error) {
 
 /**
 * HDeleteCtx
-* @params ctx context.Context
-* @params key string
+* @params ctx context.Context, key string
 * @params atr string
 * @return error
 **/

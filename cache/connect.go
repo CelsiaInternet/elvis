@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"sync"
 
@@ -14,7 +15,7 @@ import (
 
 func ConnectTo(host, password string, dbname int) (*Conn, error) {
 	if !utility.ValidStr(host, 0, []string{}) {
-		return nil, utility.NewErrorf(msg.MSG_ATRIB_REQUIRED, "redist_host")
+		return nil, fmt.Errorf(msg.MSG_ATRIB_REQUIRED, "redist_host")
 	}
 
 	client := redis.NewClient(&redis.Options{

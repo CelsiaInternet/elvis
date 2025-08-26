@@ -1,6 +1,7 @@
 package event
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/celsiainternet/elvis/envar"
@@ -17,7 +18,7 @@ import (
 **/
 func ConnectTo(host, user, password string) (*Conn, error) {
 	if !utility.ValidStr(host, 0, []string{}) {
-		return nil, utility.NewErrorf(msg.MSG_ATRIB_REQUIRED, "host")
+		return nil, fmt.Errorf(msg.MSG_ATRIB_REQUIRED, "host")
 	}
 
 	connect, err := nats.Connect(host, nats.UserInfo(user, password))

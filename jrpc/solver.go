@@ -1,15 +1,11 @@
 package jrpc
 
 import (
-	"errors"
-	"net/rpc"
-	"reflect"
+	"fmt"
 	"slices"
 	"strings"
 
 	"github.com/celsiainternet/elvis/logs"
-	"github.com/celsiainternet/elvis/strs"
-	"github.com/celsiainternet/elvis/utility"
 )
 
 type Solver struct {
@@ -32,43 +28,7 @@ func Mount(services any) error {
 		return logs.Alertm(ERR_PACKAGE_NOT_FOUND)
 	}
 
-	tipoStruct := reflect.TypeOf(services)
-	structName := tipoStruct.String()
-	list := strings.Split(structName, ".")
-	structName = list[len(list)-1]
-	for i := 0; i < tipoStruct.NumMethod(); i++ {
-		metodo := tipoStruct.Method(i)
-		numInputs := metodo.Type.NumIn()
-		numOutputs := metodo.Type.NumOut()
-
-		inputs := []string{}
-		for i := 0; i < numInputs; i++ {
-			inputs = append(inputs, metodo.Type.In(i).String())
-		}
-
-		outputs := []string{}
-		for o := 0; o < numOutputs; o++ {
-			outputs = append(outputs, metodo.Type.Out(o).String())
-		}
-
-		structName = strs.DaskSpace(structName)
-		name := strs.DaskSpace(metodo.Name)
-		method := strs.Format(`%s.%s`, structName, name)
-		key := strs.Format(`%s.%s.%s`, pkg.Name, structName, name)
-		solver := &Solver{
-			PackageName: pkg.Name,
-			Host:        pkg.Host,
-			Port:        pkg.Port,
-			Method:      method,
-			Inputs:      inputs,
-			Output:      outputs,
-		}
-		pkg.Solvers[key] = solver
-	}
-
-	rpc.Register(services)
-
-	return pkg.Save()
+	return pkg.Mount(services)
 }
 
 /**
@@ -109,20 +69,20 @@ func GetSolver(method string) (*Solver, error) {
 
 	lst := strings.Split(method, ".")
 	if len(lst) != 3 {
-		return nil, utility.NewErrorf(ERR_METHOD_NOT_FOUND, method)
+		return nil, fmt.Errorf(ERR_METHOD_NAME_INVALID, method)
 	}
 
 	packageName := lst[0]
 	idx := slices.IndexFunc(routers, func(e *Package) bool { return e.Name == packageName })
 	if idx == -1 {
-		return nil, errors.New(ERR_PACKAGE_NOT_FOUND)
+		return nil, fmt.Errorf(ERR_METHOD_NOT_FOUND, method)
 	}
 
 	router := routers[idx]
 	solver := router.Solvers[method]
 
 	if solver == nil {
-		return nil, utility.NewErrorf(ERR_METHOD_NOT_FOUND, method)
+		return nil, fmt.Errorf(ERR_METHOD_NOT_FOUND, method)
 	}
 
 	return solver, nil

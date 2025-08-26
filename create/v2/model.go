@@ -586,7 +586,7 @@ const modelModel = `package $1
 import (
 	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/jdb/jdb"
-	"github.com/octopus/internal/models/$1"
+	"github.com/$1/internal/models/$2"
 )
 
 func initModels(db *jdb.DB) error {
@@ -622,7 +622,7 @@ import (
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/jrpc"
-	"github.com/octopus/internal/models/$1"
+	"github.com/$1/internal/models/$1"
 )
 
 type Services struct{}
@@ -712,7 +712,7 @@ func defaultConfig(stage string) error {
 	}
 
 	if !result.Ok {
-		return utility.NewErrorf(jrpc.MSG_NOT_LOAD_CONFIG, stage, name)
+		return fmt.Errorf(jrpc.MSG_NOT_LOAD_CONFIG, stage, name)
 	}
 
 	cfg := result.Json("config")
@@ -990,7 +990,7 @@ import (
 	"github.com/celsiainternet/elvis/utility"
 	"github.com/celsiainternet/jdb/jdb"
 	"github.com/go-chi/chi/v5"
-	"github.com/octopus/internal/models/$1"
+	"github.com/$1/internal/models/$1"
 )
 
 /**
@@ -1129,7 +1129,7 @@ PRODUCTION=false
 HOST=localhost
 
 # DB
-DB_DRIVE=postgres
+DB_DRIVER=postgres
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=test
@@ -1182,7 +1182,7 @@ services:
       - "PRODUCTION=true"
       - "HOST=stack"
       # DB
-      - "DB_DRIVE=postgres"
+      - "DB_DRIVER=postgres"
       - "DB_HOST="
       - "DB_PORT=5432"
       - "DB_NAME=internet"

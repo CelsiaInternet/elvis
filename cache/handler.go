@@ -151,6 +151,58 @@ func Decr(key string) int64 {
 }
 
 /**
+* LPush
+* @params key string, val string
+* @return error
+**/
+func LPush(key, val string) error {
+	if conn == nil {
+		return errors.New(msg.ERR_NOT_CACHE_SERVICE)
+	}
+
+	return LPushCtx(conn.ctx, key, val)
+}
+
+/**
+* LRem
+* @params key string, val string
+* @return error
+**/
+func LRem(key, val string) error {
+	if conn == nil {
+		return errors.New(msg.ERR_NOT_CACHE_SERVICE)
+	}
+
+	return LRemCtx(conn.ctx, key, val)
+}
+
+/**
+* LRange
+* @params key string, start int64, stop int64
+* @return []string, error
+**/
+func LRange(key string, start, stop int64) ([]string, error) {
+	if conn == nil {
+		return []string{}, errors.New(msg.ERR_NOT_CACHE_SERVICE)
+	}
+
+	return LRangeCtx(conn.ctx, key, start, stop)
+}
+
+/**
+* LTrim
+* @params key string, start int64, stop int64
+* @return error
+**/
+func LTrim(key string, start, stop int64) error {
+	if conn == nil {
+		return errors.New(msg.ERR_NOT_CACHE_SERVICE)
+	}
+
+	return LTrimCtx(conn.ctx, key, start, stop)
+}
+
+/**
 * SetH
 * @params key string
 * @params val interface{}

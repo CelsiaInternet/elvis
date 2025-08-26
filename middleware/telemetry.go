@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
 	"time"
@@ -222,6 +223,19 @@ func NewRpcMetric(method string) *Metrics {
 }
 
 /**
+* setRequest
+* @params remove bool
+**/
+func (m *Metrics) setRequest(remove bool) {
+	m.key = fmt.Sprintf(`%s:%s:%s:%s`, m.Method, m.Path, m.RemoteAddr, m.Host)
+	if remove {
+		cache.LRem("telemetry:requests", m.key)
+	} else {
+		cache.LPush("telemetry:requests", m.key)
+	}
+}
+
+/**
 * SetPath
 * @params val string
 **/
@@ -231,7 +245,8 @@ func (m *Metrics) SetPath(val string) {
 	}
 
 	m.Path = val
-	m.key = strs.Format(`%s:%s`, m.Method, m.Path)
+	m.key = fmt.Sprintf(`%s:%s`, m.Method, m.Path)
+	m.setRequest(false)
 }
 
 /**
@@ -320,6 +335,7 @@ func (m *Metrics) println() et.Json {
 	lg.CW(w, lg.NMagenta, " [service_id]:%s", m.ReqID)
 	lg.Println(w)
 
+	m.setRequest(true)
 	PushTelemetryStatus(et.Json{
 		"service_id":  m.ReqID,
 		"method":      m.Method,
