@@ -6,22 +6,20 @@ import (
 )
 
 /**
-* Load
-* @return *Conn, error
+* LoadTo
+* @param dbname string
+* @return *DB, error
 **/
-func Load() (*DB, error) {
+func LoadTo(dbname string) (*DB, error) {
 	conn, err := ConnectTo(et.Json{
 		"driver":           envar.GetStr("", "DB_DRIVER"),
 		"host":             envar.GetStr("", "DB_HOST"),
 		"port":             envar.GetInt(5432, "DB_PORT"),
-		"dbname":           envar.GetStr("", "DB_NAME"),
+		"dbname":           dbname,
 		"user":             envar.GetStr("", "DB_USER"),
 		"password":         envar.GetStr("", "DB_PASSWORD"),
 		"application_name": envar.GetStr("elvis", "DB_APPLICATION_NAME"),
 	})
-	if err != nil {
-		return nil, err
-	}
 
 	conn.UseCore = envar.GetBool(true, "USE_CORE")
 	if !conn.UseCore {
@@ -34,4 +32,13 @@ func Load() (*DB, error) {
 	}
 
 	return conn, nil
+}
+
+/**
+* Load
+* @return *Conn, error
+**/
+func Load() (*DB, error) {
+	dbname := envar.GetStr("", "DB_NAME")
+	return LoadTo(dbname)
 }
