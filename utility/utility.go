@@ -466,3 +466,26 @@ func FromBase64(data string) string {
 
 	return string(result)
 }
+
+/**
+* ToBase64Raw
+* @param data string
+* @return string
+**/
+func ToBase64Raw(data string) string {
+	return base64.RawStdEncoding.EncodeToString([]byte(data))
+}
+
+/**
+* FromBase64Raw
+* @param data string
+* @return string
+**/
+func FromBase64Raw(data string) string {
+	result, err := base64.RawStdEncoding.DecodeString(data)
+	if err != nil {
+		return ""
+	}
+
+	return string(result)
+}

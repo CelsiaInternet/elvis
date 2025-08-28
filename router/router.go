@@ -179,14 +179,14 @@ func pushApiGateway(method, path, packagePath, host, packageName string, private
 func resetApigateway() {
 	event.Stack(APIGATEWAY_RESET, func(m event.EvenMessage) {
 		for _, r := range router.routes {
-			event.Publish(APIGATEWAY_DELETE_RESOLVE, r)
+			event.Publish(APIGATEWAY_SET_RESOLVE, r)
 		}
 	})
 
 	channel := strs.Format(`%s/%s`, APIGATEWAY_RESET, router.name)
 	event.Stack(channel, func(m event.EvenMessage) {
 		for _, r := range router.routes {
-			event.Publish(APIGATEWAY_DELETE_RESOLVE, r)
+			event.Publish(APIGATEWAY_SET_RESOLVE, r)
 		}
 	})
 }
