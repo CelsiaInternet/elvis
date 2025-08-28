@@ -22,6 +22,7 @@ var serviceName = "telemetry"
 
 const (
 	TELEMETRY                = "telemetry"
+	TELEMETRY_LOG            = "telemetry:log"
 	TELEMETRY_SERVICE_STATUS = "telemetry:service:status"
 	TELEMETRY_TOKEN_LAST_USE = "telemetry:token:last_use"
 	TELEMETRY_OVERFLOW       = "telemetry:overflow"
@@ -135,7 +136,17 @@ func PushTelemetry(data et.Json) {
 }
 
 /**
-* PushTelemetry
+* PushTelemetryLog
+* @param data string
+**/
+func PushTelemetryLog(data string) {
+	go event.Publish(TELEMETRY_LOG, et.Json{
+		"log": data,
+	})
+}
+
+/**
+* PushTelemetryStatus
 * @param data et.Json
 **/
 func PushTelemetryStatus(data et.Json) {
@@ -336,6 +347,7 @@ func (m *Metrics) println() et.Json {
 	lg.Println(w)
 
 	m.setRequest(true)
+	PushTelemetryLog(w.String())
 	PushTelemetryStatus(et.Json{
 		"service_id":  m.ReqID,
 		"method":      m.Method,
