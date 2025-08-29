@@ -6,6 +6,14 @@
     "staticcheck": false,
     "analyses": {
       "ST1020": false,
+      "ST1000": false,
+      "ST1003": false,
+      "ST1005": false,
+      "ST1006": false,
+      "ST1007": false,
+      "ST1008": false,
+      "ST1009": false,
+      "ST1010": false,
       "staticcheck": false
     }
   },
