@@ -17,8 +17,10 @@ import (
 	"github.com/celsiainternet/elvis/utility"
 )
 
-var hostName, _ = os.Hostname()
-var serviceName = "telemetry"
+var (
+	hostName, _ = os.Hostname()
+	serviceName = "telemetry"
+)
 
 const (
 	TELEMETRY                = "telemetry"
@@ -26,6 +28,9 @@ const (
 	TELEMETRY_SERVICE_STATUS = "telemetry:service:status"
 	TELEMETRY_TOKEN_LAST_USE = "telemetry:token:last_use"
 	TELEMETRY_OVERFLOW       = "telemetry:overflow"
+	STATUS_PENDING           = "pending"
+	STATUS_OPERATIVE         = "operative"
+	STATUS_FAILED            = "failed"
 )
 
 type Result struct {
