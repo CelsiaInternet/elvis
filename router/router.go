@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/celsiainternet/elvis/cache"
 	"github.com/celsiainternet/elvis/envar"
@@ -168,7 +169,7 @@ func GetRoutes() map[string]et.Json {
 **/
 func pushApiGateway(method, path, packagePath, host, packageName string, private bool) {
 	id := cache.GenKey(method, path)
-	path = packagePath + path
+	path = strings.ReplaceAll(packagePath+path, "//", "/")
 	resolve := host + path
 	PushApiGateway(id, method, path, resolve, et.Json{}, TpReplaceHeader, []string{}, private, packageName)
 }
