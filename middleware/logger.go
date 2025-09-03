@@ -50,11 +50,11 @@ func RequestLogger(f LogFormatter) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
 			metric := NewMetric(r)
-			_, ok := r.Header["service_id"]
+			_, ok := r.Header["ServiceId"]
 			if ok {
-				metric.ReqID = r.Header.Get("service_id")
+				metric.ServiceId = r.Header.Get("ServiceId")
 			}
-			w.Header().Set("service_id", metric.ReqID)
+			w.Header().Set("ServiceId", metric.ServiceId)
 			metric.CallSearchTime()
 
 			ww := &ResponseWriterWrapper{ResponseWriter: w, StatusCode: http.StatusOK}

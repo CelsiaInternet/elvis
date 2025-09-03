@@ -309,6 +309,16 @@ func SetToken(app, device, id, token string, duration time.Duration) error {
 }
 
 /**
+* ServiceId
+* @param r *http.Request
+* @return string
+**/
+func ServiceId(r *http.Request) string {
+	ctx := r.Context()
+	return ServiceIdKey.String(ctx, "-1")
+}
+
+/**
 * ClientId
 * @param r *http.Request
 * @return string
@@ -339,17 +349,19 @@ func GetClient(r *http.Request) et.Json {
 	username := UsernameKey.String(ctx, "Anonimo")
 	fullName := NameKey.String(ctx, "Anonimo")
 	clientId := ClientIdKey.String(ctx, "-1")
+	serviceId := ServiceIdKey.String(ctx, "-1")
 	tag := TagKey.String(ctx, "")
 	app := AppKey.String(ctx, "")
 	device := DeviceKey.String(ctx, "")
 
 	return et.Json{
-		"date_at":   now,
-		"client_id": clientId,
-		"app":       app,
-		"username":  username,
-		"device":    device,
-		"full_name": fullName,
-		"tag":       tag,
+		"date_at":    now,
+		"client_id":  clientId,
+		"service_id": serviceId,
+		"app":        app,
+		"username":   username,
+		"device":     device,
+		"full_name":  fullName,
+		"tag":        tag,
 	}
 }

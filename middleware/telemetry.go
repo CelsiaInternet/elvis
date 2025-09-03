@@ -25,9 +25,8 @@ var (
 const (
 	TELEMETRY                = "telemetry"
 	TELEMETRY_LOG            = "telemetry:log"
-	TELEMETRY_SERVICE_STATUS = "telemetry:service:status"
-	TELEMETRY_TOKEN_LAST_USE = "telemetry:token:last_use"
 	TELEMETRY_OVERFLOW       = "telemetry:overflow"
+	TELEMETRY_TOKEN_LAST_USE = "telemetry:token:last_use"
 	STATUS_PENDING           = "pending"
 	STATUS_OPERATIVE         = "operative"
 	STATUS_FAILED            = "failed"
@@ -65,7 +64,7 @@ func SetServiceName(name string) {
 type Metrics struct {
 	TimeStamp    time.Time     `json:"timestamp"`
 	ServiceName  string        `json:"service_name"`
-	ReqID        string        `json:"req_id"`
+	ServiceId    string        `json:"service_id"`
 	RemoteAddr   string        `json:"remote_addr"`
 	Token        string        `json:"token"`
 	Scheme       string        `json:"scheme"`
@@ -89,7 +88,7 @@ type Metrics struct {
 func (m *Metrics) ToJson() et.Json {
 	return et.Json{
 		"timestamp":     strs.FormatDateTime("02/01/2006 03:04:05 PM", m.TimeStamp),
-		"req_id":        m.ReqID,
+		"service_id":    m.ServiceId,
 		"remote_addr":   m.RemoteAddr,
 		"token":         m.Token,
 		"scheme":        m.Scheme,
@@ -101,13 +100,15 @@ func (m *Metrics) ToJson() et.Json {
 		"response_time": m.ResponseTime,
 		"latency":       m.Latency,
 		"response_size": m.ResponseSize,
+		"metric":        m.metrics.ToJson(),
 	}
 }
 
 type Telemetry struct {
 	TimeStamp         string
 	ServiceName       string
-	Key               string
+	Method            string
+	Path              string
 	RequestsPerSecond int64
 	RequestsPerMinute int64
 	RequestsPerHour   int64
@@ -122,7 +123,8 @@ type Telemetry struct {
 func (m *Telemetry) ToJson() et.Json {
 	return et.Json{
 		"timestamp":           m.TimeStamp,
-		"key":                 m.Key,
+		"method":              m.Method,
+		"path":                m.Path,
 		"service_name":        m.ServiceName,
 		"requests_per_second": m.RequestsPerSecond,
 		"requests_per_minute": m.RequestsPerMinute,
@@ -148,14 +150,6 @@ func PushTelemetryLog(data string) {
 	go event.Publish(TELEMETRY_LOG, et.Json{
 		"log": data,
 	})
-}
-
-/**
-* PushTelemetryStatus
-* @param data et.Json
-**/
-func PushTelemetryStatus(data et.Json) {
-	go event.Publish(TELEMETRY_SERVICE_STATUS, data)
 }
 
 /**
@@ -197,12 +191,17 @@ func NewMetric(r *http.Request) *Metrics {
 	if r.TLS != nil {
 		scheme = "https"
 	}
+	serviceId := r.Header.Get("ServiceId")
+	if serviceId == "" {
+		serviceId = utility.UUID()
+		r.Header.Set("ServiceId", serviceId)
+	}
 
 	token := r.Header.Get("Authorization")
 	result := &Metrics{
 		TimeStamp:   timezone.NowTime(),
 		ServiceName: serviceName,
-		ReqID:       utility.UUID(),
+		ServiceId:   serviceId,
 		RemoteAddr:  remoteAddr,
 		Token:       token,
 		Host:        hostName,
@@ -223,11 +222,10 @@ func NewMetric(r *http.Request) *Metrics {
 **/
 func NewRpcMetric(method string) *Metrics {
 	scheme := "rpc"
-
 	result := &Metrics{
 		TimeStamp:   timezone.NowTime(),
 		ServiceName: serviceName,
-		ReqID:       utility.UUID(),
+		ServiceId:   utility.UUID(),
 		Path:        method,
 		Method:      strs.Uppcase(scheme),
 		Scheme:      scheme,
@@ -243,7 +241,7 @@ func NewRpcMetric(method string) *Metrics {
 * @params remove bool
 **/
 func (m *Metrics) setRequest(remove bool) {
-	m.key = fmt.Sprintf(`%s:%s:%s:%s`, m.Method, m.Path, m.RemoteAddr, m.Host)
+	m.key = fmt.Sprintf(`%s:%s`, m.Method, m.Path)
 	if remove {
 		cache.LRem("telemetry:requests", m.key)
 	} else {
@@ -261,7 +259,6 @@ func (m *Metrics) SetPath(val string) {
 	}
 
 	m.Path = val
-	m.key = fmt.Sprintf(`%s:%s`, m.Method, m.Path)
 	m.setRequest(false)
 }
 
@@ -302,7 +299,8 @@ func (m *Metrics) CallMetrics() Telemetry {
 	return Telemetry{
 		TimeStamp:         date,
 		ServiceName:       serviceName,
-		Key:               m.key,
+		Method:            m.Method,
+		Path:              m.Path,
 		RequestsPerSecond: cache.Incr(cache.GenKey(m.key, second), 2*time.Second),
 		RequestsPerMinute: cache.Incr(cache.GenKey(m.key, minute), 1*time.Minute+1*time.Second),
 		RequestsPerHour:   cache.Incr(cache.GenKey(m.key, hour), 1*time.Hour+1*time.Second),
@@ -348,18 +346,11 @@ func (m *Metrics) println() et.Json {
 	} else {
 		lg.CW(w, lg.NGreen, " - Request:S:%vM:%vH:%vD:%vL:%v", m.metrics.RequestsPerSecond, m.metrics.RequestsPerMinute, m.metrics.RequestsPerHour, m.metrics.RequestsPerDay, m.metrics.RequestsLimit)
 	}
-	lg.CW(w, lg.NMagenta, " [service_id]:%s", m.ReqID)
+	lg.CW(w, lg.NMagenta, " [ServiceId]:%s", m.ServiceId)
 	lg.Println(w)
 
 	m.setRequest(true)
 	PushTelemetryLog(w.String())
-	PushTelemetryStatus(et.Json{
-		"service_id":  m.ReqID,
-		"method":      m.Method,
-		"path":        m.Path,
-		"remote_addr": m.RemoteAddr,
-		"token":       m.Token,
-	})
 
 	return m.ToJson()
 }
@@ -370,37 +361,12 @@ func (m *Metrics) println() et.Json {
 **/
 func (m *Metrics) telemetry() et.Json {
 	result := m.ToJson()
-	result["metric"] = m.metrics.ToJson()
-
-	PushTelemetry(et.Json{
-		"response": m,
-		"metric":   m.metrics.ToJson(),
-	})
-
+	PushTelemetry(result)
 	if m.metrics.RequestsPerSecond > m.metrics.RequestsLimit {
-		PushTelemetryOverflow(et.Json{
-			"response": m,
-			"metric":   m.metrics.ToJson(),
-		})
+		PushTelemetryOverflow(m.metrics.ToJson())
 	}
 
 	return result
-}
-
-/**
-* DoneFn
-* @params rw *ResponseWriterWrapper
-* @params r *http.Request
-* @return et.Json
-**/
-func (m *Metrics) DoneFn(rw *ResponseWriterWrapper) et.Json {
-	m.StatusCode = rw.StatusCode
-	m.ResponseSize = rw.Size
-	m.CallResponseTime()
-	m.CallLatency()
-	m.println()
-
-	return m.telemetry()
 }
 
 /**
@@ -415,6 +381,15 @@ func (m *Metrics) DoneHTTP(rw *ResponseWriterWrapper) et.Json {
 	m.CallLatency()
 
 	return m.println()
+}
+
+/**
+* Done
+* @params rw *ResponseWriterWrapper
+**/
+func (m *Metrics) DoneTelemetry(rw *ResponseWriterWrapper) et.Json {
+	m.DoneHTTP(rw)
+	return m.telemetry()
 }
 
 /**
@@ -447,7 +422,7 @@ func (m *Metrics) WriteResponse(w http.ResponseWriter, r *http.Request, statusCo
 	rw.WriteHeader(statusCode)
 	rw.Write(e)
 
-	m.DoneFn(rw)
+	m.DoneHTTP(rw)
 	return nil
 }
 

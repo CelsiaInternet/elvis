@@ -81,9 +81,9 @@ func Autentication(next http.Handler) http.Handler {
 		}
 
 		serviceId := utility.UUID()
-		_, ok := r.Header["service_id"]
+		_, ok := r.Header["ServiceId"]
 		if ok {
-			serviceId = r.Header.Get("service_id")
+			serviceId = r.Header.Get("ServiceId")
 		}
 
 		ctx := r.Context()
