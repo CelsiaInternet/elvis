@@ -2,12 +2,27 @@ package request
 
 import (
 	"bytes"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/celsiainternet/elvis/et"
+)
+
+var (
+	methods = map[string]bool{
+		"GET":     true,
+		"POST":    true,
+		"PUT":     true,
+		"DELETE":  true,
+		"PATCH":   true,
+		"OPTIONS": true,
+	}
 )
 
 type Status struct {
@@ -146,8 +161,7 @@ func (b Body) ToTime() (time.Time, error) {
 /**
 * ReadBody reads the body response
 * @param body io.ReadCloser
-* @return *Body
-* @return error
+* @return *Body, error
 **/
 func ReadBody(body io.ReadCloser) (*Body, error) {
 	bodyBytes, err := io.ReadAll(body)
@@ -158,166 +172,205 @@ func ReadBody(body io.ReadCloser) (*Body, error) {
 	return &Body{Data: bodyBytes}, nil
 }
 
-// Return true if status code is ok
+/**
+* statusOk
+* @param status int
+* @return bool
+**/
 func statusOk(status int) bool {
 	return status < http.StatusBadRequest
 }
 
-// Request post method
+/**
+* Http
+* @param method, url string, header, body et.Json
+* @return *Body, Status
+**/
+func Http(method, url string, header, body et.Json, tlsConfig *tls.Config) (*Body, Status) {
+	if _, ok := methods[method]; !ok {
+		return nil, Status{
+			Ok:      false,
+			Code:    http.StatusBadRequest,
+			Message: "Invalid method",
+		}
+	}
+
+	bodyParams := []byte(body.ToString())
+	req, err := http.NewRequest(method, url, bytes.NewBuffer(bodyParams))
+	if err != nil {
+		return nil, Status{Ok: false, Code: http.StatusBadRequest, Message: err.Error()}
+	}
+
+	for k, v := range header {
+		req.Header.Set(k, v.(string))
+	}
+
+	client := &http.Client{}
+	if tlsConfig != nil {
+		client.Transport = &http.Transport{
+			TLSClientConfig: tlsConfig,
+		}
+	}
+
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, Status{
+			Ok:      false,
+			Code:    http.StatusBadRequest,
+			Message: err.Error(),
+		}
+	}
+	defer res.Body.Close()
+
+	result, err := ReadBody(res.Body)
+	if err != nil {
+		return nil, Status{
+			Ok:      false,
+			Code:    http.StatusBadRequest,
+			Message: err.Error(),
+		}
+	}
+
+	return result, Status{
+		Ok:      statusOk(res.StatusCode),
+		Code:    res.StatusCode,
+		Message: res.Status,
+	}
+}
+
+/**
+* Post
+* @param url string, header, body et.Json
+* @return *Body, Status
+**/
 func Post(url string, header, body et.Json) (*Body, Status) {
-	bodyParams := []byte(body.ToString())
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(bodyParams))
-	if err != nil {
-		return nil, Status{Ok: false, Code: http.StatusBadRequest, Message: err.Error()}
-	}
-
-	for k, v := range header {
-		req.Header.Set(k, v.(string))
-	}
-
-	client := &http.Client{}
-	res, err := client.Do(req)
-	if err != nil {
-		return nil, Status{Ok: false, Code: http.StatusBadRequest, Message: err.Error()}
-	}
-	defer res.Body.Close()
-
-	result, err := ReadBody(res.Body)
-	if err != nil {
-		return nil, Status{Ok: false, Code: http.StatusBadRequest, Message: err.Error()}
-	}
-
-	return result, Status{Ok: statusOk(res.StatusCode), Code: res.StatusCode, Message: res.Status}
+	return Http("POST", url, header, body, nil)
 }
 
-// Request get method
+/**
+* Get
+* @param url string, header et.Json
+* @return *Body, Status
+**/
 func Get(url string, header et.Json) (*Body, Status) {
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, Status{Ok: false, Code: http.StatusBadRequest, Message: err.Error()}
-	}
-
-	for k, v := range header {
-		req.Header.Set(k, v.(string))
-	}
-
-	client := &http.Client{}
-	res, err := client.Do(req)
-	if err != nil {
-		return nil, Status{Ok: false, Code: http.StatusBadRequest, Message: err.Error()}
-	}
-	defer res.Body.Close()
-
-	result, err := ReadBody(res.Body)
-	if err != nil {
-		return nil, Status{Ok: false, Code: http.StatusBadRequest, Message: err.Error()}
-	}
-
-	return result, Status{Ok: statusOk(res.StatusCode), Code: res.StatusCode, Message: res.Status}
+	return Http("GET", url, header, et.Json{}, nil)
 }
 
-// Request put method
+/**
+* Put
+* @param url string, header, body et.Json
+* @return *Body, Status
+**/
 func Put(url string, header, body et.Json) (*Body, Status) {
-	bodyParams := []byte(body.ToString())
-	req, err := http.NewRequest("PUT", url, bytes.NewBuffer(bodyParams))
-	if err != nil {
-		return nil, Status{Ok: false, Code: http.StatusBadRequest, Message: err.Error()}
-	}
-
-	for k, v := range header {
-		req.Header.Set(k, v.(string))
-	}
-
-	client := &http.Client{}
-	res, err := client.Do(req)
-	if err != nil {
-		return nil, Status{Ok: false, Code: http.StatusBadRequest, Message: err.Error()}
-	}
-	defer res.Body.Close()
-
-	result, err := ReadBody(res.Body)
-	if err != nil {
-		return nil, Status{Ok: false, Code: http.StatusBadRequest, Message: err.Error()}
-	}
-
-	return result, Status{Ok: statusOk(res.StatusCode), Code: res.StatusCode, Message: res.Status}
+	return Http("PUT", url, header, body, nil)
 }
 
-// Request delete method
+/**
+* Delete
+* @param url string, header et.Json
+* @return *Body, Status
+**/
 func Delete(url string, header et.Json) (*Body, Status) {
-	req, err := http.NewRequest("DELETE", url, nil)
-	if err != nil {
-		return nil, Status{Ok: false, Code: http.StatusBadRequest, Message: err.Error()}
-	}
-
-	for k, v := range header {
-		req.Header.Set(k, v.(string))
-	}
-
-	client := &http.Client{}
-	res, err := client.Do(req)
-	if err != nil {
-		return nil, Status{Ok: false, Code: http.StatusBadRequest, Message: err.Error()}
-	}
-	defer res.Body.Close()
-
-	result, err := ReadBody(res.Body)
-	if err != nil {
-		return nil, Status{Ok: false, Code: http.StatusBadRequest, Message: err.Error()}
-	}
-
-	return result, Status{Ok: statusOk(res.StatusCode), Code: res.StatusCode, Message: res.Status}
+	return Http("DELETE", url, header, et.Json{}, nil)
 }
 
-// Request patch method
+/**
+* Patch
+* @param url string, header, body et.Json
+* @return *Body, Status
+**/
 func Patch(url string, header, body et.Json) (*Body, Status) {
-	bodyParams := []byte(body.ToString())
-	req, err := http.NewRequest("PATCH", url, bytes.NewBuffer(bodyParams))
-	if err != nil {
-		return nil, Status{Ok: false, Code: http.StatusBadRequest, Message: err.Error()}
-	}
-
-	for k, v := range header {
-		req.Header.Set(k, v.(string))
-	}
-
-	client := &http.Client{}
-	res, err := client.Do(req)
-	if err != nil {
-		return nil, Status{Ok: false, Code: http.StatusBadRequest, Message: err.Error()}
-	}
-	defer res.Body.Close()
-
-	result, err := ReadBody(res.Body)
-	if err != nil {
-		return nil, Status{Ok: false, Code: http.StatusBadRequest, Message: err.Error()}
-	}
-
-	return result, Status{Ok: statusOk(res.StatusCode), Code: res.StatusCode, Message: res.Status}
+	return Http("PATCH", url, header, body, nil)
 }
 
-// Request options method
+/**
+* Options
+* @param url string, header et.Json
+* @return *Body, Status
+**/
 func Options(url string, header et.Json) (*Body, Status) {
-	req, err := http.NewRequest("OPTIONS", url, nil)
+	return Http("OPTIONS", url, header, et.Json{}, nil)
+}
+
+/**
+* PostWithTls
+* @param url string, header, body et.Json, tlsConfig *tls.Config
+* @return *Body, Status
+**/
+func PostWithTls(url string, header, body et.Json, tlsConfig *tls.Config) (*Body, Status) {
+	return Http("POST", url, header, body, tlsConfig)
+}
+
+/**
+* GetWithTls
+* @param url string, header et.Json, tlsConfig *tls.Config
+* @return *Body, Status
+**/
+func GetWithTls(url string, header et.Json, tlsConfig *tls.Config) (*Body, Status) {
+	return Http("GET", url, header, et.Json{}, tlsConfig)
+}
+
+/**
+* PutWithTls
+* @param url string, header, body et.Json, tlsConfig *tls.Config
+* @return *Body, Status
+**/
+func PutWithTls(url string, header, body et.Json, tlsConfig *tls.Config) (*Body, Status) {
+	return Http("PUT", url, header, body, tlsConfig)
+}
+
+/**
+* DeleteWithTls
+* @param url string, header et.Json, tlsConfig *tls.Config
+* @return *Body, Status
+**/
+func DeleteWithTls(url string, header et.Json, tlsConfig *tls.Config) (*Body, Status) {
+	return Http("DELETE", url, header, et.Json{}, tlsConfig)
+}
+
+/**
+* PatchWithCA
+* @param url string, header, body et.Json, tlsConfig *tls.Config
+* @return *Body, Status
+**/
+func PatchWithTls(url string, header, body et.Json, tlsConfig *tls.Config) (*Body, Status) {
+	return Http("PATCH", url, header, body, tlsConfig)
+}
+
+/**
+* OptionsWithTls
+* @param url string, header et.Json, tlsConfig *tls.Config
+* @return *Body, Status
+**/
+func OptionsWithTls(url string, header et.Json, tlsConfig *tls.Config) (*Body, Status) {
+	return Http("OPTIONS", url, header, et.Json{}, tlsConfig)
+}
+
+/**
+* NewTlsConfig
+* @param caPath, certPath, keyPath string
+* @return *tls.Config, error
+**/
+func NewTlsConfig(caPath, certPath, keyPath string) (*tls.Config, error) {
+	if caPath == "" {
+		return nil, fmt.Errorf("CA certificate path is required")
+	}
+
+	if _, err := os.Stat(caPath); os.IsNotExist(err) {
+		return nil, fmt.Errorf("CA certificate not found")
+	}
+
+	caCert, _ := os.ReadFile(caPath)
+	caCertPool := x509.NewCertPool()
+	caCertPool.AppendCertsFromPEM(caCert)
+
+	cert, err := tls.LoadX509KeyPair(certPath, keyPath)
 	if err != nil {
-		return nil, Status{Ok: false, Code: http.StatusBadRequest, Message: err.Error()}
+		panic(err)
 	}
 
-	for k, v := range header {
-		req.Header.Set(k, v.(string))
-	}
-
-	client := &http.Client{}
-	res, err := client.Do(req)
-	if err != nil {
-		return nil, Status{Ok: false, Code: http.StatusBadRequest, Message: err.Error()}
-	}
-	defer res.Body.Close()
-
-	result, err := ReadBody(res.Body)
-	if err != nil {
-		return nil, Status{Ok: false, Code: http.StatusBadRequest, Message: err.Error()}
-	}
-
-	return result, Status{Ok: statusOk(res.StatusCode), Code: res.StatusCode, Message: res.Status}
+	return &tls.Config{
+		RootCAs:      caCertPool,
+		Certificates: []tls.Certificate{cert},
+	}, nil
 }
