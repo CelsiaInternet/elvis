@@ -23,6 +23,25 @@ func UUID() string {
 }
 
 /**
+* ULID
+* @return string
+**/
+func ULID() string {
+	t := timezone.NowTime()
+	entropy := ulid.Monotonic(rand.New(rand.NewSource(t.UnixNano())), 0)
+	return ulid.MustNew(ulid.Timestamp(t), entropy).String()
+}
+
+/**
+* XID
+* @return string
+**/
+func XID() string {
+	id := xid.New()
+	return id.String()
+}
+
+/**
 * GenKey
 * @params args ...interface{}
 * @return string
@@ -64,19 +83,6 @@ func GenXid(tag string) string {
 }
 
 /**
-* GetId
-* @params tag, id string
-* @return string
-**/
-func GetId(tag, id string) string {
-	if !map[string]bool{"": true, "*": true, "new": true}[id] {
-		return id
-	}
-
-	return GenId(tag)
-}
-
-/**
 * GenIndex
 * @return int64
 **/
@@ -104,22 +110,55 @@ func GenHashKey(args ...interface{}) string {
 }
 
 /**
-* ULID
+* GetId
+* @params tag, id string
 * @return string
 **/
-func ULID() string {
-	t := timezone.NowTime()
-	entropy := ulid.Monotonic(rand.New(rand.NewSource(t.UnixNano())), 0)
-	return ulid.MustNew(ulid.Timestamp(t), entropy).String()
+func GetId(tag, id string) string {
+	if !map[string]bool{"": true, "*": true, "new": true}[id] {
+		return id
+	}
+
+	return GenId(tag)
 }
 
 /**
-* XID
+* GetUUID
+* @params id string
 * @return string
 **/
-func XID() string {
-	id := xid.New()
-	return id.String()
+func GetUUID(id string) string {
+	if !map[string]bool{"": true, "*": true, "new": true}[id] {
+		return id
+	}
+
+	return UUID()
+}
+
+/**
+* GetULID
+* @params id string
+* @return string
+**/
+func GetULID(id string) string {
+	if !map[string]bool{"": true, "*": true, "new": true}[id] {
+		return id
+	}
+
+	return ULID()
+}
+
+/**
+* GetXID
+* @params id string
+* @return string
+**/
+func GetXID(id string) string {
+	if !map[string]bool{"": true, "*": true, "new": true}[id] {
+		return id
+	}
+
+	return XID()
 }
 
 func init() {

@@ -32,6 +32,19 @@ func SetCtx(ctx context.Context, key, val string, second time.Duration) error {
 }
 
 /**
+* ExpireCtx
+* @params ctx context.Context, key string, second time.Duration
+* @return error
+**/
+func ExpireCtx(ctx context.Context, key string, second time.Duration) error {
+	if conn == nil {
+		return errors.New(msg.ERR_NOT_CACHE_SERVICE)
+	}
+
+	return conn.Expire(ctx, key, second).Err()
+}
+
+/**
 * IncrCtx
 * @params ctx context.Context, key string, second time.Duration
 * @return int64
@@ -47,7 +60,7 @@ func IncrCtx(ctx context.Context, key string, second time.Duration) int64 {
 	}
 
 	if result == 1 {
-		conn.Expire(ctx, key, second)
+		ExpireCtx(ctx, key, second)
 	}
 
 	return result

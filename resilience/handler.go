@@ -2,6 +2,7 @@ package resilience
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/celsiainternet/elvis/cache"
 	"github.com/celsiainternet/elvis/et"
@@ -34,18 +35,18 @@ func Load() error {
 }
 
 /**
-* Add
-* @param tag, description string, fn interface{}, fnArgs ...interface{}
-* @return *Transaction
+* AddCustom
+* @param id, tag, description string, totalAttempts int, timeAttempts time.Duration, fn interface{}, fnArgs ...interface{}
+* @return *Attempt
  */
-func Add(tag, description string, fn interface{}, fnArgs ...interface{}) *Transaction {
+func AddCustom(id, tag, description string, totalAttempts int, timeAttempts time.Duration, fn interface{}, fnArgs ...interface{}) *Attempt {
 	if resilience == nil {
 		logs.Log("resilience", "resilience is nil")
 		return nil
 	}
 
-	result := NewTransaction(tag, description, fn, fnArgs...)
-	resilience.Transactions = append(resilience.Transactions, result)
+	result := NewAttempt(id, tag, description, totalAttempts, timeAttempts, fn, fnArgs...)
+	resilience.Attempts = append(resilience.Attempts, result)
 	logs.Log("resilience", "add:", result.Json().ToString())
 	resilience.Notify(result)
 	resilience.Run(result)
@@ -54,51 +55,24 @@ func Add(tag, description string, fn interface{}, fnArgs ...interface{}) *Transa
 }
 
 /**
-* SetNotifyType
-* @param notifyType TpNotify
+* Add
+* @param tag, description string, fn interface{}, fnArgs ...interface{}
+* @return *Attempt
  */
-func SetNotifyType(notifyType TpNotify) {
-	resilience.NotifyType = notifyType
+func Add(id, tag, description string, fn interface{}, fnArgs ...interface{}) *Attempt {
+	return AddCustom(id, tag, description, resilience.TotalAttempts, resilience.TimeAttempts, fn, fnArgs...)
 }
 
 /**
-* SetContactNumbers
-* @param contactNumbers []string
- */
-func SetContactNumbers(contactNumbers []string) {
-	resilience.ContactNumbers = contactNumbers
-}
+* HealthCheck
+* @return bool
+**/
+func HealthCheck() bool {
+	if resilience == nil {
+		return false
+	}
 
-/**
-* SetEmails
-* @param emails []et.Json
- */
-func SetEmails(emails []et.Json) {
-	resilience.Emails = emails
-}
-
-/**
-* SetTemplateId
-* @param templateId int
- */
-func SetTemplateId(templateId int) {
-	resilience.TemplateId = templateId
-}
-
-/**
-* SetContentSMS
-* @param content string, params []et.Json
- */
-func SetContentSMS(content string, params []et.Json) {
-	resilience.SetContentSMS(content, params)
-}
-
-/**
-* SetContentEmail
-* @param subject string, htmlMessage string, params []et.Json
- */
-func SetContentEmail(subject string, htmlMessage string, params []et.Json) {
-	resilience.SetContentEmail(subject, htmlMessage, params)
+	return resilience.HealthCheck()
 }
 
 /**
@@ -124,15 +98,15 @@ func HttpGetResilience(w http.ResponseWriter, r *http.Request) {
 func HttpGetResilienceById(w http.ResponseWriter, r *http.Request) {
 	body, _ := response.GetBody(r)
 	id := body.Str("id")
-	transaction := resilience.GetById(id)
-	if transaction == nil {
+	attempt := resilience.GetById(id)
+	if attempt == nil {
 		response.JSON(w, r, http.StatusNotFound, et.Json{
-			"message": "transaction not found",
+			"message": "attempt not found",
 		})
 		return
 	}
 
-	response.JSON(w, r, http.StatusOK, transaction.Json())
+	response.JSON(w, r, http.StatusOK, attempt.Json())
 }
 
 /**
@@ -142,13 +116,13 @@ func HttpGetResilienceById(w http.ResponseWriter, r *http.Request) {
 func HttpGetResilienceByTag(w http.ResponseWriter, r *http.Request) {
 	body, _ := response.GetBody(r)
 	tag := body.Str("tag")
-	transaction := resilience.GetByTag(tag)
-	if transaction == nil {
+	attempt := resilience.GetByTag(tag)
+	if attempt == nil {
 		response.JSON(w, r, http.StatusNotFound, et.Json{
-			"message": "transaction not found",
+			"message": "attempt not found",
 		})
 		return
 	}
 
-	response.JSON(w, r, http.StatusOK, transaction.Json())
+	response.JSON(w, r, http.StatusOK, attempt.Json())
 }

@@ -13,66 +13,71 @@ import (
 
 var errorInterface = reflect.TypeOf((*error)(nil)).Elem()
 
-type Store int
+type TpStore int
 
 const (
-	StoreCache Store = iota
-	StoreMemory
+	TpStoreCache TpStore = iota
+	TpStoreMemory
 )
 
-func (s Store) String() string {
+func (s TpStore) String() string {
 	return []string{"cache", "memory"}[s]
 }
 
-type TransactionStatus string
+type AttemptStatus string
 
 const (
-	StatusPending TransactionStatus = "pending"
-	StatusSuccess TransactionStatus = "success"
-	StatusRunning TransactionStatus = "running"
-	StatusFailed  TransactionStatus = "failed"
+	StatusPending AttemptStatus = "pending"
+	StatusSuccess AttemptStatus = "success"
+	StatusRunning AttemptStatus = "running"
+	StatusFailed  AttemptStatus = "failed"
 )
 
-type Transaction struct {
-	CreatedAt     time.Time         `json:"created_at"`
-	LastAttemptAt time.Time         `json:"last_attempt_at"`
-	Id            string            `json:"id"`
-	Tag           string            `json:"tag"`
-	Description   string            `json:"description"`
-	Status        TransactionStatus `json:"status"`
-	Store         Store             `json:"store"`
-	Attempts      int               `json:"attempts"`
-	fn            interface{}       `json:"-"`
-	fnArgs        []interface{}     `json:"-"`
-	fnResult      []reflect.Value   `json:"-"`
+type Attempt struct {
+	CreatedAt     time.Time       `json:"created_at"`
+	LastAttemptAt time.Time       `json:"last_attempt_at"`
+	Id            string          `json:"id"`
+	Tag           string          `json:"tag"`
+	Description   string          `json:"description"`
+	Status        AttemptStatus   `json:"status"`
+	TpStore       TpStore         `json:"store"`
+	Attempt       int             `json:"attempt"`
+	TotalAttempts int             `json:"total_attempts"`
+	TimeAttempts  time.Duration   `json:"time_attempts"`
+	fn            interface{}     `json:"-"`
+	fnArgs        []interface{}   `json:"-"`
+	fnResult      []reflect.Value `json:"-"`
 }
 
 /**
 * Json
 * @return et.Json
 **/
-func (s *Transaction) Json() et.Json {
+func (s *Attempt) Json() et.Json {
 	return et.Json{
+		"created_at":      s.CreatedAt,
+		"last_attempt_at": s.LastAttemptAt,
 		"id":              s.Id,
 		"tag":             s.Tag,
 		"description":     s.Description,
 		"status":          s.Status,
-		"attempts":        s.Attempts,
-		"store":           s.Store.String(),
-		"created_at":      s.CreatedAt,
-		"last_attempt_at": s.LastAttemptAt,
-		"result":          s.fnResult,
+		"tp_store":        s.TpStore,
+		"store":           s.TpStore.String(),
+		"attempt":         s.Attempt,
+		"total_attempts":  s.TotalAttempts,
+		"time_attempts":   s.TimeAttempts,
 	}
 }
 
 /**
-* Transaction
-* @param id, description string, fn interface{}, fnArgs ...interface{}
-* @return Transaction
+* Attempt
+* @param id, tag, description string, fn interface{}, fnArgs ...interface{}
+* @return Attempt
  */
-func NewTransaction(tag, description string, fn interface{}, fnArgs ...interface{}) *Transaction {
-	result := &Transaction{
-		Id:            utility.UUID(),
+func NewAttempt(id, tag, description string, totalAttempts int, timeAttempts time.Duration, fn interface{}, fnArgs ...interface{}) *Attempt {
+	id = utility.GenId(id)
+	result := &Attempt{
+		Id:            id,
 		Tag:           tag,
 		Description:   description,
 		Status:        StatusPending,
@@ -81,6 +86,8 @@ func NewTransaction(tag, description string, fn interface{}, fnArgs ...interface
 		fnResult:      []reflect.Value{},
 		CreatedAt:     time.Now(),
 		LastAttemptAt: time.Now(),
+		TotalAttempts: totalAttempts,
+		TimeAttempts:  timeAttempts,
 	}
 
 	result.save()
@@ -91,13 +98,13 @@ func NewTransaction(tag, description string, fn interface{}, fnArgs ...interface
 * save
 * @return error
 **/
-func (s *Transaction) save() error {
+func (s *Attempt) save() error {
 	err := cache.Set(s.Id, s.Json(), 0)
 	if err != nil {
 		mem.Set(s.Id, s.Json().ToString(), 0)
-		s.Store = StoreMemory
+		s.TpStore = TpStoreMemory
 	} else {
-		s.Store = StoreCache
+		s.TpStore = TpStoreCache
 	}
 
 	return nil
@@ -107,8 +114,8 @@ func (s *Transaction) save() error {
 * done
 * @return error
 **/
-func (s *Transaction) Done() error {
-	if s.Store == StoreCache {
+func (s *Attempt) Done() error {
+	if s.TpStore == TpStoreCache {
 		_, err := cache.Delete(s.Id)
 		if err != nil {
 			return err
@@ -122,10 +129,10 @@ func (s *Transaction) Done() error {
 
 /**
 * SetStatus
-* @param status TransactionStatus
+* @param status AttemptStatus
 * @return error
 **/
-func (s *Transaction) setStatus(status TransactionStatus) error {
+func (s *Attempt) setStatus(status AttemptStatus) error {
 	s.Status = status
 	return s.save()
 }
@@ -134,7 +141,7 @@ func (s *Transaction) setStatus(status TransactionStatus) error {
 * Run
 * @return error
 **/
-func (s *Transaction) Run() ([]reflect.Value, error) {
+func (s *Attempt) Run() ([]reflect.Value, error) {
 	if s.Status == StatusSuccess {
 		return []reflect.Value{reflect.ValueOf(et.Item{
 			Ok:     true,
@@ -143,7 +150,7 @@ func (s *Transaction) Run() ([]reflect.Value, error) {
 	}
 
 	s.LastAttemptAt = utility.NowTime()
-	s.Attempts++
+	s.Attempt++
 	s.setStatus(StatusRunning)
 
 	argsValues := make([]reflect.Value, len(s.fnArgs))

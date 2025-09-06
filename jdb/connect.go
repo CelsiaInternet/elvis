@@ -32,6 +32,10 @@ type DB struct {
 	dm          *sql.DB
 }
 
+/**
+* Close
+* @return error
+**/
 func (c *DB) Close() error {
 	err := c.db.Close()
 	if err != nil {
@@ -41,6 +45,10 @@ func (c *DB) Close() error {
 	return nil
 }
 
+/**
+* Describe
+* @return et.Json
+**/
 func (c *DB) Describe() et.Json {
 	host := strs.Format(`%s:%d`, c.Host, c.Port)
 	return et.Json{
@@ -51,6 +59,24 @@ func (c *DB) Describe() et.Json {
 	}
 }
 
+/**
+* HealthCheck
+* @return bool
+**/
+func (c *DB) HealthCheck() bool {
+	err := c.db.Ping()
+	if err != nil {
+		return false
+	}
+
+	return true
+}
+
+/**
+* ConnectTo
+* @param params et.Json
+* @return *DB, error
+**/
 func ConnectTo(params et.Json) (*DB, error) {
 	driver := params.Str("driver")
 	if !utility.ValidStr(driver, 0, []string{""}) {

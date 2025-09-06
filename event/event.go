@@ -114,6 +114,10 @@ func Load() (*Conn, error) {
 	return conn, nil
 }
 
+/**
+* Close
+* @return void
+**/
 func Close() {
 	if conn == nil {
 		return
@@ -138,4 +142,16 @@ func Id() string {
 	}
 
 	return conn.id
+}
+
+/**
+* HealthCheck
+* @return bool
+**/
+func HealthCheck() bool {
+	if conn == nil {
+		return false
+	}
+
+	return conn.IsConnected()
 }

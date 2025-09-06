@@ -128,6 +128,15 @@ func Delete(key string) (int64, error) {
 }
 
 /**
+* Expire
+* @params key string, second time.Duration
+* @return error
+**/
+func Expire(key string, second time.Duration) error {
+	return ExpireCtx(conn.ctx, key, second)
+}
+
+/**
 * Incr
 * @params key string, second time.Duration (second)
 * @return int64

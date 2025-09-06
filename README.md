@@ -1,10 +1,26 @@
 # 🎸 Elvis - Framework para Microservicios en Go
 
-[![Go Version](https://img.shields.io/badge/Go-1.23+-blue.svg)](https://golang.org)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-v1.1.122-orange.svg)](https://github.com/celsiainternet/elvis/releases)
-[![Build Status](https://img.shields.io/badge/Build-Passing-brightgreen.svg)]()
-[![Go Report Card](https://img.shields.io/badge/Go%20Report%20Card-A+-brightgreen.svg)]()
+[![Go Version](https://img.shields.io/github/go-mod/go-version/celsiainternet/elvis?style=flat-square&logo=go)](https://golang.org)
+[![License](https://img.shields.io/github/license/celsiainternet/elvis?style=flat-square)](LICENSE)
+[![Latest Release](https://img.shields.io/github/v/release/celsiainternet/elvis?style=flat-square&logo=github)](https://github.com/celsiainternet/elvis/releases)
+[![Go Report Card](https://goreportcard.com/badge/github.com/celsiainternet/elvis?style=flat-square)](https://goreportcard.com/report/github.com/celsiainternet/elvis)
+[![GitHub Stars](https://img.shields.io/github/stars/celsiainternet/elvis?style=flat-square&logo=github)](https://github.com/celsiainternet/elvis/stargazers)
+[![GitHub Issues](https://img.shields.io/github/issues/celsiainternet/elvis?style=flat-square&logo=github)](https://github.com/celsiainternet/elvis/issues)
+[![Documentation](https://img.shields.io/badge/docs-godoc-blue?style=flat-square&logo=go)](https://pkg.go.dev/github.com/celsiainternet/elvis)
+
+> 🚀 **Framework moderno y robusto para el desarrollo de microservicios escalables en Go**
+
+<div align="center">
+
+![Elvis Logo](https://via.placeholder.com/200x100/1e40af/ffffff?text=🎸+ELVIS)
+
+**[📚 Documentación](https://pkg.go.dev/github.com/celsiainternet/elvis)** •
+**[🚀 Quick Start](#-quick-start)** •
+**[📖 Ejemplos](https://github.com/celsiainternet/elvis/tree/main/examples)** •
+**[🐛 Issues](https://github.com/celsiainternet/elvis/issues)** •
+**[💬 Discusiones](https://github.com/celsiainternet/elvis/discussions)**
+
+</div>
 
 ## 📑 Tabla de Contenidos
 
@@ -55,13 +71,13 @@ go mod init github.com/tu-usuario/tu-proyecto
 ### 2. Instalar Elvis
 
 ```bash
-go get github.com/celsiainternet/elvis@v1.1.122
+go get github.com/celsiainternet/elvis@v1.1.123
 ```
 
 ### 3. Crear Proyecto con Elvis
 
 ```bash
-go run github.com/celsiainternet/elvis/cmd/create-go create
+go run github.com/celsiainternet/elvis/cmd/create go
 ```
 
 ### 4. Configurar Variables de Entorno
@@ -85,14 +101,14 @@ El proyecto incluye configuración optimizada para Cursor y VSCode:
 ### Ejecutar en Modo Desarrollo
 
 ```bash
-# Servidor principal
-gofmt -w . && go run ./cmd/test -port 3400 -rpc 4400
+# Creacion de elementos
+gofmt -w . && go run ./cmd/create go
 
-# Servidor de resiliencia (en otra terminal)
-go run ./cmd/resilence
+# Creacion de elementos de jdb
+gofmt -w . && go run ./cmd/jdb go
 
-# Servidor WebSocket (opcional)
-go run ./cmd/ws -port 3300 -username admin -password secret
+# Cliente WorkFlow
+gofmt -w . && go run ./cmd/flow go
 ```
 
 ## Uso
@@ -102,7 +118,7 @@ go run ./cmd/ws -port 3300 -username admin -password secret
 Para crear un nuevo proyecto con Elvis, ejecuta el siguiente comando:
 
 ```bash
-go run github.com/celsiainternet/elvis/cmd/create-go create
+go run github.com/celsiainternet/elvis/cmd/create go
 ```
 
 Este comando generará:
@@ -379,23 +395,21 @@ func main() {
 gofmt -w . && go run ./cmd/test -port 3400 -rpc 4400
 
 # Generar nuevo proyecto
-go run github.com/celsiainternet/elvis/cmd/create-go create
+go run github.com/celsiainternet/elvis/cmd/create go
 ```
 
 ### Servicios Adicionales
 
 ```bash
-# Servidor WebSocket
-go run ./cmd/ws -port 3300 -username admin -password secret
+# Creaceon de elementos
+go run ./cmd/create go
 
-# Servidor de Resiliencia
-go run ./cmd/resilence
+# Creacion de elementos de jdb
+go run ./cmd/jdb go
 
-# Cliente RPC
-go run ./cmd/rpc/client
+# Cliente WorkFlow
+go run ./cmd/flow
 
-# Servidor RPC
-go run ./cmd/rpc/server
 ```
 
 ### Herramientas de Sistema
@@ -547,7 +561,7 @@ _Desarrollado con ❤️ en Colombia_
 
 ## Releases
 
-### v1.1.122
+### v1.1.123
 
 - **Sistema de Comunicación en Tiempo Real**
 

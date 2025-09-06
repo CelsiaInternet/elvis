@@ -21,6 +21,10 @@ type Conn struct {
 	mutex    *sync.RWMutex
 }
 
+/**
+* Load
+* @return *Conn, error
+**/
 func Load() (*Conn, error) {
 	if conn != nil {
 		return conn, nil
@@ -37,6 +41,10 @@ func Load() (*Conn, error) {
 	return conn, nil
 }
 
+/**
+* Close
+* @return void
+**/
 func Close() {
 	if conn == nil {
 		return
@@ -47,6 +55,27 @@ func Close() {
 	logs.Log("Cache", `Disconnect...`)
 }
 
+/**
+* IsLoad
+* @return bool
+**/
 func IsLoad() bool {
 	return conn != nil
+}
+
+/**
+* HealthCheck
+* @return bool
+**/
+func HealthCheck() bool {
+	if conn == nil {
+		return false
+	}
+
+	err := conn.Ping(conn.ctx).Err()
+	if err != nil {
+		return false
+	}
+
+	return true
 }

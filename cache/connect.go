@@ -13,6 +13,11 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+/**
+* ConnectTo
+* @param host, password string, dbname int
+* @return *Conn, error
+**/
 func ConnectTo(host, password string, dbname int) (*Conn, error) {
 	if !utility.ValidStr(host, 0, []string{}) {
 		return nil, fmt.Errorf(msg.MSG_ATRIB_REQUIRED, "redist_host")
@@ -43,6 +48,10 @@ func ConnectTo(host, password string, dbname int) (*Conn, error) {
 	}, nil
 }
 
+/**
+* connect
+* @return *Conn, error
+**/
 func connect() (*Conn, error) {
 	host := envar.GetStr("", "REDIS_HOST")
 	password := envar.GetStr("", "REDIS_PASSWORD")
