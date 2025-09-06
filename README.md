@@ -402,13 +402,13 @@ go run github.com/celsiainternet/elvis/cmd/create go
 
 ```bash
 # Creaceon de elementos
-go run ./cmd/create go
+gofmt -w . && go run ./cmd/create go
 
 # Creacion de elementos de jdb
-go run ./cmd/jdb go
+gofmt -w . && go run ./cmd/jdb go
 
 # Cliente WorkFlow
-go run ./cmd/flow
+gofmt -w . && go run ./cmd/flow
 
 ```
 

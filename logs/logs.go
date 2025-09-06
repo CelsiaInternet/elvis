@@ -48,26 +48,26 @@ func Alertf(format string, args ...any) error {
 }
 
 func Traces(err error) error {
-	_, err = utility.Traces("Error", "red", err)
+	_, err = utility.Traces("Error", "Red", err)
 
 	return err
 }
 
-func Error(err error) error {
-	printLn("Error", "red", err.Error())
+func Error(kind string, err error) error {
+	printLn("error:"+kind, "Red", err.Error())
 
 	return err
 }
 
-func Errorm(message string) error {
+func Errorm(kind string, message string) error {
 	err := errors.New(message)
-	return Error(err)
+	return Error(kind, err)
 }
 
-func Errorf(format string, args ...any) error {
+func Errorf(kind string, format string, args ...any) error {
 	message := fmt.Sprintf(format, args...)
 	err := errors.New(message)
-	return Error(err)
+	return Error(kind, err)
 }
 
 func Info(v ...any) {

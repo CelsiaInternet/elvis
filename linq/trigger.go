@@ -1,17 +1,10 @@
 package linq
 
 import (
-	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
-	"github.com/celsiainternet/elvis/event"
 	"github.com/celsiainternet/elvis/jdb"
 	"github.com/celsiainternet/elvis/utility"
 )
-
-func eventErrorDefault(model *Model, data et.Json) {
-	console.LogKF("error/sql", `Model:%s, Error:%s`, model.Name, data.ToString())
-	event.Log("error/sql", data)
-}
 
 func beforeInsert(model *Model, old, new *et.Json, data et.Json) error {
 	now := utility.Now()

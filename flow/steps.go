@@ -8,16 +8,14 @@ import (
 )
 
 type Step struct {
-	Name        string                         `json:"name"`
-	Description string                         `json:"description"`
-	Stop        bool                           `json:"stop"`
-	Expression  string                         `json:"expression"`
-	YesGoTo     int                            `json:"yes_go_to"`
-	NoGoTo      int                            `json:"no_go_to"`
-	flow        *Flow                          `json:"-"`
-	fn          FnContext                      `json:"-"`
-	rollbacks   FnContext                      `json:"-"`
-	expression  *govaluate.EvaluableExpression `json:"-"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Stop        bool      `json:"stop"`
+	Expression  string    `json:"expression"`
+	YesGoTo     int       `json:"yes_go_to"`
+	NoGoTo      int       `json:"no_go_to"`
+	fn          FnContext `json:"-"`
+	rollbacks   FnContext `json:"-"`
 }
 
 /**
@@ -25,9 +23,8 @@ type Step struct {
 * @param name, description, expression string, nextIndex int, fn FnContext, stop bool
 * @return *Step
 **/
-func newStep(flow *Flow, name, description string, fn FnContext, stop bool) (*Step, error) {
+func newStep(name, description string, fn FnContext, stop bool) (*Step, error) {
 	result := &Step{
-		flow:        flow,
 		fn:          fn,
 		Name:        name,
 		Description: description,
@@ -43,10 +40,8 @@ func newStep(flow *Flow, name, description string, fn FnContext, stop bool) (*St
 * @return et.Item, error
 **/
 func (s *Step) run(ctx et.Json) (et.Item, error) {
-	s.flow.statusInstance(FlowStatusRunning)
 	result, err := s.fn(ctx)
 	if err != nil {
-		s.flow.statusInstance(FlowStatusFailed)
 		return et.Item{}, err
 	}
 
@@ -73,20 +68,14 @@ func (s *Step) ToJson() et.Json {
 * @param expression string, yesGoTo int, noGoTo int
 * @return *Step, error
 **/
-func (s *Step) IfElse(expression string, yesGoTo int, noGoTo int) (*Step, error) {
+func (s *Step) IfElse(expression string, yesGoTo int, noGoTo int) *Step {
 	s.YesGoTo = yesGoTo
 	s.NoGoTo = noGoTo
 	if expression != "" {
-		evalueExpression, err := govaluate.NewEvaluableExpression(expression)
-		if err != nil {
-			return s, err
-		}
-
 		s.Expression = expression
-		s.expression = evalueExpression
 	}
 
-	return s, nil
+	return s
 }
 
 /**
@@ -94,16 +83,27 @@ func (s *Step) IfElse(expression string, yesGoTo int, noGoTo int) (*Step, error)
 * @param ctx et.Json
 * @return bool, error
 **/
-func (s *Step) Evaluate(ctx et.Json) (bool, error) {
-	ok, err := s.expression.Evaluate(ctx)
-	if err != nil {
+func (s *Step) Evaluate(ctx et.Json, instance *Flow) (bool, error) {
+	resultError := func(err error) (bool, error) {
+		instance.setFailed(fmt.Errorf("error al evaluar expresion:%s, error:%s", s.Expression, err.Error()))
 		return false, err
+	}
+
+	instance.setStatus(FlowStatusRunning)
+	evalueExpression, err := govaluate.NewEvaluableExpression(s.Expression)
+	if err != nil {
+		return resultError(err)
+	}
+
+	ok, err := evalueExpression.Evaluate(ctx)
+	if err != nil {
+		return resultError(err)
 	}
 
 	switch v := ok.(type) {
 	case bool:
 		return v, nil
 	default:
-		return false, fmt.Errorf("expression result is not a boolean")
+		return resultError(fmt.Errorf("expression result is not a boolean"))
 	}
 }

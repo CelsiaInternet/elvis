@@ -173,7 +173,7 @@ func (it *Item) Json(atribs ...string) Json {
 	case map[string]interface{}:
 		return Json(v)
 	default:
-		logs.Errorf("Not Item.Json type (%v) value:%v", reflect.TypeOf(v), v)
+		logs.Errorf("Item.Json", "Not type (%v) value:%v", reflect.TypeOf(v), v)
 		return Json{}
 	}
 }

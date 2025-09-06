@@ -17,11 +17,12 @@ const (
 )
 
 type Resilence struct {
-	CreatedAt     time.Time
-	Id            string
-	Attempts      []*Attempt
-	TotalAttempts int
-	TimeAttempts  time.Duration
+	CreatedAt       time.Time
+	Id              string
+	Attempts        []*Attempt
+	TotalAttempts   int
+	TimeAttempts    time.Duration
+	SynchronousMode bool // Nuevo campo para deshabilitar agentes en segundo plano
 }
 
 func (s *Resilence) Json() et.Json {
@@ -31,11 +32,12 @@ func (s *Resilence) Json() et.Json {
 	}
 
 	return et.Json{
-		"id":             s.Id,
-		"created_at":     s.CreatedAt,
-		"attempts":       attempts,
-		"total_attempts": s.TotalAttempts,
-		"time_attempts":  s.TimeAttempts,
+		"id":               s.Id,
+		"created_at":       s.CreatedAt,
+		"attempts":         attempts,
+		"total_attempts":   s.TotalAttempts,
+		"time_attempts":    s.TimeAttempts,
+		"synchronous_mode": s.SynchronousMode,
 	}
 }
 
@@ -49,13 +51,15 @@ func NewResilence() *Resilence {
 	totalAttempts := envar.EnvarInt(3, "RESILIENCE_TOTAL_ATTEMPTS")
 	timeAttempts := envar.EnvarNumber(30, "RESILIENCE_TIME_ATTEMPTS")
 	interval := time.Duration(timeAttempts) * time.Second
+	synchronousMode := envar.EnvarBool(false, "RESILIENCE_SYNCHRONOUS_MODE")
 
 	return &Resilence{
-		CreatedAt:     time.Now(),
-		Id:            utility.UUID(),
-		Attempts:      make([]*Attempt, 0),
-		TotalAttempts: totalAttempts,
-		TimeAttempts:  interval,
+		CreatedAt:       time.Now(),
+		Id:              utility.UUID(),
+		Attempts:        make([]*Attempt, 0),
+		TotalAttempts:   totalAttempts,
+		TimeAttempts:    interval,
+		SynchronousMode: synchronousMode,
 	}
 }
 
@@ -107,6 +111,12 @@ func (s *Resilence) Run(attempt *Attempt) {
 		return
 	}
 
+	// Si está en modo síncrono, no ejecutar en segundo plano
+	if s.SynchronousMode {
+		logs.Log("resilience", "synchronous mode enabled, background execution disabled for:", attempt.Tag)
+		return
+	}
+
 	time.AfterFunc(attempt.TimeAttempts, func() {
 		if attempt.Status != StatusSuccess && attempt.Attempt < attempt.TotalAttempts {
 			_, err := attempt.Run()
@@ -149,4 +159,27 @@ func (s *Resilence) GetByTag(tag string) *Attempt {
 	}
 
 	return nil
+}
+
+/**
+* SetSynchronousMode
+* @param enabled bool
+* Permite habilitar/deshabilitar el modo síncrono dinámicamente
+ */
+func (s *Resilence) SetSynchronousMode(enabled bool) {
+	s.SynchronousMode = enabled
+	if enabled {
+		logs.Log("resilience", "synchronous mode enabled - background agents disabled")
+	} else {
+		logs.Log("resilience", "synchronous mode disabled - background agents enabled")
+	}
+}
+
+/**
+* IsSynchronousMode
+* @return bool
+* Devuelve si el modo síncrono está habilitado
+ */
+func (s *Resilence) IsSynchronousMode() bool {
+	return s.SynchronousMode
 }

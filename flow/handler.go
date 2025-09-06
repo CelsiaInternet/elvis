@@ -39,6 +39,30 @@ func Load() error {
 }
 
 /**
+* HealthCheck
+* @return bool
+**/
+func HealthCheck() bool {
+	if workFlows == nil {
+		return false
+	}
+
+	return workFlows.HealthCheck()
+}
+
+/**
+* SetInstanceAtrib
+* @param instanceAtrib string
+**/
+func SetInstanceAtrib(instanceAtrib string) {
+	if workFlows == nil {
+		return
+	}
+
+	workFlows.SetInstanceAtrib(instanceAtrib)
+}
+
+/**
 * NewFlow
 * @param tag, version, name, description string, fn FnContext, retries int, retryDelay, retentionTime time.Duration, createdBy string
 * @return *Flow, error
@@ -56,12 +80,12 @@ func NewFlow(tag, version, name, description string, fn FnContext, retries int, 
 * @param instanceId, tag string, ctx et.Json
 * @return et.Item, error
 **/
-func Run(instanceId, tag string, ctx et.Json) (et.Item, error) {
+func Run(instanceId, tag string, startId int, ctx et.Json) (et.Item, error) {
 	if workFlows == nil {
 		return et.Item{}, fmt.Errorf("workFlows is nil")
 	}
 
-	return workFlows.Run(instanceId, tag, ctx)
+	return workFlows.Run(instanceId, tag, startId, ctx)
 }
 
 /**
@@ -75,16 +99,4 @@ func Rollback(instanceId string) (et.Item, error) {
 	}
 
 	return workFlows.Rollback(instanceId)
-}
-
-/**
-* HealthCheck
-* @return bool
-**/
-func HealthCheck() bool {
-	if workFlows == nil {
-		return false
-	}
-
-	return workFlows.HealthCheck()
 }

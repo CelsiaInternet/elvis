@@ -249,7 +249,7 @@ func DeleteRouters(host, packageName string) (et.Item, error) {
 
 	idx := slices.IndexFunc(routers, func(e *Package) bool { return e.Host == host && e.Name == packageName })
 	if idx == -1 {
-		return et.Item{}, logs.Errorm(MSG_PACKAGE_NOT_FOUND)
+		return et.Item{}, logs.Errorm("jrpc", MSG_PACKAGE_NOT_FOUND)
 	} else {
 		routers = append(routers[:idx], routers[idx+1:]...)
 	}

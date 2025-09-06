@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/celsiainternet/elvis/cache"
+	"github.com/celsiainternet/elvis/logs"
 )
 
 /**
@@ -26,12 +27,13 @@ func (s *WorkFlows) cloneInstance(id, tag string) (*Flow, error) {
 * @param id, tag string
 * @return *Flow, error
 **/
-func (s *WorkFlows) newInstance(id, tag string) (*Flow, error) {
+func (s *WorkFlows) newInstance(id, tag string, startId int) (*Flow, error) {
 	result, err := s.cloneInstance(id, tag)
 	if err != nil {
 		return nil, err
 	}
-	s.Instance[id] = result
+	result.Current = startId
+	s.Instance[result.Id] = result
 
 	return result, nil
 }
@@ -75,7 +77,6 @@ func (s *WorkFlows) getInstance(id string) (*Flow, error) {
 	result.Retries = source.Retries
 	result.RetryDelay = source.RetryDelay
 	result.RetentionTime = source.RetentionTime
-	result.Ctx = source.Ctx
 	result.Ctxs = source.Ctxs
 	result.Results = source.Results
 	result.Rollbacks = source.Rollbacks
@@ -85,8 +86,10 @@ func (s *WorkFlows) getInstance(id string) (*Flow, error) {
 	result.CreatedAt = source.CreatedAt
 	result.UpdatedAt = source.UpdatedAt
 	result.DoneAt = source.DoneAt
-	result.Status = source.Status
+	result.setCtx(source.Ctx)
+	result.setStatus(source.Status)
 	s.Instance[id] = result
+	logs.Logf("Workflow", "Instancia load:%s tag:%s currentStep:%d", id, result.Tag, result.Current)
 
 	return result, nil
 }

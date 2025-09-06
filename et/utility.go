@@ -92,7 +92,7 @@ func Unquote(val interface{}) any {
 	case nil:
 		return strs.Format(`%s`, "NULL")
 	default:
-		logs.Errorf("Not quoted type:%v value:%v", reflect.TypeOf(v), v)
+		logs.Errorf("Quote", "Not quoted type:%v value:%v", reflect.TypeOf(v), v)
 		return val
 	}
 }
@@ -159,7 +159,7 @@ func Quote(val interface{}) any {
 	case nil:
 		return strs.Format(`%s`, "NULL")
 	default:
-		logs.Errorf("Not double quoted type:%v value:%v", reflect.TypeOf(v), v)
+		logs.Errorf("Quote", "Not double quoted type:%v value:%v", reflect.TypeOf(v), v)
 		return val
 	}
 }
@@ -189,7 +189,7 @@ func ToJson(src interface{}) (Json, error) {
 		}
 		return r, nil
 	default:
-		return nil, logs.Errorf(`Failed ToJson value: %v type: %v`, src, reflect.TypeOf(v))
+		return nil, logs.Errorf("ToJson", "Failed ToJson value: %v type: %v", src, reflect.TypeOf(v))
 	}
 
 	t := map[string]interface{}{}
@@ -286,7 +286,7 @@ func Val(data Json, _default any, atribs ...string) any {
 					return _default
 				}
 			default:
-				logs.Errorf("Val. Type (%v) value:%v", reflect.TypeOf(v), v)
+				logs.Errorf("Val", "Type (%v) value:%v", reflect.TypeOf(v), v)
 				return _default
 			}
 		}
@@ -322,19 +322,19 @@ func IsDiferent(a, b Json) bool {
 			case Json:
 				_new, err := ToJson(new)
 				if err != nil {
-					logs.Error(err)
+					logs.Errorf("IsDiferent", "err:%v", err)
 					return false
 				}
 				return IsDiferent(v, _new)
 			case map[string]interface{}:
 				_old, err := ToJson(old)
 				if err != nil {
-					logs.Error(err)
+					logs.Errorf("IsDiferent", "err:%v", err)
 					return false
 				}
 				_new, err := ToJson(new)
 				if err != nil {
-					logs.Error(err)
+					logs.Errorf("IsDiferent", "err:%v", err)
 					return false
 				}
 				return IsDiferent(_old, _new)
@@ -362,19 +362,19 @@ func IsChange(a, b Json) bool {
 			case Json:
 				_new, err := ToJson(new)
 				if err != nil {
-					logs.Error(err)
+					logs.Errorf("IsChange", "err:%v", err)
 					return false
 				}
 				return IsChange(v, _new)
 			case map[string]interface{}:
 				_old, err := ToJson(old)
 				if err != nil {
-					logs.Error(err)
+					logs.Errorf("IsChange", "err:%v", err)
 					return false
 				}
 				_new, err := ToJson(new)
 				if err != nil {
-					logs.Error(err)
+					logs.Errorf("IsChange", "err:%v", err)
 					return false
 				}
 				return IsChange(_old, _new)
@@ -405,7 +405,7 @@ func Update(a, b Json) (Json, bool) {
 			case Json:
 				_old, err := ToJson(old)
 				if err != nil {
-					logs.Error(err)
+					logs.Errorf("Update", "err:%v", err)
 				}
 				_new, ch := Update(_old, v)
 				if !change {
@@ -415,7 +415,7 @@ func Update(a, b Json) (Json, bool) {
 			case map[string]interface{}:
 				_old, err := ToJson(old)
 				if err != nil {
-					logs.Error(err)
+					logs.Errorf("Update", "err:%v", err)
 				}
 				_new, ch := Update(_old, v)
 				if !change {
@@ -454,7 +454,7 @@ func Merge(a, b Json) (Json, bool) {
 			case Json:
 				_old, err := ToJson(old)
 				if err != nil {
-					logs.Error(err)
+					logs.Errorf("Merge", "err:%v", err)
 				}
 				_new, ch := Merge(_old, v)
 				if !change {
@@ -464,7 +464,7 @@ func Merge(a, b Json) (Json, bool) {
 			case map[string]interface{}:
 				_old, err := ToJson(old)
 				if err != nil {
-					logs.Error(err)
+					logs.Errorf("Merge", "err:%v", err)
 				}
 				_new, ch := Merge(_old, v)
 				if !change {

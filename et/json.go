@@ -84,7 +84,7 @@ func (s *Json) Scan(src interface{}) error {
 	case string:
 		ba = []byte(v)
 	default:
-		return logs.Errorf(`json/Scan - Failed to unmarshal JSON type:%s`, reflect.TypeOf(v))
+		return logs.Errorf("json.Scan", `Failed to unmarshal JSON type:%s`, reflect.TypeOf(v))
 	}
 
 	t := map[string]interface{}{}
@@ -515,7 +515,7 @@ func (s Json) Data(atrib ...string) JsonD {
 			Value: v,
 		}
 	default:
-		logs.Errorf("json/Json - Atrib:%s Type:%v Value:%v", atrib, reflect.TypeOf(v), v)
+		logs.Errorf("json.Data", "Atrib:%s Type:%v Value:%v", atrib, reflect.TypeOf(v), v)
 		return JsonD{
 			Type:  TpObject,
 			Value: Json{},

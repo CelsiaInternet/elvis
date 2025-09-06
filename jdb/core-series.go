@@ -119,7 +119,7 @@ func NextSerie(db *DB, tag string) int64 {
 	if db.dm != nil {
 		rows, err := db.dm.Query(sql, tag)
 		if err != nil {
-			logs.Error(err)
+			logs.Error("jdb", err)
 			return 0
 		}
 		defer rows.Close()
@@ -136,7 +136,7 @@ func NextSerie(db *DB, tag string) int64 {
 
 	item, err := db.QueryOne(sql, tag)
 	if err != nil {
-		logs.Error(err)
+		logs.Error("jdb", err)
 		return 0
 	}
 	if !item.Ok {

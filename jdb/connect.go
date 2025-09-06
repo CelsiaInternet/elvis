@@ -148,7 +148,7 @@ func ConnectTo(params et.Json) (*DB, error) {
 
 		connStr = strs.Format(`%s:%s@tcp(%s:%d)/%s`, user, password, host, port, dbname)
 	default:
-		return nil, logs.Errorm(msg.NOT_SELECT_DRIVE)
+		return nil, logs.Errorm("jdb", msg.NOT_SELECT_DRIVE)
 	}
 
 	db, err := sql.Open(driver, connStr)

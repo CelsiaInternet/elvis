@@ -23,7 +23,7 @@ func (it *Items) Scan(src interface{}) error {
 	case string:
 		ba = []byte(v)
 	default:
-		return logs.Errorf(`json/Scan - Failed to unmarshal JSON value:%s`, src)
+		return logs.Errorf("Items.Scan", `json/Scan - Failed to unmarshal JSON value:%s`, src)
 	}
 
 	var t []Json
@@ -236,7 +236,7 @@ func (it *Items) Json(idx int, atribs ...string) Json {
 	case map[string]interface{}:
 		return Json(v)
 	default:
-		logs.Errorf("Not Items.Json type (%v) value:%v", reflect.TypeOf(v), v)
+		logs.Errorf("Items.Json", "Not type (%v) value:%v", reflect.TypeOf(v), v)
 		return Json{}
 	}
 }

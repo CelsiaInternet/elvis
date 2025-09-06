@@ -5,14 +5,16 @@ import (
 	"time"
 
 	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/event"
 	"github.com/celsiainternet/elvis/reg"
 	"github.com/celsiainternet/elvis/resilience"
 )
 
 type WorkFlows struct {
-	Flows      map[string]*Flow
-	Instance   map[string]*Flow
-	Resilience map[string]*resilience.Attempt
+	Flows         map[string]*Flow               `json:"flows"`
+	Instance      map[string]*Flow               `json:"instance"`
+	Resilience    map[string]*resilience.Attempt `json:"resilience"`
+	InstanceAtrib string                         `json:"instance_atrib"`
 }
 
 var workFlows *WorkFlows
@@ -23,10 +25,28 @@ var workFlows *WorkFlows
 **/
 func NewWorkFlows() *WorkFlows {
 	return &WorkFlows{
-		Flows:      make(map[string]*Flow),
-		Instance:   make(map[string]*Flow),
-		Resilience: make(map[string]*resilience.Attempt),
+		Flows:         make(map[string]*Flow),
+		Instance:      make(map[string]*Flow),
+		Resilience:    make(map[string]*resilience.Attempt),
+		InstanceAtrib: "instance_id",
 	}
+}
+
+/**
+* HealthCheck
+* @return bool
+**/
+func (s *WorkFlows) HealthCheck() bool {
+	ok := resilience.HealthCheck()
+	if !ok {
+		return false
+	}
+
+	return true
+}
+
+func (s *WorkFlows) SetInstanceAtrib(instanceAtrib string) {
+	s.InstanceAtrib = instanceAtrib
 }
 
 /**
@@ -46,23 +66,24 @@ func (s *WorkFlows) NewFlow(tag, version, name, description string, fn FnContext
 
 /**
 * Run
-* @param serviceId, tag string, ctx et.Json
+* @param instanceId, tag string, ctx et.Json
 * @return et.Item, error
 **/
-func (s *WorkFlows) Run(serviceId, tag string, ctx et.Json) (et.Item, error) {
-	serviceId = reg.GetUUID(serviceId)
-	instance, err := s.getInstance(serviceId)
+func (s *WorkFlows) Run(instanceId, tag string, startId int, ctx et.Json) (et.Item, error) {
+	instanceId = reg.GetUUID(instanceId)
+	instance, err := s.getInstance(instanceId)
 	if err != nil {
 		return et.Item{}, err
 	}
 
 	if instance == nil {
-		instance, err = s.newInstance(serviceId, tag)
+		instance, err = s.newInstance(instanceId, tag, startId)
 		if err != nil {
 			return et.Item{}, err
 		}
 	}
 
+	ctx.Set(s.InstanceAtrib, instanceId)
 	result, err := instance.run(ctx)
 	if err != nil {
 		instance.addResilience(ctx)
@@ -74,13 +95,13 @@ func (s *WorkFlows) Run(serviceId, tag string, ctx et.Json) (et.Item, error) {
 
 /**
 * Rollback
-* @param serviceId string
+* @param instanceId string
 * @return et.Item, error
 **/
 
-func (s *WorkFlows) Rollback(serviceId string) (et.Item, error) {
-	serviceId = reg.GetUUID(serviceId)
-	instance, err := s.getInstance(serviceId)
+func (s *WorkFlows) Rollback(instanceId string) (et.Item, error) {
+	instanceId = reg.GetUUID(instanceId)
+	instance, err := s.getInstance(instanceId)
 	if err != nil {
 		return et.Item{}, err
 	}
@@ -98,14 +119,18 @@ func (s *WorkFlows) Rollback(serviceId string) (et.Item, error) {
 }
 
 /**
-* HealthCheck
+* DeleteFlow
+* @param tag string
 * @return bool
 **/
-func (s *WorkFlows) HealthCheck() bool {
-	ok := resilience.HealthCheck()
-	if !ok {
+func (s *WorkFlows) DeleteFlow(tag string) bool {
+	if s.Flows[tag] == nil {
 		return false
 	}
+
+	flow := s.Flows[tag]
+	delete(s.Flows, tag)
+	event.Publish(EVENT_WORKFLOW_DELETE, flow.ToJson())
 
 	return true
 }

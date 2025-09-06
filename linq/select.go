@@ -52,7 +52,7 @@ func (s *Linq) selCols(sel ...any) *Linq {
 				cols = append(cols, cols2...)
 			}
 		default:
-			logs.Errorf("Linq select type (%v) value:%v", reflect.TypeOf(v), v)
+			logs.Errorf("linq", "Select type (%v) value:%v", reflect.TypeOf(v), v)
 		}
 	}
 
