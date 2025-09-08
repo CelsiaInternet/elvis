@@ -56,6 +56,7 @@ type Model struct {
 	BeforeDelete       []Trigger
 	AfterDelete        []Trigger
 	OnListener         Listener
+	EventError         Event
 	EventInsert        Event
 	EventUpdate        Event
 	EventDelete        Event
@@ -536,4 +537,8 @@ func (c *Model) UpsertRow(data et.Json) *Linq {
 	result.data = data
 
 	return result
+}
+
+func (c *Model) Query(sql string, args ...any) (et.Items, error) {
+	return c.db.Query(sql, args...)
 }

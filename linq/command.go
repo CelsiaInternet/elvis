@@ -214,6 +214,10 @@ func (c *Linq) insert() (et.Item, error) {
 	c.SqlInsert()
 	items, err := c.command()
 	if err != nil {
+		if model.EventError != nil {
+			model.EventError(model, c.data)
+		}
+
 		return et.Item{}, err
 	}
 
@@ -254,6 +258,10 @@ func (c *Linq) update(current et.Json) (et.Item, error) {
 	c.SqlUpdate()
 	items, err := c.command()
 	if err != nil {
+		if model.EventError != nil {
+			model.EventError(model, c.data)
+		}
+
 		return et.Item{}, err
 	}
 
@@ -294,6 +302,10 @@ func (c *Linq) delete(current et.Json) (et.Item, error) {
 	c.SqlDelete()
 	items, err := c.command()
 	if err != nil {
+		if model.EventError != nil {
+			model.EventError(model, c.data)
+		}
+
 		return et.Item{}, err
 	}
 
