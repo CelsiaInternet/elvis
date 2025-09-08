@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/celsiainternet/elvis/cache"
-	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/event"
 	"github.com/celsiainternet/elvis/logs"
@@ -22,6 +21,7 @@ type TpStore string
 type Status string
 
 const (
+	packageName                      = "resilience"
 	TpStoreCache             TpStore = "cache"
 	TpStoreMemory            TpStore = "memory"
 	StatusPending            Status  = "pending"
@@ -32,6 +32,7 @@ const (
 	EVENT_RESILIENCE_STATUS          = "resilience:status"
 	EVENT_RESILIENCE_STOP            = "resilience:stop"
 	EVENT_RESILIENCE_RESTART         = "resilience:restart"
+	EVENT_RESILIENCE_FAILED          = "resilience:failed"
 )
 
 type Instance struct {
@@ -128,12 +129,10 @@ func (s *Instance) save() error {
 	event.Publish(EVENT_RESILIENCE_STATUS, s.ToJson())
 	bt, err := json.Marshal(s)
 	if err != nil {
-		console.Debug("instance.save:", err.Error())
 		return err
 	}
 
 	s.saveTo(s.Id, bt)
-	s.saveTo(s.Tag, bt)
 
 	return nil
 }
@@ -185,9 +184,17 @@ func (s *Instance) setStatus(status Status) error {
 		if s.err != nil {
 			errMsg = s.err.Error()
 		}
-		logs.Errorf("Resilience", "Instance:%s Tag:%s Status:%s, Attempt:%d Error:%s", s.Id, s.Tag, s.Status, s.Attempt, errMsg)
+		if s.Attempt == s.TotalAttempts {
+			logs.Logf(packageName, MSG_RESILIENCE_FINISHED_ERROR, s.Attempt, s.TotalAttempts, s.Id, s.Tag, s.Status, errMsg)
+		} else {
+			logs.Logf(packageName, MSG_RESILIENCE_ERROR, s.Attempt, s.TotalAttempts, s.Id, s.Tag, s.Status, errMsg)
+		}
 	default:
-		logs.Logf("Resilience", "Instance:%s Tag:%s Status:%s Attempt:%d", s.Id, s.Tag, s.Status, s.Attempt)
+		if s.Attempt == s.TotalAttempts {
+			logs.Logf(packageName, MSG_RESILIENCE_FINISHED, s.Attempt, s.TotalAttempts, s.Id, s.Tag, s.Status)
+		} else {
+			logs.Logf(packageName, MSG_RESILIENCE_STATUS, s.Attempt, s.TotalAttempts, s.Id, s.Tag, s.Status)
+		}
 	}
 
 	return s.save()

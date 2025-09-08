@@ -95,7 +95,7 @@ func newFlow(workFlows *WorkFlows, tag, version, name, description string, fn Fn
 		CreatedBy:     createdBy,
 		workFlows:     workFlows,
 	}
-	logs.Logf("Workflow", MSG_FLOW_CREATED, tag, version, name)
+	logs.Logf(packageName, MSG_FLOW_CREATED, tag, version, name)
 	flow.Step("Start", MSG_START_WORKFLOW, fn, false)
 
 	return flow
@@ -186,9 +186,9 @@ func (s *Flow) setStatus(status FlowStatus) error {
 		if s.err != nil {
 			errMsg = s.err.Error()
 		}
-		logs.Errorf("Workflow", MSG_INSTANCE_FAILED, s.Id, s.Tag, s.Status, errMsg)
+		logs.Errorf(packageName, MSG_INSTANCE_FAILED, s.Id, s.Tag, s.Status, s.Current, errMsg)
 	default:
-		logs.Logf("Workflow", MSG_INSTANCE_STATUS, s.Id, s.Tag, s.Status)
+		logs.Logf(packageName, MSG_INSTANCE_STATUS, s.Id, s.Tag, s.Status, s.Current)
 	}
 
 	return s.save()
@@ -245,7 +245,7 @@ func (s *Flow) setResult(result et.Json, err error) {
 func (s *Flow) setGoto(step int, message string) {
 	s.Current = step
 	s.setStatus(FlowStatusRunning)
-	logs.Logf("Workflow", MSG_INSTANCE_GOTO, s.Id, s.Tag, step, message)
+	logs.Logf(packageName, MSG_INSTANCE_GOTO, s.Id, s.Tag, step, message)
 }
 
 /**
@@ -306,29 +306,31 @@ func (s *Flow) run(ctx et.Json) (et.Json, error) {
 		}
 
 		s.setResult(result, err)
-		s.Current++
-
 		if step.Stop {
+			s.Current++
 			return result, nil
 		}
 
-		if step.Expression != "" {
-			ok, err := step.Evaluate(ctx, s)
-			if err != nil {
-				s.setFailed(result, err)
-				resultRb, errRb := s.rollback(s.Current)
-				if errRb != nil {
-					return resultRb, errRb
-				}
+		if step.Expression == "" {
+			s.Current++
+			continue
+		}
 
-				return result, err
+		ok, err := step.Evaluate(ctx, s)
+		if err != nil {
+			s.setFailed(result, err)
+			resultRb, errRb := s.rollback(s.Current)
+			if errRb != nil {
+				return resultRb, errRb
 			}
 
-			if ok {
-				s.setGoto(step.YesGoTo, MSG_INSTANCE_EXPRESSION_TRUE)
-			} else {
-				s.setGoto(step.NoGoTo, MSG_INSTANCE_EXPRESSION_FALSE)
-			}
+			return result, err
+		}
+
+		if ok {
+			s.setGoto(step.YesGoTo, MSG_INSTANCE_EXPRESSION_TRUE)
+		} else {
+			s.setGoto(step.NoGoTo, MSG_INSTANCE_EXPRESSION_FALSE)
 		}
 	}
 
@@ -347,22 +349,22 @@ func (s *Flow) rollback(idx int) (et.Json, error) {
 		return et.Json{}, fmt.Errorf(MSG_INSTANCE_ROLLBACK)
 	}
 
-	if !s.startRollback() {
+	if s.startResilence() {
 		return et.Json{}, nil
 	}
 
 	if s.Status == FlowStatusDone {
-		return s.ToJson(), fmt.Errorf("flow already done")
+		return s.ToJson(), fmt.Errorf(MSG_INSTANCE_ALREADY_DONE)
 	} else if s.Status == FlowStatusRunning {
-		return et.Json{}, fmt.Errorf("flow already running")
+		return et.Json{}, fmt.Errorf(MSG_INSTANCE_ALREADY_RUNNING)
 	} else if s.Status == FlowStatusPending {
-		return et.Json{}, fmt.Errorf("flow is pending")
+		return et.Json{}, fmt.Errorf(MSG_INSTANCE_PENDING)
 	}
 
 	var result et.Json
 	var err error
 	for i := idx - 1; i >= 0; i-- {
-		logs.Logf("Workflow", MSG_INSTANCE_ROLLBACK_STEP, i)
+		logs.Logf(packageName, MSG_INSTANCE_ROLLBACK_STEP, i)
 		s.LastRollback = i
 		step := s.Steps[i]
 		if step == nil {
@@ -402,21 +404,21 @@ func (s *Flow) rollback(idx int) (et.Json, error) {
 }
 
 /**
-* startRollback
+* startResilence
 * @return bool
 **/
-func (s *Flow) startRollback() bool {
+func (s *Flow) startResilence() bool {
 	if s.TotalAttempts == 0 {
-		return true
+		return false
 	}
 
 	if s.resilence != nil {
-		return s.resilence.IsFailed()
+		return !s.resilence.IsFailed()
 	}
 
 	description := fmt.Sprintf("flow: %s,  %s", s.Name, s.Description)
 	s.resilence = resilience.AddCustom(s.Id, s.Tag, description, s.TotalAttempts, s.TimeAttempts, s.RetentionTime, s.run, s.Ctx)
-	return false
+	return true
 }
 
 /**
@@ -428,7 +430,7 @@ func (s *Flow) Step(name, description string, fn FnContext, stop bool) *Flow {
 	result, _ := newStep(name, description, fn, stop)
 	s.Steps = append(s.Steps, result)
 	event.Publish(EVENT_WORKFLOW_SET, s.ToJson())
-	logs.Logf("Workflow", MSG_INSTANCE_STEP_CREATED, len(s.Steps)-1, name, s.Tag)
+	logs.Logf(packageName, MSG_INSTANCE_STEP_CREATED, len(s.Steps)-1, name, s.Tag)
 
 	return s
 }
@@ -442,7 +444,7 @@ func (s *Flow) Rollback(fn FnContext) *Flow {
 	n := len(s.Steps)
 	step := s.Steps[n-1]
 	step.rollbacks = fn
-	logs.Logf("Workflow", MSG_INSTANCE_ROLLBACK_CREATED, n-1, step.Name, s.Tag)
+	logs.Logf(packageName, MSG_INSTANCE_ROLLBACK_CREATED, n-1, step.Name, s.Tag)
 
 	return s
 }
@@ -454,7 +456,7 @@ func (s *Flow) Rollback(fn FnContext) *Flow {
 **/
 func (s *Flow) Consistency(consistency TpConsistency) *Flow {
 	s.TpConsistency = consistency
-	logs.Logf("Workflow", MSG_INSTANCE_CONSISTENCY, s.Tag, s.TpConsistency)
+	logs.Logf(packageName, MSG_INSTANCE_CONSISTENCY, s.Tag, s.TpConsistency)
 
 	return s
 }
@@ -468,7 +470,7 @@ func (s *Flow) Resilence(totalAttempts int, timeAttempts, retentionTime time.Dur
 	s.TotalAttempts = totalAttempts
 	s.TimeAttempts = timeAttempts
 	s.RetentionTime = retentionTime
-	logs.Logf("Workflow", MSG_INSTANCE_RESILIENCE, s.Tag, totalAttempts, timeAttempts, retentionTime)
+	logs.Logf(packageName, MSG_INSTANCE_RESILIENCE, s.Tag, totalAttempts, timeAttempts, retentionTime)
 
 	return s
 }
@@ -482,7 +484,7 @@ func (s *Flow) IfElse(expression string, yesGoTo int, noGoTo int) *Flow {
 	n := len(s.Steps)
 	step := s.Steps[n-1]
 	step.IfElse(expression, yesGoTo, noGoTo)
-	logs.Logf("Workflow", MSG_INSTANCE_IFELSE, n-1, step.Name, expression, yesGoTo, noGoTo, s.Tag)
+	logs.Logf(packageName, MSG_INSTANCE_IFELSE, n-1, step.Name, expression, yesGoTo, noGoTo, s.Tag)
 
 	return s
 }

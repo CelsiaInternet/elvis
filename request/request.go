@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 
@@ -182,6 +183,25 @@ func statusOk(status int) bool {
 }
 
 /**
+* bodyParams
+* @param header, body et.Json
+* @return []byte
+**/
+func bodyParams(header, body et.Json) []byte {
+	result := []byte(body.ToString())
+	contentType := header.Get("Content-Type")
+	if contentType == "application/x-www-form-urlencoded" {
+		data := url.Values{}
+		for k, v := range body {
+			data.Set(k, v.(string))
+		}
+		result = []byte(data.Encode())
+	}
+
+	return result
+}
+
+/**
 * Http
 * @param method, url string, header, body et.Json
 * @return *Body, Status
@@ -195,7 +215,7 @@ func Http(method, url string, header, body et.Json, tlsConfig *tls.Config) (*Bod
 		}
 	}
 
-	bodyParams := []byte(body.ToString())
+	bodyParams := bodyParams(header, body)
 	req, err := http.NewRequest(method, url, bytes.NewBuffer(bodyParams))
 	if err != nil {
 		return nil, Status{Ok: false, Code: http.StatusBadRequest, Message: err.Error()}

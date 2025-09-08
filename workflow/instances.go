@@ -88,7 +88,7 @@ func (s *WorkFlows) getInstance(id string) (*Flow, error) {
 	result.setCtx(source.Ctx)
 	result.setStatus(source.Status)
 	s.Instance[id] = result
-	logs.Logf("Workflow", "Instancia load:%s tag:%s currentStep:%d", id, result.Tag, result.Current)
+	logs.Logf(packageName, "Instancia load:%s tag:%s currentStep:%d", id, result.Tag, result.Current)
 
 	return result, nil
 }

@@ -741,3 +741,5 @@ git push origin main --tags
 - Asegúrate de que todos los cambios estén commiteados antes de ejecutar el script
 - El script debe tener permisos de ejecución (`chmod +x version.sh`)
 - Siempre verifica los cambios generados por el script antes de hacer push
+
+application/x-www-form-urlencoded

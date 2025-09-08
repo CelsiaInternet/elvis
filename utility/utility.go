@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"os/signal"
 	"reflect"
 	"regexp"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/celsiainternet/elvis/stdrout"
@@ -50,6 +52,15 @@ const QUEUE_STACK = "stack"
 var ping = 0
 var locks = make(map[string]*sync.RWMutex)
 var count = make(map[string]int64)
+
+/**
+* AppWait
+**/
+func AppWait() {
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+	<-stop
+}
 
 /**
 * NowTime

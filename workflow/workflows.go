@@ -9,6 +9,8 @@ import (
 	"github.com/celsiainternet/elvis/resilience"
 )
 
+const packageName = "workflow"
+
 type WorkFlows struct {
 	Flows    map[string]*Flow `json:"flows"`
 	Instance map[string]*Flow `json:"instance"`

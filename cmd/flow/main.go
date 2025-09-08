@@ -6,6 +6,7 @@ import (
 
 	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/utility"
 	"github.com/celsiainternet/elvis/workflow"
 )
 
@@ -17,7 +18,7 @@ func main() {
 
 		return ctx, nil
 	}, "test").
-		Resilence(3, 30*time.Second, 10*time.Minute).
+		Resilence(3, 5*time.Second, 10*time.Minute).
 		Step("Step 1", "Step 1", func(flow *workflow.Flow, ctx et.Json) (et.Json, error) {
 			console.Debug("Respuesta desde step 1, contexto:", ctx.ToString())
 			atrib := fmt.Sprintf("step_%d", flow.Current)
@@ -25,7 +26,7 @@ func main() {
 
 			return ctx, nil
 		}, false).
-		IfElse("test == 'test'", 3, 2).
+		IfElse("ctx.test == 'test'", 3, 2).
 		Step("Step 2", "Step 2", func(flow *workflow.Flow, ctx et.Json) (et.Json, error) {
 			console.Debug("Respuesta desde step 2, con este contexto:", ctx.ToString())
 			atrib := fmt.Sprintf("step_%d", flow.Current)
@@ -48,8 +49,11 @@ func main() {
 	})
 	if err != nil {
 		console.Error(err)
-		return
+	} else {
+		console.Debug("Result:", result.ToString())
 	}
 
-	console.Debug("Result:", result.ToString())
+	utility.AppWait()
+
+	console.Debug("Fin de flow")
 }
