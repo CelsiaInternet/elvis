@@ -1,21 +1,25 @@
 package resilience
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/celsiainternet/elvis/cache"
+	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/event"
-	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/response"
+	"github.com/go-chi/chi"
 )
 
+var resilience map[string]*Instance
+
 /**
-* Load
+* load
 * @return error
  */
-func Load() error {
+func load() error {
 	if resilience != nil {
 		return nil
 	}
@@ -30,37 +34,11 @@ func Load() error {
 		return err
 	}
 
-	resilience = NewResilence()
+	initEvents()
+
+	resilience = make(map[string]*Instance)
+
 	return nil
-}
-
-/**
-* AddCustom
-* @param id, tag, description string, totalAttempts int, timeAttempts time.Duration, fn interface{}, fnArgs ...interface{}
-* @return *Attempt
- */
-func AddCustom(id, tag, description string, totalAttempts int, timeAttempts time.Duration, fn interface{}, fnArgs ...interface{}) *Attempt {
-	if resilience == nil {
-		logs.Log("resilience", "resilience is nil")
-		return nil
-	}
-
-	result := NewAttempt(id, tag, description, totalAttempts, timeAttempts, fn, fnArgs...)
-	resilience.Attempts = append(resilience.Attempts, result)
-	logs.Log("resilience", "add:", result.Json().ToString())
-	resilience.Notify(result)
-	resilience.Run(result)
-
-	return result
-}
-
-/**
-* Add
-* @param tag, description string, fn interface{}, fnArgs ...interface{}
-* @return *Attempt
- */
-func Add(id, tag, description string, fn interface{}, fnArgs ...interface{}) *Attempt {
-	return AddCustom(id, tag, description, resilience.TotalAttempts, resilience.TimeAttempts, fn, fnArgs...)
 }
 
 /**
@@ -68,27 +46,87 @@ func Add(id, tag, description string, fn interface{}, fnArgs ...interface{}) *At
 * @return bool
 **/
 func HealthCheck() bool {
-	if resilience == nil {
+	if err := load(); err != nil {
 		return false
 	}
 
-	return resilience.HealthCheck()
+	if !cache.HealthCheck() {
+		return false
+	}
+
+	if !event.HealthCheck() {
+		return false
+	}
+
+	return true
 }
 
 /**
-* HttpGetResilience
-* @param w http.ResponseWriter, r *http.Request
-**/
-func HttpGetResilience(w http.ResponseWriter, r *http.Request) {
-	if resilience == nil {
-		response.JSON(w, r, http.StatusServiceUnavailable, et.Json{
-			"message": "resilience is not initialized",
-		})
-		return
+* AddCustom
+* @param id, tag, description string, totalAttempts int, timeAttempts, retentionTime time.Duration, fn interface{}, fnArgs ...interface{}
+* @return *Instance
+ */
+func AddCustom(id, tag, description string, totalAttempts int, timeAttempts, retentionTime time.Duration, fn interface{}, fnArgs ...interface{}) *Instance {
+	if err := load(); err != nil {
+		return nil
 	}
 
-	data := resilience.Json()
-	response.JSON(w, r, http.StatusOK, data)
+	result := NewInstance(id, tag, description, totalAttempts, timeAttempts, retentionTime, fn, fnArgs...)
+	resilience[id] = result
+	result.runAttempt()
+
+	return result
+}
+
+/**
+* Add
+* @param tag, description string, fn interface{}, fnArgs ...interface{}
+* @return *Instance
+ */
+func Add(id, tag, description string, fn interface{}, fnArgs ...interface{}) *Instance {
+	totalAttempts := envar.EnvarInt(3, "RESILIENCE_TOTAL_ATTEMPTS")
+	timeAttempts := envar.EnvarNumber(30, "RESILIENCE_TIME_ATTEMPTS")
+	retentionTime := envar.EnvarNumber(10, "RESILIENCE_RETENTION_TIME")
+
+	return AddCustom(id, tag, description, totalAttempts, time.Duration(timeAttempts)*time.Second, time.Duration(retentionTime)*time.Minute, fn, fnArgs...)
+}
+
+/**
+* Stop
+* @param id string
+* @return error
+ */
+func Stop(id string) error {
+	if err := load(); err != nil {
+		return err
+	}
+
+	if _, ok := resilience[id]; !ok {
+		return fmt.Errorf(MSG_ID_NOT_FOUND)
+	}
+
+	resilience[id].setStop()
+
+	return nil
+}
+
+/**
+* Restart
+* @param id string
+* @return error
+ */
+func Restart(id string) error {
+	if err := load(); err != nil {
+		return err
+	}
+
+	if _, ok := resilience[id]; !ok {
+		return fmt.Errorf(MSG_ID_NOT_FOUND)
+	}
+
+	resilience[id].setRestart()
+
+	return nil
 }
 
 /**
@@ -96,33 +134,77 @@ func HttpGetResilience(w http.ResponseWriter, r *http.Request) {
 * @param w http.ResponseWriter, r *http.Request
 **/
 func HttpGetResilienceById(w http.ResponseWriter, r *http.Request) {
-	body, _ := response.GetBody(r)
-	id := body.Str("id")
-	attempt := resilience.GetById(id)
-	if attempt == nil {
-		response.JSON(w, r, http.StatusNotFound, et.Json{
-			"message": "attempt not found",
-		})
+	if err := load(); err != nil {
+		response.HTTPError(w, r, http.StatusBadRequest, MSG_RESILIENCE_NOT_INITIALIZED)
 		return
 	}
 
-	response.JSON(w, r, http.StatusOK, attempt.Json())
+	id := chi.URLParam(r, "id")
+	if id == "" {
+		response.HTTPError(w, r, http.StatusBadRequest, MSG_ID_REQUIRED)
+		return
+	}
+
+	res, err := loadById(id)
+	if err != nil {
+		response.HTTPError(w, r, http.StatusNotFound, err.Error())
+		return
+	}
+
+	response.ITEM(w, r, http.StatusOK, et.Item{
+		Ok:     true,
+		Result: res.ToJson(),
+	})
 }
 
 /**
-* HttpGetResilienceByTag
+* HttpGetResilienceStop
 * @param w http.ResponseWriter, r *http.Request
 **/
-func HttpGetResilienceByTag(w http.ResponseWriter, r *http.Request) {
-	body, _ := response.GetBody(r)
-	tag := body.Str("tag")
-	attempt := resilience.GetByTag(tag)
-	if attempt == nil {
-		response.JSON(w, r, http.StatusNotFound, et.Json{
-			"message": "attempt not found",
-		})
+func HttpGetResilienceStop(w http.ResponseWriter, r *http.Request) {
+	if err := load(); err != nil {
+		response.HTTPError(w, r, http.StatusBadRequest, MSG_RESILIENCE_NOT_INITIALIZED)
 		return
 	}
 
-	response.JSON(w, r, http.StatusOK, attempt.Json())
+	id := chi.URLParam(r, "id")
+	if id == "" {
+		response.HTTPError(w, r, http.StatusBadRequest, MSG_ID_REQUIRED)
+		return
+	}
+
+	res, ok := resilience[id]
+	if !ok {
+		response.HTTPError(w, r, http.StatusNotFound, MSG_ID_NOT_FOUND)
+		return
+	}
+
+	result := res.setStop()
+	response.ITEM(w, r, http.StatusOK, result)
+}
+
+/**
+* HttpGetResilienceRestart
+* @param w http.ResponseWriter, r *http.Request
+**/
+func HttpGetResilienceRestart(w http.ResponseWriter, r *http.Request) {
+	if err := load(); err != nil {
+		response.HTTPError(w, r, http.StatusBadRequest, MSG_RESILIENCE_NOT_INITIALIZED)
+		return
+	}
+
+	id := chi.URLParam(r, "id")
+	if id == "" {
+		response.HTTPError(w, r, http.StatusBadRequest, MSG_ID_REQUIRED)
+		return
+	}
+
+	res, ok := resilience[id]
+	if !ok {
+		response.HTTPError(w, r, http.StatusNotFound, MSG_ID_NOT_FOUND)
+		return
+	}
+
+	result := res.setRestart()
+	response.ITEM(w, r, http.StatusOK, result)
 }

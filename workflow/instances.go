@@ -1,4 +1,4 @@
-package flow
+package workflow
 
 import (
 	"encoding/json"
@@ -74,14 +74,13 @@ func (s *WorkFlows) getInstance(id string) (*Flow, error) {
 	}
 
 	result.Current = source.Current
-	result.Retries = source.Retries
-	result.RetryDelay = source.RetryDelay
+	result.TotalAttempts = source.TotalAttempts
+	result.TimeAttempts = source.TimeAttempts
 	result.RetentionTime = source.RetentionTime
 	result.Ctxs = source.Ctxs
 	result.Results = source.Results
 	result.Rollbacks = source.Rollbacks
 	result.LastRollback = source.LastRollback
-	result.Attempt = source.Attempt
 	result.TpConsistency = source.TpConsistency
 	result.CreatedAt = source.CreatedAt
 	result.UpdatedAt = source.UpdatedAt

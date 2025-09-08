@@ -1,4 +1,4 @@
-package flow
+package workflow
 
 import (
 	"fmt"
@@ -36,13 +36,13 @@ func newStep(name, description string, fn FnContext, stop bool) (*Step, error) {
 
 /**
 * run
-* @params ctx et.Json
-* @return et.Item, error
+* @params flow *Flow, ctx et.Json
+* @return et.Json, error
 **/
-func (s *Step) run(ctx et.Json) (et.Item, error) {
-	result, err := s.fn(ctx)
+func (s *Step) run(flow *Flow, ctx et.Json) (et.Json, error) {
+	result, err := s.fn(flow, ctx)
 	if err != nil {
-		return et.Item{}, err
+		return et.Json{}, err
 	}
 
 	return result, nil
@@ -85,8 +85,7 @@ func (s *Step) IfElse(expression string, yesGoTo int, noGoTo int) *Step {
 **/
 func (s *Step) Evaluate(ctx et.Json, instance *Flow) (bool, error) {
 	resultError := func(err error) (bool, error) {
-		instance.setFailed(fmt.Errorf("error al evaluar expresion:%s, error:%s", s.Expression, err.Error()))
-		return false, err
+		return false, fmt.Errorf("error al evaluar expresion:%s, error:%s", s.Expression, err.Error())
 	}
 
 	instance.setStatus(FlowStatusRunning)
