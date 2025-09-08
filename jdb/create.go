@@ -18,8 +18,7 @@ func CreateDatabase(db *DB, name string) error {
 	if !exists {
 		sql := strs.Format(`CREATE DATABASE %s;`, name)
 
-		id := strs.Format(`create-db-%s`, name)
-		err := db.Exec(id, sql)
+		err := db.Ddl(sql)
 		if err != nil {
 			return err
 		}
@@ -32,8 +31,7 @@ func CreateDatabase(db *DB, name string) error {
 func CreateSchema(db *DB, name string) error {
 	sql := strs.Format(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"; CREATE SCHEMA IF NOT EXISTS "%s";`, name)
 
-	id := strs.Format(`create-schema-%s`, name)
-	err := db.Exec(id, sql)
+	err := db.Ddl(sql)
 	if err != nil {
 		return err
 	}
@@ -55,8 +53,7 @@ func CreateColumn(db *DB, schema, table, name, kind, defaultValue string) error 
 	END;
 	$$;`, tableName, strs.Uppcase(name), strs.Uppcase(kind), defaultValue)
 
-	id := strs.Format(`create-column-%s-%s-%s`, schema, table, name)
-	err := db.Exec(id, sql)
+	err := db.Ddl(sql)
 	if err != nil {
 		return err
 	}
@@ -70,8 +67,7 @@ func CreateIndex(db *DB, schema, table, field string) error {
 	CREATE INDEX IF NOT EXISTS $2_$3_IDX ON $1.$2($3);`,
 		strs.Uppcase(schema), strs.Uppcase(table), strs.Uppcase(field))
 
-	id := strs.Format(`create-index-%s-%s-%s`, schema, table, field)
-	err := db.Exec(id, sql)
+	err := db.Ddl(sql)
 	if err != nil {
 		return err
 	}
@@ -89,8 +85,7 @@ func CreateTrigger(db *DB, schema, table, name, when, event, function string) er
 	EXECUTE PROCEDURE $6;`,
 		strs.Uppcase(schema), strs.Uppcase(table), strs.Uppcase(name), when, event, function)
 
-	id := strs.Format(`create-trigger-%s-%s-%s`, schema, table, name)
-	err := db.Exec(id, sql)
+	err := db.Ddl(sql)
 	if err != nil {
 		return err
 	}
@@ -102,8 +97,7 @@ func CreateTrigger(db *DB, schema, table, name, when, event, function string) er
 func CreateSequence(db *DB, schema, tag string) error {
 	sql := strs.Format(`CREATE SEQUENCE IF NOT EXISTS %s START 1;`, tag)
 
-	id := strs.Format(`create-sequence-%s-%s`, schema, tag)
-	err := db.Exec(id, sql)
+	err := db.Ddl(sql)
 	if err != nil {
 		return err
 	}
@@ -116,8 +110,7 @@ func CreateUser(db *DB, name, password string) error {
 	passwordHash := utility.PasswordSha256(password)
 	sql := strs.Format(`CREATE USER %s WITH PASSWORD '%s';`, name, passwordHash)
 
-	id := strs.Format(`create-user-%s`, name)
-	err := db.Exec(id, sql)
+	err := db.Ddl(sql)
 	if err != nil {
 		return err
 	}
@@ -130,8 +123,7 @@ func ChangePassword(db *DB, name, password string) error {
 	passwordHash := utility.PasswordSha256(password)
 	sql := strs.Format(`ALTER USER %s WITH PASSWORD '%s';`, name, passwordHash)
 
-	id := strs.Format(`change-password-%s`, name)
-	err := db.Exec(id, sql)
+	err := db.Ddl(sql)
 	if err != nil {
 		return err
 	}

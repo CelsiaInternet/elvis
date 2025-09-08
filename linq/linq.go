@@ -5,7 +5,6 @@ import (
 
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/jdb"
-	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/strs"
 )
 
@@ -378,64 +377,4 @@ func (c *Linq) AddValidate(col *Column, val any) {
 	}
 
 	c.AddPrimaryKey(col, val)
-}
-
-/**
-* Query
-**/
-func (c *Linq) query() (et.Items, error) {
-	if c.debug {
-		logs.Debug(c.sql)
-	}
-
-	if c.Tp == TpData {
-		result, err := c.db.Source(SourceField.Upp(), c.sql)
-		if err != nil {
-			return et.Items{}, err
-		}
-
-		return result, nil
-	}
-
-	result, err := c.db.Query(c.sql)
-	if err != nil {
-		return et.Items{}, err
-	}
-
-	return result, nil
-}
-
-func (c *Linq) queryOne() (et.Item, error) {
-	if c.debug {
-		logs.Debug(c.sql)
-	}
-
-	if c.Tp == TpData {
-		result, err := c.db.SourceOne(SourceField.Upp(), c.sql)
-		if err != nil {
-			return et.Item{}, err
-		}
-
-		return result, nil
-	}
-
-	result, err := c.db.QueryOne(c.sql)
-	if err != nil {
-		return et.Item{}, err
-	}
-
-	return result, nil
-}
-
-func (c *Linq) queryCount() int {
-	if c.debug {
-		logs.Debug(c.sql)
-	}
-
-	result, err := c.db.QueryOne(c.sql)
-	if err != nil {
-		return 0
-	}
-
-	return result.Int("count")
 }

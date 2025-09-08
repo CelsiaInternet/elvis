@@ -41,6 +41,9 @@ type Schema struct {
 	Models      []*Model
 }
 
+/**
+* NewSchema
+**/
 func NewSchema(db *jdb.DB, name string) *Schema {
 	result := &Schema{
 		db:     db,
@@ -54,6 +57,9 @@ func NewSchema(db *jdb.DB, name string) *Schema {
 	return result
 }
 
+/**
+* GetSchema
+**/
 func GetSchema(name string) *Schema {
 	for _, item := range schemas {
 		if strs.Uppcase(item.Name) == strs.Uppcase(name) {
@@ -65,7 +71,7 @@ func GetSchema(name string) *Schema {
 }
 
 /**
-*
+* Describe
 **/
 func (c *Schema) Describe() et.Json {
 	var models []et.Json = []et.Json{}
@@ -80,10 +86,12 @@ func (c *Schema) Describe() et.Json {
 	}
 }
 
+/**
+* Init
+**/
 func (c *Schema) Init() error {
 	c.Define = strs.Format(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"; CREATE SCHEMA IF NOT EXISTS "%s";`, c.Name)
-	id := strs.Format(`create-schema-%s`, c.Name)
-	err := c.db.Exec(id, c.Define)
+	err := c.db.Ddl(c.Define)
 	if err != nil {
 		return err
 	}
@@ -92,7 +100,7 @@ func (c *Schema) Init() error {
 }
 
 /**
-*
+* Model
 **/
 func (c *Schema) Model(name string) *Model {
 	for _, item := range c.Models {

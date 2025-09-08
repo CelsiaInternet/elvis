@@ -109,6 +109,11 @@ func defineSeriesFunction(db *DB) error {
 	return nil
 }
 
+/**
+* NextSerie
+* @param db *DB, tag string
+* @return int64
+**/
 func NextSerie(db *DB, tag string) int64 {
 	if !db.UseCore {
 		return 0
@@ -134,11 +139,13 @@ func NextSerie(db *DB, tag string) int64 {
 		return result
 	}
 
-	item, err := db.QueryOne(sql, tag)
+	items, err := db.Query(sql, tag)
 	if err != nil {
 		logs.Error("jdb", err)
 		return 0
 	}
+
+	item := items.First()
 	if !item.Ok {
 		return 0
 	}
@@ -148,6 +155,11 @@ func NextSerie(db *DB, tag string) int64 {
 	return result
 }
 
+/**
+* NextCode
+* @param db *DB, tag string, prefix string
+* @return string
+**/
 func NextCode(db *DB, tag, prefix string) string {
 	num := NextSerie(db, tag)
 
@@ -158,10 +170,15 @@ func NextCode(db *DB, tag, prefix string) string {
 	}
 }
 
+/**
+* SetSerie
+* @param db *DB, tag string, val int
+* @return int, error
+**/
 func SetSerie(db *DB, tag string, val int) (int, error) {
 	sql := `SELECT core.setserie($1, $2);`
 
-	_, err := db.QueryOne(sql, tag, val)
+	_, err := db.Query(sql, tag, val)
 	if err != nil {
 		return 0, err
 	}
@@ -169,11 +186,21 @@ func SetSerie(db *DB, tag string, val int) (int, error) {
 	return val, nil
 }
 
+/**
+* LastSerie
+* @param db *DB, tag string
+* @return int
+**/
 func LastSerie(db *DB, tag string) int {
 	sql := `SELECT core.currserie($1) AS SERIE;`
 
-	item, err := db.QueryOne(sql, tag)
+	items, err := db.Query(sql, tag)
 	if err != nil {
+		return 0
+	}
+
+	item := items.First()
+	if !item.Ok {
 		return 0
 	}
 

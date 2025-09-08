@@ -25,10 +25,6 @@ func InitCore(db *DB) error {
 		return err
 	}
 
-	if err := defineDDL(db); err != nil {
-		return err
-	}
-
 	makedCore = true
 
 	logs.Log("CORE", "Init core")

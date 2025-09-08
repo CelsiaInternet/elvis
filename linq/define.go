@@ -168,17 +168,6 @@ func (c *Model) DefineRequired(names []string) *Model {
 }
 
 /**
-* DefineEventError
-* @param fn Event
-* @return *Model
-**/
-func (c *Model) DefineEventError(fn Event) *Model {
-	c.EventError = fn
-
-	return c
-}
-
-/**
 * DefineEventInsert
 * @param fn Event
 * @return *Model

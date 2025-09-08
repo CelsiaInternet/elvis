@@ -194,13 +194,8 @@ func (c *Linq) commandUpsert() (et.Items, error) {
 *
 **/
 func (c *Linq) Current() (et.Items, error) {
-	c.sql = c.SqlCurrent()
-	result, err := c.query()
-	if err != nil {
-		return et.Items{}, err
-	}
-
-	return result, nil
+	c.SqlCurrent()
+	return c.db.Query(c.sql)
 }
 
 /**
@@ -217,22 +212,12 @@ func (c *Linq) insert() (et.Item, error) {
 	}
 
 	c.SqlInsert()
-
-	item, err := c.queryOne()
+	items, err := c.command()
 	if err != nil {
-		if model.EventError != nil {
-			model.EventError(model, et.Json{
-				"model":  model.Name,
-				"action": "insert",
-				"sql":    c.sql,
-				"data":   c.data,
-				"error":  err.Error(),
-			})
-		}
-
 		return et.Item{}, err
 	}
 
+	item := items.First()
 	if !item.Ok {
 		return item, nil
 	}
@@ -267,22 +252,12 @@ func (c *Linq) update(current et.Json) (et.Item, error) {
 	}
 
 	c.SqlUpdate()
-
-	item, err := c.queryOne()
+	items, err := c.command()
 	if err != nil {
-		if model.EventError != nil {
-			model.EventError(model, et.Json{
-				"model":  model.Name,
-				"action": "update",
-				"sql":    c.sql,
-				"data":   c.data,
-				"error":  err.Error(),
-			})
-		}
-
 		return et.Item{}, err
 	}
 
+	item := items.First()
 	if !item.Ok {
 		return item, nil
 	}
@@ -317,22 +292,12 @@ func (c *Linq) delete(current et.Json) (et.Item, error) {
 	}
 
 	c.SqlDelete()
-
-	item, err := c.queryOne()
+	items, err := c.command()
 	if err != nil {
-		if model.EventError != nil {
-			model.EventError(model, et.Json{
-				"model":  model.Name,
-				"action": "delete",
-				"sql":    c.sql,
-				"where":  c.where,
-				"error":  err.Error(),
-			})
-		}
-
 		return et.Item{}, err
 	}
 
+	item := items.First()
 	if !item.Ok {
 		return item, nil
 	}

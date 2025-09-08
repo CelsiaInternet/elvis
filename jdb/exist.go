@@ -17,10 +17,12 @@ func ExistDatabase(db *DB, name string) (bool, error) {
 		FROM pg_database
 		WHERE UPPER(datname) = UPPER($1));`
 
-	item, err := db.QueryOne(sql, name)
+	items, err := db.Query(sql, name)
 	if err != nil {
 		return false, err
 	}
+
+	item := items.First()
 
 	return item.Bool("exists"), nil
 }
@@ -34,10 +36,12 @@ func ExistSchema(db *DB, name string) (bool, error) {
 		FROM pg_namespace
 		WHERE UPPER(nspname) = UPPER($1));`
 
-	item, err := db.QueryOne(sql, name)
+	items, err := db.Query(sql, name)
 	if err != nil {
 		return false, err
 	}
+
+	item := items.First()
 
 	return item.Bool("exists"), nil
 }
@@ -51,10 +55,12 @@ func ExistTable(db *DB, schema, name string) (bool, error) {
 		WHERE UPPER(table_schema) = UPPER($1)
 		AND UPPER(table_name) = UPPER($2));`
 
-	item, err := db.QueryOne(sql, schema, name)
+	items, err := db.Query(sql, schema, name)
 	if err != nil {
 		return false, err
 	}
+
+	item := items.First()
 
 	return item.Bool("exists"), nil
 }
@@ -69,10 +75,12 @@ func ExistColum(db *DB, schema, table, name string) (bool, error) {
 		AND UPPER(table_name) = UPPER($2)
 		AND UPPER(column_name) = UPPER($3));`
 
-	item, err := db.QueryOne(sql, schema, table, name)
+	items, err := db.Query(sql, schema, table, name)
 	if err != nil {
 		return false, err
 	}
+
+	item := items.First()
 
 	return item.Bool("exists"), nil
 }
@@ -88,10 +96,12 @@ func ExistIndex(db *DB, schema, table, field string) (bool, error) {
 		AND UPPER(tablename) = UPPER($2)
 		AND UPPER(indexname) = UPPER($3));`
 
-	item, err := db.QueryOne(sql, schema, table, indexName)
+	items, err := db.Query(sql, schema, table, indexName)
 	if err != nil {
 		return false, err
 	}
+
+	item := items.First()
 
 	return item.Bool("exists"), nil
 }
@@ -106,10 +116,12 @@ func ExistTrigger(db *DB, schema, table, name string) (bool, error) {
 		AND UPPER(event_object_table) = UPPER($2)
 		AND UPPER(trigger_name) = UPPER($3));`
 
-	item, err := db.QueryOne(sql, schema, table, name)
+	items, err := db.Query(sql, schema, table, name)
 	if err != nil {
 		return false, err
 	}
+
+	item := items.First()
 
 	return item.Bool("exists"), nil
 }
@@ -123,10 +135,12 @@ func ExistSerie(db *DB, schema, name string) (bool, error) {
 		WHERE UPPER(schemaname) = UPPER($1)
 		AND UPPER(sequencename) = UPPER($2));`
 
-	item, err := db.QueryOne(sql, schema, name)
+	items, err := db.Query(sql, schema, name)
 	if err != nil {
 		return false, err
 	}
+
+	item := items.First()
 
 	return item.Bool("exists"), nil
 }
@@ -140,10 +154,12 @@ func ExistUser(db *DB, name string) (bool, error) {
 		FROM pg_roles
 		WHERE UPPER(rolname) = UPPER($1));`
 
-	item, err := db.QueryOne(sql, name)
+	items, err := db.Query(sql, name)
 	if err != nil {
 		return false, err
 	}
+
+	item := items.First()
 
 	return item.Bool("exists"), nil
 }

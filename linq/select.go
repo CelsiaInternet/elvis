@@ -98,11 +98,12 @@ func (s *Linq) All() (et.Items, error) {
 func (s *Linq) First() (et.Item, error) {
 	s.sql = s.SqlLimit(1)
 
-	item, err := s.queryOne()
+	items, err := s.query()
 	if err != nil {
 		return et.Item{}, err
 	}
 
+	item := items.First()
 	if item.Ok {
 		s.Details(&item.Result)
 	}

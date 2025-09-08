@@ -56,7 +56,6 @@ type Model struct {
 	BeforeDelete       []Trigger
 	AfterDelete        []Trigger
 	OnListener         Listener
-	EventError         Event
 	EventInsert        Event
 	EventUpdate        Event
 	EventDelete        Event
@@ -210,8 +209,7 @@ func (c *Model) Init() error {
 	}
 
 	if exists {
-		id := strs.Format(`definefunciones-%s`, c.Low())
-		err = c.db.Exec(id, c.Functions)
+		err = c.db.Ddl(c.Functions)
 		if err != nil {
 			return err
 		}
@@ -219,8 +217,7 @@ func (c *Model) Init() error {
 		return nil
 	}
 
-	id := strs.Format(`definemodel-%s`, c.Low())
-	err = c.db.Exec(id, c.Define)
+	err = c.db.Ddl(c.Define)
 	if err != nil {
 		return err
 	}
@@ -539,20 +536,4 @@ func (c *Model) UpsertRow(data et.Json) *Linq {
 	result.data = data
 
 	return result
-}
-
-func (c *Model) Query(sql string, args ...any) (et.Items, error) {
-	return c.db.Query(sql, args...)
-}
-
-func (c *Model) QueryOne(sql string, args ...any) (et.Item, error) {
-	return c.db.QueryOne(sql, args...)
-}
-
-func (c *Model) Source(sourceField, sql string, args ...any) (et.Items, error) {
-	return c.db.Source(sourceField, sql, args...)
-}
-
-func (c *Model) Exec(id, sql string, args ...any) error {
-	return c.db.Exec(id, sql, args...)
 }
