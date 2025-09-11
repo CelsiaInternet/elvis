@@ -10,6 +10,7 @@ import (
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/event"
+	"github.com/celsiainternet/elvis/jdb"
 	"github.com/celsiainternet/elvis/jrpc"
 	"github.com/celsiainternet/elvis/middleware"
 	"github.com/celsiainternet/elvis/strs"
@@ -126,7 +127,7 @@ func ToTpHeader(tp int) TpHeader {
 func PushApiGateway(id, method, path, resolve string, header et.Json, tpHeader TpHeader, excludeHeader []string, private bool, packageName string) {
 	initRouter(packageName)
 	router.routes[id] = et.Json{
-		"_id":            id,
+		jdb.KEY:          id,
 		"kind":           HTTP,
 		"method":         method,
 		"path":           path,
@@ -149,7 +150,7 @@ func DeleteApiGatewayById(id, method, path string) {
 	delete(router.routes, id)
 
 	event.Publish(APIGATEWAY_DELETE_RESOLVE, et.Json{
-		"_id":    id,
+		jdb.KEY:  id,
 		"method": method,
 		"path":   path,
 	})

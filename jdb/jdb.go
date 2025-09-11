@@ -5,6 +5,10 @@ import (
 	"github.com/celsiainternet/elvis/et"
 )
 
+const (
+	KEY = "_id"
+)
+
 /**
 * LoadTo
 * @param dbname string

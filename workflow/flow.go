@@ -9,6 +9,7 @@ import (
 	"github.com/celsiainternet/elvis/cache"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/event"
+	"github.com/celsiainternet/elvis/jdb"
 	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/resilience"
 	"github.com/celsiainternet/elvis/utility"
@@ -115,7 +116,7 @@ func FlowToJson(flow *Flow) et.Json {
 	steps := make([]et.Json, len(flow.Steps))
 	for i, step := range flow.Steps {
 		j := step.ToJson()
-		j.Set("_id", i)
+		j.Set(jdb.KEY, i)
 		steps[i] = j
 	}
 
@@ -143,7 +144,7 @@ func (s *Flow) ToJson() et.Json {
 	steps := make([]et.Json, len(s.Steps))
 	for i, step := range s.Steps {
 		j := step.ToJson()
-		j.Set("_id", i)
+		j.Set(jdb.KEY, i)
 		steps[i] = j
 	}
 
@@ -153,7 +154,7 @@ func (s *Flow) ToJson() et.Json {
 	}
 
 	result := et.Json{
-		"id":             s.Id,
+		jdb.KEY:          s.Id,
 		"tag":            s.Tag,
 		"version":        s.Version,
 		"name":           s.Name,

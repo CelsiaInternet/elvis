@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/jdb"
 	"github.com/celsiainternet/elvis/msg"
 	"github.com/celsiainternet/elvis/strs"
 )
@@ -94,7 +95,7 @@ func (c *Model) DefineReference(thisKey, name, otherKey string, column *Column, 
 	}
 	idxName := c.ColIdx(name)
 	if idxName == -1 {
-		col := NewColumn(c, name, "", "REFERENCE", et.Json{"_id": "", "name": ""})
+		col := NewColumn(c, name, "", "REFERENCE", et.Json{jdb.KEY: "", "name": ""})
 		col.Tp = TpReference
 		col.Title = name
 		col.Reference = &Reference{thisKey, name, otherKey, column}

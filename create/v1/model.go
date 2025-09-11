@@ -750,13 +750,13 @@ func Define$2(db *jdb.DB) error {
 	$2.DefineColum("date_make", "", "TIMESTAMP", "NOW()")
 	$2.DefineColum("date_update", "", "TIMESTAMP", "NOW()")
 	$2.DefineColum("_state", "", "VARCHAR(80)", utility.ACTIVE)
-	$2.DefineColum("_id", "", "VARCHAR(80)", "-1")
+	$2.DefineColum(jdb.KEY, "", "VARCHAR(80)", "-1")
 	$2.DefineColum("project_id", "", "VARCHAR(80)", "-1")
 	$2.DefineColum("name", "", "VARCHAR(250)", "")
 	$2.DefineColum("description", "", "TEXT", "")
 	$2.DefineColum("_data", "", "JSONB", "{}")
 	$2.DefineColum("index", "", "INTEGER", 0)
-	$2.DefinePrimaryKey([]string{"_id"})
+	$2.DefinePrimaryKey([]string{jdb.KEY})
 	$2.DefineIndex([]string{
 		"date_make",
 		"date_update",
@@ -806,7 +806,7 @@ func Define$2(db *jdb.DB) error {
 **/
 func Get$2ById(id string) (et.Item, error) {
 	result, err := $2.Data().
-		Where($2.Column("_id").Eq(id)).
+		Where($2.Column(jdb.KEY).Eq(id)).
 		First()
 	if err != nil {
 		return et.Item{}, err
@@ -831,11 +831,11 @@ func Insert$2(project_id, id, name, description string, data et.Json) (et.Item, 
 	}
 
 	if !utility.ValidId(id) {
-		return et.Item{}, fmt.Errorf(msg.MSG_ATRIB_REQUIRED, "_id")
+		return et.Item{}, fmt.Errorf(msg.MSG_ATRIB_REQUIRED, jdb.KEY)
 	}
 
 	current, err := $2.Data().
-		Where($2.Column("_id").Eq(id)).
+		Where($2.Column(jdb.KEY).Eq(id)).
 		First()
 	if err != nil {
 		return et.Item{}, err
@@ -850,7 +850,7 @@ func Insert$2(project_id, id, name, description string, data et.Json) (et.Item, 
 	data["date_make"] = now
 	data["date_update"] = now
 	data["project_id"] = project_id
-	data["_id"] = id
+	data[jdb.KEY] = id
 	data["name"] = name
 	data["description"] = description
 	item, err := $2.Insert(data).
@@ -884,15 +884,15 @@ func UpSert$2(project_id, id, name, description string, data et.Json) (et.Item, 
 		return et.Item{}, console.AlertF(msg.RECORD_NOT_UPDATE)
 	}
 
-	id = current.Str("_id")
+	id = current.Str(jdb.KEY)
 	now := utility.Now()
 	data["date_update"] = now
 	data["project_id"] = project_id
-	data["_id"] = id
+	data[jdb.KEY] = id
 	data["name"] = name
 	data["description"] = description
 	result, err := $2.Update(data).
-		Where($2.Column("_id").Eq(id)).
+		Where($2.Column(jdb.KEY).Eq(id)).
 		CommandOne()
 	if err != nil {
 		return et.Item{}, err
@@ -912,7 +912,7 @@ func State$2(id, state string) (et.Item, error) {
 	}
 
 	current, err := $2.Data("_state").
-		Where($2.Column("_id").Eq(id)).
+		Where($2.Column(jdb.KEY).Eq(id)).
 		First()
 	if err != nil {
 		return et.Item{}, err
@@ -930,7 +930,7 @@ func State$2(id, state string) (et.Item, error) {
 	return $2.Update(et.Json{
 		"_state":   state,
 	}).
-		Where($2.Column("_id").Eq(id)).
+		Where($2.Column(jdb.KEY).Eq(id)).
 		CommandOne()	
 }
 

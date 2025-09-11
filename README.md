@@ -207,7 +207,7 @@ Sistema de base de datos con triggers automáticos y sincronización:
 ```go
 // Definir modelo con triggers
 model := linq.NewModel(db, "users", "Usuarios", 1)
-model.DefineColum("id", "", "VARCHAR(80)", "-1")
+model.DefineColum("_id", "", "VARCHAR(80)", "-1")
 model.DefineColum("name", "", "VARCHAR(250)", "")
 model.DefineColum("email", "", "VARCHAR(250)", "")
 
