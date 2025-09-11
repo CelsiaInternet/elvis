@@ -722,3 +722,12 @@ func (s Json) ConsolidateAndUpdate(toField string, ruleOut []string, new Json) (
 
 	return result, nil
 }
+
+func (s Json) Clone() Json {
+	result := Json{}
+	for k, v := range s {
+		result[k] = v
+	}
+
+	return result
+}

@@ -10,6 +10,16 @@ import (
 	"github.com/nats-io/nats.go"
 )
 
+const (
+	EVENT            = "event"
+	EVENT_LOG        = "event:log"
+	EVENT_OVERFLOW   = "event:requests:overflow"
+	EVENT_WORK       = "event:worker"
+	EVENT_WORK_STATE = "event:worker:state"
+	EVENT_SUBSCRIBED = "event:subscribed"
+	EVENT_SOURCE     = "event:source"
+)
+
 var conn *Conn
 
 type Conn struct {

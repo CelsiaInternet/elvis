@@ -70,10 +70,10 @@ func MakeModel(packageName, modelo, schema string) error {
 	modelPath := strs.Format(`./internal/models/%s`, packageName)
 
 	if len(schema) > 0 {
-		_, _ = file.MakeFile(modelPath, "schema.go", modelSchema, packageName, "schema")
+		_, _ = file.MakeFile(modelPath, "schema.go", modelSchema, packageName, "schema", schema)
 
 		modelFileName := strs.Format(`%s.go`, modelo)
-		_, _ = file.MakeFile(modelPath, modelFileName, modelData, packageName, modelo)
+		_, _ = file.MakeFile(modelPath, modelFileName, modelData, packageName, strs.Titlecase(modelo))
 	}
 
 	pkgPath := strs.Format(`./pkg/%s`, packageName)

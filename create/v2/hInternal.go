@@ -18,14 +18,13 @@ func MakeInternal(packageName, name, schema string) error {
 	}
 
 	if len(schema) > 0 {
-		_, err = file.MakeFile(modelsPath, "schema.go", modelSchema, name, "schema")
+		_, err = file.MakeFile(modelsPath, "schema.go", modelSchema, name, "schema", schema)
 		if err != nil {
 			return err
 		}
 
-		modelo := strs.Titlecase(name)
 		modelFileName := strs.Format(`%s.go`, name)
-		_, err = file.MakeFile(modelsPath, modelFileName, modelData, name, modelo)
+		_, err = file.MakeFile(modelsPath, modelFileName, modelData, name, strs.Titlecase(name))
 		if err != nil {
 			return err
 		}

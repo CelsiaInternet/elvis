@@ -1,11 +1,12 @@
 package workflow
 
 import (
-	"fmt"
+	"time"
 
+	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/event"
-	"github.com/celsiainternet/elvis/reg"
+	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/resilience"
 )
 
@@ -44,33 +45,25 @@ func (s *WorkFlows) HealthCheck() bool {
 
 /**
 * NewFlow
-* @param tag, version, name, description string, fn FnContext, createdBy string
+* @param tag, version, name, description string, fn FnContext, stop bool, createdBy string
 * @return *Flow
 **/
-func (s *WorkFlows) NewFlow(tag, version, name, description string, fn FnContext, createdBy string) *Flow {
-	flow := newFlow(s, tag, version, name, description, fn, createdBy)
+func (s *WorkFlows) NewFlow(tag, version, name, description string, fn FnContext, stop bool, createdBy string) *Flow {
+	flow := newFlow(s, tag, version, name, description, fn, stop, createdBy)
 	s.Flows[tag] = flow
 
 	return flow
 }
 
 /**
-* Run
-* @param instanceId, tag string, ctx et.Json
+* Start
+* @param instanceId, tag string, startId int, tags et.Json, ctx et.Json
 * @return et.Json, error
 **/
-func (s *WorkFlows) Run(instanceId, tag string, startId int, ctx et.Json) (et.Json, error) {
-	instanceId = reg.GetUUID(instanceId)
-	instance, err := s.getInstance(instanceId)
+func (s *WorkFlows) Start(instanceId, tag string, startId int, tags, ctx et.Json) (et.Json, error) {
+	instance, err := s.createInstance(instanceId, tag, startId, tags)
 	if err != nil {
 		return et.Json{}, err
-	}
-
-	if instance == nil {
-		instance, err = s.newInstance(instanceId, tag, startId)
-		if err != nil {
-			return et.Json{}, err
-		}
 	}
 
 	result, err := instance.run(ctx)
@@ -82,20 +75,57 @@ func (s *WorkFlows) Run(instanceId, tag string, startId int, ctx et.Json) (et.Js
 }
 
 /**
-* Rollback
-* @param instanceId string
+* Run
+* @param instanceId, tag string, startId int, tags, ctx et.Json
 * @return et.Json, error
 **/
-
-func (s *WorkFlows) Rollback(instanceId string) (et.Json, error) {
-	instanceId = reg.GetUUID(instanceId)
-	instance, err := s.getInstance(instanceId)
+func (s *WorkFlows) Run(instanceId, tag string, startId int, tags, ctx et.Json) (et.Json, error) {
+	instance, err := s.getOrCreateInstance(instanceId, tag, tags)
 	if err != nil {
 		return et.Json{}, err
 	}
 
-	if instance == nil {
-		return et.Json{}, fmt.Errorf("instance not found")
+	result, err := instance.Run(startId, ctx)
+	if err != nil {
+		return et.Json{}, err
+	}
+
+	if instance.isDebug {
+		console.Debug("Flow instance:", instance.ToJson().ToString())
+	}
+
+	return result, err
+}
+
+/**
+* Continue
+* @param instanceId, tag string, ctx et.Json
+* @return et.Json, error
+**/
+func (s *WorkFlows) Continue(instanceId, tag string, ctx et.Json) (et.Json, error) {
+	instance, err := s.getInstance(instanceId, tag)
+	if err != nil {
+		return et.Json{}, err
+	}
+
+	result, err := instance.Continue(ctx)
+	if err != nil {
+		return et.Json{}, err
+	}
+
+	return result, err
+}
+
+/**
+* Rollback
+* @param instanceId, tag string
+* @return et.Json, error
+**/
+
+func (s *WorkFlows) Rollback(instanceId, tag string) (et.Json, error) {
+	instance, err := s.getInstance(instanceId, tag)
+	if err != nil {
+		return et.Json{}, err
 	}
 
 	result, err := instance.rollback(instance.LastRollback)
@@ -104,6 +134,24 @@ func (s *WorkFlows) Rollback(instanceId string) (et.Json, error) {
 	}
 
 	return result, nil
+}
+
+/**
+* Done
+* @param instanceId string
+* @return bool
+**/
+func (s *WorkFlows) Done(instanceId string) bool {
+	if s.Instance[instanceId] == nil {
+		return false
+	}
+
+	time.AfterFunc(300*time.Millisecond, func() {
+		delete(s.Instance, instanceId)
+		logs.Logf(packageName, MSG_WORKFLOW_DONE_INSTANCE, instanceId)
+	})
+
+	return true
 }
 
 /**
@@ -117,8 +165,10 @@ func (s *WorkFlows) DeleteFlow(tag string) bool {
 	}
 
 	flow := s.Flows[tag]
-	delete(s.Flows, tag)
 	event.Publish(EVENT_WORKFLOW_DELETE, flow.ToJson())
+	time.AfterFunc(300*time.Millisecond, func() {
+		delete(s.Flows, tag)
+	})
 
 	return true
 }

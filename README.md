@@ -71,7 +71,7 @@ go mod init github.com/tu-usuario/tu-proyecto
 ### 2. Instalar Elvis
 
 ```bash
-go get github.com/celsiainternet/elvis@v1.1.125
+go get github.com/celsiainternet/elvis@v1.1.126
 ```
 
 ### 3. Crear Proyecto con Elvis
@@ -207,7 +207,7 @@ Sistema de base de datos con triggers automáticos y sincronización:
 ```go
 // Definir modelo con triggers
 model := linq.NewModel(db, "users", "Usuarios", 1)
-model.DefineColum("_id", "", "VARCHAR(80)", "-1")
+model.DefineColum("id", "", "VARCHAR(80)", "-1")
 model.DefineColum("name", "", "VARCHAR(250)", "")
 model.DefineColum("email", "", "VARCHAR(250)", "")
 
@@ -561,7 +561,7 @@ _Desarrollado con ❤️ en Colombia_
 
 ## Releases
 
-### v1.1.125
+### v1.1.126
 
 - **Sistema de Comunicación en Tiempo Real**
 

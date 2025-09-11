@@ -24,9 +24,6 @@ const (
 	FlowStatusFailed      FlowStatus    = "failed"
 	TpConsistencyStrong   TpConsistency = "strong"
 	TpConsistencyEventual TpConsistency = "eventual"
-	EVENT_WORKFLOW_SET                  = "workflow:set"
-	EVENT_WORKFLOW_DELETE               = "workflow:delete"
-	EVENT_WORKFLOW_STATUS               = "workflow:status"
 )
 
 var workerHost string
@@ -68,9 +65,15 @@ type Flow struct {
 	Status        FlowStatus           `json:"status"`
 	CreatedBy     string               `json:"created_by"`
 	WorkerHost    string               `json:"worker_host"`
+	Tags          et.Json              `json:"tags"`
 	workFlows     *WorkFlows           `json:"-"`
+	done          bool                 `json:"-"`
+	goTo          int                  `json:"-"`
 	err           error                `json:"-"`
 	resilence     *resilience.Instance `json:"-"`
+	isDebug       bool                 `json:"-"`
+	team          string               `json:"-"`
+	level         string               `json:"-"`
 }
 
 /**
@@ -78,7 +81,7 @@ type Flow struct {
 * @param workFlows *WorkFlows, tag, version, name, description string, fn FnContext, totalAttempts int, timeAttempts, retentionTime time.Duration, createdBy string
 * @return *Flow
 **/
-func newFlow(workFlows *WorkFlows, tag, version, name, description string, fn FnContext, createdBy string) *Flow {
+func newFlow(workFlows *WorkFlows, tag, version, name, description string, fn FnContext, stop bool, createdBy string) *Flow {
 	flow := &Flow{
 		Tag:           tag,
 		Version:       version,
@@ -93,12 +96,43 @@ func newFlow(workFlows *WorkFlows, tag, version, name, description string, fn Fn
 		Rollbacks:     make(map[int]Result),
 		LastRollback:  -1,
 		CreatedBy:     createdBy,
+		Tags:          et.Json{},
 		workFlows:     workFlows,
+		goTo:          -1,
 	}
 	logs.Logf(packageName, MSG_FLOW_CREATED, tag, version, name)
-	flow.Step("Start", MSG_START_WORKFLOW, fn, false)
+	flow.Step("Start", MSG_START_WORKFLOW, fn, stop)
 
 	return flow
+}
+
+/**
+* FlowToJson
+* @param flow *Flow
+* @return et.Json
+**/
+func FlowToJson(flow *Flow) et.Json {
+	steps := make([]et.Json, len(flow.Steps))
+	for i, step := range flow.Steps {
+		j := step.ToJson()
+		j.Set("_id", i)
+		steps[i] = j
+	}
+
+	result := et.Json{
+		"tag":            flow.Tag,
+		"version":        flow.Version,
+		"name":           flow.Name,
+		"description":    flow.Description,
+		"total_attempts": flow.TotalAttempts,
+		"time_attempts":  flow.TimeAttempts,
+		"retention_time": flow.RetentionTime,
+		"steps":          steps,
+		"tp_consistency": flow.TpConsistency,
+		"worker_host":    flow.WorkerHost,
+	}
+
+	return result
 }
 
 /**
@@ -118,7 +152,7 @@ func (s *Flow) ToJson() et.Json {
 		resilence = s.resilence.ToJson()
 	}
 
-	return et.Json{
+	result := et.Json{
 		"id":             s.Id,
 		"tag":            s.Tag,
 		"version":        s.Version,
@@ -142,6 +176,12 @@ func (s *Flow) ToJson() et.Json {
 		"status":         s.Status,
 		"worker_host":    s.WorkerHost,
 	}
+
+	for k, v := range s.Tags {
+		result.Set(k, v)
+	}
+
+	return result
 }
 
 /**
@@ -174,10 +214,23 @@ func (s *Flow) setStatus(status FlowStatus) error {
 		return nil
 	}
 
+	done := func() {
+		if s.workFlows != nil {
+			s.workFlows.Done(s.Id)
+		}
+	}
+
 	s.Status = status
 	s.UpdatedAt = utility.NowTime()
+
+	if s.isDebug {
+		logs.Logf(packageName, MSG_INSTANCE_DEBUG, s.Id, s.ToJson().ToString())
+	}
+
 	if s.Status == FlowStatusDone {
 		s.DoneAt = s.UpdatedAt
+		s.done = true
+		done()
 	}
 
 	switch s.Status {
@@ -187,11 +240,84 @@ func (s *Flow) setStatus(status FlowStatus) error {
 			errMsg = s.err.Error()
 		}
 		logs.Errorf(packageName, MSG_INSTANCE_FAILED, s.Id, s.Tag, s.Status, s.Current, errMsg)
+		if s.resilence != nil && s.resilence.IsEnd() {
+			done()
+		}
 	default:
 		logs.Logf(packageName, MSG_INSTANCE_STATUS, s.Id, s.Tag, s.Status, s.Current)
 	}
 
 	return s.save()
+}
+
+/**
+* newInstance
+* @param id string, tags et.Json
+* @return *Flow, error
+**/
+func (s *Flow) newInstance(id string, tags et.Json) *Flow {
+	id = utility.GenId(id)
+	result := *s
+	result.CreatedAt = utility.NowTime()
+	result.WorkerHost = workerHost
+	result.Id = id
+	result.Tags = tags
+	result.setStatus(FlowStatusPending)
+	return &result
+}
+
+/**
+* existInstance
+* @param id string
+* @return *Flow, error
+**/
+func (s *Flow) existInstance(id string) bool {
+	return cache.Exists(id)
+}
+
+/**
+* loadInstance
+* @param id string
+* @return *Flow, error
+**/
+func (s *Flow) loadInstance(id string) (*Flow, error) {
+	if !s.existInstance(id) {
+		return nil, fmt.Errorf(MSG_INSTANCE_NOT_FOUND)
+	}
+
+	source := &Flow{}
+	bt, err := json.Marshal(source)
+	if err != nil {
+		return nil, err
+	}
+
+	src, err := cache.Get(id, string(bt))
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.Unmarshal([]byte(src), &source)
+	if err != nil {
+		return nil, err
+	}
+
+	result := s.newInstance(id, source.Tags)
+	result.Current = source.Current
+	result.TotalAttempts = source.TotalAttempts
+	result.TimeAttempts = source.TimeAttempts
+	result.RetentionTime = source.RetentionTime
+	result.Ctxs = source.Ctxs
+	result.Results = source.Results
+	result.Rollbacks = source.Rollbacks
+	result.LastRollback = source.LastRollback
+	result.TpConsistency = source.TpConsistency
+	result.CreatedAt = source.CreatedAt
+	result.UpdatedAt = source.UpdatedAt
+	result.DoneAt = source.DoneAt
+	result.setCtx(source.Ctx)
+	result.setStatus(source.Status)
+
+	return result, nil
 }
 
 /**
@@ -210,9 +336,10 @@ func (s *Flow) regResult(result et.Json, err error) {
 		attempt = s.resilence.Attempt
 	}
 
+	ctx := s.Ctxs[s.Current].Clone()
 	s.Results[s.Current] = Result{
 		Step:    s.Current,
-		Ctx:     s.Ctx,
+		Ctx:     ctx,
 		Attempt: attempt,
 		Result:  result,
 		Error:   errMessage,
@@ -239,31 +366,6 @@ func (s *Flow) setResult(result et.Json, err error) {
 }
 
 /**
-* setGoto
-* @param step int
-**/
-func (s *Flow) setGoto(step int, message string) {
-	s.Current = step
-	s.setStatus(FlowStatusRunning)
-	logs.Logf(packageName, MSG_INSTANCE_GOTO, s.Id, s.Tag, step, message)
-}
-
-/**
-* cloneInstance
-* @param id string
-* @return *Flow, error
-**/
-func (s *Flow) cloneInstance(id string) *Flow {
-	id = utility.GenId(id)
-	result := *s
-	result.CreatedAt = utility.NowTime()
-	result.WorkerHost = workerHost
-	result.Id = id
-	result.setStatus(FlowStatusPending)
-	return &result
-}
-
-/**
 * setCtx
 * @param ctx et.Json
 **/
@@ -273,6 +375,33 @@ func (s *Flow) setCtx(ctx et.Json) et.Json {
 	}
 
 	return s.Ctx
+}
+
+/**
+* setCurrent
+* @param step int
+**/
+func (s *Flow) setCurrent(step int) {
+	s.Current = step
+	s.save()
+}
+
+/**
+* Next
+* @return error
+**/
+func (s *Flow) next() {
+	s.setCurrent(s.Current + 1)
+}
+
+/**
+* setGoto
+* @param step int
+**/
+func (s *Flow) setGoto(step int, message string) {
+	s.setCurrent(step)
+	s.setStatus(FlowStatusRunning)
+	logs.Logf(packageName, MSG_INSTANCE_GOTO, s.Id, s.Tag, step, message)
 }
 
 /**
@@ -292,7 +421,7 @@ func (s *Flow) run(ctx et.Json) (et.Json, error) {
 	ctx = s.setCtx(ctx)
 	for s.Current < len(s.Steps) {
 		step := s.Steps[s.Current]
-		s.Ctxs[s.Current] = ctx
+		s.Ctxs[s.Current] = ctx.Clone()
 		s.setStatus(FlowStatusRunning)
 		result, err = step.run(s, ctx)
 		if err != nil {
@@ -306,13 +435,24 @@ func (s *Flow) run(ctx et.Json) (et.Json, error) {
 		}
 
 		s.setResult(result, err)
+		if s.done {
+			s.next()
+			return result, nil
+		}
+
+		if s.goTo != -1 {
+			s.setCurrent(s.goTo)
+			s.goTo = -1
+			return result, nil
+		}
+
 		if step.Stop {
-			s.Current++
+			s.next()
 			return result, nil
 		}
 
 		if step.Expression == "" {
-			s.Current++
+			s.next()
 			continue
 		}
 
@@ -379,7 +519,7 @@ func (s *Flow) rollback(idx int) (et.Json, error) {
 			continue
 		}
 
-		ctx := s.Ctxs[i]
+		ctx := s.Ctxs[i].Clone()
 		result, err = step.rollbacks(s, ctx)
 		if err != nil {
 			attempt := 0
@@ -417,8 +557,26 @@ func (s *Flow) startResilence() bool {
 	}
 
 	description := fmt.Sprintf("flow: %s,  %s", s.Name, s.Description)
-	s.resilence = resilience.AddCustom(s.Id, s.Tag, description, s.TotalAttempts, s.TimeAttempts, s.RetentionTime, s.run, s.Ctx)
+	s.resilence = resilience.AddCustom(s.Id, s.Tag, description, s.TotalAttempts, s.TimeAttempts, s.RetentionTime, s.Tags, s.team, s.level, s.run, s.Ctx)
 	return true
+}
+
+/**
+* setConfig
+* @return error
+**/
+func (s *Flow) setConfig(format string, args ...any) {
+	event.Publish(EVENT_WORKFLOW_SET, FlowToJson(s))
+	logs.Logf(packageName, format, args...)
+}
+
+/**
+* Debug
+* @return *Flow
+**/
+func (s *Flow) Debug() *Flow {
+	s.isDebug = true
+	return s
 }
 
 /**
@@ -429,8 +587,7 @@ func (s *Flow) startResilence() bool {
 func (s *Flow) Step(name, description string, fn FnContext, stop bool) *Flow {
 	result, _ := newStep(name, description, fn, stop)
 	s.Steps = append(s.Steps, result)
-	event.Publish(EVENT_WORKFLOW_SET, s.ToJson())
-	logs.Logf(packageName, MSG_INSTANCE_STEP_CREATED, len(s.Steps)-1, name, s.Tag)
+	s.setConfig(MSG_INSTANCE_STEP_CREATED, len(s.Steps)-1, name, s.Tag)
 
 	return s
 }
@@ -444,7 +601,7 @@ func (s *Flow) Rollback(fn FnContext) *Flow {
 	n := len(s.Steps)
 	step := s.Steps[n-1]
 	step.rollbacks = fn
-	logs.Logf(packageName, MSG_INSTANCE_ROLLBACK_CREATED, n-1, step.Name, s.Tag)
+	s.setConfig(MSG_INSTANCE_ROLLBACK_CREATED, n-1, step.Name, s.Tag)
 
 	return s
 }
@@ -456,21 +613,38 @@ func (s *Flow) Rollback(fn FnContext) *Flow {
 **/
 func (s *Flow) Consistency(consistency TpConsistency) *Flow {
 	s.TpConsistency = consistency
-	logs.Logf(packageName, MSG_INSTANCE_CONSISTENCY, s.Tag, s.TpConsistency)
+	s.setConfig(MSG_INSTANCE_CONSISTENCY, s.Tag, s.TpConsistency)
 
 	return s
 }
 
 /**
 * Resilence
-* @param totalAttempts int, timeAttempts, retentionTime time.Duration
+* @param totalAttempts int, timeAttempts time.Duration
 * @return *Flow
 **/
-func (s *Flow) Resilence(totalAttempts int, timeAttempts, retentionTime time.Duration) *Flow {
+func (s *Flow) Resilence(totalAttempts int, timeAttempts time.Duration, team string, level string) *Flow {
 	s.TotalAttempts = totalAttempts
 	s.TimeAttempts = timeAttempts
+	retentionTime := time.Duration(s.TotalAttempts * int(timeAttempts))
+	if s.RetentionTime < retentionTime {
+		s.RetentionTime = retentionTime
+	}
+	s.team = team
+	s.level = level
+	s.setConfig(MSG_INSTANCE_RESILIENCE, s.Tag, totalAttempts, timeAttempts, retentionTime)
+
+	return s
+}
+
+/**
+* Retention
+* @param retentionTime time.Duration
+* @return *Flow
+**/
+func (s *Flow) Retention(retentionTime time.Duration) *Flow {
 	s.RetentionTime = retentionTime
-	logs.Logf(packageName, MSG_INSTANCE_RESILIENCE, s.Tag, totalAttempts, timeAttempts, retentionTime)
+	s.setConfig(MSG_INSTANCE_RETENTION, s.Tag, retentionTime)
 
 	return s
 }
@@ -484,20 +658,95 @@ func (s *Flow) IfElse(expression string, yesGoTo int, noGoTo int) *Flow {
 	n := len(s.Steps)
 	step := s.Steps[n-1]
 	step.IfElse(expression, yesGoTo, noGoTo)
-	logs.Logf(packageName, MSG_INSTANCE_IFELSE, n-1, step.Name, expression, yesGoTo, noGoTo, s.Tag)
+	s.setConfig(MSG_INSTANCE_IFELSE, n-1, step.Name, expression, yesGoTo, noGoTo, s.Tag)
 
 	return s
 }
 
 /**
 * Run
-* @param instanceId string, startId int, ctx et.Json
+* @param startId int, tags et.Json, ctx et.Json
 * @return et.Json, error
 **/
-func (s *Flow) Run(instanceId string, startId int, ctx et.Json) (et.Json, error) {
+func (s *Flow) Run(startId int, ctx et.Json) (et.Json, error) {
 	if s.workFlows == nil {
 		return et.Json{}, fmt.Errorf(MSG_INSTANCE_WORKFLOWS_IS_NIL)
 	}
 
-	return s.workFlows.Run(instanceId, s.Tag, startId, ctx)
+	if s.Id == "" {
+		return et.Json{}, fmt.Errorf(MSG_FLOW_NOT_INSTANCE)
+	}
+
+	return s.run(ctx)
+}
+
+/**
+* Continue
+* @param ctx et.Json
+* @return et.Json, error
+**/
+func (s *Flow) Continue(ctx et.Json) (et.Json, error) {
+	if s.workFlows == nil {
+		return et.Json{}, fmt.Errorf(MSG_INSTANCE_WORKFLOWS_IS_NIL)
+	}
+
+	if s.Id == "" {
+		return et.Json{}, fmt.Errorf(MSG_FLOW_NOT_INSTANCE)
+	}
+
+	s.setCurrent(s.Current)
+	return s.run(ctx)
+}
+
+/**
+* Stop
+* @return error
+**/
+func (s *Flow) Stop() error {
+	if s.workFlows == nil {
+		return fmt.Errorf(MSG_INSTANCE_WORKFLOWS_IS_NIL)
+	}
+
+	if s.Id == "" {
+		return fmt.Errorf(MSG_FLOW_NOT_INSTANCE)
+	}
+
+	s.Steps[s.Current].Stop = true
+	return nil
+}
+
+/**
+* Done
+* @return error
+**/
+func (s *Flow) Done() error {
+	if s.workFlows == nil {
+		return fmt.Errorf(MSG_INSTANCE_WORKFLOWS_IS_NIL)
+	}
+
+	if s.Id == "" {
+		return fmt.Errorf(MSG_FLOW_NOT_INSTANCE)
+	}
+
+	s.setStatus(FlowStatusDone)
+	return nil
+}
+
+/**
+* Goto
+* @param step int
+**/
+func (s *Flow) Goto(step int) error {
+	if s.workFlows == nil {
+		return fmt.Errorf(MSG_INSTANCE_WORKFLOWS_IS_NIL)
+	}
+
+	if s.Id == "" {
+		return fmt.Errorf(MSG_FLOW_NOT_INSTANCE)
+	}
+
+	s.goTo = step
+	s.setGoto(step, MSG_INSTANCE_GOTO_USER_DECISION)
+
+	return nil
 }

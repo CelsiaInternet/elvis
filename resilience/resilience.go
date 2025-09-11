@@ -21,18 +21,14 @@ type TpStore string
 type Status string
 
 const (
-	packageName                      = "resilience"
-	TpStoreCache             TpStore = "cache"
-	TpStoreMemory            TpStore = "memory"
-	StatusPending            Status  = "pending"
-	StatusRunning            Status  = "running"
-	StatusDone               Status  = "done"
-	StatusStop               Status  = "stop"
-	StatusFailed             Status  = "failed"
-	EVENT_RESILIENCE_STATUS          = "resilience:status"
-	EVENT_RESILIENCE_STOP            = "resilience:stop"
-	EVENT_RESILIENCE_RESTART         = "resilience:restart"
-	EVENT_RESILIENCE_FAILED          = "resilience:failed"
+	packageName           = "resilience"
+	TpStoreCache  TpStore = "cache"
+	TpStoreMemory TpStore = "memory"
+	StatusPending Status  = "pending"
+	StatusRunning Status  = "running"
+	StatusDone    Status  = "done"
+	StatusStop    Status  = "stop"
+	StatusFailed  Status  = "failed"
 )
 
 type Instance struct {
@@ -49,6 +45,9 @@ type Instance struct {
 	TotalAttempts int             `json:"total_attempts"`
 	TimeAttempts  time.Duration   `json:"time_attempts"`
 	RetentionTime time.Duration   `json:"retention_time"`
+	Tags          et.Json         `json:"tags"`
+	Team          string          `json:"team"`
+	Level         string          `json:"level"`
 	stop          bool            `json:"-"`
 	err           error           `json:"-"`
 	fn            interface{}     `json:"-"`
@@ -57,11 +56,64 @@ type Instance struct {
 }
 
 /**
+* Instance
+* @param id, tag, description string, totalAttempts int, timeAttempts, retentionTime time.Duration, tags et.Json, team string, level string, fn interface{}, fnArgs ...interface{}
+* @return Instance
+ */
+func NewInstance(id, tag, description string, totalAttempts int, timeAttempts, retentionTime time.Duration, tags et.Json, team string, level string, fn interface{}, fnArgs ...interface{}) *Instance {
+	id = utility.GenId(id)
+	result := &Instance{
+		CreatedAt:     time.Now(),
+		Id:            id,
+		Tag:           tag,
+		Description:   description,
+		fn:            fn,
+		fnArgs:        fnArgs,
+		fnResult:      []reflect.Value{},
+		TotalAttempts: totalAttempts,
+		TimeAttempts:  timeAttempts,
+		RetentionTime: retentionTime,
+		Tags:          tags,
+		Team:          team,
+		Level:         level,
+		stop:          false,
+	}
+	result.setStatus(StatusPending)
+
+	return result
+}
+
+/**
+* LoadById
+* @param id string
+* @return *Instance, error
+**/
+func LoadById(id string) (*Instance, error) {
+	exists := cache.Exists(id)
+	if !exists {
+		return nil, fmt.Errorf(MSG_INSTANCE_NOT_FOUND)
+	}
+
+	bt, err := cache.Get(id, "")
+	if err != nil {
+		return nil, err
+	}
+
+	var result Instance
+	err = json.Unmarshal([]byte(bt), &result)
+	if err != nil {
+		return nil, err
+	}
+
+	return &result, nil
+}
+
+/**
 * ToJson
 * @return et.Json
 **/
 func (s *Instance) ToJson() et.Json {
-	return et.Json{
+	result := et.Json{
 		"created_at":      s.CreatedAt,
 		"updated_at":      s.UpdatedAt,
 		"last_attempt_at": s.LastAttemptAt,
@@ -76,29 +128,10 @@ func (s *Instance) ToJson() et.Json {
 		"time_attempts":   s.TimeAttempts,
 		"retention_time":  s.RetentionTime,
 	}
-}
 
-/**
-* Instance
-* @param id, tag, description string, totalAttempts int, timeAttempts, retentionTime time.Duration, fn interface{}, fnArgs ...interface{}
-* @return Instance
- */
-func NewInstance(id, tag, description string, totalAttempts int, timeAttempts, retentionTime time.Duration, fn interface{}, fnArgs ...interface{}) *Instance {
-	id = utility.GenId(id)
-	result := &Instance{
-		CreatedAt:     time.Now(),
-		Id:            id,
-		Tag:           tag,
-		Description:   description,
-		fn:            fn,
-		fnArgs:        fnArgs,
-		fnResult:      []reflect.Value{},
-		TotalAttempts: totalAttempts,
-		TimeAttempts:  timeAttempts,
-		RetentionTime: retentionTime,
-		stop:          false,
+	for k, v := range s.Tags {
+		result[k] = v
 	}
-	result.setStatus(StatusPending)
 
 	return result
 }
@@ -138,31 +171,6 @@ func (s *Instance) save() error {
 }
 
 /**
-* loadById
-* @param id string
-* @return *Instance, error
-**/
-func loadById(id string) (*Instance, error) {
-	exists := cache.Exists(id)
-	if !exists {
-		return nil, fmt.Errorf(MSG_INSTANCE_NOT_FOUND)
-	}
-
-	bt, err := cache.Get(id, "")
-	if err != nil {
-		return nil, err
-	}
-
-	var result Instance
-	err = json.Unmarshal([]byte(bt), &result)
-	if err != nil {
-		return nil, err
-	}
-
-	return &result, nil
-}
-
-/**
 * SetStatus
 * @param status Status
 * @return error
@@ -185,7 +193,12 @@ func (s *Instance) setStatus(status Status) error {
 			errMsg = s.err.Error()
 		}
 		if s.Attempt == s.TotalAttempts {
-			logs.Logf(packageName, MSG_RESILIENCE_FINISHED_ERROR, s.Attempt, s.TotalAttempts, s.Id, s.Tag, s.Status, errMsg)
+			data := s.ToJson().Clone()
+			data.Set("team", s.Team)
+			data.Set("level", s.Level)
+			message := fmt.Sprintf(MSG_RESILIENCE_FINISHED_ERROR, s.Attempt, s.TotalAttempts, s.Id, s.Tag, s.Status, errMsg)
+			event.Publish(EVENT_RESILIENCE_FAILED, data)
+			logs.Logf(packageName, message)
 		} else {
 			logs.Logf(packageName, MSG_RESILIENCE_ERROR, s.Attempt, s.TotalAttempts, s.Id, s.Tag, s.Status, errMsg)
 		}
@@ -324,4 +337,12 @@ func (s *Instance) runAttempt() {
 **/
 func (s *Instance) IsFailed() bool {
 	return s.Status == StatusFailed && s.Attempt == s.TotalAttempts
+}
+
+/**
+* IsEnd
+* @return bool
+**/
+func (s *Instance) IsEnd() bool {
+	return s.Attempt == s.TotalAttempts
 }

@@ -687,11 +687,12 @@ const (
 const modelConfig = `package $1
 
 import (
+	"fmt"
+
 	"github.com/celsiainternet/elvis/config"
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/jrpc"
-	"github.com/celsiainternet/elvis/utility"
 )
 
 func LoadConfig() error {

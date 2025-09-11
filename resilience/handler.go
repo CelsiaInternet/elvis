@@ -63,15 +63,15 @@ func HealthCheck() bool {
 
 /**
 * AddCustom
-* @param id, tag, description string, totalAttempts int, timeAttempts, retentionTime time.Duration, fn interface{}, fnArgs ...interface{}
+* @param id, tag, description string, totalAttempts int, timeAttempts, retentionTime time.Duration, tags et.Json, team string, level string, fn interface{}, fnArgs ...interface{}
 * @return *Instance
  */
-func AddCustom(id, tag, description string, totalAttempts int, timeAttempts, retentionTime time.Duration, fn interface{}, fnArgs ...interface{}) *Instance {
+func AddCustom(id, tag, description string, totalAttempts int, timeAttempts, retentionTime time.Duration, tags et.Json, team string, level string, fn interface{}, fnArgs ...interface{}) *Instance {
 	if err := load(); err != nil {
 		return nil
 	}
 
-	result := NewInstance(id, tag, description, totalAttempts, timeAttempts, retentionTime, fn, fnArgs...)
+	result := NewInstance(id, tag, description, totalAttempts, timeAttempts, retentionTime, tags, team, level, fn, fnArgs...)
 	resilience[id] = result
 	result.runAttempt()
 
@@ -80,15 +80,15 @@ func AddCustom(id, tag, description string, totalAttempts int, timeAttempts, ret
 
 /**
 * Add
-* @param tag, description string, fn interface{}, fnArgs ...interface{}
+* @param tag, description string, tags et.Json, team string, level string, fn interface{}, fnArgs ...interface{}
 * @return *Instance
  */
-func Add(id, tag, description string, fn interface{}, fnArgs ...interface{}) *Instance {
+func Add(id, tag, description string, tags et.Json, team string, level string, fn interface{}, fnArgs ...interface{}) *Instance {
 	totalAttempts := envar.EnvarInt(3, "RESILIENCE_TOTAL_ATTEMPTS")
 	timeAttempts := envar.EnvarNumber(30, "RESILIENCE_TIME_ATTEMPTS")
 	retentionTime := envar.EnvarNumber(10, "RESILIENCE_RETENTION_TIME")
 
-	return AddCustom(id, tag, description, totalAttempts, time.Duration(timeAttempts)*time.Second, time.Duration(retentionTime)*time.Minute, fn, fnArgs...)
+	return AddCustom(id, tag, description, totalAttempts, time.Duration(timeAttempts)*time.Second, time.Duration(retentionTime)*time.Minute, tags, team, level, fn, fnArgs...)
 }
 
 /**
@@ -145,7 +145,7 @@ func HttpGetResilienceById(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := loadById(id)
+	res, err := LoadById(id)
 	if err != nil {
 		response.HTTPError(w, r, http.StatusNotFound, err.Error())
 		return

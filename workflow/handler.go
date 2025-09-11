@@ -46,38 +46,69 @@ func HealthCheck() bool {
 * @param tag, version, name, description string, fn FnContext, createdBy string
 * @return *Flow
 **/
-func New(tag, version, name, description string, fn FnContext, createdBy string) *Flow {
+func New(tag, version, name, description string, fn FnContext, stop bool, createdBy string) *Flow {
 	if err := Load(); err != nil {
 		return nil
 	}
 
-	return workFlows.NewFlow(tag, version, name, description, fn, createdBy)
+	return workFlows.NewFlow(tag, version, name, description, fn, stop, createdBy)
+}
+
+/**
+* Start
+* @param instanceId, tag string, startId int, tags et.Json, ctx et.Json
+* @return et.Json, error
+**/
+func Start(instanceId, tag string, startId int, tags et.Json, ctx et.Json) (et.Json, error) {
+	if err := Load(); err != nil {
+		return et.Json{}, err
+	}
+
+	return workFlows.Start(instanceId, tag, startId, tags, ctx)
 }
 
 /**
 * Run
-* @param instanceId, tag string, ctx et.Json
+* @param instanceId, tag string, startId int, tags et.Json, ctx et.Json
 * @return et.Json, error
 **/
-func Run(instanceId, tag string, startId int, ctx et.Json) (et.Json, error) {
+func Run(instanceId, tag string, startId int, tags et.Json, ctx et.Json) (et.Json, error) {
 	if err := Load(); err != nil {
 		return et.Json{}, err
 	}
 
-	return workFlows.Run(instanceId, tag, startId, ctx)
+	return workFlows.Run(instanceId, tag, startId, tags, ctx)
+}
+
+/**
+* Continue
+* @param instanceId, tag string, ctx et.Json
+* @return et.Json, error
+**/
+func Continue(instanceId, tag string, ctx et.Json) (et.Json, error) {
+	if err := Load(); err != nil {
+		return et.Json{}, err
+	}
+
+	result, err := workFlows.Continue(instanceId, tag, ctx)
+	if err != nil {
+		return et.Json{}, err
+	}
+
+	return result, nil
 }
 
 /**
 * Rollback
-* @param instanceId string
+* @param instanceId, tag string
 * @return et.Json, error
 **/
-func Rollback(instanceId string) (et.Json, error) {
+func Rollback(instanceId, tag string) (et.Json, error) {
 	if err := Load(); err != nil {
 		return et.Json{}, err
 	}
 
-	return workFlows.Rollback(instanceId)
+	return workFlows.Rollback(instanceId, tag)
 }
 
 /**

@@ -12,13 +12,6 @@ import (
 	"github.com/celsiainternet/elvis/strs"
 )
 
-const (
-	EVENT_SQL_ERROR   = "sql:error"
-	EVENT_SQL_QUERY   = "sql:query"
-	EVENT_SQL_DDL     = "sql:ddl"
-	EVENT_SQL_COMMAND = "sql:command"
-)
-
 /**
 * SQLQuote
 * @param sql string
@@ -84,16 +77,18 @@ func query(db *DB, sql string, args ...any) (*sql.Rows, error) {
 	rows, err := db.db.Query(sql, args...)
 	if err != nil {
 		event.Publish(EVENT_SQL_ERROR, et.Json{
-			"sql":   sql,
-			"args":  args,
-			"error": err.Error(),
+			"db_name": db.Dbname,
+			"sql":     sql,
+			"args":    args,
+			"error":   err.Error(),
 		})
 		return nil, fmt.Errorf(msg.ERR_SQL, err.Error(), sql)
 	}
 
 	event.Publish(EVENT_SQL_QUERY, et.Json{
-		"sql":  sql,
-		"args": args,
+		"db_name": db.Dbname,
+		"sql":     sql,
+		"args":    args,
 	})
 
 	return rows, nil
@@ -112,16 +107,18 @@ func ddl(db *DB, sql string, args ...any) error {
 	_, err := db.db.Exec(sql, args...)
 	if err != nil {
 		event.Publish(EVENT_SQL_ERROR, et.Json{
-			"sql":   sql,
-			"args":  args,
-			"error": err.Error(),
+			"db_name": db.Dbname,
+			"sql":     sql,
+			"args":    args,
+			"error":   err.Error(),
 		})
 		return fmt.Errorf(msg.ERR_SQL, err.Error(), sql)
 	}
 
 	event.Publish(EVENT_SQL_DDL, et.Json{
-		"sql":  sql,
-		"args": args,
+		"db_name": db.Dbname,
+		"sql":     sql,
+		"args":    args,
 	})
 
 	return nil
@@ -140,16 +137,18 @@ func command(db *DB, sql string, args ...any) (*sql.Rows, error) {
 	rows, err := db.db.Query(sql, args...)
 	if err != nil {
 		event.Publish(EVENT_SQL_ERROR, et.Json{
-			"sql":   sql,
-			"args":  args,
-			"error": err.Error(),
+			"db_name": db.Dbname,
+			"sql":     sql,
+			"args":    args,
+			"error":   err.Error(),
 		})
 		return nil, fmt.Errorf(msg.ERR_SQL, err.Error(), sql)
 	}
 
 	event.Publish(EVENT_SQL_COMMAND, et.Json{
-		"sql":  sql,
-		"args": args,
+		"db_name": db.Dbname,
+		"sql":     sql,
+		"args":    args,
 	})
 
 	return rows, nil

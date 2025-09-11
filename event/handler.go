@@ -14,12 +14,6 @@ import (
 )
 
 const QUEUE_STACK = "stack"
-const EVENT_LOG = "log"
-const EVENT_OVERFLOW = "requests:overflow"
-const EVENT_WORK = "event:worker"
-const EVENT_WORK_STATE = "event:worker:state"
-const EVENT_SUBSCRIBED = "event:subscribed"
-const EVENT_SOURCE = "event:source"
 
 /**
 * publish
@@ -38,6 +32,7 @@ func publish(channel string, data et.Json) error {
 		return err
 	}
 
+	conn.Publish(EVENT, dt)
 	return conn.Publish(msg.Channel, dt)
 }
 
