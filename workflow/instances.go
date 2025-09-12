@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/celsiainternet/elvis/cache"
-	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/event"
 	"github.com/celsiainternet/elvis/jdb"
@@ -177,15 +176,17 @@ func (s *Instance) setResult(result et.Json, err error) (et.Json, error) {
 	}
 	s.Results[s.Current] = res
 
-	key := fmt.Sprintf("workflow:result:%s", s.Id)
-	src, err := res.Serialize()
-	if err != nil {
-		console.ErrorF("WorkFlows.done, Error serializing result:%s", err.Error())
-	}
-	cache.Set(key, src, s.RetentionTime)
-	event.Publish(EVENT_WORKFLOW_RESULTS, res.ToJson())
-
 	return result, err
+}
+
+/**
+* setTags
+* @param tags et.Json
+**/
+func (s *Instance) setTags(tags et.Json) {
+	for k, v := range tags {
+		s.Tags[k] = v
+	}
 }
 
 /**

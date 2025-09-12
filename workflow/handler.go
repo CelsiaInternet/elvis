@@ -70,6 +70,19 @@ func Run(instanceId, tag string, startId int, tags et.Json, ctx et.Json, created
 }
 
 /**
+* Continue
+* @param instanceId string, tags et.Json, ctx et.Json, createdBy string
+* @return et.Json, error
+**/
+func Continue(instanceId string, tags et.Json, ctx et.Json, createdBy string) (et.Json, error) {
+	if err := Load(); err != nil {
+		return et.Json{}, err
+	}
+
+	return workFlows.goOn(instanceId, tags, ctx, createdBy)
+}
+
+/**
 * Rollback
 * @param instanceId string
 * @return et.Json, error

@@ -91,6 +91,17 @@ func main() {
 		}
 	}()
 
+	result, err := workflow.Continue("", et.Json{
+		"cedula": "91499023",
+	}, et.Json{
+		"test": "test",
+	}, "test")
+	if err != nil {
+		console.Error(err)
+	} else {
+		console.Debug("Result 2:", result.ToString())
+	}
+
 	// go func() {
 	// 	result, err := workflow.Run("", "ventas", 2, et.Json{
 	// 		"cedula": "91499023",

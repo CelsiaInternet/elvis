@@ -55,3 +55,47 @@ func loadResult(s string) (*Result, error) {
 
 	return &result, nil
 }
+
+type resultFn struct {
+	Result et.Json `json:"result"`
+	Error  error   `json:"error"`
+}
+
+/**
+* ToJson
+* @return et.Json
+**/
+func (s *resultFn) ToJson() et.Json {
+	return et.Json{
+		"result": s.Result,
+		"error":  s.Error,
+	}
+}
+
+/**
+* Serialize
+* @return string
+**/
+func (s *resultFn) Serialize() (string, error) {
+	bt, err := json.Marshal(s)
+	if err != nil {
+		return "", err
+	}
+
+	return string(bt), nil
+}
+
+/**
+* loadResultFn
+* @param s string
+* @return *resultFn
+**/
+func loadResultFn(s string) (*resultFn, error) {
+	var result resultFn
+	err := json.Unmarshal([]byte(s), &result)
+	if err != nil {
+		return nil, err
+	}
+
+	return &result, nil
+}

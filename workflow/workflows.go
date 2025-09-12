@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
 	"sync"
 	"time"
 
@@ -30,8 +31,7 @@ type Awaiting struct {
 	CreatedAt  time.Time     `json:"created_at"`
 	ExecutedAt time.Time     `json:"executed_at"`
 	Id         string        `json:"id"`
-	Tag        string        `json:"tag"`
-	fn         instanceFn    `json:"-"`
+	fn         interface{}   `json:"-"`
 	fnArgs     []interface{} `json:"-"`
 }
 
@@ -39,7 +39,6 @@ func (s *Awaiting) ToJson() et.Json {
 	return et.Json{
 		"created_at":  s.CreatedAt,
 		"id":          s.Id,
-		"tag":         s.Tag,
 		"args":        s.fnArgs,
 		"executed_at": s.ExecutedAt,
 	}
@@ -51,6 +50,7 @@ type WorkFlows struct {
 	LimitRequests int                  `json:"limit_requests"`
 	AwaitingList  []*Awaiting          `json:"awaiting_list"`
 	Results       map[string]et.Json   `json:"results"`
+	RetentionTime time.Duration        `json:"retention_time"`
 	count         int                  `json:"-"`
 	mu            sync.Mutex           `json:"-"`
 }
@@ -60,12 +60,14 @@ type WorkFlows struct {
 * @return *WorkFlows
 **/
 func newWorkFlows() *WorkFlows {
+	retentionTime := envar.GetInt(10, "WORKFLOW_RETENTION_TIME")
 	result := &WorkFlows{
 		Flows:         make(map[string]*Flow),
 		Instances:     make(map[string]*Instance),
-		LimitRequests: envar.GetInt(1, "WORKFLOW_LIMIT_REQUESTS"),
+		LimitRequests: envar.GetInt(0, "WORKFLOW_LIMIT_REQUESTS"),
 		AwaitingList:  make([]*Awaiting, 0),
 		Results:       make(map[string]et.Json),
+		RetentionTime: time.Duration(retentionTime) * time.Minute,
 		count:         0,
 		mu:            sync.Mutex{},
 	}
@@ -204,24 +206,37 @@ func (s *WorkFlows) loadInstance(id string) (*Instance, error) {
 }
 
 /**
-* runNextInstance
+* runNextInBackground
 **/
-func (s *WorkFlows) runNextInstance() (et.Json, error) {
+func (s *WorkFlows) runNextInBackground() {
 	if len(s.AwaitingList) == 0 {
-		return et.Json{}, nil
+		return
 	}
 
-	awaiting := s.AwaitingList[0]
+	req := s.AwaitingList[0]
 	s.AwaitingList = s.AwaitingList[1:]
-	logs.Logf(packageName, MSG_INSTANCE_RUN, awaiting.Id, awaiting.ToJson().ToString())
-	awaiting.ExecutedAt = time.Now()
-	args := awaiting.fnArgs
-	result, err := awaiting.fn(args[0].(string), args[1].(string), args[2].(int), args[3].(et.Json), args[4].(et.Json), args[5].(string))
-	if err != nil {
-		return et.Json{}, err
+	logs.Logf(packageName, MSG_INSTANCE_RUN, req.Id, req.ToJson().ToString())
+	req.ExecutedAt = timezone.NowTime()
+
+	argsValues := make([]reflect.Value, len(req.fnArgs))
+	for i, arg := range req.fnArgs {
+		argsValues[i] = reflect.ValueOf(arg)
 	}
 
-	return result, nil
+	fn := reflect.ValueOf(req.fn)
+	fnResult := fn.Call(argsValues)
+	res := &resultFn{
+		Result: fnResult[0].Interface().(et.Json),
+		Error:  fnResult[1].Interface().(error),
+	}
+
+	key := fmt.Sprintf("workflow:result:%s", req.Id)
+	src, err := res.Serialize()
+	if err != nil {
+		console.ErrorF("WorkFlows.done, Error serializing result:%s", err.Error())
+	}
+	cache.Set(key, src, s.RetentionTime)
+	event.Publish(EVENT_WORKFLOW_RESULTS, res.ToJson())
 }
 
 /**
@@ -255,16 +270,12 @@ func (s *WorkFlows) instanceRun(instanceId, tag string, startId int, tags, ctx e
 				return et.Json{}, err
 			}
 
-			result, err := loadResult(scr)
+			result, err := loadResultFn(scr)
 			if err != nil {
 				return et.Json{}, err
 			}
 
-			if result.Error != "" {
-				return et.Json{}, errors.New(result.Error)
-			}
-
-			return result.Result, nil
+			return result.Result, result.Error
 		}
 	}
 
@@ -273,6 +284,49 @@ func (s *WorkFlows) instanceRun(instanceId, tag string, startId int, tags, ctx e
 		return et.Json{}, err
 	}
 
+	result, err := instance.run(ctx)
+	if err != nil {
+		return et.Json{}, err
+	}
+
+	if instance.isDebug {
+		logs.Debugf("Flow instance:%s", instance.ToJson().ToString())
+	}
+
+	return result, err
+}
+
+/**
+* instanceGoOn
+* @param instanceId string, tags et.Json, ctx et.Json, createdBy string
+* @return et.Json, error
+**/
+func (s *WorkFlows) instanceGoOn(instanceId string, tags et.Json, ctx et.Json, createdBy string) (et.Json, error) {
+	s.instanceInc()
+	if instanceId != "" {
+		key := fmt.Sprintf("workflow:result:%s", instanceId)
+		if cache.Exists(key) {
+			scr, err := cache.Get(key, "")
+			if err != nil {
+				return et.Json{}, err
+			}
+
+			result, err := loadResultFn(scr)
+			if err != nil {
+				return et.Json{}, err
+			}
+
+			return result.Result, result.Error
+		}
+	}
+
+	instance, err := s.loadInstance(instanceId)
+	if err != nil {
+		return et.Json{}, err
+	}
+
+	instance.setTags(tags)
+	instance.setCtx(ctx)
 	result, err := instance.run(ctx)
 	if err != nil {
 		return et.Json{}, err
@@ -298,6 +352,25 @@ func (s *WorkFlows) newFlow(tag, version, name, description string, fn FnContext
 }
 
 /**
+* newAwaiting
+* @param instanceId string, fnArgs ...interface{}
+* @return *Awaiting
+**/
+func (s *WorkFlows) newAwaiting(instanceId string, fnArgs ...interface{}) (et.Json, error) {
+	instanceId = reg.GetUUID(instanceId)
+	awaiting := &Awaiting{
+		CreatedAt: time.Now(),
+		Id:        instanceId,
+		fn:        s.run,
+		fnArgs:    fnArgs,
+	}
+	s.AwaitingList = append(s.AwaitingList, awaiting)
+	event.Publish(EVENT_WORKFLOW_AWAITING, awaiting.ToJson())
+
+	return et.Json{}, fmt.Errorf(MSG_WORKFLOW_LIMIT_REQUESTS, instanceId)
+}
+
+/**
 * run
 * @param instanceId, tag string, startId int, tags, ctx et.Json, createdBy string
 * @return et.Json, error
@@ -307,7 +380,7 @@ func (s *WorkFlows) run(instanceId, tag string, startId int, tags, ctx et.Json, 
 		s.instanceDec()
 		delete(s.Instances, instanceId)
 		logs.Logf(packageName, MSG_WORKFLOW_DONE_INSTANCE, instanceId)
-		go s.runNextInstance()
+		go s.runNextInBackground()
 
 		return result, err
 	}
@@ -321,18 +394,34 @@ func (s *WorkFlows) run(instanceId, tag string, startId int, tags, ctx et.Json, 
 		return response(s.instanceRun(instanceId, tag, startId, tags, ctx, createdBy))
 	}
 
-	instanceId = reg.GetUUID(instanceId)
-	awaiting := &Awaiting{
-		CreatedAt: time.Now(),
-		Id:        instanceId,
-		Tag:       tag,
-		fn:        s.run,
-		fnArgs:    []interface{}{instanceId, tag, startId, tags, ctx, createdBy},
-	}
-	s.AwaitingList = append(s.AwaitingList, awaiting)
-	event.Publish(EVENT_WORKFLOW_AWAITING, awaiting.ToJson())
+	return s.newAwaiting(instanceId, []interface{}{instanceId, tag, startId, tags, ctx, createdBy})
+}
 
-	return et.Json{}, fmt.Errorf(MSG_WORKFLOW_LIMIT_REQUESTS, instanceId)
+/**
+* GoOn
+* @param instanceId string, tags et.Json, ctx et.Json, createdBy string
+* @return et.Json, error
+**/
+func (s *WorkFlows) goOn(instanceId string, tags et.Json, ctx et.Json, createdBy string) (et.Json, error) {
+	response := func(result et.Json, err error) (et.Json, error) {
+		s.instanceDec()
+		delete(s.Instances, instanceId)
+		logs.Logf(packageName, MSG_WORKFLOW_DONE_INSTANCE, instanceId)
+		go s.runNextInBackground()
+
+		return result, err
+	}
+
+	if s.LimitRequests == 0 {
+		return response(s.instanceGoOn(instanceId, tags, ctx, createdBy))
+	}
+
+	totalInstances := s.instanceCount()
+	if totalInstances < s.LimitRequests {
+		return response(s.instanceGoOn(instanceId, tags, ctx, createdBy))
+	}
+
+	return s.newAwaiting(instanceId, []interface{}{instanceId, tags, ctx, createdBy})
 }
 
 /**
