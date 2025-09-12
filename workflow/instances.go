@@ -31,6 +31,7 @@ type Instance struct {
 	UpdatedAt  time.Time            `json:"updated_at"`
 	Id         string               `json:"id"`
 	CreatedBy  string               `json:"created_by"`
+	Current    int                  `json:"current"`
 	Ctx        et.Json              `json:"ctx"`
 	Ctxs       map[int]et.Json      `json:"ctxs"`
 	Results    map[int]*Result      `json:"results"`
@@ -101,7 +102,6 @@ func (s *Instance) save() error {
 	event.Publish(EVENT_WORKFLOW_STATUS, s.ToJson())
 	bt, err := json.Marshal(s)
 	if err != nil {
-		console.Ping()
 		return err
 	}
 
@@ -110,25 +110,11 @@ func (s *Instance) save() error {
 	}
 	cache.Set(s.Id, string(bt), s.RetentionTime)
 
-	if !s.done {
-		return nil
+	if s.isDebug {
+		logs.Debugf(MSG_INSTANCE_DEBUG, s.Id, s.ToJson().ToString())
 	}
 
-	n := len(s.Results)
-	if n > 0 {
-		result := s.Results[n-1]
-		if result != nil {
-			key := fmt.Sprintf("workflow:result:%s", s.Id)
-			src, err := result.Serialize()
-			if err != nil {
-				console.ErrorF("WorkFlows.done, Error serializing result:%s", err.Error())
-			}
-			cache.Set(key, src, s.RetentionTime)
-			event.Publish(EVENT_WORKFLOW_RESULTS, result.ToJson())
-		}
-	}
-
-	return s.workFlows.doneInstance(s.Id)
+	return nil
 }
 
 /**
@@ -162,10 +148,6 @@ func (s *Instance) setStatus(status FlowStatus) error {
 		logs.Logf(packageName, MSG_INSTANCE_STATUS, s.Id, s.Tag, s.Status, s.Current)
 	}
 
-	if s.isDebug {
-		logs.Debugf(MSG_INSTANCE_DEBUG, s.Id, s.ToJson().ToString())
-	}
-
 	return s.save()
 }
 
@@ -186,13 +168,22 @@ func (s *Instance) setResult(result et.Json, err error) (et.Json, error) {
 		attempt = s.resilence.Attempt
 	}
 
-	s.Results[s.Current] = &Result{
+	res := &Result{
 		Step:    s.Current,
 		Ctx:     s.Ctx.Clone(),
 		Attempt: attempt,
 		Result:  result,
 		Error:   errMessage,
 	}
+	s.Results[s.Current] = res
+
+	key := fmt.Sprintf("workflow:result:%s", s.Id)
+	src, err := res.Serialize()
+	if err != nil {
+		console.ErrorF("WorkFlows.done, Error serializing result:%s", err.Error())
+	}
+	cache.Set(key, src, s.RetentionTime)
+	event.Publish(EVENT_WORKFLOW_RESULTS, res.ToJson())
 
 	return result, err
 }

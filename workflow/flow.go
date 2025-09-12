@@ -30,7 +30,6 @@ type Flow struct {
 	Version       string        `json:"version"`
 	Name          string        `json:"name"`
 	Description   string        `json:"description"`
-	Current       int           `json:"current"`
 	TotalAttempts int           `json:"total_attempts"`
 	TimeAttempts  time.Duration `json:"time_attempts"`
 	RetentionTime time.Duration `json:"retention_time"`
@@ -53,7 +52,6 @@ func newFlow(tag, version, name, description string, fn FnContext, stop bool, cr
 		Version:       version,
 		Name:          name,
 		Description:   description,
-		Current:       0,
 		TpConsistency: TpConsistencyEventual,
 		Steps:         make([]*Step, 0),
 		CreatedBy:     createdBy,

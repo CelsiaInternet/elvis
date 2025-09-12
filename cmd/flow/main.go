@@ -15,13 +15,11 @@ import (
 
 func main() {
 	workflow.New("ventas", "1.0.0", "Flujo de ventas", "flujo de ventas", func(flow *workflow.Instance, ctx et.Json) (et.Json, error) {
-		// LOGIACA DEL CONSULTA DE CLIENTES
+		console.Debug("Respuesta desde step 0, contexto:", ctx.ToString())
+		atrib := fmt.Sprintf("step_%d", flow.Current)
+		ctx.Set(atrib, "step0")
 
-		return et.Json{
-			"deuda":  100,
-			"existe": true,
-			"estado": "activo",
-		}, nil
+		return ctx, nil
 	}, false, "test").
 		Retention(10*time.Minute).
 		Resilence(3, 15*time.Second, "test", "1").
@@ -31,14 +29,15 @@ func main() {
 			ctx.Set(atrib, "step1")
 
 			// guardar en el Oss
-			flow.Done()
-			flow.Stop()
-			flow.Goto(2)
+			// flow.Done()
+			// flow.Stop()
+			// flow.Goto(2)
 
-			time.Sleep(5 * time.Second)
+			time.Sleep(3 * time.Second)
 
 			return ctx, nil
 		}, false).
+		IfElse("test == 'test'", 3, 2).
 		Step("Step 2", "Step 2", func(flow *workflow.Instance, ctx et.Json) (et.Json, error) {
 			console.Debug("Respuesta desde step 2, con este contexto:", ctx.ToString())
 			atrib := fmt.Sprintf("step_%d", flow.Current)
@@ -50,7 +49,7 @@ func main() {
 		}, true).
 		Rollback(func(flow *workflow.Instance, ctx et.Json) (et.Json, error) {
 			console.Debug("Respuesta desde rollback 2, con este contexto:", ctx.ToString())
-			atrib := fmt.Sprintf("step_%d", flow.Current)
+			atrib := fmt.Sprintf("rollback_%d", flow.Current)
 			ctx.Set(atrib, "step2")
 
 			return ctx, nil
@@ -63,6 +62,9 @@ func main() {
 			return ctx, nil
 		}, false)
 
+	console.Debug("")
+	console.Debug("")
+
 	go func() {
 		result, err := workflow.Run("", "ventas", 0, et.Json{
 			"cedula": "91499023",
@@ -71,9 +73,22 @@ func main() {
 		}, "test")
 		if err != nil {
 			console.Error(err)
+		} else {
+			console.Debug("Result 1:", result.ToString())
 		}
+	}()
 
-		console.Debug("Result 1:", result.ToString())
+	go func() {
+		result, err := workflow.Run("", "ventas", 2, et.Json{
+			"cedula": "91499023",
+		}, et.Json{
+			"test": "test",
+		}, "test")
+		if err != nil {
+			console.Error(err)
+		} else {
+			console.Debug("Result 2:", result.ToString())
+		}
 	}()
 
 	// go func() {
@@ -84,22 +99,9 @@ func main() {
 	// 	}, "test")
 	// 	if err != nil {
 	// 		console.Error(err)
+	// 	} else {
+	// 		console.Debug("Result:", result.ToString())
 	// 	}
-
-	// 	console.Debug("Result 2:", result.ToString())
-	// }()
-
-	// go func() {
-	// 	result, err := workflow.Run("", "ventas", 2, et.Json{
-	// 		"cedula": "91499023",
-	// 	}, et.Json{
-	// 		"test": "test",
-	// 	}, "test")
-	// 	if err != nil {
-	// 		console.Error(err)
-	// 	}
-
-	// 	console.Debug("Result:", result.ToString())
 	// }()
 
 	utility.AppWait()

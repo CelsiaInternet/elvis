@@ -31,7 +31,10 @@ const (
 	MSG_INSTANCE_RETENTION          = "Definida retencion Tag:%s retentionTime:%s"
 	MSG_INSTANCE_GOTO_USER_DECISION = "Por desicion del usuario"
 	MSG_WORKFLOW_DELETE             = "Workflow eliminado Tag:%s"
-	MSG_WORKFLOW_DONE_INSTANCE      = "Instancia finalizada:%s"
+	MSG_WORKFLOW_DONE_INSTANCE      = "Instancia terminada:%s"
 	MSG_WORKFLOW_LIMIT_REQUESTS     = "Límite de peticiones alcanzado, el proceso se pondra en espera para ejecusión, instanceId:%s"
+	MSG_INSTANCE_RUN                = "Run instance:%s, flow:%s"
+	MSG_INSTANCE_INSTANCE_INC       = "WorkFlows.instanceInc totalInstances:%d limitRequests:%d"
+	MSG_INSTANCE_INSTANCE_DEC       = "WorkFlows.instanceDec totalInstances:%d limitRequests:%d"
 	MSG_INSTANCE_EVALUATE           = "error al evaluar expresion:%s, error:%s"
 )

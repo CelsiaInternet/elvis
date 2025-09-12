@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/celsiainternet/elvis/cache"
+	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/event"
@@ -43,19 +45,14 @@ func (s *Awaiting) ToJson() et.Json {
 	}
 }
 
-type command struct {
-	action string
-	resp   chan int
-}
-
 type WorkFlows struct {
 	Flows         map[string]*Flow     `json:"flows"`
 	Instances     map[string]*Instance `json:"instances"`
 	LimitRequests int                  `json:"limit_requests"`
 	AwaitingList  []*Awaiting          `json:"awaiting_list"`
 	Results       map[string]et.Json   `json:"results"`
-	retentionTime time.Duration        `json:"-"`
-	count         chan command         `json:"-"`
+	count         int                  `json:"-"`
+	mu            sync.Mutex           `json:"-"`
 }
 
 /**
@@ -69,10 +66,9 @@ func newWorkFlows() *WorkFlows {
 		LimitRequests: envar.GetInt(1, "WORKFLOW_LIMIT_REQUESTS"),
 		AwaitingList:  make([]*Awaiting, 0),
 		Results:       make(map[string]et.Json),
-		retentionTime: 100 * time.Millisecond,
-		count:         make(chan command),
+		count:         0,
+		mu:            sync.Mutex{},
 	}
-	go result.initCount()
 
 	return result
 }
@@ -91,36 +87,36 @@ func (s *WorkFlows) healthCheck() bool {
 }
 
 /**
-* initCount
-* @return int
+* instanceInc
 **/
-func (s *WorkFlows) initCount() {
-	val := 0
-	for cmd := range s.count {
-		switch cmd.action {
-		case "set":
-			val = len(s.Instances)
-		case "get":
-			cmd.resp <- val
-		}
-	}
+func (s *WorkFlows) instanceInc() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.count++
+	console.DebugF(MSG_INSTANCE_INSTANCE_INC, s.count, s.LimitRequests)
 }
 
 /**
-* countSet
+* instanceDec
 **/
-func (s *WorkFlows) countSet() {
-	s.count <- command{action: "set"}
+func (s *WorkFlows) instanceDec() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.count--
+	console.DebugF(MSG_INSTANCE_INSTANCE_DEC, s.count, s.LimitRequests)
 }
 
 /**
-* countGet
+* instanceCount
 * @return int
 **/
-func (s *WorkFlows) countGet() int {
-	resp := make(chan int)
-	s.count <- command{action: "get", resp: resp}
-	return <-resp
+func (s *WorkFlows) instanceCount() int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	return s.count
 }
 
 /**
@@ -146,6 +142,7 @@ func (s *WorkFlows) newInstance(tag, id string, tags et.Json, startId int, creat
 		UpdatedAt:  now,
 		Id:         id,
 		CreatedBy:  createdBy,
+		Current:    startId,
 		Ctx:        et.Json{},
 		Ctxs:       make(map[int]et.Json),
 		Results:    make(map[int]*Result),
@@ -154,10 +151,8 @@ func (s *WorkFlows) newInstance(tag, id string, tags et.Json, startId int, creat
 		goTo:       -1,
 		WorkerHost: workerHost,
 	}
-	result.Current = startId
 	result.setStatus(FlowStatusPending)
 	s.Instances[id] = result
-	s.countSet()
 
 	return result, nil
 }
@@ -204,39 +199,29 @@ func (s *WorkFlows) loadInstance(id string) (*Instance, error) {
 	result.Flow = flow
 	result.setStatus(result.Status)
 	s.Instances[id] = result
-	s.countSet()
 
 	return result, nil
 }
 
 /**
-* doneInstance
-* @param id string
-* @return error
+* runNextInstance
 **/
-func (s *WorkFlows) doneInstance(id string) error {
-	if id == "" {
-		return fmt.Errorf(MSG_INSTANCE_ID_REQUIRED)
-	}
-
-	time.AfterFunc(s.retentionTime, func() {
-		delete(s.Instances, id)
-		s.countSet()
-		logs.Logf(packageName, MSG_WORKFLOW_DONE_INSTANCE, id)
-	})
-
+func (s *WorkFlows) runNextInstance() (et.Json, error) {
 	if len(s.AwaitingList) == 0 {
-		return nil
+		return et.Json{}, nil
 	}
 
 	awaiting := s.AwaitingList[0]
-	awaiting.ExecutedAt = time.Now()
 	s.AwaitingList = s.AwaitingList[1:]
+	logs.Logf(packageName, MSG_INSTANCE_RUN, awaiting.Id, awaiting.ToJson().ToString())
+	awaiting.ExecutedAt = time.Now()
 	args := awaiting.fnArgs
-	go awaiting.fn(args[0].(string), args[1].(string), args[2].(int), args[3].(et.Json), args[4].(et.Json), args[5].(string))
-	logs.Logf(packageName, "Run instance:%s, flow:%s", awaiting.Id, awaiting.ToJson().ToString())
+	result, err := awaiting.fn(args[0].(string), args[1].(string), args[2].(int), args[3].(et.Json), args[4].(et.Json), args[5].(string))
+	if err != nil {
+		return et.Json{}, err
+	}
 
-	return nil
+	return result, nil
 }
 
 /**
@@ -261,6 +246,28 @@ func (s *WorkFlows) getOrCreateInstance(id, tag string, startId int, tags et.Jso
 * @return et.Json, error
 **/
 func (s *WorkFlows) instanceRun(instanceId, tag string, startId int, tags, ctx et.Json, createdBy string) (et.Json, error) {
+	s.instanceInc()
+	if instanceId != "" {
+		key := fmt.Sprintf("workflow:result:%s", instanceId)
+		if cache.Exists(key) {
+			scr, err := cache.Get(key, "")
+			if err != nil {
+				return et.Json{}, err
+			}
+
+			result, err := loadResult(scr)
+			if err != nil {
+				return et.Json{}, err
+			}
+
+			if result.Error != "" {
+				return et.Json{}, errors.New(result.Error)
+			}
+
+			return result.Result, nil
+		}
+	}
+
 	instance, err := s.getOrCreateInstance(instanceId, tag, startId, tags, createdBy)
 	if err != nil {
 		return et.Json{}, err
@@ -296,34 +303,22 @@ func (s *WorkFlows) newFlow(tag, version, name, description string, fn FnContext
 * @return et.Json, error
 **/
 func (s *WorkFlows) run(instanceId, tag string, startId int, tags, ctx et.Json, createdBy string) (et.Json, error) {
-	if instanceId != "" {
-		key := fmt.Sprintf("workflow:result:%s", instanceId)
-		if cache.Exists(key) {
-			scr, err := cache.Get(key, "")
-			if err != nil {
-				return et.Json{}, err
-			}
+	response := func(result et.Json, err error) (et.Json, error) {
+		s.instanceDec()
+		delete(s.Instances, instanceId)
+		logs.Logf(packageName, MSG_WORKFLOW_DONE_INSTANCE, instanceId)
+		go s.runNextInstance()
 
-			result, err := loadResult(scr)
-			if err != nil {
-				return et.Json{}, err
-			}
-
-			if result.Error != "" {
-				return et.Json{}, errors.New(result.Error)
-			}
-
-			return result.Result, nil
-		}
+		return result, err
 	}
 
 	if s.LimitRequests == 0 {
-		return s.instanceRun(instanceId, tag, startId, tags, ctx, createdBy)
+		return response(s.instanceRun(instanceId, tag, startId, tags, ctx, createdBy))
 	}
 
-	totalInstances := s.countGet()
+	totalInstances := s.instanceCount()
 	if totalInstances < s.LimitRequests {
-		return s.instanceRun(instanceId, tag, startId, tags, ctx, createdBy)
+		return response(s.instanceRun(instanceId, tag, startId, tags, ctx, createdBy))
 	}
 
 	instanceId = reg.GetUUID(instanceId)
@@ -332,7 +327,7 @@ func (s *WorkFlows) run(instanceId, tag string, startId int, tags, ctx et.Json, 
 		Id:        instanceId,
 		Tag:       tag,
 		fn:        s.run,
-		fnArgs:    []interface{}{instanceId, tag, startId, tags, ctx},
+		fnArgs:    []interface{}{instanceId, tag, startId, tags, ctx, createdBy},
 	}
 	s.AwaitingList = append(s.AwaitingList, awaiting)
 	event.Publish(EVENT_WORKFLOW_AWAITING, awaiting.ToJson())
@@ -386,9 +381,7 @@ func (s *WorkFlows) deleteFlow(tag string) bool {
 
 	flow := s.Flows[tag]
 	event.Publish(EVENT_WORKFLOW_DELETE, flow.ToJson())
-	time.AfterFunc(s.retentionTime, func() {
-		delete(s.Flows, tag)
-	})
+	delete(s.Flows, tag)
 
 	return true
 }
