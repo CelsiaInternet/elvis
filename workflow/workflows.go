@@ -327,6 +327,7 @@ func (s *WorkFlows) instanceGoOn(instanceId string, tags et.Json, ctx et.Json, c
 
 	instance.setTags(tags)
 	instance.setCtx(ctx)
+	instance.CreatedBy = createdBy
 	result, err := instance.run(ctx)
 	if err != nil {
 		return et.Json{}, err
