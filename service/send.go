@@ -6,6 +6,7 @@ import (
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/event"
 	"github.com/celsiainternet/elvis/msg"
+	"github.com/celsiainternet/elvis/reg"
 	"github.com/celsiainternet/elvis/utility"
 )
 
@@ -15,7 +16,7 @@ import (
 * @response et.Json
 **/
 func SendSms(project_id, service_id string, contactNumbers []string, content string, params []et.Json, tp TpMessage, clientId string) et.Json {
-	service_id = utility.GenId(service_id)
+	service_id = reg.GetUUID(service_id)
 	result := event.Work("send/sms", et.Json{
 		"project_id":      project_id,
 		"service_id":      service_id,
@@ -36,7 +37,7 @@ func SendSms(project_id, service_id string, contactNumbers []string, content str
 * @response et.Json
 **/
 func SendWhatsapp(project_id, service_id string, template_id int, contactNumbers []string, params []et.Json, tp TpMessage, clientId string) et.Json {
-	service_id = utility.GenId(service_id)
+	service_id = reg.GetUUID(service_id)
 	result := event.Work("send/whatsapp", et.Json{
 		"project_id":      project_id,
 		"service_id":      service_id,
@@ -57,7 +58,7 @@ func SendWhatsapp(project_id, service_id string, template_id int, contactNumbers
 * @response et.Json
 **/
 func SendEmail(project_id, service_id string, to []et.Json, subject string, html_content string, params []et.Json, tp TpMessage, clientId string) et.Json {
-	service_id = utility.GenId(service_id)
+	service_id = reg.GetUUID(service_id)
 	result := event.Work("send/email", et.Json{
 		"project_id":   project_id,
 		"service_id":   service_id,

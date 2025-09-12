@@ -11,6 +11,7 @@ import (
 	"github.com/celsiainternet/elvis/event"
 	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/mem"
+	"github.com/celsiainternet/elvis/reg"
 	"github.com/celsiainternet/elvis/utility"
 )
 
@@ -61,7 +62,7 @@ type Instance struct {
 * @return Instance
  */
 func NewInstance(id, tag, description string, totalAttempts int, timeAttempts, retentionTime time.Duration, tags et.Json, team string, level string, fn interface{}, fnArgs ...interface{}) *Instance {
-	id = utility.GenId(id)
+	id = reg.GetUUID(id)
 	result := &Instance{
 		CreatedAt:     time.Now(),
 		Id:            id,

@@ -15,6 +15,32 @@ var (
 )
 
 /**
+* instanceAdd
+* @param instance *Flow
+* @return int
+**/
+func (s *WorkFlows) instanceAdd(instance *Flow) {
+	s.Instances[instance.Id] = instance
+}
+
+/**
+* instanceRemove
+* @param instanceId string
+* @return int
+**/
+func (s *WorkFlows) instanceRemove(instanceId string) {
+	delete(s.Instances, instanceId)
+}
+
+/**
+* instanceCount
+* @return int
+**/
+func (s *WorkFlows) instanceCount() int {
+	return len(s.Instances)
+}
+
+/**
 * existInstance
 * @param id, tag string
 * @return bool, error
@@ -24,7 +50,7 @@ func (s *WorkFlows) existInstance(id, tag string) (bool, error) {
 		return false, fmt.Errorf(MSG_FLOW_NOT_FOUND)
 	}
 
-	if s.Instance[id] != nil {
+	if s.Instances[id] != nil {
 		return true, nil
 	}
 
@@ -45,7 +71,7 @@ func (s *WorkFlows) createInstance(id, tag string, startId int, tags et.Json) (*
 
 	result := s.Flows[tag].newInstance(id, tags)
 	result.setCurrent(startId)
-	s.Instance[result.Id] = result
+	s.instanceAdd(result)
 
 	return result, nil
 }
@@ -68,7 +94,7 @@ func (s *WorkFlows) getInstance(id, tag string) (*Flow, error) {
 		return nil, err
 	}
 
-	s.Instance[id] = result
+	s.instanceAdd(result)
 	logs.Logf(packageName, MSG_INSTANCE_LOAD, id, result.Tag, result.Current)
 
 	return result, nil
@@ -79,7 +105,7 @@ func (s *WorkFlows) getInstance(id, tag string) (*Flow, error) {
 * @param id, tag string, tags et.Json
 * @return *Flow, error
 **/
-func (s *WorkFlows) getOrCreateInstance(id, tag string, tags et.Json) (*Flow, error) {
+func (s *WorkFlows) getOrCreateInstance(id, tag string, startId int, tags et.Json) (*Flow, error) {
 	id = reg.GetUUID(id)
 	if exist, err := s.existInstance(id, tag); err != nil {
 		return nil, err
@@ -87,5 +113,5 @@ func (s *WorkFlows) getOrCreateInstance(id, tag string, tags et.Json) (*Flow, er
 		return s.getInstance(id, tag)
 	}
 
-	return s.createInstance(id, tag, 0, tags)
+	return s.createInstance(id, tag, startId, tags)
 }

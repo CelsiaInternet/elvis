@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	test := workflow.New("ventas", "1.0.0", "Flujo de ventas", "flujo de ventas", func(flow *workflow.Flow, ctx et.Json) (et.Json, error) {
+	workflow.New("ventas", "1.0.0", "Flujo de ventas", "flujo de ventas", func(flow *workflow.Flow, ctx et.Json) (et.Json, error) {
 		// LOGIACA DEL CONSULTA DE CLIENTES
 
 		return et.Json{
@@ -22,8 +22,7 @@ func main() {
 			"estado": "activo",
 		}, nil
 	}, false, "test").
-		Debug().
-		Retention(24*time.Hour).
+		Retention(10*time.Minute).
 		Resilence(3, 15*time.Second, "test", "1").
 		Step("Step 1", "Step 1", func(flow *workflow.Flow, ctx et.Json) (et.Json, error) {
 			console.Debug("Respuesta desde step 1, contexto:", ctx.ToString())
@@ -34,6 +33,8 @@ func main() {
 			// flow.Done()
 			// flow.Stop()
 			// flow.Goto(2)
+
+			time.Sleep(5 * time.Second)
 
 			return ctx, nil
 		}, false).
@@ -61,18 +62,46 @@ func main() {
 			return ctx, nil
 		}, false)
 
-	console.Debug("Flow:", workflow.FlowToJson(test).ToString())
+	// console.Debug("Flow:", workflow.FlowToJson(test).ToString())
 
-	result, err := workflow.Run("", "ventas", 0, et.Json{
-		"cedula": "91499023",
-	}, et.Json{
-		"test": "test",
-	})
-	if err != nil {
-		console.Error(err)
-	}
+	go func() {
+		result, err := workflow.Run("", "ventas", 0, et.Json{
+			"cedula": "91499023",
+		}, et.Json{
+			"test": "test",
+		})
+		if err != nil {
+			console.Error(err)
+		}
 
-	console.Debug("Result:", result.ToString())
+		console.Debug("Result 1:", result.ToString())
+	}()
+
+	go func() {
+		result, err := workflow.Run("", "ventas", 2, et.Json{
+			"cedula": "91499023",
+		}, et.Json{
+			"test": "test",
+		})
+		if err != nil {
+			console.Error(err)
+		}
+
+		console.Debug("Result 2:", result.ToString())
+	}()
+
+	// go func() {
+	// 	result, err := workflow.Run("", "ventas", 2, et.Json{
+	// 		"cedula": "91499023",
+	// 	}, et.Json{
+	// 		"test": "test",
+	// 	})
+	// 	if err != nil {
+	// 		console.Error(err)
+	// 	}
+
+	// 	console.Debug("Result:", result.ToString())
+	// }()
 
 	utility.AppWait()
 

@@ -7,10 +7,12 @@ import (
 	"time"
 
 	"github.com/celsiainternet/elvis/cache"
+	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/event"
 	"github.com/celsiainternet/elvis/jdb"
 	"github.com/celsiainternet/elvis/logs"
+	"github.com/celsiainternet/elvis/reg"
 	"github.com/celsiainternet/elvis/resilience"
 	"github.com/celsiainternet/elvis/utility"
 )
@@ -43,6 +45,48 @@ type Result struct {
 	Error   string  `json:"error"`
 }
 
+/**
+* ToJson
+* @return et.Json
+**/
+func (s *Result) ToJson() et.Json {
+	return et.Json{
+		"step":    s.Step,
+		"ctx":     s.Ctx,
+		"attempt": s.Attempt,
+		"result":  s.Result,
+		"error":   s.Error,
+	}
+}
+
+/**
+* Serialize
+* @return string
+**/
+func (s *Result) Serialize() (string, error) {
+	bt, err := json.Marshal(s)
+	if err != nil {
+		return "", err
+	}
+
+	return string(bt), nil
+}
+
+/**
+* loadResult
+* @param s string
+* @return *Result
+**/
+func loadResult(s string) (*Result, error) {
+	var result Result
+	err := json.Unmarshal([]byte(s), &result)
+	if err != nil {
+		return nil, err
+	}
+
+	return &result, nil
+}
+
 type Flow struct {
 	Tag           string               `json:"tag"`
 	Version       string               `json:"version"`
@@ -55,8 +99,8 @@ type Flow struct {
 	Ctx           et.Json              `json:"ctx"`
 	Steps         []*Step              `json:"steps"`
 	Ctxs          map[int]et.Json      `json:"ctxs"`
-	Results       map[int]Result       `json:"results"`
-	Rollbacks     map[int]Result       `json:"rollbacks"`
+	Results       map[int]*Result      `json:"results"`
+	Rollbacks     map[int]*Result      `json:"rollbacks"`
 	LastRollback  int                  `json:"last_rollback"`
 	TpConsistency TpConsistency        `json:"tp_consistency"`
 	Id            string               `json:"id"`
@@ -93,8 +137,8 @@ func newFlow(workFlows *WorkFlows, tag, version, name, description string, fn Fn
 		Steps:         make([]*Step, 0),
 		Ctx:           et.Json{},
 		Ctxs:          make(map[int]et.Json),
-		Results:       make(map[int]Result),
-		Rollbacks:     make(map[int]Result),
+		Results:       make(map[int]*Result),
+		Rollbacks:     make(map[int]*Result),
 		LastRollback:  -1,
 		CreatedBy:     createdBy,
 		Tags:          et.Json{},
@@ -193,6 +237,7 @@ func (s *Flow) save() error {
 	event.Publish(EVENT_WORKFLOW_STATUS, s.ToJson())
 	bt, err := json.Marshal(s)
 	if err != nil {
+		console.Ping()
 		return err
 	}
 
@@ -201,6 +246,10 @@ func (s *Flow) save() error {
 	}
 
 	cache.Set(s.Id, string(bt), s.RetentionTime)
+
+	if s.workFlows != nil && s.done {
+		s.workFlows.done(s.Id)
+	}
 
 	return nil
 }
@@ -215,12 +264,6 @@ func (s *Flow) setStatus(status FlowStatus) error {
 		return nil
 	}
 
-	done := func() {
-		if s.workFlows != nil {
-			s.workFlows.Done(s.Id)
-		}
-	}
-
 	s.Status = status
 	s.UpdatedAt = utility.NowTime()
 
@@ -231,7 +274,6 @@ func (s *Flow) setStatus(status FlowStatus) error {
 	if s.Status == FlowStatusDone {
 		s.DoneAt = s.UpdatedAt
 		s.done = true
-		done()
 	}
 
 	switch s.Status {
@@ -242,7 +284,7 @@ func (s *Flow) setStatus(status FlowStatus) error {
 		}
 		logs.Errorf(packageName, MSG_INSTANCE_FAILED, s.Id, s.Tag, s.Status, s.Current, errMsg)
 		if s.resilence != nil && s.resilence.IsEnd() {
-			done()
+			s.done = true
 		}
 	default:
 		logs.Logf(packageName, MSG_INSTANCE_STATUS, s.Id, s.Tag, s.Status, s.Current)
@@ -257,7 +299,7 @@ func (s *Flow) setStatus(status FlowStatus) error {
 * @return *Flow, error
 **/
 func (s *Flow) newInstance(id string, tags et.Json) *Flow {
-	id = utility.GenId(id)
+	id = reg.GetUUID(id)
 	result := *s
 	result.CreatedAt = utility.NowTime()
 	result.WorkerHost = workerHost
@@ -338,32 +380,13 @@ func (s *Flow) regResult(result et.Json, err error) {
 	}
 
 	ctx := s.Ctxs[s.Current].Clone()
-	s.Results[s.Current] = Result{
+	s.Results[s.Current] = &Result{
 		Step:    s.Current,
 		Ctx:     ctx,
 		Attempt: attempt,
 		Result:  result,
 		Error:   errMessage,
 	}
-}
-
-/**
-* setFailed
-* @param result et.Json, err error
-**/
-func (s *Flow) setFailed(result et.Json, err error) {
-	s.regResult(result, err)
-	s.setStatus(FlowStatusFailed)
-}
-
-/**
-* setResult
-* @param result et.Json, err error
-**/
-func (s *Flow) setResult(result et.Json, err error) {
-	s.regResult(result, err)
-	s.setCtx(result)
-	s.save()
 }
 
 /**
@@ -384,25 +407,70 @@ func (s *Flow) setCtx(ctx et.Json) et.Json {
 **/
 func (s *Flow) setCurrent(step int) {
 	s.Current = step
-	s.save()
+	s.setStatus(s.Status)
+}
+
+/**
+* setGoto
+* @param step int, result et.Json, err error
+* @return et.Json, error
+**/
+func (s *Flow) setGoto(step int, message string, result et.Json, err error) {
+	s.regResult(result, err)
+	s.setCurrent(step)
+	s.goTo = step
+	s.setStatus(FlowStatusRunning)
+	logs.Logf(packageName, MSG_INSTANCE_GOTO, s.Id, s.Tag, step, message)
 }
 
 /**
 * Next
 * @return error
 **/
-func (s *Flow) next() {
+func (s *Flow) setNext(result et.Json, err error) {
+	s.regResult(result, err)
 	s.setCurrent(s.Current + 1)
+	s.setStatus(s.Status)
 }
 
 /**
-* setGoto
-* @param step int
+* setFailed
+* @param result et.Json, err error
 **/
-func (s *Flow) setGoto(step int, message string) {
-	s.setCurrent(step)
-	s.setStatus(FlowStatusRunning)
-	logs.Logf(packageName, MSG_INSTANCE_GOTO, s.Id, s.Tag, step, message)
+func (s *Flow) setFailed(result et.Json, err error) (et.Json, error) {
+	s.regResult(result, err)
+	s.setStatus(FlowStatusFailed)
+
+	return result, err
+}
+
+/**
+* setDone
+* @param result et.Json, err error
+* @return et.Json, error
+**/
+func (s *Flow) setDone(result et.Json, err error) (et.Json, error) {
+	s.regResult(result, err)
+	s.setCurrent(s.Current + 1)
+	s.setCtx(result)
+	s.setStatus(FlowStatusDone)
+
+	return result, err
+}
+
+/**
+* setStop
+* @param result et.Json, err error
+* @return et.Json, error
+**/
+func (s *Flow) setStop(result et.Json, err error) (et.Json, error) {
+	s.regResult(result, err)
+	s.setCurrent(s.Current + 1)
+	s.setCtx(result)
+	s.done = true
+	s.setStatus(FlowStatusPending)
+
+	return result, err
 }
 
 /**
@@ -435,25 +503,22 @@ func (s *Flow) run(ctx et.Json) (et.Json, error) {
 			return result, err
 		}
 
-		s.setResult(result, err)
+		if step.Stop {
+			return s.setStop(result, err)
+		}
+
 		if s.done {
-			s.next()
-			return result, nil
+			s.setNext(result, err)
+			continue
 		}
 
 		if s.goTo != -1 {
-			s.setCurrent(s.goTo)
-			s.goTo = -1
-			return result, nil
-		}
-
-		if step.Stop {
-			s.next()
-			return result, nil
+			s.setGoto(s.goTo, MSG_INSTANCE_GOTO_USER_DECISION, result, err)
+			continue
 		}
 
 		if step.Expression == "" {
-			s.next()
+			s.setNext(result, err)
 			continue
 		}
 
@@ -469,15 +534,13 @@ func (s *Flow) run(ctx et.Json) (et.Json, error) {
 		}
 
 		if ok {
-			s.setGoto(step.YesGoTo, MSG_INSTANCE_EXPRESSION_TRUE)
+			s.setGoto(step.YesGoTo, MSG_INSTANCE_EXPRESSION_TRUE, result, err)
 		} else {
-			s.setGoto(step.NoGoTo, MSG_INSTANCE_EXPRESSION_FALSE)
+			s.setGoto(step.NoGoTo, MSG_INSTANCE_EXPRESSION_FALSE, result, err)
 		}
 	}
 
-	s.setStatus(FlowStatusDone)
-
-	return result, err
+	return s.setDone(result, err)
 }
 
 /**
@@ -527,7 +590,7 @@ func (s *Flow) rollback(idx int) (et.Json, error) {
 			if s.resilence != nil {
 				attempt = s.resilence.Attempt
 			}
-			s.Rollbacks[i] = Result{
+			s.Rollbacks[i] = &Result{
 				Step:    i,
 				Ctx:     ctx,
 				Attempt: attempt,
@@ -560,6 +623,25 @@ func (s *Flow) startResilence() bool {
 	description := fmt.Sprintf("flow: %s,  %s", s.Name, s.Description)
 	s.resilence = resilience.AddCustom(s.Id, s.Tag, description, s.TotalAttempts, s.TimeAttempts, s.RetentionTime, s.Tags, s.team, s.level, s.run, s.Ctx)
 	return true
+}
+
+/**
+* stop
+* @return error
+**/
+func (s *Flow) stop() error {
+	if s.workFlows == nil {
+		return fmt.Errorf(MSG_INSTANCE_WORKFLOWS_IS_NIL)
+	}
+
+	if s.Id == "" {
+		return fmt.Errorf(MSG_FLOW_NOT_INSTANCE)
+	}
+
+	s.Steps[s.Current].Stop = true
+	s.setStatus(s.Status)
+
+	return nil
 }
 
 /**
@@ -665,58 +747,6 @@ func (s *Flow) IfElse(expression string, yesGoTo int, noGoTo int) *Flow {
 }
 
 /**
-* Run
-* @param startId int, tags et.Json, ctx et.Json
-* @return et.Json, error
-**/
-func (s *Flow) Run(startId int, ctx et.Json) (et.Json, error) {
-	if s.workFlows == nil {
-		return et.Json{}, fmt.Errorf(MSG_INSTANCE_WORKFLOWS_IS_NIL)
-	}
-
-	if s.Id == "" {
-		return et.Json{}, fmt.Errorf(MSG_FLOW_NOT_INSTANCE)
-	}
-
-	return s.run(ctx)
-}
-
-/**
-* Continue
-* @param ctx et.Json
-* @return et.Json, error
-**/
-func (s *Flow) Continue(ctx et.Json) (et.Json, error) {
-	if s.workFlows == nil {
-		return et.Json{}, fmt.Errorf(MSG_INSTANCE_WORKFLOWS_IS_NIL)
-	}
-
-	if s.Id == "" {
-		return et.Json{}, fmt.Errorf(MSG_FLOW_NOT_INSTANCE)
-	}
-
-	s.setCurrent(s.Current)
-	return s.run(ctx)
-}
-
-/**
-* Stop
-* @return error
-**/
-func (s *Flow) Stop() error {
-	if s.workFlows == nil {
-		return fmt.Errorf(MSG_INSTANCE_WORKFLOWS_IS_NIL)
-	}
-
-	if s.Id == "" {
-		return fmt.Errorf(MSG_FLOW_NOT_INSTANCE)
-	}
-
-	s.Steps[s.Current].Stop = true
-	return nil
-}
-
-/**
 * Done
 * @return error
 **/
@@ -730,24 +760,5 @@ func (s *Flow) Done() error {
 	}
 
 	s.setStatus(FlowStatusDone)
-	return nil
-}
-
-/**
-* Goto
-* @param step int
-**/
-func (s *Flow) Goto(step int) error {
-	if s.workFlows == nil {
-		return fmt.Errorf(MSG_INSTANCE_WORKFLOWS_IS_NIL)
-	}
-
-	if s.Id == "" {
-		return fmt.Errorf(MSG_FLOW_NOT_INSTANCE)
-	}
-
-	s.goTo = step
-	s.setGoto(step, MSG_INSTANCE_GOTO_USER_DECISION)
-
 	return nil
 }

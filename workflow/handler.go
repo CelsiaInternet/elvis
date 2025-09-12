@@ -25,7 +25,7 @@ func Load() error {
 		return err
 	}
 
-	workFlows = NewWorkFlows()
+	workFlows = newWorkFlows()
 	return nil
 }
 
@@ -38,7 +38,7 @@ func HealthCheck() bool {
 		return false
 	}
 
-	return workFlows.HealthCheck()
+	return workFlows.healthCheck()
 }
 
 /**
@@ -51,20 +51,7 @@ func New(tag, version, name, description string, fn FnContext, stop bool, create
 		return nil
 	}
 
-	return workFlows.NewFlow(tag, version, name, description, fn, stop, createdBy)
-}
-
-/**
-* Start
-* @param instanceId, tag string, startId int, tags et.Json, ctx et.Json
-* @return et.Json, error
-**/
-func Start(instanceId, tag string, startId int, tags et.Json, ctx et.Json) (et.Json, error) {
-	if err := Load(); err != nil {
-		return et.Json{}, err
-	}
-
-	return workFlows.Start(instanceId, tag, startId, tags, ctx)
+	return workFlows.newFlow(tag, version, name, description, fn, stop, createdBy)
 }
 
 /**
@@ -77,25 +64,7 @@ func Run(instanceId, tag string, startId int, tags et.Json, ctx et.Json) (et.Jso
 		return et.Json{}, err
 	}
 
-	return workFlows.Run(instanceId, tag, startId, tags, ctx)
-}
-
-/**
-* Continue
-* @param instanceId, tag string, ctx et.Json
-* @return et.Json, error
-**/
-func Continue(instanceId, tag string, ctx et.Json) (et.Json, error) {
-	if err := Load(); err != nil {
-		return et.Json{}, err
-	}
-
-	result, err := workFlows.Continue(instanceId, tag, ctx)
-	if err != nil {
-		return et.Json{}, err
-	}
-
-	return result, nil
+	return workFlows.run(instanceId, tag, startId, tags, ctx)
 }
 
 /**
@@ -108,7 +77,20 @@ func Rollback(instanceId, tag string) (et.Json, error) {
 		return et.Json{}, err
 	}
 
-	return workFlows.Rollback(instanceId, tag)
+	return workFlows.rollback(instanceId, tag)
+}
+
+/**
+* Stop
+* @param instanceId, tag string
+* @return error
+**/
+func Stop(instanceId, tag string) error {
+	if err := Load(); err != nil {
+		return err
+	}
+
+	return workFlows.stop(instanceId, tag)
 }
 
 /**
@@ -121,5 +103,5 @@ func DeleteFlow(tag string) (bool, error) {
 		return false, err
 	}
 
-	return workFlows.DeleteFlow(tag), nil
+	return workFlows.deleteFlow(tag), nil
 }
