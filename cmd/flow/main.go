@@ -22,7 +22,7 @@ func main() {
 		return ctx, nil
 	}, false, "test").
 		Retention(10*time.Minute).
-		Resilence(3, 15*time.Second, "test", "1").
+		Resilence(3, 3*time.Second, "test", "1").
 		Step("Step 1", "Step 1", func(flow *workflow.Instance, ctx et.Json) (et.Json, error) {
 			console.Debug("Respuesta desde step 1, contexto:", ctx.ToString())
 			atrib := fmt.Sprintf("step_%d", flow.Current)
@@ -91,16 +91,16 @@ func main() {
 		}
 	}()
 
-	result, err := workflow.Continue("", et.Json{
-		"cedula": "91499023",
-	}, et.Json{
-		"test": "test",
-	}, "test")
-	if err != nil {
-		console.Error(err)
-	} else {
-		console.Debug("Result 2:", result.ToString())
-	}
+	// result, err := workflow.Continue("", et.Json{
+	// 	"cedula": "91499023",
+	// }, et.Json{
+	// 	"test": "test",
+	// }, "test")
+	// if err != nil {
+	// 	console.Error(err)
+	// } else {
+	// 	console.Debug("Result 2:", result.ToString())
+	// }
 
 	// go func() {
 	// 	result, err := workflow.Run("", "ventas", 2, et.Json{

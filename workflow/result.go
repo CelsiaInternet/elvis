@@ -41,21 +41,6 @@ func (s *Result) ToJson() et.Json {
 	}
 }
 
-/**
-* loadResult
-* @param s string
-* @return *Result
-**/
-func loadResult(s string) (*Result, error) {
-	var result Result
-	err := json.Unmarshal([]byte(s), &result)
-	if err != nil {
-		return nil, err
-	}
-
-	return &result, nil
-}
-
 type resultFn struct {
 	Result et.Json `json:"result"`
 	Error  error   `json:"error"`
