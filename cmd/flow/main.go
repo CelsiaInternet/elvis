@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/celsiainternet/elvis/claim"
 	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/response"
@@ -13,7 +14,7 @@ import (
 )
 
 func main() {
-	workflow.New("ventas", "1.0.0", "Flujo de ventas", "flujo de ventas", func(flow *workflow.Flow, ctx et.Json) (et.Json, error) {
+	workflow.New("ventas", "1.0.0", "Flujo de ventas", "flujo de ventas", func(flow *workflow.Instance, ctx et.Json) (et.Json, error) {
 		// LOGIACA DEL CONSULTA DE CLIENTES
 
 		return et.Json{
@@ -24,21 +25,21 @@ func main() {
 	}, false, "test").
 		Retention(10*time.Minute).
 		Resilence(3, 15*time.Second, "test", "1").
-		Step("Step 1", "Step 1", func(flow *workflow.Flow, ctx et.Json) (et.Json, error) {
+		Step("Step 1", "Step 1", func(flow *workflow.Instance, ctx et.Json) (et.Json, error) {
 			console.Debug("Respuesta desde step 1, contexto:", ctx.ToString())
 			atrib := fmt.Sprintf("step_%d", flow.Current)
 			ctx.Set(atrib, "step1")
 
 			// guardar en el Oss
-			// flow.Done()
-			// flow.Stop()
-			// flow.Goto(2)
+			flow.Done()
+			flow.Stop()
+			flow.Goto(2)
 
 			time.Sleep(5 * time.Second)
 
 			return ctx, nil
 		}, false).
-		Step("Step 2", "Step 2", func(flow *workflow.Flow, ctx et.Json) (et.Json, error) {
+		Step("Step 2", "Step 2", func(flow *workflow.Instance, ctx et.Json) (et.Json, error) {
 			console.Debug("Respuesta desde step 2, con este contexto:", ctx.ToString())
 			atrib := fmt.Sprintf("step_%d", flow.Current)
 			ctx.Set(atrib, "step2")
@@ -47,14 +48,14 @@ func main() {
 
 			return ctx, nil
 		}, true).
-		Rollback(func(flow *workflow.Flow, ctx et.Json) (et.Json, error) {
+		Rollback(func(flow *workflow.Instance, ctx et.Json) (et.Json, error) {
 			console.Debug("Respuesta desde rollback 2, con este contexto:", ctx.ToString())
 			atrib := fmt.Sprintf("step_%d", flow.Current)
 			ctx.Set(atrib, "step2")
 
 			return ctx, nil
 		}).
-		Step("Step 3", "Step 3", func(flow *workflow.Flow, ctx et.Json) (et.Json, error) {
+		Step("Step 3", "Step 3", func(flow *workflow.Instance, ctx et.Json) (et.Json, error) {
 			console.Debug("Respuesta desde step 3, con este contexto:", ctx.ToString())
 			atrib := fmt.Sprintf("step_%d", flow.Current)
 			ctx.Set(atrib, "step3")
@@ -62,14 +63,12 @@ func main() {
 			return ctx, nil
 		}, false)
 
-	// console.Debug("Flow:", workflow.FlowToJson(test).ToString())
-
 	go func() {
 		result, err := workflow.Run("", "ventas", 0, et.Json{
 			"cedula": "91499023",
 		}, et.Json{
 			"test": "test",
-		})
+		}, "test")
 		if err != nil {
 			console.Error(err)
 		}
@@ -77,25 +76,25 @@ func main() {
 		console.Debug("Result 1:", result.ToString())
 	}()
 
-	go func() {
-		result, err := workflow.Run("", "ventas", 2, et.Json{
-			"cedula": "91499023",
-		}, et.Json{
-			"test": "test",
-		})
-		if err != nil {
-			console.Error(err)
-		}
+	// go func() {
+	// 	result, err := workflow.Run("", "ventas", 2, et.Json{
+	// 		"cedula": "91499023",
+	// 	}, et.Json{
+	// 		"test": "test",
+	// 	}, "test")
+	// 	if err != nil {
+	// 		console.Error(err)
+	// 	}
 
-		console.Debug("Result 2:", result.ToString())
-	}()
+	// 	console.Debug("Result 2:", result.ToString())
+	// }()
 
 	// go func() {
 	// 	result, err := workflow.Run("", "ventas", 2, et.Json{
 	// 		"cedula": "91499023",
 	// 	}, et.Json{
 	// 		"test": "test",
-	// 	})
+	// 	}, "test")
 	// 	if err != nil {
 	// 		console.Error(err)
 	// 	}
@@ -118,7 +117,8 @@ func HttpVenta(w http.ResponseWriter, r *http.Request) {
 		"codigo": "112342",
 	}
 	step := body.Int("step")
-	result, err := workflow.Run(serviceId, tag, step, tags, body)
+	createdBy := claim.ClientName(r)
+	result, err := workflow.Run(serviceId, tag, step, tags, body, createdBy)
 	if err != nil {
 		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return

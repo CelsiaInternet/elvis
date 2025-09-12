@@ -36,10 +36,10 @@ func newStep(name, description string, fn FnContext, stop bool) (*Step, error) {
 
 /**
 * run
-* @params flow *Flow, ctx et.Json
+* @params flow *Instance, ctx et.Json
 * @return et.Json, error
 **/
-func (s *Step) run(flow *Flow, ctx et.Json) (et.Json, error) {
+func (s *Step) run(flow *Instance, ctx et.Json) (et.Json, error) {
 	result, err := s.fn(flow, ctx)
 	if err != nil {
 		return et.Json{}, err
@@ -64,11 +64,11 @@ func (s *Step) ToJson() et.Json {
 }
 
 /**
-* If
+* ifElse
 * @param expression string, yesGoTo int, noGoTo int
 * @return *Step, error
 **/
-func (s *Step) IfElse(expression string, yesGoTo int, noGoTo int) *Step {
+func (s *Step) ifElse(expression string, yesGoTo int, noGoTo int) *Step {
 	s.YesGoTo = yesGoTo
 	s.NoGoTo = noGoTo
 	if expression != "" {
@@ -79,13 +79,13 @@ func (s *Step) IfElse(expression string, yesGoTo int, noGoTo int) *Step {
 }
 
 /**
-* Evaluate
+* evaluate
 * @param ctx et.Json
 * @return bool, error
 **/
-func (s *Step) Evaluate(ctx et.Json, instance *Flow) (bool, error) {
+func (s *Step) evaluate(ctx et.Json, instance *Instance) (bool, error) {
 	resultError := func(err error) (bool, error) {
-		return false, fmt.Errorf("error al evaluar expresion:%s, error:%s", s.Expression, err.Error())
+		return false, fmt.Errorf(MSG_INSTANCE_EVALUATE, s.Expression, err.Error())
 	}
 
 	instance.setStatus(FlowStatusRunning)

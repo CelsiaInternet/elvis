@@ -1,0 +1,57 @@
+package workflow
+
+import (
+	"encoding/json"
+
+	"github.com/celsiainternet/elvis/et"
+)
+
+type Result struct {
+	Step    int     `json:"step"`
+	Ctx     et.Json `json:"ctx"`
+	Attempt int     `json:"attempt"`
+	Result  et.Json `json:"result"`
+	Error   string  `json:"error"`
+}
+
+/**
+* Serialize
+* @return string
+**/
+func (s *Result) Serialize() (string, error) {
+	bt, err := json.Marshal(s)
+	if err != nil {
+		return "", err
+	}
+
+	return string(bt), nil
+}
+
+/**
+* ToJson
+* @return et.Json
+**/
+func (s *Result) ToJson() et.Json {
+	return et.Json{
+		"step":    s.Step,
+		"ctx":     s.Ctx,
+		"attempt": s.Attempt,
+		"result":  s.Result,
+		"error":   s.Error,
+	}
+}
+
+/**
+* loadResult
+* @param s string
+* @return *Result
+**/
+func loadResult(s string) (*Result, error) {
+	var result Result
+	err := json.Unmarshal([]byte(s), &result)
+	if err != nil {
+		return nil, err
+	}
+
+	return &result, nil
+}

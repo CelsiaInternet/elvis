@@ -6,6 +6,8 @@ import (
 	"github.com/celsiainternet/elvis/event"
 )
 
+var workFlows *WorkFlows
+
 /**
 * Load
 * @return error
@@ -56,28 +58,28 @@ func New(tag, version, name, description string, fn FnContext, stop bool, create
 
 /**
 * Run
-* @param instanceId, tag string, startId int, tags et.Json, ctx et.Json
+* @param instanceId, tag string, startId int, tags et.Json, ctx et.Json, createdBy string
 * @return et.Json, error
 **/
-func Run(instanceId, tag string, startId int, tags et.Json, ctx et.Json) (et.Json, error) {
+func Run(instanceId, tag string, startId int, tags et.Json, ctx et.Json, createdBy string) (et.Json, error) {
 	if err := Load(); err != nil {
 		return et.Json{}, err
 	}
 
-	return workFlows.run(instanceId, tag, startId, tags, ctx)
+	return workFlows.run(instanceId, tag, startId, tags, ctx, createdBy)
 }
 
 /**
 * Rollback
-* @param instanceId, tag string
+* @param instanceId string
 * @return et.Json, error
 **/
-func Rollback(instanceId, tag string) (et.Json, error) {
+func Rollback(instanceId string) (et.Json, error) {
 	if err := Load(); err != nil {
 		return et.Json{}, err
 	}
 
-	return workFlows.rollback(instanceId, tag)
+	return workFlows.rollback(instanceId)
 }
 
 /**
@@ -85,12 +87,12 @@ func Rollback(instanceId, tag string) (et.Json, error) {
 * @param instanceId, tag string
 * @return error
 **/
-func Stop(instanceId, tag string) error {
+func Stop(instanceId string) error {
 	if err := Load(); err != nil {
 		return err
 	}
 
-	return workFlows.stop(instanceId, tag)
+	return workFlows.stop(instanceId)
 }
 
 /**
