@@ -283,6 +283,7 @@ func (s *WorkFlows) instanceRun(instanceId, tag string, startId int, tags, ctx e
 		return et.Json{}, err
 	}
 
+	instance.setTags(tags)
 	result, err := instance.run(ctx)
 	if err != nil {
 		return et.Json{}, err
