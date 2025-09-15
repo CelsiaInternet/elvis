@@ -196,6 +196,7 @@ func (s *WorkFlows) loadInstance(id string) (*Instance, error) {
 	}
 
 	result.Flow = flow
+	result.goTo = -1
 	result.setStatus(result.Status)
 	s.Instances[id] = result
 

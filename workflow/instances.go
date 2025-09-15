@@ -240,11 +240,21 @@ func (s *Instance) setFailed(result et.Json, err error) {
 * @return et.Json, error
 **/
 func (s *Instance) setStop(result et.Json, err error) (et.Json, error) {
-	s.Current++
 	s.setResult(result, err)
+	s.Current++
 	s.setStatus(FlowStatusPending)
 
 	return result, err
+}
+
+/**
+* setNext
+* @return error
+**/
+func (s *Instance) setNext(result et.Json, err error) {
+	s.setResult(result, err)
+	s.Current++
+	s.setStatus(s.Status)
 }
 
 /**
@@ -258,16 +268,6 @@ func (s *Instance) setGoto(step int, message string, result et.Json, err error) 
 	s.goTo = -1
 	s.setStatus(s.Status)
 	logs.Logf(packageName, MSG_INSTANCE_GOTO, s.Id, s.Tag, step, message)
-}
-
-/**
-* setNext
-* @return error
-**/
-func (s *Instance) setNext(result et.Json, err error) {
-	s.setResult(result, err)
-	s.Current++
-	s.setStatus(s.Status)
 }
 
 /**
@@ -323,24 +323,27 @@ func (s *Instance) run(ctx et.Json) (et.Json, error) {
 			continue
 		}
 
-		if step.Expression == "" {
-			s.setNext(ctx, err)
-			continue
+		if step.Expression != "" {
+			ok, err := step.evaluate(ctx, s)
+			if err != nil {
+				return s.rollback(ctx, err)
+			}
+
+			if ok {
+				s.setGoto(step.YesGoTo, MSG_INSTANCE_EXPRESSION_TRUE, ctx, err)
+			} else {
+				s.setGoto(step.NoGoTo, MSG_INSTANCE_EXPRESSION_FALSE, ctx, err)
+			}
 		}
 
-		ok, err := step.evaluate(ctx, s)
-		if err != nil {
-			return s.rollback(ctx, err)
+		if s.Current == len(s.Steps)-1 {
+			return s.setDone(ctx, err)
 		}
 
-		if ok {
-			s.setGoto(step.YesGoTo, MSG_INSTANCE_EXPRESSION_TRUE, ctx, err)
-		} else {
-			s.setGoto(step.NoGoTo, MSG_INSTANCE_EXPRESSION_FALSE, ctx, err)
-		}
+		s.setNext(ctx, err)
 	}
 
-	return s.setDone(ctx, err)
+	return ctx, err
 }
 
 /**
