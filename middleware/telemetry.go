@@ -76,6 +76,7 @@ type Metrics struct {
 	SearchTime   time.Duration `json:"search_time"`
 	ResponseTime time.Duration `json:"response_time"`
 	Latency      time.Duration `json:"latency"`
+	AppName      string        `json:"app_name"`
 	key          string
 	mark         time.Time
 	metrics      Telemetry
@@ -101,6 +102,7 @@ func (m *Metrics) ToJson() et.Json {
 		"latency":       m.Latency,
 		"response_size": m.ResponseSize,
 		"metric":        m.metrics.ToJson(),
+		"app_name":      m.AppName,
 	}
 }
 
@@ -187,6 +189,10 @@ func NewMetric(r *http.Request) *Metrics {
 	if remoteAddr != "" {
 		remoteAddr = strs.Split(remoteAddr, ",")[0]
 	}
+	appName := "Not Found"
+	if r.Header.Get("AppName") != "" {
+		appName = r.Header.Get("AppName")
+	}
 	scheme := "http"
 	if r.TLS != nil {
 		scheme = "https"
@@ -208,6 +214,7 @@ func NewMetric(r *http.Request) *Metrics {
 		Method:      r.Method,
 		Path:        r.URL.Path,
 		Scheme:      scheme,
+		AppName:     appName,
 		mark:        timezone.NowTime(),
 		key:         strs.Format(`%s:%s`, r.Method, r.URL.Path),
 	}
@@ -347,6 +354,7 @@ func (m *Metrics) println() et.Json {
 		lg.CW(w, lg.NGreen, " - Request:S:%vM:%vH:%vD:%vL:%v", m.metrics.RequestsPerSecond, m.metrics.RequestsPerMinute, m.metrics.RequestsPerHour, m.metrics.RequestsPerDay, m.metrics.RequestsLimit)
 	}
 	lg.CW(w, lg.NMagenta, " [ServiceId]:%s", m.ServiceId)
+	lg.CW(w, lg.NMagenta, " [AppName]:%s", m.AppName)
 	lg.Println(w)
 
 	m.setRequest(true)

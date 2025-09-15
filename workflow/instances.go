@@ -63,7 +63,7 @@ func (s *Instance) ToJson() et.Json {
 	}
 
 	result := et.Json{
-		jdb.KEY:          s.Id,
+		"id":             s.Id,
 		"tag":            s.Tag,
 		"version":        s.Version,
 		"name":           s.Name,
@@ -104,13 +104,13 @@ func (s *Instance) save() error {
 		return err
 	}
 
-	if s.RetentionTime == 0 {
+	if s.RetentionTime <= 0 {
 		s.RetentionTime = 10 * time.Minute
 	}
-	cache.Set(s.Id, string(bt), s.RetentionTime)
 
-	if s.isDebug {
-		logs.Debugf(MSG_INSTANCE_DEBUG, s.Id, s.ToJson().ToString())
+	err = cache.Set(s.Id, string(bt), s.RetentionTime)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -123,7 +123,12 @@ func (s *Instance) save() error {
 **/
 func (s *Instance) setStatus(status FlowStatus) error {
 	if s.Status == status {
-		return s.save()
+		err := s.save()
+		if err != nil {
+			return fmt.Errorf("setStatus: error al guardar el estado de la instancia: %v", err)
+		}
+
+		return nil
 	}
 
 	s.Status = status
@@ -147,7 +152,12 @@ func (s *Instance) setStatus(status FlowStatus) error {
 		logs.Logf(packageName, MSG_INSTANCE_STATUS, s.Id, s.Tag, s.Status, s.Current)
 	}
 
-	return s.save()
+	err := s.save()
+	if err != nil {
+		return fmt.Errorf("setStatus: error al guardar el estado de la instancia: %v", err)
+	}
+
+	return nil
 }
 
 /**
@@ -204,13 +214,13 @@ func (s *Instance) setCtx(ctx et.Json) et.Json {
 }
 
 /**
-* setStop
+* setDone
 * @param result et.Json, err error
 * @return et.Json, error
 **/
-func (s *Instance) setStop(result et.Json, err error) (et.Json, error) {
+func (s *Instance) setDone(result et.Json, err error) (et.Json, error) {
 	s.setResult(result, err)
-	s.setStatus(s.Status)
+	s.setStatus(FlowStatusDone)
 
 	return result, err
 }
@@ -225,6 +235,19 @@ func (s *Instance) setFailed(result et.Json, err error) {
 }
 
 /**
+* setStop
+* @param result et.Json, err error
+* @return et.Json, error
+**/
+func (s *Instance) setStop(result et.Json, err error) (et.Json, error) {
+	s.Current++
+	s.setResult(result, err)
+	s.setStatus(FlowStatusPending)
+
+	return result, err
+}
+
+/**
 * setGoto
 * @param step int, result et.Json, err error
 * @return et.Json, error
@@ -235,18 +258,6 @@ func (s *Instance) setGoto(step int, message string, result et.Json, err error) 
 	s.goTo = -1
 	s.setStatus(s.Status)
 	logs.Logf(packageName, MSG_INSTANCE_GOTO, s.Id, s.Tag, step, message)
-}
-
-/**
-* setDone
-* @param result et.Json, err error
-* @return et.Json, error
-**/
-func (s *Instance) setDone(result et.Json, err error) (et.Json, error) {
-	s.setResult(result, err)
-	s.setStatus(FlowStatusDone)
-
-	return result, err
 }
 
 /**
@@ -300,7 +311,7 @@ func (s *Instance) run(ctx et.Json) (et.Json, error) {
 		}
 
 		if s.done {
-			return s.setStop(ctx, err)
+			return s.setDone(ctx, err)
 		}
 
 		if step.Stop {

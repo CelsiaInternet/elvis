@@ -108,6 +108,7 @@ func (s *DB) query(sql string, args ...any) (*sql.Rows, error) {
 			"args":    args,
 			"error":   err.Error(),
 		})
+		sql = SQLParse(sql, args...)
 		return nil, fmt.Errorf(msg.ERR_SQL, err.Error(), sql)
 	}
 

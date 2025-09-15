@@ -6,7 +6,6 @@ import (
 
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/event"
-	"github.com/celsiainternet/elvis/jdb"
 	"github.com/celsiainternet/elvis/response"
 	"github.com/celsiainternet/elvis/timezone"
 	"github.com/celsiainternet/elvis/utility"
@@ -162,7 +161,7 @@ func Work(event string, data et.Json) et.Json {
 func WorkState(work_id string, status event.WorkStatus, data et.Json) {
 	work := et.Json{
 		"update_at": timezone.Now(),
-		jdb.KEY:     work_id,
+		"id":        work_id,
 		"status":    status.String(),
 		"data":      data,
 	}

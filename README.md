@@ -71,7 +71,7 @@ go mod init github.com/tu-usuario/tu-proyecto
 ### 2. Instalar Elvis
 
 ```bash
-go get github.com/celsiainternet/elvis@v1.1.131
+go get github.com/celsiainternet/elvis@v1.1.132
 ```
 
 ### 3. Crear Proyecto con Elvis
@@ -561,7 +561,7 @@ _Desarrollado con ❤️ en Colombia_
 
 ## Releases
 
-### v1.1.131
+### v1.1.132
 
 - **Sistema de Comunicación en Tiempo Real**
 
