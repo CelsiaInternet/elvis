@@ -12,6 +12,32 @@ import (
 	"github.com/celsiainternet/elvis/strs"
 )
 
+func TipoSQL(query string) string {
+	q := strings.TrimSpace(strings.ToUpper(query))
+
+	parts := strings.Fields(q)
+	if len(parts) == 0 {
+		return "DESCONOCIDO"
+	}
+
+	cmd := parts[0]
+
+	switch cmd {
+	case "SELECT":
+		return "query"
+	case "INSERT", "UPDATE", "DELETE", "MERGE":
+		return "command"
+	case "CREATE", "ALTER", "DROP", "TRUNCATE":
+		return "definition"
+	case "GRANT", "REVOKE":
+		return "definition"
+	case "COMMIT", "ROLLBACK", "SAVEPOINT", "SET":
+		return "definition"
+	default:
+		return "desconocido"
+	}
+}
+
 /**
 * SQLQuote
 * @param sql string
@@ -69,15 +95,15 @@ func SQLParse(sql string, args ...any) string {
 * @param db *DB, sql string, args ...any
 * @return *sql.Rows, error
 **/
-func query(db *DB, sql string, args ...any) (*sql.Rows, error) {
-	if db == nil {
+func (s *DB) query(sql string, args ...any) (*sql.Rows, error) {
+	if s == nil {
 		return nil, logs.Alertf(msg.NOT_CONNECT_DB)
 	}
 
-	rows, err := db.db.Query(sql, args...)
+	rows, err := s.db.Query(sql, args...)
 	if err != nil {
 		event.Publish(EVENT_SQL_ERROR, et.Json{
-			"db_name": db.Dbname,
+			"db_name": s.Dbname,
 			"sql":     sql,
 			"args":    args,
 			"error":   err.Error(),
@@ -85,68 +111,9 @@ func query(db *DB, sql string, args ...any) (*sql.Rows, error) {
 		return nil, fmt.Errorf(msg.ERR_SQL, err.Error(), sql)
 	}
 
-	event.Publish(EVENT_SQL_QUERY, et.Json{
-		"db_name": db.Dbname,
-		"sql":     sql,
-		"args":    args,
-	})
-
-	return rows, nil
-}
-
-/**
-* ddl
-* @param db *DB, sql string, args ...any
-* @return error
-**/
-func ddl(db *DB, sql string, args ...any) error {
-	if db == nil {
-		return logs.Alertf(msg.NOT_CONNECT_DB)
-	}
-
-	_, err := db.db.Exec(sql, args...)
-	if err != nil {
-		event.Publish(EVENT_SQL_ERROR, et.Json{
-			"db_name": db.Dbname,
-			"sql":     sql,
-			"args":    args,
-			"error":   err.Error(),
-		})
-		return fmt.Errorf(msg.ERR_SQL, err.Error(), sql)
-	}
-
-	event.Publish(EVENT_SQL_DDL, et.Json{
-		"db_name": db.Dbname,
-		"sql":     sql,
-		"args":    args,
-	})
-
-	return nil
-}
-
-/**
-* command
-* @param db *DB, id string, sql string, args ...any
-* @return *sql.Rows, error
-**/
-func command(db *DB, sql string, args ...any) (*sql.Rows, error) {
-	if db == nil {
-		return nil, logs.Alertf(msg.NOT_CONNECT_DB)
-	}
-
-	rows, err := db.db.Query(sql, args...)
-	if err != nil {
-		event.Publish(EVENT_SQL_ERROR, et.Json{
-			"db_name": db.Dbname,
-			"sql":     sql,
-			"args":    args,
-			"error":   err.Error(),
-		})
-		return nil, fmt.Errorf(msg.ERR_SQL, err.Error(), sql)
-	}
-
-	event.Publish(EVENT_SQL_COMMAND, et.Json{
-		"db_name": db.Dbname,
+	tp := TipoSQL(sql)
+	event.Publish(fmt.Sprintf("sql:%s", tp), et.Json{
+		"db_name": s.Dbname,
 		"sql":     sql,
 		"args":    args,
 	})
@@ -160,7 +127,7 @@ func command(db *DB, sql string, args ...any) (*sql.Rows, error) {
 * @return error
 **/
 func (d *DB) Ddl(sql string, args ...any) error {
-	err := ddl(d, sql, args...)
+	_, err := d.query(sql, args...)
 	if err != nil {
 		return err
 	}
@@ -174,7 +141,7 @@ func (d *DB) Ddl(sql string, args ...any) error {
 * @return et.Items, error
 **/
 func (d *DB) Query(sql string, args ...any) (et.Items, error) {
-	rows, err := query(d, sql, args...)
+	rows, err := d.query(sql, args...)
 	if err != nil {
 		return et.Items{}, err
 	}
@@ -189,7 +156,7 @@ func (d *DB) Query(sql string, args ...any) (et.Items, error) {
 * @return et.Items, error
 **/
 func (d *DB) Source(sourceField string, sql string, args ...any) (et.Items, error) {
-	rows, err := query(d, sql, args...)
+	rows, err := d.query(sql, args...)
 	if err != nil {
 		return et.Items{}, err
 	}
@@ -204,7 +171,7 @@ func (d *DB) Source(sourceField string, sql string, args ...any) (et.Items, erro
 * @return et.Items, error
 **/
 func (d *DB) Command(sql string, args ...any) (et.Items, error) {
-	rows, err := command(d, sql, args...)
+	rows, err := d.query(sql, args...)
 	if err != nil {
 		return et.Items{}, err
 	}
@@ -219,7 +186,7 @@ func (d *DB) Command(sql string, args ...any) (et.Items, error) {
 * @return et.Items, error
 **/
 func (d *DB) CommandSource(sourceField string, sql string, args ...any) (et.Items, error) {
-	rows, err := command(d, sql, args...)
+	rows, err := d.query(sql, args...)
 	if err != nil {
 		return et.Items{}, err
 	}
@@ -234,7 +201,7 @@ func (d *DB) CommandSource(sourceField string, sql string, args ...any) (et.Item
 * @return error
 **/
 func (d *DB) Bulck(sql string, args ...any) error {
-	_, err := d.Command(sql, args...)
+	_, err := d.query(sql, args...)
 	if err != nil {
 		return err
 	}
