@@ -2,6 +2,7 @@ package claim
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -300,6 +301,11 @@ func ValidToken(token string) (*Claim, error) {
 **/
 func SetToken(app, device, id, token string, duration time.Duration) error {
 	key := GetTokenKey(app, device, id)
+	if duration <= 0 {
+		cache.Delete(key)
+		return fmt.Errorf(MSG_TOKEN_EXPIRED)
+	}
+
 	err := cache.Set(key, token, duration)
 	if err != nil {
 		return err
@@ -344,7 +350,7 @@ func ClientName(r *http.Request) string {
 * @return et.Json
 **/
 func GetClient(r *http.Request) et.Json {
-	now := utility.Now()
+	now := timezone.NowTime()
 	ctx := r.Context()
 	username := UsernameKey.String(ctx, "Anonimo")
 	fullName := NameKey.String(ctx, "Anonimo")
