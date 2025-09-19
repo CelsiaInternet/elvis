@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/utility"
 )
 
 var (
@@ -371,26 +372,33 @@ func OptionsWithTls(url string, header et.Json, tlsConfig *tls.Config) (*Body, S
 * @param caPath, certPath, keyPath string
 * @return *tls.Config, error
 **/
-func NewTlsConfig(caPath, certPath, keyPath string) (*tls.Config, error) {
-	if caPath == "" {
-		return nil, fmt.Errorf("CA certificate path is required")
+func NewTlsConfig(caFile, certFile, keyFile string) (*tls.Config, error) {
+	if certFile == "" {
+		return nil, fmt.Errorf("CRT certificate path is required")
 	}
 
-	if _, err := os.Stat(caPath); os.IsNotExist(err) {
-		return nil, fmt.Errorf("CA certificate not found")
+	if _, err := os.Stat(certFile); os.IsNotExist(err) {
+		return nil, fmt.Errorf("CRT certificate not found")
 	}
 
-	caCert, _ := os.ReadFile(caPath)
-	caCertPool := x509.NewCertPool()
-	caCertPool.AppendCertsFromPEM(caCert)
-
-	cert, err := tls.LoadX509KeyPair(certPath, keyPath)
+	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	return &tls.Config{
-		RootCAs:      caCertPool,
+	tlsConfig := &tls.Config{
 		Certificates: []tls.Certificate{cert},
-	}, nil
+	}
+
+	if !utility.ValidStr(caFile, 0, []string{""}) {
+		return tlsConfig, nil
+	}
+
+	caCert, err := os.ReadFile(caFile)
+	if !os.IsNotExist(err) {
+		tlsConfig.RootCAs = x509.NewCertPool()
+		tlsConfig.RootCAs.AppendCertsFromPEM(caCert)
+	}
+
+	return tlsConfig, nil
 }
