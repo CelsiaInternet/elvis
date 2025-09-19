@@ -189,17 +189,18 @@ func statusOk(status int) bool {
 * @return []byte
 **/
 func bodyParams(header, body et.Json) []byte {
-	result := []byte(body.ToString())
 	contentType := header.Get("Content-Type")
 	if contentType == "application/x-www-form-urlencoded" {
 		data := url.Values{}
 		for k, v := range body {
 			data.Set(k, v.(string))
 		}
-		result = []byte(data.Encode())
+		return []byte(data.Encode())
+	} else if contentType == "application/json" {
+		return []byte(body.ToEscapeHTML())
+	} else {
+		return []byte(body.ToString())
 	}
-
-	return result
 }
 
 /**

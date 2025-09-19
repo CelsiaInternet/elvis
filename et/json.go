@@ -1,6 +1,7 @@
 package et
 
 import (
+	"bytes"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -161,6 +162,18 @@ func (s Json) ToString() string {
 	result := string(bt)
 
 	return result
+}
+
+func (s Json) ToEscapeHTML() string {
+	buf := &bytes.Buffer{}
+	encoder := json.NewEncoder(buf)
+	encoder.SetEscapeHTML(false)
+	err := encoder.Encode(s)
+	if err != nil {
+		panic(err)
+	}
+
+	return buf.String()
 }
 
 func (s Json) ToUnquote() string {
