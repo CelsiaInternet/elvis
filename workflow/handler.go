@@ -120,3 +120,16 @@ func DeleteFlow(tag string) (bool, error) {
 
 	return workFlows.deleteFlow(tag), nil
 }
+
+/**
+* GetInstance
+* @param instanceId string
+* @return (*Instance, error)
+**/
+func GetInstance(instanceId string) (*Instance, error) {
+	if err := Load(); err != nil {
+		return nil, err
+	}
+
+	return workFlows.getInstance(instanceId)
+}

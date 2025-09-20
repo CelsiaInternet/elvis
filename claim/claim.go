@@ -301,7 +301,7 @@ func ValidToken(token string) (*Claim, error) {
 **/
 func SetToken(app, device, id, token string, duration time.Duration) error {
 	key := GetTokenKey(app, device, id)
-	if duration <= 0 {
+	if duration < 0 {
 		cache.Delete(key)
 		return fmt.Errorf(MSG_TOKEN_EXPIRED)
 	}

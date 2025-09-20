@@ -256,6 +256,43 @@ func (s *WorkFlows) getOrCreateInstance(id, tag string, startId int, tags et.Jso
 }
 
 /**
+* getInstance
+* @param instanceId string
+* @return *Instance, error
+**/
+func (s *WorkFlows) getInstance(instanceId string) (*Instance, error) {
+	if instanceId == "" {
+		return nil, fmt.Errorf(MSG_INSTANCE_ID_REQUIRED)
+	}
+
+	if s.Instances[instanceId] != nil {
+		return s.Instances[instanceId], nil
+	}
+
+	if !cache.Exists(instanceId) {
+		return nil, errorInstanceNotFound
+	}
+
+	result := &Instance{}
+	bt, err := json.Marshal(result)
+	if err != nil {
+		return nil, err
+	}
+
+	src, err := cache.Get(instanceId, string(bt))
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.Unmarshal([]byte(src), &result)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+/**
 * instanceRun
 * @param instanceId, tag string, startId int, tags, ctx et.Json, createdBy string
 * @return et.Json, error

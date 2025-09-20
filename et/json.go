@@ -497,6 +497,16 @@ func (s Json) Time(atribs ...string) time.Time {
 	return s.ValTime(_default, atribs...)
 }
 
+func (s Json) Duration(atribs ...string) (time.Duration, error) {
+	str := s.ValStr("", atribs...)
+	timDuration, err := strs.StrToTime(str)
+	if err != nil {
+		return 0, err
+	}
+
+	return timDuration.Sub(timezone.NowTime()), nil
+}
+
 func (s Json) Data(atrib ...string) JsonD {
 	val := Val(s, nil, atrib...)
 	if val == nil {
