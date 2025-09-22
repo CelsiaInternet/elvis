@@ -152,6 +152,20 @@ func (d *DB) Query(sql string, args ...any) (et.Items, error) {
 }
 
 /**
+* QueryOne
+* @param sql string, args ...any
+* @return et.Item, error
+**/
+func (d *DB) QueryOne(sql string, args ...any) (et.Item, error) {
+	result, err := d.Query(sql, args...)
+	if err != nil {
+		return et.Item{}, err
+	}
+
+	return result.First(), nil
+}
+
+/**
 * Source
 * @param sourceField string, sql string, args ...any
 * @return et.Items, error
