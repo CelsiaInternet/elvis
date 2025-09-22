@@ -542,3 +542,7 @@ func (c *Model) UpsertRow(data et.Json) *Linq {
 func (c *Model) Query(sql string, args ...any) (et.Items, error) {
 	return c.db.Query(sql, args...)
 }
+
+func (c *Model) QueryOne(sql string, args ...any) (et.Item, error) {
+	return c.db.QueryOne(sql, args...)
+}
