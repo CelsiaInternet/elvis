@@ -169,6 +169,9 @@ func GetRoutes() map[string]et.Json {
 **/
 func pushApiGateway(method, path, packagePath, host, packageName string, private bool) {
 	id := cache.GenKey(method, path)
+	if path == "/" {
+		path = ""
+	}
 	path = strings.ReplaceAll(packagePath+path, "//", "/")
 	resolve := host + path
 	PushApiGateway(id, method, path, resolve, et.Json{}, TpReplaceHeader, []string{}, private, packageName)
