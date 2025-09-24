@@ -8,6 +8,7 @@ import (
 )
 
 var (
+	EVENT_CRONTAB_SERVER = "event:crontab:server"
 	EVENT_CRONTAB_SET    = "event:crontab:set"
 	EVENT_CRONTAB_STATUS = "event:crontab:status"
 	EVENT_CRONTAB_STOP   = "event:crontab:stop"
@@ -20,22 +21,22 @@ var (
 * @return error
 **/
 func eventInit() error {
-	err := event.Subscribe(EVENT_CRONTAB_SET, eventSet)
+	err := event.Stack(EVENT_CRONTAB_SET, eventSet)
 	if err != nil {
 		return err
 	}
 
-	err = event.Subscribe(EVENT_CRONTAB_DELETE, eventDelete)
+	err = event.Stack(EVENT_CRONTAB_DELETE, eventDelete)
 	if err != nil {
 		return err
 	}
 
-	err = event.Subscribe(EVENT_CRONTAB_STOP, eventStop)
+	err = event.Stack(EVENT_CRONTAB_STOP, eventStop)
 	if err != nil {
 		return err
 	}
 
-	err = event.Subscribe(EVENT_CRONTAB_START, eventStart)
+	err = event.Stack(EVENT_CRONTAB_START, eventStart)
 	if err != nil {
 		return err
 	}
@@ -63,7 +64,7 @@ func eventSet(msg event.EvenMessage) {
 	spec := data.Str("spec")
 	channel := data.Str("channel")
 	params := data.Json("params")
-	_, err := crontab.addEventJob(id, name, spec, channel, params, true)
+	_, err := crontab.addEventJob(id, name, spec, channel, params)
 	if err != nil {
 		logs.Logf(packageName, fmt.Sprintf("Error adding job %s", err))
 		return

@@ -2,11 +2,9 @@ package crontab
 
 import (
 	"fmt"
-	"net/http"
 
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/event"
-	"github.com/celsiainternet/elvis/response"
 )
 
 var crontab *Jobs
@@ -20,7 +18,7 @@ func Load() error {
 	}
 
 	crontab = New()
-	err := crontab.load(false)
+	err := crontab.load()
 	if err != nil {
 		return err
 	}
@@ -38,7 +36,8 @@ func Server() error {
 	}
 
 	crontab = New()
-	err := crontab.load(true)
+	crontab.isServer = true
+	err := crontab.load()
 	if err != nil {
 		return err
 	}
@@ -95,7 +94,7 @@ func AddEventJob(id, name, spec, channel string, params et.Json) (*Job, error) {
 		return nil, err
 	}
 
-	return crontab.addEventJob(id, name, spec, channel, params, true)
+	return crontab.addEventJob(id, name, spec, channel, params)
 }
 
 /**
@@ -244,23 +243,31 @@ func Stop() error {
 }
 
 /**
-* HttpCrontabs
-* @param w http.ResponseWriter
-* @param r *http.Request
+* EventStatusRunning
+* @param data et.Json
+* @return error
 **/
-func HttpCrontabs(w http.ResponseWriter, r *http.Request) {
-	err := Load()
-	if err != nil {
-		response.JSON(w, r, http.StatusInternalServerError, et.Json{
-			"message": "crontab not initialized",
-		})
-		return
-	}
+func EventStatusRunning(data et.Json) error {
+	data.Set("status", StatusRunning)
+	return event.Publish(EVENT_CRONTAB_STATUS, data)
+}
 
-	result := et.Items{}
-	for _, job := range crontab.jobs {
-		result.Add(job.ToJson())
-	}
+/**
+* EventStatusPending
+* @param data et.Json
+* @return error
+**/
+func EventStatusDone(data et.Json) error {
+	data.Set("status", StatusDone)
+	return event.Publish(EVENT_CRONTAB_STATUS, data)
+}
 
-	response.ITEMS(w, r, http.StatusOK, result)
+/**
+* EventStatusFailed
+* @param data et.Json
+* @return error
+**/
+func EventStatusFailed(data et.Json) error {
+	data.Set("status", StatusFailed)
+	return event.Publish(EVENT_CRONTAB_STATUS, data)
 }

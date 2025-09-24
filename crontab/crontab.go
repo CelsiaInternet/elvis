@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"slices"
+	"sync"
 	"time"
 
+	"github.com/celsiainternet/elvis/cache"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/event"
 	"github.com/celsiainternet/elvis/logs"
@@ -20,10 +22,13 @@ const (
 	StatusAdded    = "added"
 	StatusPending  = "pending"
 	StatusStarting = "starting"
+	StatusDone     = "done"
+	StatusNotified = "notified"
 	StatusRunning  = "running"
 	StatusStopped  = "stopped"
 	StatusExecuted = "executed"
 	StatusRemoved  = "removed"
+	StatusFailed   = "failed"
 )
 
 var (
@@ -39,9 +44,10 @@ type Job struct {
 	Started bool           `json:"started"`
 	Status  string         `json:"status"`
 	Idx     int            `json:"idx"`
+	NodeId  int64          `json:"node_id"`
 	fn      func(job *Job) `json:"-"`
 	jobs    *Jobs          `json:"-"`
-	delete  bool           `json:"-"`
+	mu      *sync.Mutex    `json:"-"`
 }
 
 /**
@@ -82,14 +88,12 @@ func (s *Job) ToJson() et.Json {
 * @return void
 **/
 func (s *Job) setStatus(status string) {
-	s.Status = status
-	if StatusRemoved == status {
-		s.delete = true
-	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-	logs.Logf(packageName, fmt.Sprintf("Job %s status:%s id:%s", s.Name, s.Status, s.Id))
+	s.Status = status
+	logs.Logf(packageName, fmt.Sprintf("Job %s status:%s id:%s node:%d", s.Name, s.Status, s.Id, s.NodeId))
 	event.Publish(EVENT_CRONTAB_STATUS, s.ToJson())
-	s.jobs.save()
 }
 
 /**
@@ -103,14 +107,16 @@ func (s *Job) Start() error {
 
 	if s.fn == nil {
 		s.fn = func(job *Job) {
-			event.Publish(job.Channel, job.Params)
+			err := event.Publish(job.Channel, job.ToJson())
+			if err != nil {
+				s.setStatus(StatusFailed)
+			}
 		}
 	}
 	fn := func() {
-		if s.fn != nil && s.Started && !s.delete {
-			s.setStatus(StatusExecuted)
+		if s.fn != nil && s.Started {
+			s.setStatus(StatusNotified)
 			s.fn(s)
-			s.setStatus(StatusPending)
 		}
 	}
 
@@ -154,7 +160,7 @@ func (s *Job) Remove() error {
 
 type Jobs struct {
 	Id         string     `json:"id"`
-	Started    bool       `json:"started"`
+	nodeId     int64      `json:"-"`
 	jobs       []*Job     `json:"-"`
 	crontab    *cron.Cron `json:"-"`
 	storageKey string     `json:"-"`
@@ -173,12 +179,104 @@ func New() *Jobs {
 }
 
 /**
+* load
+* @return error
+**/
+func (s *Jobs) load() error {
+	_, err := cache.Load()
+	if err != nil {
+		return err
+	}
+
+	_, err = event.Load()
+	if err != nil {
+		return err
+	}
+
+	s.nodeId = cache.Incr("crontab:nodes", time.Second*60)
+	if s.nodeId == 1 {
+		event.Stack(EVENT_CRONTAB_SERVER, func(msg event.EvenMessage) {
+			logs.Logf(packageName, `Crontab server loaded`)
+		})
+
+		logs.Logf(packageName, `Crontab server loaded`)
+	} else {
+		event.Publish(EVENT_CRONTAB_SERVER, et.Json{
+			"event": "event:crontab:startNode",
+			"id":    s.Id,
+		})
+		logs.Logf(packageName, `Crontab  loaded`)
+	}
+
+	return nil
+}
+
+/**
+* addJob
+* @param id, name, spec, channel string, params et.Json
+* @return *Job, error
+**/
+func (s *Jobs) addJob(id, name, spec, channel string, params et.Json, fn func(job *Job)) (*Job, error) {
+	if !utility.ValidStr(name, 0, []string{"", " "}) {
+		return nil, fmt.Errorf(msg.MSG_ATRIB_REQUIRED, "name")
+	}
+
+	idx := s.indexJobByName(name)
+	if idx != -1 {
+		result := s.jobs[idx]
+		return result, nil
+	}
+
+	id = reg.GetUUID(id)
+	result := &Job{
+		Id:      id,
+		Name:    name,
+		Channel: channel,
+		Params:  params,
+		Spec:    spec,
+		Started: false,
+		Idx:     len(s.jobs),
+		NodeId:  s.nodeId,
+		fn:      fn,
+		jobs:    s,
+		mu:      &sync.Mutex{},
+	}
+	s.jobs = append(s.jobs, result)
+	result.setStatus(StatusAdded)
+
+	return result, nil
+}
+
+/**
+* addEventJob
+* @param id, name, spec, channel string, params et.Json
+* @return *Job, error
+**/
+func (s *Jobs) addEventJob(id, name, spec, channel string, params et.Json) (*Job, error) {
+	if !s.isServer {
+		return nil, fmt.Errorf("crontab is not server")
+	}
+
+	result, err := s.addJob(id, name, spec, channel, params, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	err = result.Start()
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+/**
 * indexJobById
 * @param id string
 * @return int
 **/
 func (s *Jobs) indexJobById(id string) int {
-	return slices.IndexFunc(s.jobs, func(s *Job) bool { return s.Id == id && !s.delete })
+	return slices.IndexFunc(s.jobs, func(s *Job) bool { return s.Id == id })
 }
 
 /**
@@ -187,7 +285,7 @@ func (s *Jobs) indexJobById(id string) int {
 * @return int
 **/
 func (s *Jobs) indexJobByName(name string) int {
-	return slices.IndexFunc(s.jobs, func(s *Job) bool { return s.Name == name && !s.delete })
+	return slices.IndexFunc(s.jobs, func(s *Job) bool { return s.Name == name })
 }
 
 /**
@@ -208,71 +306,6 @@ func (s *Jobs) removeJob(job *Job) error {
 	job.setStatus(StatusRemoved)
 
 	return nil
-}
-
-/**
-* addJob
-* @param id, name, spec, channel string, params et.Json
-* @return *Job, error
-**/
-func (s *Jobs) addJob(id, name, spec, channel string, params et.Json, fn func(job *Job)) (*Job, error) {
-	if !utility.ValidStr(name, 0, []string{"", " "}) {
-		return nil, fmt.Errorf(msg.MSG_ATRIB_REQUIRED, "name")
-	}
-
-	idx := slices.IndexFunc(s.jobs, func(s *Job) bool { return s.Name == name })
-	if idx != -1 {
-		result := s.jobs[idx]
-		result.delete = false
-		return result, nil
-	}
-
-	id = reg.GetUUID(id)
-	result := &Job{
-		Id:      id,
-		Name:    name,
-		Channel: channel,
-		Params:  params,
-		Spec:    spec,
-		Started: false,
-		Idx:     len(s.jobs),
-		fn:      fn,
-		jobs:    s,
-	}
-	s.jobs = append(s.jobs, result)
-	result.setStatus(StatusAdded)
-
-	return result, nil
-}
-
-/**
-* addEventJob
-* @param id, name, spec, channel string, params et.Json, save bool
-* @return *Job, error
-**/
-func (s *Jobs) addEventJob(id, name, spec, channel string, params et.Json, save bool) (*Job, error) {
-	if !s.isServer {
-		return nil, fmt.Errorf("crontab is not server")
-	}
-
-	result, err := s.addJob(id, name, spec, channel, params, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	err = result.Start()
-	if err != nil {
-		return nil, err
-	}
-
-	if save {
-		err = s.save()
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return result, nil
 }
 
 /**

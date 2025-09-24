@@ -5,7 +5,6 @@ import (
 	"slices"
 
 	"github.com/celsiainternet/elvis/cache"
-	"github.com/celsiainternet/elvis/event"
 	"github.com/celsiainternet/elvis/logs"
 )
 
@@ -46,35 +45,17 @@ func (s *Jobs) storage() (*Storage, error) {
 }
 
 /**
-* load
-* @param isServer bool
+* loadByCache
 * @return error
 **/
-func (s *Jobs) load(isServer bool) error {
-	_, err := cache.Load()
-	if err != nil {
-		return err
-	}
-
-	_, err = event.Load()
-	if err != nil {
-		return err
-	}
-
-	s.isServer = isServer
-	if !isServer {
-		logs.Logf(packageName, `Crontab loaded`)
-
-		return nil
-	}
-
+func (s *Jobs) loadByCache() error {
 	storage, err := s.storage()
 	if err != nil {
 		return err
 	}
 
 	for _, job := range storage.Jobs {
-		_, err := s.addEventJob(job.Id, job.Name, job.Spec, job.Channel, job.Params, false)
+		_, err := s.addEventJob(job.Id, job.Name, job.Spec, job.Channel, job.Params)
 		if err != nil {
 			continue
 		}
@@ -103,17 +84,8 @@ func (s *Jobs) save() error {
 		return err
 	}
 
-	for i, job := range s.jobs {
-		if job.delete {
-			idx := slices.IndexFunc(storage.Jobs, func(s *Job) bool { return s.Id == job.Id })
-			if idx != -1 {
-				storage.Jobs = slices.Delete(storage.Jobs, idx, idx+1)
-			}
-			s.jobs = slices.Delete(s.jobs, i, i+1)
-			continue
-		}
-
-		idx := slices.IndexFunc(storage.Jobs, func(s *Job) bool { return s.Id == job.Id })
+	for _, job := range s.jobs {
+		idx := slices.IndexFunc(storage.Jobs, func(e *Job) bool { return e.Id == job.Id })
 		if idx != -1 {
 			storage.Jobs[idx] = job
 		}
