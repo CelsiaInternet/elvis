@@ -2,7 +2,6 @@ package crontab
 
 import (
 	"encoding/json"
-	"slices"
 
 	"github.com/celsiainternet/elvis/cache"
 	"github.com/celsiainternet/elvis/logs"
@@ -71,33 +70,29 @@ func (s *Jobs) loadByCache() error {
 * @return error
 **/
 func (s *Jobs) save() error {
-	if !s.isServer {
-		return nil
-	}
+	// if !cache.IsLoad() {
+	// 	return nil
+	// }
 
-	if !cache.IsLoad() {
-		return nil
-	}
+	// storage, err := s.storage()
+	// if err != nil {
+	// 	return err
+	// }
 
-	storage, err := s.storage()
-	if err != nil {
-		return err
-	}
+	// for _, job := range s.jobs {
+	// 	idx := slices.IndexFunc(storage.Jobs, func(e *Job) bool { return e.Id == job.Id })
+	// 	if idx != -1 {
+	// 		storage.Jobs[idx] = job
+	// 	}
+	// 	storage.Jobs = append(storage.Jobs, job)
+	// }
 
-	for _, job := range s.jobs {
-		idx := slices.IndexFunc(storage.Jobs, func(e *Job) bool { return e.Id == job.Id })
-		if idx != -1 {
-			storage.Jobs[idx] = job
-		}
-		storage.Jobs = append(storage.Jobs, job)
-	}
+	// bt, err := json.Marshal(storage)
+	// if err != nil {
+	// 	return err
+	// }
 
-	bt, err := json.Marshal(storage)
-	if err != nil {
-		return err
-	}
-
-	cache.Set(s.storageKey, string(bt), 0)
+	// cache.Set(s.storageKey, string(bt), 0)
 
 	return nil
 }
