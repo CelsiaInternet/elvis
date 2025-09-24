@@ -88,7 +88,7 @@ func main() {
 const modelService = `package module
 
 import (
-	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/celsiainternet/elvis/console"
@@ -110,7 +110,7 @@ func New() (*Server, error) {
 
 	port := envar.EnvarInt(3300, "PORT")
 	if port == 0 {
-		return nil, errors.New("variable PORT es requerida")
+		return nil, fmt.Errorf("variable PORT es requerida")
 	}
 
 	r := chi.NewRouter()

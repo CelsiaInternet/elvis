@@ -1,7 +1,6 @@
 package console
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"runtime"
@@ -87,7 +86,7 @@ func InfoF(format string, args ...any) error {
 
 func Alert(message string) error {
 	functionName := utility.PrintFunctionName()
-	err := errors.New(message)
+	err := fmt.Errorf(message)
 	printLn("Alert", "Yellow", err.Error(), " - ", functionName)
 	return err
 }
@@ -103,7 +102,7 @@ func AlertE(err error) error {
 func AlertF(format string, args ...any) error {
 	functionName := utility.PrintFunctionName()
 	message := fmt.Sprintf(format, args...)
-	err := errors.New(message)
+	err := fmt.Errorf(message)
 	printLn("Alert", "Yellow", err.Error(), " - ", functionName)
 	return err
 }
@@ -115,13 +114,13 @@ func Error(err error) error {
 }
 
 func ErrorM(message string) error {
-	err := errors.New(message)
+	err := fmt.Errorf(message)
 	return Error(err)
 }
 
 func ErrorF(format string, args ...any) error {
 	message := strs.Format(format, args...)
-	err := errors.New(message)
+	err := fmt.Errorf(message)
 	return Error(err)
 }
 

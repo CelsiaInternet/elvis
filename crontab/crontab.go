@@ -2,40 +2,154 @@ package crontab
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"slices"
 	"time"
 
-	"github.com/celsiainternet/elvis/cache"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/event"
+	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/msg"
+	"github.com/celsiainternet/elvis/reg"
 	"github.com/celsiainternet/elvis/utility"
 	"github.com/robfig/cron/v3"
 )
 
+const (
+	packageName    = "crontab"
+	StatusAdded    = "added"
+	StatusPending  = "pending"
+	StatusStarting = "starting"
+	StatusRunning  = "running"
+	StatusStopped  = "stopped"
+	StatusExecuted = "executed"
+	StatusRemoved  = "removed"
+)
+
+var (
+	ErrJobExists = fmt.Errorf("job already exists")
+)
+
 type Job struct {
-	Id      string  `json:"id"`
-	Name    string  `json:"name"`
-	Channel string  `json:"channel"`
-	Params  et.Json `json:"params"`
-	Spec    string  `json:"spec"`
-	Started bool    `json:"started"`
-	Idx     int     `json:"idx"`
-	fn      func()  `json:"-"`
+	Id      string         `json:"id"`
+	Name    string         `json:"name"`
+	Channel string         `json:"channel"`
+	Params  et.Json        `json:"params"`
+	Spec    string         `json:"spec"`
+	Started bool           `json:"started"`
+	Status  string         `json:"status"`
+	Idx     int            `json:"idx"`
+	fn      func(job *Job) `json:"-"`
+	jobs    *Jobs          `json:"-"`
+	delete  bool           `json:"-"`
 }
 
-func (j *Job) Json() et.Json {
-	return et.Json{
-		"id":      j.Id,
-		"name":    j.Name,
-		"channel": j.Channel,
-		"params":  j.Params,
-		"spec":    j.Spec,
-		"started": j.Started,
-		"idx":     j.Idx,
+/**
+* Serialize
+* @return ([]byte, error)
+**/
+func (s *Job) serialize() ([]byte, error) {
+	bt, err := json.Marshal(s)
+	if err != nil {
+		return nil, err
 	}
+
+	return bt, nil
+}
+
+/**
+* ToJson
+* @return et.Json
+**/
+func (s *Job) ToJson() et.Json {
+	bt, err := s.serialize()
+	if err != nil {
+		return et.Json{}
+	}
+
+	var result et.Json
+	err = json.Unmarshal(bt, &result)
+	if err != nil {
+		return et.Json{}
+	}
+
+	return result
+}
+
+/**
+* setStatus
+* @param status string
+* @return void
+**/
+func (s *Job) setStatus(status string) {
+	s.Status = status
+	if StatusRemoved == status {
+		s.delete = true
+	}
+
+	logs.Logf(packageName, fmt.Sprintf("Job %s status:%s id:%s", s.Name, s.Status, s.Id))
+	event.Publish(EVENT_CRONTAB_STATUS, s.ToJson())
+	s.jobs.save()
+}
+
+/**
+* Start
+* @return error
+**/
+func (s *Job) Start() error {
+	if s.Started {
+		return nil
+	}
+
+	if s.fn == nil {
+		s.fn = func(job *Job) {
+			event.Publish(job.Channel, job.Params)
+		}
+	}
+	fn := func() {
+		if s.fn != nil && s.Started && !s.delete {
+			s.setStatus(StatusExecuted)
+			s.fn(s)
+			s.setStatus(StatusPending)
+		}
+	}
+
+	id, err := s.jobs.crontab.AddFunc(s.Spec, fn)
+	if err != nil {
+		return err
+	}
+
+	s.Idx = int(id)
+	s.Started = true
+	s.setStatus(StatusStarting)
+
+	return nil
+}
+
+/**
+* Stop
+* @return error
+**/
+func (s *Job) Stop() {
+	if !s.Started {
+		return
+	}
+
+	s.Started = false
+	s.setStatus(StatusStopped)
+
+	time.AfterFunc(time.Second*1, func() {
+		s.jobs.crontab.Remove(cron.EntryID(s.Idx))
+		s.Idx = -1
+	})
+}
+
+/**
+* Remove
+* @return error
+**/
+func (s *Job) Remove() error {
+	return s.jobs.removeJob(s)
 }
 
 type Jobs struct {
@@ -44,6 +158,8 @@ type Jobs struct {
 	jobs       []*Job     `json:"-"`
 	crontab    *cron.Cron `json:"-"`
 	storageKey string     `json:"-"`
+	running    bool       `json:"-"`
+	isServer   bool       `json:"-"`
 }
 
 func New() *Jobs {
@@ -51,155 +167,69 @@ func New() *Jobs {
 	return &Jobs{
 		Id:         utility.UUID(),
 		jobs:       make([]*Job, 0),
-		crontab:    cron.New(),
+		crontab:    cron.New(cron.WithSeconds()),
 		storageKey: fmt.Sprintf("crontab_%s", version),
 	}
 }
 
 /**
+* indexJobById
+* @param id string
+* @return int
+**/
+func (s *Jobs) indexJobById(id string) int {
+	return slices.IndexFunc(s.jobs, func(s *Job) bool { return s.Id == id && !s.delete })
+}
+
+/**
+* indexJobByName
+* @param name string
+* @return int
+**/
+func (s *Jobs) indexJobByName(name string) int {
+	return slices.IndexFunc(s.jobs, func(s *Job) bool { return s.Name == name && !s.delete })
+}
+
+/**
 * removeJob
-* @param idx int
+* @param job *Job
 * @return error
 **/
-func (s *Jobs) removeJob(idx int) error {
-	job := s.jobs[idx]
+func (s *Jobs) removeJob(job *Job) error {
 	if job.Started {
-		time.AfterFunc(time.Second*3, func() {
-			id := job.Idx
-			s.crontab.Remove(cron.EntryID(id))
-		})
+		job.Stop()
 	}
 
-	s.jobs = slices.Delete(s.jobs, idx, idx+1)
-
-	return nil
-}
-
-/**
-* startJob
-* @param idx int
-* @return int, error
-**/
-func (s *Jobs) startJob(idx int) (int, error) {
-	job := s.jobs[idx]
-	if job.Started {
-		return 0, errors.New("job already started")
-	}
-
-	if job.fn == nil {
-		job.fn = func() {
-			event.Publish(job.Channel, job.Params)
-		}
-	}
-
-	id, err := s.crontab.AddFunc(job.Spec, job.fn)
-	if err != nil {
-		return 0, err
-	}
-
-	job.Idx = int(id)
-	job.Started = true
-
-	return job.Idx, nil
-}
-
-/**
-* stopJobs
-* @param idx int
-* @return error
-**/
-func (s *Jobs) stopJobs(idx int) error {
-	job := s.jobs[idx]
-	if !job.Started {
-		return errors.New("job not started")
-	}
-
-	time.AfterFunc(time.Second*3, func() {
-		s.crontab.Remove(cron.EntryID(job.Idx))
-	})
-
-	job.Started = false
-	job.Idx = -1
-
-	return nil
-}
-
-/**
-* Load
-* @return error
-**/
-func (s *Jobs) Load() error {
-	if !cache.IsLoad() {
+	idx := s.indexJobById(job.Id)
+	if idx == -1 {
 		return nil
 	}
 
-	storage := NewStorage()
-	bt, err := json.Marshal(storage)
-	if err != nil {
-		return err
-	}
-
-	strs, err := cache.Get(s.storageKey, string(bt))
-	if err != nil {
-		return err
-	}
-
-	err = json.Unmarshal([]byte(strs), &storage)
-	if err != nil {
-		return err
-	}
-
-	for _, job := range storage.Jobs {
-		res, err := s.AddJob(job.Name, job.Spec, job.Channel, job.Params, nil)
-		if err != nil {
-			return err
-		}
-
-		res.Id = job.Id
-	}
+	job.setStatus(StatusRemoved)
 
 	return nil
 }
 
 /**
-* Save
-* @return error
-**/
-func (s *Jobs) Save() error {
-	if !cache.IsLoad() {
-		return nil
-	}
-
-	storage := NewStorage()
-	storage.Jobs = s.jobs
-
-	bt, err := json.Marshal(storage)
-	if err != nil {
-		return err
-	}
-
-	cache.Set(s.storageKey, string(bt), 0)
-
-	return nil
-}
-
-/**
-* AddJob
-* @param name, spec, channel string, params et.Json
+* addJob
+* @param id, name, spec, channel string, params et.Json
 * @return *Job, error
 **/
-func (s *Jobs) AddJob(name, spec, channel string, params et.Json, fn func()) (*Job, error) {
+func (s *Jobs) addJob(id, name, spec, channel string, params et.Json, fn func(job *Job)) (*Job, error) {
 	if !utility.ValidStr(name, 0, []string{"", " "}) {
 		return nil, fmt.Errorf(msg.MSG_ATRIB_REQUIRED, "name")
 	}
 
-	idx := slices.IndexFunc(s.jobs, func(j *Job) bool { return j.Name == name })
+	idx := slices.IndexFunc(s.jobs, func(s *Job) bool { return s.Name == name })
 	if idx != -1 {
-		return nil, errors.New("job already exists")
+		result := s.jobs[idx]
+		result.delete = false
+		return result, nil
 	}
 
+	id = reg.GetUUID(id)
 	result := &Job{
-		Id:      utility.UUID(),
+		Id:      id,
 		Name:    name,
 		Channel: channel,
 		Params:  params,
@@ -207,53 +237,82 @@ func (s *Jobs) AddJob(name, spec, channel string, params et.Json, fn func()) (*J
 		Started: false,
 		Idx:     len(s.jobs),
 		fn:      fn,
+		jobs:    s,
 	}
 	s.jobs = append(s.jobs, result)
+	result.setStatus(StatusAdded)
 
 	return result, nil
 }
 
 /**
-* DeleteJob
+* addEventJob
+* @param id, name, spec, channel string, params et.Json, save bool
+* @return *Job, error
+**/
+func (s *Jobs) addEventJob(id, name, spec, channel string, params et.Json, save bool) (*Job, error) {
+	if !s.isServer {
+		return nil, fmt.Errorf("crontab is not server")
+	}
+
+	result, err := s.addJob(id, name, spec, channel, params, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	err = result.Start()
+	if err != nil {
+		return nil, err
+	}
+
+	if save {
+		err = s.save()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return result, nil
+}
+
+/**
+* deleteJobByName
 * @param name string
 * @return error
 **/
-func (s *Jobs) DeleteJob(name string) error {
-	idx := slices.IndexFunc(s.jobs, func(j *Job) bool { return j.Name == name })
+func (s *Jobs) deleteJobByName(name string) error {
+	idx := s.indexJobByName(name)
 	if idx == -1 {
-		return errors.New("job not found")
+		return fmt.Errorf("job not found")
 	}
 
-	return s.removeJob(idx)
+	job := s.jobs[idx]
+	return s.removeJob(job)
 }
 
 /**
-* DeleteJobById
+* deleteJobById
 * @param id string
 * @return error
 **/
-func (s *Jobs) DeleteJobById(id string) error {
-	idx := slices.IndexFunc(s.jobs, func(j *Job) bool { return j.Id == id })
+func (s *Jobs) deleteJobById(id string) error {
+	idx := s.indexJobById(id)
 	if idx == -1 {
-		return errors.New("job not found")
+		return fmt.Errorf("job not found")
 	}
 
-	return s.removeJob(idx)
+	job := s.jobs[idx]
+	return s.removeJob(job)
 }
 
 /**
-* List
+* list
 * @return et.Items
 **/
-func (s *Jobs) List() et.Items {
+func (s *Jobs) list() et.Items {
 	var items = make([]et.Json, 0)
 	for _, job := range s.jobs {
-		items = append(items, et.Json{
-			"idx":     job.Idx,
-			"name":    job.Name,
-			"spec":    job.Spec,
-			"started": job.Started,
-		})
+		items = append(items, job.ToJson())
 	}
 
 	return et.Items{
@@ -264,84 +323,112 @@ func (s *Jobs) List() et.Items {
 }
 
 /**
-* StartJob
-* @param name string
-* @return int, error
-**/
-func (s *Jobs) StartJob(name string) (int, error) {
-	idx := slices.IndexFunc(s.jobs, func(j *Job) bool { return j.Name == name })
-	if idx == -1 {
-		return 0, errors.New("job not found")
-	}
-
-	return s.startJob(idx)
-}
-
-/**
-* StartJobById
-* @param id string
-* @return int, error
-**/
-func (s *Jobs) StartJobById(id string) (int, error) {
-	idx := slices.IndexFunc(s.jobs, func(j *Job) bool { return j.Id == id })
-	if idx == -1 {
-		return 0, errors.New("job not found")
-	}
-
-	return s.startJob(idx)
-}
-
-/**
-* StopJob
+* stopJobByName
 * @param name string
 **/
-func (s *Jobs) StopJob(name string) error {
-	idx := slices.IndexFunc(s.jobs, func(j *Job) bool { return j.Name == name })
+func (s *Jobs) stopJobByName(name string) error {
+	idx := s.indexJobByName(name)
 	if idx == -1 {
-		return errors.New("job not found")
+		return fmt.Errorf("job not found")
 	}
 
-	return s.stopJobs(idx)
+	job := s.jobs[idx]
+	job.Stop()
+
+	return nil
 }
 
 /**
-* StopJobById
+* stopJobById
 * @param id string
 * @return error
 **/
-func (s *Jobs) StopJobById(id string) error {
-	idx := slices.IndexFunc(s.jobs, func(j *Job) bool { return j.Id == id })
+func (s *Jobs) stopJobById(id string) error {
+	idx := s.indexJobById(id)
 	if idx == -1 {
-		return errors.New("job not found")
+		return fmt.Errorf("job not found")
 	}
 
-	return s.stopJobs(idx)
+	job := s.jobs[idx]
+	job.Stop()
+
+	return nil
+}
+
+/**
+* startJobByName
+* @param name string
+* @return int, error
+**/
+func (s *Jobs) startJobByName(name string) (int, error) {
+	idx := s.indexJobByName(name)
+	if idx == -1 {
+		return 0, fmt.Errorf("job not found")
+	}
+
+	job := s.jobs[idx]
+	err := job.Start()
+	if err != nil {
+		return 0, err
+	}
+
+	return job.Idx, nil
+}
+
+/**
+* startJobById
+* @param id string
+* @return error
+**/
+func (s *Jobs) startJobById(id string) error {
+	idx := s.indexJobById(id)
+	if idx == -1 {
+		return fmt.Errorf("job not found")
+	}
+
+	job := s.jobs[idx]
+	err := job.Start()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 /**
 * Start
 * @return error
 **/
-func (s *Jobs) Start() error {
+func (s *Jobs) start() error {
 	if s.crontab == nil {
-		return errors.New("crontab not initialized")
+		return fmt.Errorf("crontab not initialized")
+	}
+
+	if s.running {
+		return nil
 	}
 
 	s.crontab.Start()
+	s.running = true
+
+	logs.Logf(packageName, `Crontab started`)
 
 	return nil
 }
 
 /**
-* Stop
+* stop
 * @return error
 **/
-func (s *Jobs) Stop() error {
+func (s *Jobs) stop() error {
 	if s.crontab == nil {
-		return errors.New("crontab not initialized")
+		return fmt.Errorf("crontab not initialized")
 	}
 
 	s.crontab.Stop()
+	s.running = false
+
+	logs.Logf(packageName, `Crontab stopped`)
 
 	return nil
 }

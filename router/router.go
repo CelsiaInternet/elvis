@@ -1,7 +1,6 @@
 package router
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -353,7 +352,7 @@ func With(r *chi.Mux, method, path string, middlewares []func(http.Handler) http
 func authorization(profile et.Json) (map[string]bool, error) {
 	method := envar.GetStr("Module.Services.GetPermissions", "AUTHORIZATION_METHOD")
 	if method == "" {
-		return map[string]bool{}, errors.New("authorization method not found")
+		return map[string]bool{}, fmt.Errorf("authorization method not found")
 	}
 
 	result, err := jrpc.CallPermitios(method, profile)

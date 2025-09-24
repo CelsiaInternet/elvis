@@ -1,7 +1,7 @@
 package ws
 
 import (
-	"errors"
+	"fmt"
 	"net/http"
 	"sync"
 
@@ -262,7 +262,7 @@ func (h *Hub) JoinTo(master et.Json) error {
 
 	name := master.Str("adapter")
 	if _, ok := adapters[name]; !ok {
-		return errors.New(ERR_ADAPTER_NOT_FOUND)
+		return fmt.Errorf(ERR_ADAPTER_NOT_FOUND)
 	}
 
 	adapter := adapters[name]()

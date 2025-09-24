@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/celsiainternet/elvis/claim"
@@ -94,7 +94,7 @@ func Authorization(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		if authorizationFunc == nil {
-			response.InternalServerError(w, r, errors.New("AuthorizationFunc not set"))
+			response.InternalServerError(w, r, fmt.Errorf("AuthorizationFunc not set"))
 			return
 		}
 

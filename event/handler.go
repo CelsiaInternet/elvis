@@ -1,7 +1,7 @@
 package event
 
 import (
-	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/celsiainternet/elvis/envar"
@@ -64,11 +64,11 @@ func Publish(channel string, data et.Json) error {
 **/
 func Subscribe(channel string, f func(EvenMessage)) error {
 	if conn == nil {
-		return errors.New(ERR_NOT_CONNECT)
+		return fmt.Errorf(ERR_NOT_CONNECT)
 	}
 
 	if len(channel) == 0 {
-		return errors.New(ERR_CHANNEL_REQUIRED)
+		return fmt.Errorf(ERR_CHANNEL_REQUIRED)
 	}
 
 	ok, err := conn.Add(channel)
@@ -109,11 +109,11 @@ func Subscribe(channel string, f func(EvenMessage)) error {
 **/
 func Queue(channel, queue string, f func(EvenMessage)) error {
 	if conn == nil {
-		return errors.New(ERR_NOT_CONNECT)
+		return fmt.Errorf(ERR_NOT_CONNECT)
 	}
 
 	if len(channel) == 0 {
-		return errors.New(ERR_CHANNEL_REQUIRED)
+		return fmt.Errorf(ERR_CHANNEL_REQUIRED)
 	}
 
 	ok, err := conn.Add(channel)

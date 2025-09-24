@@ -71,7 +71,7 @@ go mod init github.com/tu-usuario/tu-proyecto
 ### 2. Instalar Elvis
 
 ```bash
-go get github.com/celsiainternet/elvis@v1.1.140
+go get github.com/celsiainternet/elvis@v1.1.141
 ```
 
 ### 3. Crear Proyecto con Elvis
@@ -109,6 +109,9 @@ gofmt -w . && go run ./cmd/jdb go
 
 # Cliente WorkFlow
 gofmt -w . && go run ./cmd/flow go
+
+# Crontab
+gofmt -w . && go run ./cmd/crontab go
 ```
 
 ## Uso
@@ -299,7 +302,7 @@ realtime.Telemetry(map[string]interface{}{
 
 // Logging estructurado
 logs.Log("user-service", "Usuario creado exitosamente")
-logs.Alert(errors.New("Error de conexión"))
+logs.Alert(fmt.Errorf("Error de conexión"))
 ```
 
 ## 📁 Estructura del Proyecto
@@ -561,7 +564,7 @@ _Desarrollado con ❤️ en Colombia_
 
 ## Releases
 
-### v1.1.140
+### v1.1.141
 
 - **Sistema de Comunicación en Tiempo Real**
 

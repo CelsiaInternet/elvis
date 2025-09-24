@@ -1,7 +1,7 @@
 package realtime
 
 import (
-	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/celsiainternet/elvis/envar"
@@ -25,7 +25,7 @@ func Load(id, name string) (*ws.Client, error) {
 
 	url := envar.GetStr("", "RT_URL")
 	if url == "" {
-		return nil, errors.New(MSG_RT_URL_REQUIRED)
+		return nil, fmt.Errorf(MSG_RT_URL_REQUIRED)
 	}
 
 	username := envar.GetStr("", "WS_USERNAME")

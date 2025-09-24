@@ -1,7 +1,7 @@
 package realtime
 
 import (
-	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/celsiainternet/elvis/et"
@@ -46,7 +46,7 @@ func Active() bool {
 **/
 func SetFrom(name string) error {
 	if conn == nil {
-		return errors.New(ERR_REALTIME_NOT_LOAD)
+		return fmt.Errorf(ERR_REALTIME_NOT_LOAD)
 	}
 
 	return conn.SetFrom(name)
@@ -59,7 +59,7 @@ func SetFrom(name string) error {
 **/
 func Publish(channel string, message interface{}) error {
 	if conn == nil {
-		return errors.New(ERR_REALTIME_NOT_LOAD)
+		return fmt.Errorf(ERR_REALTIME_NOT_LOAD)
 	}
 
 	conn.Publish(channel, message)
@@ -74,7 +74,7 @@ func Publish(channel string, message interface{}) error {
 **/
 func SendMessage(clientId string, message interface{}) error {
 	if conn == nil {
-		return errors.New(ERR_REALTIME_NOT_LOAD)
+		return fmt.Errorf(ERR_REALTIME_NOT_LOAD)
 	}
 
 	return conn.SendMessage(clientId, message)
@@ -87,7 +87,7 @@ func SendMessage(clientId string, message interface{}) error {
 **/
 func Subscribe(channel string, reciveFn func(ws.Message)) error {
 	if conn == nil {
-		return errors.New(ERR_REALTIME_NOT_LOAD)
+		return fmt.Errorf(ERR_REALTIME_NOT_LOAD)
 	}
 
 	conn.Subscribe(channel, reciveFn)

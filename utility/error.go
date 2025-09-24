@@ -1,7 +1,6 @@
 package utility
 
 import (
-	"errors"
 	"fmt"
 	"runtime"
 	"strings"
@@ -11,7 +10,7 @@ import (
 )
 
 func NewError(message string) error {
-	return errors.New(message)
+	return fmt.Errorf(message)
 }
 
 func NewErrorf(format string, args ...any) error {
