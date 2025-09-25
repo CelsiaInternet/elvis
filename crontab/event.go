@@ -14,6 +14,7 @@ var (
 	EVENT_CRONTAB_STOP   = "event:crontab:stop"
 	EVENT_CRONTAB_START  = "event:crontab:start"
 	EVENT_CRONTAB_DELETE = "event:crontab:delete"
+	EVENT_CRONTAB_FAILED = "event:crontab:failed"
 )
 
 /**
@@ -63,8 +64,9 @@ func eventSet(msg event.EvenMessage) {
 	name := data.Str("name")
 	spec := data.Str("spec")
 	channel := data.Str("channel")
+	started := data.Bool("started")
 	params := data.Json("params")
-	_, err := crontab.addEventJob(id, name, spec, channel, params)
+	_, err := crontab.addEventJob(id, name, spec, channel, started, params)
 	if err != nil {
 		logs.Logf(packageName, fmt.Sprintf("Error adding job %s", err))
 		return

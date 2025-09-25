@@ -39,6 +39,7 @@ type Instance struct {
 	DoneAt     time.Time            `json:"done_at"`
 	Tags       et.Json              `json:"tags"`
 	WorkerHost string               `json:"worker_host"`
+	Params     et.Json              `json:"params"`
 	done       bool                 `json:"-"`
 	goTo       int                  `json:"-"`
 	err        error                `json:"-"`
@@ -84,6 +85,7 @@ func (s *Instance) ToJson() et.Json {
 		"done_at":        s.DoneAt,
 		"status":         s.Status,
 		"worker_host":    s.WorkerHost,
+		"params":         s.Params,
 	}
 
 	for k, v := range s.Tags {
@@ -197,6 +199,14 @@ func (s *Instance) setTags(tags et.Json) {
 	for k, v := range tags {
 		s.Tags[k] = v
 	}
+}
+
+/**
+* SetParam
+* @param key string, value interface{}
+**/
+func (s *Instance) SetParam(key string, value interface{}) {
+	s.Params[key] = value
 }
 
 /**

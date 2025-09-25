@@ -27,14 +27,6 @@ func main() {
 		panic(err)
 	}
 
-	// job, err := crontab.AddEventJob("", "test", "*/5 * * * * *", "test",
-	// 	et.Json{
-	// 		"test": "test",
-	// 	})
-	// if err != nil {
-	// 	panic(err)
-	// }
-
 	// time.AfterFunc(time.Second*9, func() {
 	// 	job.Stop()
 	// })

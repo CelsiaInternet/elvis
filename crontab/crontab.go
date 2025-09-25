@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/celsiainternet/elvis/cache"
+	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/event"
 	"github.com/celsiainternet/elvis/logs"
@@ -36,18 +37,20 @@ var (
 )
 
 type Job struct {
-	Id      string         `json:"id"`
-	Name    string         `json:"name"`
-	Channel string         `json:"channel"`
-	Params  et.Json        `json:"params"`
-	Spec    string         `json:"spec"`
-	Started bool           `json:"started"`
-	Status  string         `json:"status"`
-	Idx     int            `json:"idx"`
-	NodeId  int64          `json:"node_id"`
-	fn      func(job *Job) `json:"-"`
-	jobs    *Jobs          `json:"-"`
-	mu      *sync.Mutex    `json:"-"`
+	Id        string         `json:"id"`
+	Name      string         `json:"name"`
+	Channel   string         `json:"channel"`
+	Params    et.Json        `json:"params"`
+	Spec      string         `json:"spec"`
+	Started   bool           `json:"started"`
+	Status    string         `json:"status"`
+	Idx       int            `json:"idx"`
+	NodeId    int64          `json:"node_id"`
+	Attempts  int            `json:"attempts"`
+	fn        func(job *Job) `json:"-"`
+	jobs      *Jobs          `json:"-"`
+	isEventUp bool           `json:"-"`
+	mu        *sync.Mutex    `json:"-"`
 }
 
 /**
@@ -83,6 +86,46 @@ func (s *Job) ToJson() et.Json {
 }
 
 /**
+* eventUp
+* @return void
+**/
+func (s *Job) eventUp() {
+	if s.isEventUp {
+		return
+	}
+
+	key := fmt.Sprintf("crontab:%s", s.Id)
+	err := event.Stack(key, func(msg event.EvenMessage) {
+		data := msg.Data
+		action := data.Str("action")
+		switch action {
+		case "start":
+			s.Start()
+		case "stop":
+			s.Stop()
+		case "remove":
+			s.Remove()
+		}
+	})
+	if err != nil {
+		logs.Logf(packageName, fmt.Sprintf("Job %s event up error:%s", s.Name, err.Error()))
+	}
+
+	s.isEventUp = true
+	logs.Logf(packageName, fmt.Sprintf("Job %s event up", s.Name))
+}
+
+/**
+* eventDown
+* @return void
+**/
+func (s *Job) eventDown() {
+	s.isEventUp = false
+	key := fmt.Sprintf("crontab:%s", s.Id)
+	event.Unsubscribe(key)
+}
+
+/**
 * setStatus
 * @param status string
 * @return void
@@ -92,7 +135,26 @@ func (s *Job) setStatus(status string) {
 	defer s.mu.Unlock()
 
 	s.Status = status
-	logs.Logf(packageName, fmt.Sprintf("Job %s status:%s id:%s node:%d", s.Name, s.Status, s.Id, s.NodeId))
+	switch status {
+	case StatusAdded:
+		s.eventUp()
+	case StatusRemoved:
+		s.eventDown()
+	case StatusNotified:
+		s.Attempts++
+	case StatusFailed:
+		if s.jobs.Team == "" {
+			break
+		}
+
+		data := s.ToJson()
+		data.Set("team", s.jobs.Team)
+		data.Set("level", s.jobs.Level)
+		data.Set("message", fmt.Sprintf("CrontabJob %s failed id:%s node:%d attempt:%d", s.Name, s.Id, s.NodeId, s.Attempts))
+		event.Publish(EVENT_CRONTAB_FAILED, data)
+	}
+
+	logs.Logf(packageName, fmt.Sprintf("Job %s status:%s id:%s node:%d attempt:%d", s.Name, s.Status, s.Id, s.NodeId, s.Attempts))
 	event.Publish(EVENT_CRONTAB_STATUS, s.ToJson())
 }
 
@@ -160,6 +222,8 @@ func (s *Job) Remove() error {
 
 type Jobs struct {
 	Id         string     `json:"id"`
+	Team       string     `json:"team"`
+	Level      string     `json:"level"`
 	nodeId     int64      `json:"-"`
 	jobs       []*Job     `json:"-"`
 	crontab    *cron.Cron `json:"-"`
@@ -172,6 +236,8 @@ func New() *Jobs {
 	version := "v0.0.1"
 	return &Jobs{
 		Id:         utility.UUID(),
+		Team:       envar.GetStr("Operation", "IRT_TEAM"),
+		Level:      envar.GetStr("", "IRT_LEVEL"),
 		jobs:       make([]*Job, 0),
 		crontab:    cron.New(cron.WithSeconds()),
 		storageKey: fmt.Sprintf("crontab_%s", version),
@@ -249,10 +315,10 @@ func (s *Jobs) addJob(id, name, spec, channel string, params et.Json, fn func(jo
 
 /**
 * addEventJob
-* @param id, name, spec, channel string, params et.Json
+* @param id, name, spec, channel string, started bool, params et.Json
 * @return *Job, error
 **/
-func (s *Jobs) addEventJob(id, name, spec, channel string, params et.Json) (*Job, error) {
+func (s *Jobs) addEventJob(id, name, spec, channel string, started bool, params et.Json) (*Job, error) {
 	if !s.isServer {
 		return nil, fmt.Errorf("crontab is not server")
 	}
@@ -262,9 +328,11 @@ func (s *Jobs) addEventJob(id, name, spec, channel string, params et.Json) (*Job
 		return nil, err
 	}
 
-	err = result.Start()
-	if err != nil {
-		return nil, err
+	if started {
+		err = result.Start()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return result, nil

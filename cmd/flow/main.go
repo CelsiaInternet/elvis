@@ -29,9 +29,8 @@ func main() {
 			atrib := fmt.Sprintf("step_%d", flow.Current)
 			ctx.Set(atrib, "step1")
 
-			// guardar en el Oss
 			// flow.Done()
-			flow.Stop()
+			// flow.Stop()
 			// flow.Goto(2)
 
 			time.Sleep(3 * time.Second)

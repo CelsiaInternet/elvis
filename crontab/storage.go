@@ -54,7 +54,7 @@ func (s *Jobs) loadByCache() error {
 	}
 
 	for _, job := range storage.Jobs {
-		_, err := s.addEventJob(job.Id, job.Name, job.Spec, job.Channel, job.Params)
+		_, err := s.addEventJob(job.Id, job.Name, job.Spec, job.Channel, job.Started, job.Params)
 		if err != nil {
 			continue
 		}

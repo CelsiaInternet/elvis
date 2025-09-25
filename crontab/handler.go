@@ -3,11 +3,15 @@ package crontab
 import (
 	"fmt"
 
+	"github.com/celsiainternet/elvis/cache"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/event"
+	"github.com/celsiainternet/elvis/logs"
 )
 
-var crontab *Jobs
+var (
+	crontab *Jobs
+)
 
 /**
 * Load
@@ -55,8 +59,27 @@ func Server() error {
 	return nil
 }
 
+func Close() {
+	if crontab == nil {
+		return
+	}
+
+	cache.Delete("crontab:nodes")
+
+	logs.Log(packageName, `Disconnect...`)
+}
+
+/**
+* IsMaster
+* @return bool
+**/
+func IsMaster() bool {
+	return crontab.nodeId == 1
+}
+
 /**
 * AddJob
+* Add job to crontab in execute local
 * @param id, name, spec, channel string, params et.Json, fn func()
 * @return *Job, error
 **/
@@ -84,21 +107,30 @@ func AddJob(id, name, spec, channel string, params et.Json, fn func(job *Job)) (
 }
 
 /**
-* AddEventJob
-* @param id, name, spec, channel string, params et.Json
-* @return *Job, error
+* PushEventJob
+* Push job to crontab was notified by event workers
+* @param id, name, spec, channel string, started bool, params et.Json
+* @return error
 **/
-func AddEventJob(id, name, spec, channel string, params et.Json) (*Job, error) {
+func PushEventJob(id, name, spec, channel string, started bool, params et.Json) error {
 	err := Server()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return crontab.addEventJob(id, name, spec, channel, params)
+	return event.Publish(EVENT_CRONTAB_SET, et.Json{
+		"id":      id,
+		"name":    name,
+		"spec":    spec,
+		"channel": channel,
+		"started": started,
+		"params":  params,
+	})
 }
 
 /**
 * EventJob
+* Event job to crontab function execute was notified by event workers
 * @param id, name, spec, channel string, params et.Json
 * @return *Job, error
 **/
@@ -108,6 +140,7 @@ func EventJob(id, name, spec, channel string, params et.Json, fn func(event.Even
 		"name":    name,
 		"spec":    spec,
 		"channel": channel,
+		"started": true,
 		"params":  params,
 	})
 

@@ -243,9 +243,9 @@ func (it *Items) Json(idx int, atribs ...string) Json {
 
 func (it *Items) ToByte() []byte {
 	return Json{
-		"Ok":     it.Ok,
-		"Count":  it.Count,
-		"Result": it.Result,
+		"ok":     it.Ok,
+		"count":  it.Count,
+		"result": it.Result,
 	}.ToByte()
 }
 
@@ -255,9 +255,9 @@ func (it *Items) ToString() string {
 
 func (it *Items) ToJson() Json {
 	return Json{
-		"Ok":     it.Ok,
-		"Count":  it.Count,
-		"Result": it.Result,
+		"ok":     it.Ok,
+		"count":  it.Count,
+		"result": it.Result,
 	}
 }
 

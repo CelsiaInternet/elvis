@@ -103,6 +103,34 @@ func Subscribe(channel string, f func(EvenMessage)) error {
 }
 
 /**
+* Unsubscribe
+* @param channel string
+* @return error
+**/
+func Unsubscribe(channel string) error {
+	if conn == nil {
+		return fmt.Errorf(ERR_NOT_CONNECT)
+	}
+
+	if len(channel) == 0 {
+		return fmt.Errorf(ERR_CHANNEL_REQUIRED)
+	}
+
+	conn.mutex.Lock()
+	defer conn.mutex.Unlock()
+
+	subscribe, ok := conn.eventCreatedSub[channel]
+	if !ok {
+		return fmt.Errorf("channel %s not found", channel)
+	}
+
+	subscribe.Unsubscribe()
+	delete(conn.eventCreatedSub, channel)
+
+	return nil
+}
+
+/**
 * Queue
 * @param string channel, string queue, func(EvenMessage) f
 * @return error
