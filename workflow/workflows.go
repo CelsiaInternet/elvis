@@ -294,10 +294,10 @@ func (s *WorkFlows) getInstance(instanceId string) (*Instance, error) {
 
 /**
 * instanceRun
-* @param instanceId, tag string, startId int, tags, ctx et.Json, createdBy string
+* @param instanceId, tag string, step int, tags, ctx et.Json, createdBy string
 * @return et.Json, error
 **/
-func (s *WorkFlows) instanceRun(instanceId, tag string, startId int, tags, ctx et.Json, createdBy string) (et.Json, error) {
+func (s *WorkFlows) instanceRun(instanceId, tag string, step int, tags, ctx et.Json, createdBy string) (et.Json, error) {
 	s.instanceInc()
 	if instanceId != "" {
 		key := fmt.Sprintf("workflow:result:%s", instanceId)
@@ -316,12 +316,15 @@ func (s *WorkFlows) instanceRun(instanceId, tag string, startId int, tags, ctx e
 		}
 	}
 
-	instance, err := s.getOrCreateInstance(instanceId, tag, startId, tags, createdBy)
+	instance, err := s.getOrCreateInstance(instanceId, tag, step, tags, createdBy)
 	if err != nil {
 		return et.Json{}, err
 	}
 
 	instance.setTags(tags)
+	if step != -1 {
+		instance.Current = step
+	}
 	result, err := instance.run(ctx)
 	if err != nil {
 		return et.Json{}, err
