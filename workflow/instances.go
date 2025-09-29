@@ -107,7 +107,7 @@ func (s *Instance) save() error {
 	}
 
 	if s.RetentionTime <= 0 {
-		s.RetentionTime = 10 * time.Minute
+		s.RetentionTime = 24 * time.Hour
 	}
 
 	err = cache.Set(s.Id, string(bt), s.RetentionTime)
@@ -313,7 +313,6 @@ func (s *Instance) run(ctx et.Json) (et.Json, error) {
 	var err error
 	for s.Current < len(s.Steps) {
 		ctx = s.setCtx(ctx)
-		s.setStatus(FlowStatusRunning)
 		step := s.Steps[s.Current]
 		ctx, err = step.run(s, ctx)
 		if err != nil {
@@ -324,13 +323,13 @@ func (s *Instance) run(ctx et.Json) (et.Json, error) {
 			return s.setDone(ctx, err)
 		}
 
-		if step.Stop {
-			return s.setStop(ctx, err)
-		}
-
 		if s.goTo != -1 {
 			s.setGoto(s.goTo, MSG_INSTANCE_GOTO_USER_DECISION, ctx, err)
 			continue
+		}
+
+		if step.Stop {
+			return s.setStop(ctx, err)
 		}
 
 		if step.Expression != "" {
@@ -362,10 +361,6 @@ func (s *Instance) run(ctx et.Json) (et.Json, error) {
 * @return et.Json, error
 **/
 func (s *Instance) rollback(result et.Json, err error) (et.Json, error) {
-	if err != nil {
-		s.setFailed(result, err)
-	}
-
 	if s.startResilence() {
 		return result, err
 	}

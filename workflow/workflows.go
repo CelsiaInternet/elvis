@@ -294,6 +294,7 @@ func (s *WorkFlows) getInstance(instanceId string) (*Instance, error) {
 
 /**
 * instanceRun
+* Si el step es -1 se ejecuta el siguiente paso, si no se ejecuta el paso indicado
 * @param instanceId, tag string, step int, tags, ctx et.Json, createdBy string
 * @return et.Json, error
 **/
@@ -323,7 +324,9 @@ func (s *WorkFlows) instanceRun(instanceId, tag string, step int, tags, ctx et.J
 
 	instance.setTags(tags)
 	if step != -1 {
+		currentCtx := instance.Ctxs[step]
 		instance.Current = step
+		instance.setCtx(currentCtx)
 	}
 	result, err := instance.run(ctx)
 	if err != nil {
