@@ -1116,7 +1116,7 @@ PORT=3300
 VERSION=0.0.0
 COMPANY=Company
 PATH_URL=
-WEB=https://www.celsia.com
+WEB=
 PRODUCTION=false
 HOST=localhost
 
@@ -1169,7 +1169,7 @@ services:
       - "PORT=3300"
       - "VERSION=1.0.1"
       - "COMPANY=Celsia Internet"
-      - "WEB=https://www.internet.celsia.com"
+      - "WEB=https://www.app.com"
       - "PATH_URL=/api/$1"
       - "PRODUCTION=true"
       - "HOST=stack"
