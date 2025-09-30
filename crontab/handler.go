@@ -80,10 +80,10 @@ func IsMaster() bool {
 /**
 * AddJob
 * Add job to crontab in execute local
-* @param id, name, spec, channel string, params et.Json, fn func()
+* @param id, name, spec, channel string, params et.Json, repetitions int, fn func()
 * @return *Job, error
 **/
-func AddJob(id, name, spec, channel string, params et.Json, fn func(job *Job)) (*Job, error) {
+func AddJob(id, name, spec, channel string, params et.Json, repetitions int, fn func(job *Job)) (*Job, error) {
 	err := Load()
 	if err != nil {
 		return nil, err
@@ -93,7 +93,7 @@ func AddJob(id, name, spec, channel string, params et.Json, fn func(job *Job)) (
 		return nil, fmt.Errorf("crontab is server")
 	}
 
-	result, err := crontab.addJob(id, name, spec, channel, params, fn)
+	result, err := crontab.addJob(id, name, spec, channel, params, repetitions, fn)
 	if err != nil {
 		return nil, err
 	}

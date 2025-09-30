@@ -37,20 +37,21 @@ var (
 )
 
 type Job struct {
-	Id        string         `json:"id"`
-	Name      string         `json:"name"`
-	Channel   string         `json:"channel"`
-	Params    et.Json        `json:"params"`
-	Spec      string         `json:"spec"`
-	Started   bool           `json:"started"`
-	Status    string         `json:"status"`
-	Idx       int            `json:"idx"`
-	NodeId    int64          `json:"node_id"`
-	Attempts  int            `json:"attempts"`
-	fn        func(job *Job) `json:"-"`
-	jobs      *Jobs          `json:"-"`
-	isEventUp bool           `json:"-"`
-	mu        *sync.Mutex    `json:"-"`
+	Id          string         `json:"id"`
+	Name        string         `json:"name"`
+	Channel     string         `json:"channel"`
+	Params      et.Json        `json:"params"`
+	Spec        string         `json:"spec"`
+	Started     bool           `json:"started"`
+	Status      string         `json:"status"`
+	Idx         int            `json:"idx"`
+	NodeId      int64          `json:"node_id"`
+	Attempts    int            `json:"attempts"`
+	Repetitions int            `json:"repetitions"`
+	fn          func(job *Job) `json:"-"`
+	jobs        *Jobs          `json:"-"`
+	isEventUp   bool           `json:"-"`
+	mu          *sync.Mutex    `json:"-"`
 }
 
 /**
@@ -142,6 +143,10 @@ func (s *Job) setStatus(status string) {
 		s.eventDown()
 	case StatusNotified:
 		s.Attempts++
+	case StatusDone:
+		if s.Repetitions != 0 && s.Attempts >= s.Repetitions {
+			s.Remove()
+		}
 	case StatusFailed:
 		if s.jobs.Team == "" {
 			break
@@ -279,10 +284,10 @@ func (s *Jobs) load() error {
 
 /**
 * addJob
-* @param id, name, spec, channel string, params et.Json
+* @param id, name, spec, channel string, params et.Json, repetitions int, fn func(job *Job)
 * @return *Job, error
 **/
-func (s *Jobs) addJob(id, name, spec, channel string, params et.Json, fn func(job *Job)) (*Job, error) {
+func (s *Jobs) addJob(id, name, spec, channel string, params et.Json, repetitions int, fn func(job *Job)) (*Job, error) {
 	if !utility.ValidStr(name, 0, []string{"", " "}) {
 		return nil, fmt.Errorf(msg.MSG_ATRIB_REQUIRED, "name")
 	}
@@ -295,17 +300,18 @@ func (s *Jobs) addJob(id, name, spec, channel string, params et.Json, fn func(jo
 
 	id = reg.GetUUID(id)
 	result := &Job{
-		Id:      id,
-		Name:    name,
-		Channel: channel,
-		Params:  params,
-		Spec:    spec,
-		Started: false,
-		Idx:     len(s.jobs),
-		NodeId:  s.nodeId,
-		fn:      fn,
-		jobs:    s,
-		mu:      &sync.Mutex{},
+		Id:          id,
+		Name:        name,
+		Channel:     channel,
+		Params:      params,
+		Spec:        spec,
+		Started:     false,
+		Idx:         len(s.jobs),
+		NodeId:      s.nodeId,
+		Repetitions: repetitions,
+		fn:          fn,
+		jobs:        s,
+		mu:          &sync.Mutex{},
 	}
 	s.jobs = append(s.jobs, result)
 	result.setStatus(StatusAdded)
@@ -315,15 +321,15 @@ func (s *Jobs) addJob(id, name, spec, channel string, params et.Json, fn func(jo
 
 /**
 * addEventJob
-* @param id, name, spec, channel string, started bool, params et.Json
+* @param id, name, spec, channel string, started bool, params et.Json, repetitions int
 * @return *Job, error
 **/
-func (s *Jobs) addEventJob(id, name, spec, channel string, started bool, params et.Json) (*Job, error) {
+func (s *Jobs) addEventJob(id, name, spec, channel string, started bool, params et.Json, repetitions int) (*Job, error) {
 	if !s.isServer {
 		return nil, fmt.Errorf("crontab is not server")
 	}
 
-	result, err := s.addJob(id, name, spec, channel, params, nil)
+	result, err := s.addJob(id, name, spec, channel, params, repetitions, nil)
 	if err != nil {
 		return nil, err
 	}
