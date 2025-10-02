@@ -345,6 +345,46 @@ func ClientName(r *http.Request) string {
 }
 
 /**
+* Username
+* @param r *http.Request
+* @return string
+**/
+func Username(r *http.Request) string {
+	ctx := r.Context()
+	return UsernameKey.String(ctx, "Anonimo")
+}
+
+/**
+* ProfileTp
+* @param r *http.Request
+* @return string
+**/
+func ProfileTp(r *http.Request) string {
+	ctx := r.Context()
+	return ProfileTpKey.String(ctx, "")
+}
+
+/**
+* ProjectId
+* @param r *http.Request
+* @return string
+**/
+func ProjectId(r *http.Request) string {
+	ctx := r.Context()
+	return ProjectIdKey.String(ctx, "")
+}
+
+/**
+* Device
+* @param r *http.Request
+* @return string
+**/
+func Device(r *http.Request) string {
+	ctx := r.Context()
+	return DeviceKey.String(ctx, "")
+}
+
+/**
 * GetClient
 * @param r *http.Request
 * @return et.Json

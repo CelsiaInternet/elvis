@@ -1,7 +1,6 @@
 package workflow
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
@@ -149,6 +148,7 @@ func (s *WorkFlows) newInstance(tag, id string, tags et.Json, startId int, creat
 		Tags:       tags,
 		goTo:       -1,
 		WorkerHost: workerHost,
+		Params:     et.Json{},
 	}
 	result.setStatus(FlowStatusPending)
 	s.Instances[id] = result
@@ -157,11 +157,11 @@ func (s *WorkFlows) newInstance(tag, id string, tags et.Json, startId int, creat
 }
 
 /**
-* loadInstance
-* @param id string
-* @return *Flow, error
+* getInstance
+* @param instanceId string
+* @return *Instance, error
 **/
-func (s *WorkFlows) loadInstance(id string) (*Instance, error) {
+func (s *WorkFlows) getInstance(id string) (*Instance, error) {
 	if id == "" {
 		return nil, fmt.Errorf(MSG_INSTANCE_ID_REQUIRED)
 	}
@@ -170,22 +170,16 @@ func (s *WorkFlows) loadInstance(id string) (*Instance, error) {
 		return s.Instances[id], nil
 	}
 
-	if !cache.Exists(id) {
-		return nil, errorInstanceNotFound
-	}
+	return load(id)
+}
 
-	result := &Instance{}
-	bt, err := json.Marshal(result)
-	if err != nil {
-		return nil, err
-	}
-
-	src, err := cache.Get(id, string(bt))
-	if err != nil {
-		return nil, err
-	}
-
-	err = json.Unmarshal([]byte(src), &result)
+/**
+* loadInstance
+* @param id string
+* @return *Flow, error
+**/
+func (s *WorkFlows) loadInstance(id string) (*Instance, error) {
+	result, err := s.getInstance(id)
 	if err != nil {
 		return nil, err
 	}
@@ -253,43 +247,6 @@ func (s *WorkFlows) getOrCreateInstance(id, tag string, startId int, tags et.Jso
 	}
 
 	return nil, fmt.Errorf(MSG_INSTANCE_NOT_FOUND)
-}
-
-/**
-* getInstance
-* @param instanceId string
-* @return *Instance, error
-**/
-func (s *WorkFlows) getInstance(instanceId string) (*Instance, error) {
-	if instanceId == "" {
-		return nil, fmt.Errorf(MSG_INSTANCE_ID_REQUIRED)
-	}
-
-	if s.Instances[instanceId] != nil {
-		return s.Instances[instanceId], nil
-	}
-
-	if !cache.Exists(instanceId) {
-		return nil, errorInstanceNotFound
-	}
-
-	result := &Instance{}
-	bt, err := json.Marshal(result)
-	if err != nil {
-		return nil, err
-	}
-
-	src, err := cache.Get(instanceId, string(bt))
-	if err != nil {
-		return nil, err
-	}
-
-	err = json.Unmarshal([]byte(src), &result)
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
 }
 
 /**

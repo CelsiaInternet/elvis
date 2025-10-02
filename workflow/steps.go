@@ -1,6 +1,7 @@
 package workflow
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/Knetic/govaluate"
@@ -51,18 +52,35 @@ func (s *Step) run(flow *Instance, ctx et.Json) (et.Json, error) {
 }
 
 /**
+* Serialize
+* @return ([]byte, error)
+**/
+func (s *Step) serialize() ([]byte, error) {
+	bt, err := json.Marshal(s)
+	if err != nil {
+		return nil, err
+	}
+
+	return bt, nil
+}
+
+/**
 * ToJson
 * @return et.Json
 **/
 func (s *Step) ToJson() et.Json {
-	return et.Json{
-		"name":        s.Name,
-		"description": s.Description,
-		"stop":        s.Stop,
-		"expression":  s.Expression,
-		"yes_go_to":   s.YesGoTo,
-		"no_go_to":    s.NoGoTo,
+	bt, err := s.serialize()
+	if err != nil {
+		return et.Json{}
 	}
+
+	var result et.Json
+	err = json.Unmarshal(bt, &result)
+	if err != nil {
+		return et.Json{}
+	}
+
+	return result
 }
 
 /**

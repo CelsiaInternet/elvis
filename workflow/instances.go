@@ -8,7 +8,6 @@ import (
 	"github.com/celsiainternet/elvis/cache"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/event"
-	"github.com/celsiainternet/elvis/jdb"
 	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/resilience"
 	"github.com/celsiainternet/elvis/utility"
@@ -47,45 +46,32 @@ type Instance struct {
 }
 
 /**
+* Serialize
+* @return ([]byte, error)
+**/
+func (s *Instance) serialize() ([]byte, error) {
+	bt, err := json.Marshal(s)
+	if err != nil {
+		return nil, err
+	}
+
+	return bt, nil
+}
+
+/**
 * ToJson
 * @return et.Json
 **/
 func (s *Instance) ToJson() et.Json {
-	steps := make([]et.Json, len(s.Steps))
-	for i, step := range s.Steps {
-		j := step.ToJson()
-		j.Set(jdb.KEY, i)
-		steps[i] = j
+	bt, err := s.serialize()
+	if err != nil {
+		return et.Json{}
 	}
 
-	resilence := et.Json{}
-	if s.resilence != nil {
-		resilence = s.resilence.ToJson()
-	}
-
-	result := et.Json{
-		"id":             s.Id,
-		"tag":            s.Tag,
-		"version":        s.Version,
-		"name":           s.Name,
-		"description":    s.Description,
-		"current":        s.Current,
-		"total_attempts": s.TotalAttempts,
-		"time_attempts":  s.TimeAttempts,
-		"retention_time": s.RetentionTime,
-		"ctx":            s.Ctx,
-		"steps":          steps,
-		"ctxs":           s.Ctxs,
-		"results":        s.Results,
-		"rollbacks":      s.Rollbacks,
-		"resilence":      resilence,
-		"tp_consistency": s.TpConsistency,
-		"created_at":     s.CreatedAt,
-		"updated_at":     s.UpdatedAt,
-		"done_at":        s.DoneAt,
-		"status":         s.Status,
-		"worker_host":    s.WorkerHost,
-		"params":         s.Params,
+	var result et.Json
+	err = json.Unmarshal(bt, &result)
+	if err != nil {
+		return et.Json{}
 	}
 
 	for k, v := range s.Tags {
@@ -96,21 +82,44 @@ func (s *Instance) ToJson() et.Json {
 }
 
 /**
+* load
+* @param id string
+* @return (*Instance, error)
+**/
+func load(id string) (*Instance, error) {
+	key := fmt.Sprintf("workflow:%s", id)
+	if !cache.Exists(key) {
+		return nil, errorInstanceNotFound
+	}
+
+	result := &Instance{}
+	src, err := cache.Get(key, "")
+	if err != nil {
+		return nil, err
+	}
+
+	if src == "" {
+		return nil, errorInstanceNotFound
+	}
+
+	err = json.Unmarshal([]byte(src), &result)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+/**
 * save
 * @return error
 **/
 func (s *Instance) save() error {
-	event.Publish(EVENT_WORKFLOW_STATUS, s.ToJson())
-	bt, err := json.Marshal(s)
-	if err != nil {
-		return err
-	}
-
-	if s.RetentionTime <= 0 {
-		s.RetentionTime = 24 * time.Hour
-	}
-
-	err = cache.Set(s.Id, string(bt), s.RetentionTime)
+	data := s.ToJson()
+	event.Publish(EVENT_WORKFLOW_STATUS, data)
+	key := fmt.Sprintf("workflow:%s", s.Id)
+	scr := data.ToString()
+	err := cache.Set(key, scr, s.RetentionTime)
 	if err != nil {
 		return err
 	}

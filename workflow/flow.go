@@ -1,12 +1,12 @@
 package workflow
 
 import (
+	"encoding/json"
 	"os"
 	"time"
 
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/event"
-	"github.com/celsiainternet/elvis/jdb"
 	"github.com/celsiainternet/elvis/logs"
 )
 
@@ -63,27 +63,32 @@ func newFlow(tag, version, name, description string, fn FnContext, stop bool, cr
 }
 
 /**
+* Serialize
+* @return ([]byte, error)
+**/
+func (s *Flow) serialize() ([]byte, error) {
+	bt, err := json.Marshal(s)
+	if err != nil {
+		return nil, err
+	}
+
+	return bt, nil
+}
+
+/**
 * ToJson
 * @return et.Json
 **/
 func (s *Flow) ToJson() et.Json {
-	steps := make([]et.Json, len(s.Steps))
-	for i, step := range s.Steps {
-		j := step.ToJson()
-		j.Set(jdb.KEY, i)
-		steps[i] = j
+	bt, err := s.serialize()
+	if err != nil {
+		return et.Json{}
 	}
 
-	result := et.Json{
-		"tag":            s.Tag,
-		"version":        s.Version,
-		"name":           s.Name,
-		"description":    s.Description,
-		"total_attempts": s.TotalAttempts,
-		"time_attempts":  s.TimeAttempts,
-		"retention_time": s.RetentionTime,
-		"steps":          steps,
-		"tp_consistency": s.TpConsistency,
+	var result et.Json
+	err = json.Unmarshal(bt, &result)
+	if err != nil {
+		return et.Json{}
 	}
 
 	return result
