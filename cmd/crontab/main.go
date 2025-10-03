@@ -14,10 +14,11 @@ func main() {
 		panic(err)
 	}
 
-	err = crontab.EventJob("", "test", "*/5 * * * * *", "test",
+	err = crontab.EventJob("", "test", "*/5 * * * * *", "test", 0, true,
 		et.Json{
 			"test": "test",
-		}, func(msg event.EvenMessage) {
+		},
+		func(msg event.EvenMessage) {
 			worker := msg.Data
 			crontab.EventStatusRunning(worker)
 			console.Debug("test by event:", worker.ToString())

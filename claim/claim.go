@@ -43,14 +43,16 @@ const (
 )
 
 type Claim struct {
-	Salt     string        `json:"salt"`
-	ID       string        `json:"id"`
-	App      string        `json:"app"`
-	Name     string        `json:"name"`
-	Username string        `json:"username"`
-	Device   string        `json:"device"`
-	Duration time.Duration `json:"duration"`
-	Tag      string        `json:"tag"`
+	Salt      string        `json:"salt"`
+	ID        string        `json:"id"`
+	App       string        `json:"app"`
+	Name      string        `json:"name"`
+	Username  string        `json:"username"`
+	Device    string        `json:"device"`
+	Duration  time.Duration `json:"duration"`
+	ProjectId string        `json:"projectId"`
+	ProfileTp string        `json:"profileTp"`
+	Tag       string        `json:"tag"`
 	jwt.StandardClaims
 }
 
@@ -60,15 +62,17 @@ type Claim struct {
 **/
 func (c *Claim) ToJson() et.Json {
 	return et.Json{
-		"id":        c.ID,
-		"app":       c.App,
-		"name":      c.Name,
-		"username":  c.Username,
-		"device":    c.Device,
-		"subject":   c.Subject,
-		"duration":  c.Duration,
-		"tag":       c.Tag,
-		"expiresAt": time.Unix(c.ExpiresAt, 0).Format("2006-01-02 03:04:05 PM"),
+		"id":         c.ID,
+		"app":        c.App,
+		"name":       c.Name,
+		"username":   c.Username,
+		"device":     c.Device,
+		"subject":    c.Subject,
+		"duration":   c.Duration,
+		"project_id": c.ProjectId,
+		"profile_tp": c.ProfileTp,
+		"tag":        c.Tag,
+		"expiresAt":  time.Unix(c.ExpiresAt, 0).Format("2006-01-02 03:04:05 PM"),
 	}
 }
 
@@ -83,10 +87,10 @@ func GetTokenKey(app, device, id string) string {
 
 /**
 * NewClaim
-* @param id, app, name, username, device, tag string, duration time.Duration
+* @param id, app, name, username, device, tag string, duration time.Duration, projectId, profileTp string
 * @return Claim
 **/
-func NewClaim(id, app, name string, username, device, tag string, duration time.Duration) Claim {
+func NewClaim(id, app, name, username, device, projectId, profileTp, tag string, duration time.Duration) Claim {
 	c := Claim{}
 	c.Salt = utility.GetOTP(6)
 	c.ID = id
@@ -95,6 +99,8 @@ func NewClaim(id, app, name string, username, device, tag string, duration time.
 	c.Username = username
 	c.Device = device
 	c.Duration = duration
+	c.ProjectId = projectId
+	c.ProfileTp = profileTp
 	c.Tag = tag
 	if c.Duration != 0 {
 		c.ExpiresAt = timezone.Add(c.Duration).Unix()
@@ -140,22 +146,41 @@ func newTokenKey(c Claim) (string, error) {
 }
 
 /**
-* NewAutorization
-* @param id, app, name, username, device, tag string, duration time.Duration
-* @return string, error
-**/
-func NewAutorization(id, app, name, username, device, tag string, duration time.Duration) (string, error) {
-	c := NewClaim(id, app, name, username, device, tag, duration)
-	return newTokenKey(c)
-}
-
-/**
 * NewToken
 * @param id, app, name, username, device string, duration time.Duration
 * @return string, string, error
 **/
-func NewToken(id, app, name string, username, device string, duration time.Duration) (string, error) {
-	return NewAutorization(id, app, name, username, device, "", duration)
+func NewToken(id, app, name, username, device string, duration time.Duration) (string, error) {
+	c := NewClaim(id, app, name, username, device, "", "", "", duration)
+	return newTokenKey(c)
+}
+
+/**
+* NewAuthorization
+* @param id, app, name, username, device string, projectId, profileTp string, duration time.Duration
+* @return string, error
+**/
+func NewAuthorization(id, app, name, username, device, projectId, profileTp string, duration time.Duration) (string, error) {
+	c := NewClaim(id, app, name, username, device, projectId, profileTp, "", duration)
+	return newTokenKey(c)
+}
+
+/**
+* NewEphemeralToken
+* @param id, app, name, username, device, tag string, duration time.Duration
+* @return string, error
+**/
+func NewEphemeralToken(id, app, name, username, device, tag string, duration time.Duration) (string, error) {
+	if tag == "" {
+		return "", logs.Alertm("Tag is required")
+	}
+
+	if duration <= 0 {
+		return "", logs.Alertm("Duration is required")
+	}
+
+	c := NewClaim(id, app, name, username, device, "", "", tag, duration)
+	return newTokenKey(c)
 }
 
 /**
@@ -249,15 +274,33 @@ func ParceToken(token string) (*Claim, error) {
 		return nil, logs.Alertf(MSG_TOKEN_INVALID_ATRIB, "duration")
 	}
 
+	projectId, ok := claim["projectId"].(string)
+	if !ok {
+		projectId = ""
+	}
+
+	profileTp, ok := claim["profileTp"].(string)
+	if !ok {
+		profileTp = ""
+	}
+
+	tag, ok := claim["tag"].(string)
+	if !ok {
+		tag = ""
+	}
+
 	duration := time.Duration(second)
 
 	result := &Claim{
-		ID:       id,
-		App:      app,
-		Name:     name,
-		Username: username,
-		Device:   device,
-		Duration: duration,
+		ID:        id,
+		App:       app,
+		Name:      name,
+		Username:  username,
+		Device:    device,
+		Duration:  duration,
+		ProjectId: projectId,
+		ProfileTp: profileTp,
+		Tag:       tag,
 	}
 	if result.Duration != 0 {
 		exp, ok := claim["exp"].(float64)
@@ -375,6 +418,16 @@ func ProjectId(r *http.Request) string {
 }
 
 /**
+* Tag
+* @param r *http.Request
+* @return string
+**/
+func Tag(r *http.Request) string {
+	ctx := r.Context()
+	return TagKey.String(ctx, "")
+}
+
+/**
 * Device
 * @param r *http.Request
 * @return string
@@ -392,13 +445,15 @@ func Device(r *http.Request) string {
 func GetClient(r *http.Request) et.Json {
 	now := timezone.NowTime()
 	ctx := r.Context()
-	username := UsernameKey.String(ctx, "Anonimo")
-	fullName := NameKey.String(ctx, "Anonimo")
 	clientId := ClientIdKey.String(ctx, "-1")
 	serviceId := ServiceIdKey.String(ctx, "-1")
-	tag := TagKey.String(ctx, "")
 	app := AppKey.String(ctx, "")
+	username := UsernameKey.String(ctx, "Anonimo")
 	device := DeviceKey.String(ctx, "")
+	fullName := NameKey.String(ctx, "Anonimo")
+	profileTp := ProfileTpKey.String(ctx, "")
+	projectId := ProjectIdKey.String(ctx, "")
+	tag := TagKey.String(ctx, "")
 
 	return et.Json{
 		"date_at":    now,
@@ -408,6 +463,8 @@ func GetClient(r *http.Request) et.Json {
 		"username":   username,
 		"device":     device,
 		"full_name":  fullName,
+		"profile_tp": profileTp,
+		"project_id": projectId,
 		"tag":        tag,
 	}
 }
