@@ -133,23 +133,13 @@ func (s *Instance) save() error {
 * @return error
 **/
 func (s *Instance) setStatus(status FlowStatus) error {
-	if s.Status == status {
-		err := s.save()
-		if err != nil {
-			return fmt.Errorf("setStatus: error al guardar el estado de la instancia: %v", err)
-		}
-
-		return nil
-	}
-
 	s.Status = status
 	s.UpdatedAt = utility.NowTime()
-	if s.Status == FlowStatusDone {
+	switch s.Status {
+	case FlowStatusDone:
 		s.DoneAt = s.UpdatedAt
 		s.done = true
-	}
-
-	if s.Status == FlowStatusFailed {
+	case FlowStatusFailed:
 		if s.resilence != nil && s.resilence.IsEnd() {
 			s.done = true
 		}
@@ -159,7 +149,7 @@ func (s *Instance) setStatus(status FlowStatus) error {
 			errMsg = s.err.Error()
 		}
 		logs.Errorf(packageName, MSG_INSTANCE_FAILED, s.Id, s.Tag, s.Status, s.Current, errMsg)
-	} else {
+	default:
 		logs.Logf(packageName, MSG_INSTANCE_STATUS, s.Id, s.Tag, s.Status, s.Current)
 	}
 

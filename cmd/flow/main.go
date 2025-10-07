@@ -30,7 +30,7 @@ func main() {
 			ctx.Set(atrib, "step1")
 
 			// flow.Done()
-			// flow.Stop()
+			flow.Stop()
 			// flow.Goto(2)
 
 			time.Sleep(3 * time.Second)
