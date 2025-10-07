@@ -73,13 +73,13 @@ func MakeModel(packageName, modelo, schema string) error {
 		_, _ = file.MakeFile(modelPath, "schema.go", modelSchema, packageName, "schema", schema)
 
 		modelFileName := strs.Format(`%s.go`, modelo)
-		_, _ = file.MakeFile(modelPath, modelFileName, modelData, packageName, strs.Titlecase(modelo))
+		_, _ = file.MakeFile(modelPath, modelFileName, modelData, packageName, strs.Titlecase(modelo), strs.Lowcase(modelo))
 	}
 
 	pkgPath := strs.Format(`./pkg/%s`, packageName)
 
 	routerFileName := strs.Format(`router-%s.go`, modelo)
-	_, err := file.MakeFile(pkgPath, routerFileName, modelDbModelRouter, packageName, modelo, strs.Uppcase(modelo), strs.Lowcase(modelo))
+	_, err := file.MakeFile(pkgPath, routerFileName, modelDbModelRouter, packageName, modelo, strs.Titlecase(modelo), strs.Lowcase(modelo))
 	if err != nil {
 		return err
 	}

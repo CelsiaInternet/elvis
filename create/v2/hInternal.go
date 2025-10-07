@@ -24,7 +24,7 @@ func MakeInternal(packageName, name, schema string) error {
 		}
 
 		modelFileName := strs.Format(`%s.go`, name)
-		_, err = file.MakeFile(modelsPath, modelFileName, modelData, name, strs.Titlecase(name))
+		_, err = file.MakeFile(modelsPath, modelFileName, modelData, name, strs.Titlecase(name), strs.Lowcase(name))
 		if err != nil {
 			return err
 		}

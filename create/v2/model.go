@@ -327,7 +327,6 @@ func eventAction(m event.EvenMessage) {
 const modelData = `package $1
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/celsiainternet/elvis/console"
@@ -349,7 +348,7 @@ func Define$2(db *jdb.DB) error {
 		return nil
 	}
 
-	$2 = jdb.NewModel(schema, "$1", 1)
+	$2 = jdb.NewModel(schema, "$3", 1)
 	$2.DefineModel()
 	$2.DefineAtribute("name", jdb.TypeDataText)
 	$2.DefineIndex(true,
@@ -997,7 +996,7 @@ func (rt *Router) upsert$2(w http.ResponseWriter, r *http.Request) {
 	name := body.Str("name")
 	description := body.Str("description")
 	clientName := claim.ClientName(r)
-	result, err := $1.Upsert$2(projectId, id, name, description, body, clientName)
+	result, err := $1.Upsert$3(projectId, id, name, description, body, clientName)
 	if err != nil {
 		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
@@ -1013,7 +1012,7 @@ func (rt *Router) upsert$2(w http.ResponseWriter, r *http.Request) {
 **/
 func (rt *Router) get$2ById(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	result, err := $1.Get$2ById(id)
+	result, err := $1.Get$3ById(id)
 	if err != nil {
 		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
@@ -1032,7 +1031,7 @@ func (rt *Router) state$2(w http.ResponseWriter, r *http.Request) {
 	body, _ := response.GetBody(r)
 	statusId := body.Str(jdb.STATUS_ID)
 	clientName := claim.ClientName(r)
-	result, err := $1.State$2(id, statusId, clientName)
+	result, err := $1.State$3(id, statusId, clientName)
 	if err != nil {
 		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
@@ -1049,7 +1048,7 @@ func (rt *Router) state$2(w http.ResponseWriter, r *http.Request) {
 func (rt *Router) delete$2(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	clientName := claim.ClientName(r)
-	result, err := $1.State$2(id, utility.FOR_DELETE, clientName)
+	result, err := $1.State$3(id, utility.FOR_DELETE, clientName)
 	if err != nil {
 		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
@@ -1066,7 +1065,7 @@ func (rt *Router) delete$2(w http.ResponseWriter, r *http.Request) {
 func (rt *Router) query$2(w http.ResponseWriter, r *http.Request) {
 	body, _ := response.GetBody(r)
 	query := body.Json("query")
-	result, err := $1.Query$2(query)
+	result, err := $1.Query$3(query)
 	if err != nil {
 		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
@@ -1085,7 +1084,7 @@ func (rt *Router) query$2(w http.ResponseWriter, r *http.Request) {
 **/
 
 /** Copy this code to func initModel in model.go
-	if err := %1.Define$2(db); err != nil {
+	if err := %1.Define$3(db); err != nil {
 		return console.Panic(err)
 	}
 **/
