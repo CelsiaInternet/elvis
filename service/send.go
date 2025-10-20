@@ -97,6 +97,29 @@ func SendEmailByTemplate(project_id, service_id string, groups_id []string, subj
 }
 
 /**
+* SendEmailToByTemplate
+* @param project_id, service_id, name, email string, subject, template_id string, params []et.Json, tp TpMessage, clientId string
+* @response et.Json
+**/
+func SendEmailToByTemplate(project_id, service_id, name, email string, subject, template_id string, params []et.Json, tp TpMessage, clientId string) et.Json {
+	service_id = reg.GetUUID(service_id)
+	result := event.Work("send/emailtobytemplate", et.Json{
+		"project_id":  project_id,
+		"service_id":  service_id,
+		"name":        name,
+		"email":       email,
+		"subject":     subject,
+		"template_id": template_id,
+		"params":      params,
+		"type":        tp.String(),
+		"client_id":   clientId,
+	})
+
+	result["service_id"] = service_id
+	return result
+}
+
+/**
 * SendOtp
 * @param project_id string, channel, name, device string, length, duration int, clientId string
 * @response et.Json
