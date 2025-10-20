@@ -76,15 +76,15 @@ func SendEmail(project_id, service_id string, to []et.Json, subject string, html
 
 /**
 * SendEmailByTemplate
-* @param project_id string, to []et.Json, subject string, template_id int, params []et.Json, tp TpMessage, clientId string
+* @param project_id string, service_id string, groups_id []string, subject string, template_id int, params []et.Json, tp TpMessage, clientId string
 * @response et.Json
 **/
-func SendEmailByTemplate(project_id string, to []et.Json, subject string, template_id int, params []et.Json, tp TpMessage, clientId string) et.Json {
-	service_id := GetId(clientId, "email", "Send Email By Template")
-	result := event.Work("send/email/template", et.Json{
+func SendEmailByTemplate(project_id, service_id string, groups_id []string, subject, template_id string, params []et.Json, tp TpMessage, clientId string) et.Json {
+	service_id = reg.GetUUID(service_id)
+	result := event.Work("send/emailbytemplate", et.Json{
 		"project_id":  project_id,
 		"service_id":  service_id,
-		"to":          to,
+		"groups_id":   groups_id,
 		"subject":     subject,
 		"template_id": template_id,
 		"params":      params,

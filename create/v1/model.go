@@ -723,6 +723,7 @@ Content-Length: 227
 const modelDbHandler = `package $1
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/celsiainternet/elvis/console"
