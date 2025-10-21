@@ -53,6 +53,7 @@ func newFlow(tag, version, name, description string, fn FnContext, stop bool, cr
 		Name:          name,
 		Description:   description,
 		TpConsistency: TpConsistencyEventual,
+		RetentionTime: 48 * time.Hour,
 		Steps:         make([]*Step, 0),
 		CreatedBy:     createdBy,
 	}
