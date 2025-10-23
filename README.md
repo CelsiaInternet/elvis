@@ -70,7 +70,7 @@ go mod init github.com/tu-usuario/tu-proyecto
 ### 2. Instalar Elvis
 
 ```bash
-go get github.com/celsiainternet/elvis@v1.1.155
+go get github.com/celsiainternet/elvis@v1.1.156
 ```
 
 ### 3. Crear Proyecto con Elvis

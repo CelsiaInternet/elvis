@@ -13,7 +13,7 @@ const (
 	MSG_INSTANCE_DEBUG              = "Instancia:%s debug:%s"
 	MSG_INSTANCE_GOTO               = "Instancia %s Tag:%s ir al step:%d %s"
 	MSG_INSTANCE_LOAD               = "Instancia load:%s tag:%s currentStep:%d"
-	MSG_INSTANCE_ALREADY_DONE       = "Instancia ya finalizada"
+	MSG_INSTANCE_ALREADY_DONE       = "Instancia ya finalizada Id:%s"
 	MSG_INSTANCE_ALREADY_RUNNING    = "Instancia ya en ejecucion"
 	MSG_INSTANCE_PENDING            = "Instancia pendiente"
 	MSG_INSTANCE_WORKFLOWS_IS_NIL   = "workFlows es nil"

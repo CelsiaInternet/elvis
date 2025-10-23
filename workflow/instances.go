@@ -316,7 +316,7 @@ func (s *Instance) startResilence() bool {
 **/
 func (s *Instance) run(ctx et.Json) (et.Json, error) {
 	if s.Status == FlowStatusDone {
-		return s.ToJson(), fmt.Errorf(MSG_INSTANCE_ALREADY_DONE)
+		return s.ToJson(), fmt.Errorf(MSG_INSTANCE_ALREADY_DONE, s.Id)
 	} else if s.Status == FlowStatusRunning {
 		return s.ToJson(), fmt.Errorf(MSG_INSTANCE_ALREADY_RUNNING)
 	}
@@ -377,7 +377,7 @@ func (s *Instance) rollback(result et.Json, err error) (et.Json, error) {
 	}
 
 	if s.Status == FlowStatusDone {
-		return result, fmt.Errorf(MSG_INSTANCE_ALREADY_DONE)
+		return result, fmt.Errorf(MSG_INSTANCE_ALREADY_DONE, s.Id)
 	} else if s.Status == FlowStatusRunning {
 		return result, fmt.Errorf(MSG_INSTANCE_ALREADY_RUNNING)
 	} else if s.Status == FlowStatusPending {
