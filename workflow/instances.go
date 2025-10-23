@@ -455,3 +455,14 @@ func (s *Instance) Goto(step int) error {
 
 	return nil
 }
+
+/**
+* SetStatus
+* @param status FlowStatus
+* @return error
+**/
+func (s *Instance) SetStatus(status FlowStatus) error {
+	s.setStatus(status)
+
+	return nil
+}

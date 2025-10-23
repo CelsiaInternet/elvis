@@ -2,9 +2,11 @@ package workflow
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"time"
 
+	"github.com/celsiainternet/elvis/cache"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/event"
 	"github.com/celsiainternet/elvis/logs"
@@ -59,6 +61,23 @@ func newFlow(tag, version, name, description string, fn FnContext, stop bool, cr
 	}
 	logs.Logf(packageName, MSG_FLOW_CREATED, tag, version, name)
 	flow.Step("Start", MSG_START_WORKFLOW, fn, stop)
+
+	tagKey := fmt.Sprintf("workflow:%s", tag)
+	flows, err := cache.GetJson(tagKey)
+	if err != nil {
+		flows = et.Json{}
+	}
+
+	for k := range flows {
+		instance, err := load(k)
+		if err != nil {
+			continue
+		}
+
+		if instance.Status == FlowStatusRunning {
+			instance.setStatus(FlowStatusPending)
+		}
+	}
 
 	return flow
 }
