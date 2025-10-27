@@ -43,6 +43,7 @@ type Instance struct {
 	goTo       int                  `json:"-"`
 	err        error                `json:"-"`
 	resilence  *resilience.Instance `json:"-"`
+	isNew      bool                 `json:"-"`
 }
 
 /**
@@ -317,8 +318,8 @@ func (s *Instance) startResilence() bool {
 func (s *Instance) run(ctx et.Json) (et.Json, error) {
 	if s.Status == FlowStatusDone {
 		return s.ToJson(), fmt.Errorf(MSG_INSTANCE_ALREADY_DONE, s.Id)
-	} else if s.Status == FlowStatusRunning {
-		return s.ToJson(), fmt.Errorf(MSG_INSTANCE_ALREADY_RUNNING)
+	} else if s.Status == FlowStatusRunning && s.isNew {
+		return s.ToJson(), fmt.Errorf(MSG_INSTANCE_ALREADY_RUNNING, s.Id)
 	}
 
 	var err error
@@ -379,9 +380,9 @@ func (s *Instance) rollback(result et.Json, err error) (et.Json, error) {
 	if s.Status == FlowStatusDone {
 		return result, fmt.Errorf(MSG_INSTANCE_ALREADY_DONE, s.Id)
 	} else if s.Status == FlowStatusRunning {
-		return result, fmt.Errorf(MSG_INSTANCE_ALREADY_RUNNING)
+		return result, fmt.Errorf(MSG_INSTANCE_ALREADY_RUNNING, s.Id)
 	} else if s.Status == FlowStatusPending {
-		return result, fmt.Errorf(MSG_INSTANCE_PENDING)
+		return result, fmt.Errorf(MSG_INSTANCE_PENDING, s.Id)
 	}
 
 	for i := s.Current - 1; i >= 0; i-- {

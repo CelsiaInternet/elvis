@@ -149,6 +149,7 @@ func (s *WorkFlows) newInstance(tag, id string, tags et.Json, startId int, creat
 		goTo:       -1,
 		WorkerHost: workerHost,
 		Params:     et.Json{},
+		isNew:      true,
 	}
 	result.setStatus(FlowStatusPending)
 	s.Instances[id] = result
