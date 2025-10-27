@@ -20,6 +20,7 @@ const (
 	FlowStatusRunning FlowStatus = "running"
 	FlowStatusDone    FlowStatus = "done"
 	FlowStatusFailed  FlowStatus = "failed"
+	FlowStatusCancel  FlowStatus = "cancel"
 )
 
 type Instance struct {
