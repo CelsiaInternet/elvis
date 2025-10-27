@@ -2,11 +2,9 @@ package workflow
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"time"
 
-	"github.com/celsiainternet/elvis/cache"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/event"
 	"github.com/celsiainternet/elvis/logs"
