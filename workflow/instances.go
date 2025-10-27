@@ -125,18 +125,6 @@ func (s *Instance) save() error {
 		return err
 	}
 
-	tagKey := fmt.Sprintf("workflow:%s", s.Tag)
-	flows, err := cache.GetJson(tagKey)
-	if err != nil {
-		flows = et.Json{}
-	}
-
-	flows[key] = scr
-	err = cache.Set(tagKey, flows.ToString(), s.RetentionTime)
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 

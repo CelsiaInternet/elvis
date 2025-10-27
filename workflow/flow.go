@@ -62,23 +62,6 @@ func newFlow(tag, version, name, description string, fn FnContext, stop bool, cr
 	logs.Logf(packageName, MSG_FLOW_CREATED, tag, version, name)
 	flow.Step("Start", MSG_START_WORKFLOW, fn, stop)
 
-	tagKey := fmt.Sprintf("workflow:%s", tag)
-	flows, err := cache.GetJson(tagKey)
-	if err != nil {
-		flows = et.Json{}
-	}
-
-	for k := range flows {
-		instance, err := load(k)
-		if err != nil {
-			continue
-		}
-
-		if instance.Status == FlowStatusRunning {
-			instance.setStatus(FlowStatusPending)
-		}
-	}
-
 	return flow
 }
 
