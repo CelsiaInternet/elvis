@@ -274,6 +274,10 @@ func (s *Instance) setNext(result et.Json, err error) {
 * @return et.Json, error
 **/
 func (s *Instance) setGoto(step int, message string, result et.Json, err error) {
+	if step == -1 {
+		return
+	}
+
 	s.setResult(result, err)
 	s.Current = step
 	s.goTo = -1

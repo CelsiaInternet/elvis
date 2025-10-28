@@ -119,10 +119,10 @@ func (s *WorkFlows) instanceCount() int {
 
 /**
 * newInstance
-* @param tag, id string, tags et.Json, startId int, createdBy string
+* @param tag, id string, tags et.Json, step int, createdBy string
 * @return *Instance, error
 **/
-func (s *WorkFlows) newInstance(tag, id string, tags et.Json, startId int, createdBy string) (*Instance, error) {
+func (s *WorkFlows) newInstance(tag, id string, tags et.Json, step int, createdBy string) (*Instance, error) {
 	if id == "" {
 		return nil, fmt.Errorf(MSG_INSTANCE_ID_REQUIRED)
 	}
@@ -130,6 +130,10 @@ func (s *WorkFlows) newInstance(tag, id string, tags et.Json, startId int, creat
 	flow := s.Flows[tag]
 	if flow == nil {
 		return nil, fmt.Errorf(MSG_FLOW_NOT_FOUND)
+	}
+
+	if step == -1 {
+		step = 0
 	}
 
 	now := timezone.NowTime()
@@ -140,7 +144,7 @@ func (s *WorkFlows) newInstance(tag, id string, tags et.Json, startId int, creat
 		UpdatedAt:  now,
 		Id:         id,
 		CreatedBy:  createdBy,
-		Current:    startId,
+		Current:    step,
 		Ctx:        et.Json{},
 		Ctxs:       make(map[int]et.Json),
 		Results:    make(map[int]*Result),
@@ -236,15 +240,15 @@ func (s *WorkFlows) runNextInBackground() {
 
 /**
 * getOrCreateInstance
-* @param id, tag string, startId int, tags et.Json, createdBy string
+* @param id, tag string, step int, tags et.Json, createdBy string
 * @return *Instance, error
 **/
-func (s *WorkFlows) getOrCreateInstance(id, tag string, startId int, tags et.Json, createdBy string) (*Instance, error) {
+func (s *WorkFlows) getOrCreateInstance(id, tag string, step int, tags et.Json, createdBy string) (*Instance, error) {
 	id = reg.GetUUID(id)
 	if result, err := s.loadInstance(id); err == nil {
 		return result, nil
 	} else if errors.Is(err, errorInstanceNotFound) {
-		return s.newInstance(tag, id, tags, startId, createdBy)
+		return s.newInstance(tag, id, tags, step, createdBy)
 	}
 
 	return nil, fmt.Errorf(MSG_INSTANCE_NOT_FOUND)
@@ -282,8 +286,8 @@ func (s *WorkFlows) instanceRun(instanceId, tag string, step int, tags, ctx et.J
 
 	instance.setTags(tags)
 	if step != -1 {
-		currentCtx := instance.Ctxs[step]
 		instance.Current = step
+		currentCtx := instance.Ctxs[instance.Current]
 		instance.setCtx(currentCtx)
 	}
 	result, err := instance.run(ctx)
@@ -332,10 +336,10 @@ func (s *WorkFlows) newAwaiting(instanceId string, fnArgs ...interface{}) (et.Js
 
 /**
 * run
-* @param instanceId, tag string, startId int, tags, ctx et.Json, createdBy string
+* @param instanceId, tag string, step int, tags, ctx et.Json, createdBy string
 * @return et.Json, error
 **/
-func (s *WorkFlows) run(instanceId, tag string, startId int, tags, ctx et.Json, createdBy string) (et.Json, error) {
+func (s *WorkFlows) run(instanceId, tag string, step int, tags, ctx et.Json, createdBy string) (et.Json, error) {
 	response := func(result et.Json, err error) (et.Json, error) {
 		s.instanceDec()
 		delete(s.Instances, instanceId)
@@ -346,15 +350,15 @@ func (s *WorkFlows) run(instanceId, tag string, startId int, tags, ctx et.Json, 
 	}
 
 	if s.LimitRequests == 0 {
-		return response(s.instanceRun(instanceId, tag, startId, tags, ctx, createdBy))
+		return response(s.instanceRun(instanceId, tag, step, tags, ctx, createdBy))
 	}
 
 	totalInstances := s.instanceCount()
 	if totalInstances < s.LimitRequests {
-		return response(s.instanceRun(instanceId, tag, startId, tags, ctx, createdBy))
+		return response(s.instanceRun(instanceId, tag, step, tags, ctx, createdBy))
 	}
 
-	return s.newAwaiting(instanceId, []interface{}{instanceId, tag, startId, tags, ctx, createdBy})
+	return s.newAwaiting(instanceId, []interface{}{instanceId, tag, step, tags, ctx, createdBy})
 }
 
 /**
