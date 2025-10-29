@@ -1,7 +1,6 @@
 package workflow
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 	"sync"
@@ -245,13 +244,12 @@ func (s *WorkFlows) runNextInBackground() {
 **/
 func (s *WorkFlows) getOrCreateInstance(id, tag string, step int, tags et.Json, createdBy string) (*Instance, error) {
 	id = reg.GetUUID(id)
-	if result, err := s.loadInstance(id); err == nil {
-		return result, nil
-	} else if errors.Is(err, ErrorInstanceNotFound) {
+	result, err := s.loadInstance(id)
+	if err != nil {
 		return s.newInstance(tag, id, tags, step, createdBy)
 	}
 
-	return nil, fmt.Errorf(MSG_INSTANCE_NOT_FOUND)
+	return result, err
 }
 
 /**
