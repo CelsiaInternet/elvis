@@ -99,11 +99,11 @@ func (s *Instance) ToJson() et.Json {
 }
 
 /**
-* load
+* LoadInstance
 * @param id string
 * @return (*Instance, error)
 **/
-func load(id string) (*Instance, error) {
+func LoadInstance(id string) (*Instance, error) {
 	if loadInstance != nil {
 		return loadInstance(id)
 	}

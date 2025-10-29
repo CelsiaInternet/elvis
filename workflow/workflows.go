@@ -175,7 +175,7 @@ func (s *WorkFlows) getInstance(id string) (*Instance, error) {
 		return s.Instances[id], nil
 	}
 
-	return load(id)
+	return LoadInstance(id)
 }
 
 /**
