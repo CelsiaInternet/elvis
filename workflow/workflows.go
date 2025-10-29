@@ -171,9 +171,9 @@ func (s *WorkFlows) getInstance(id string) (*Instance, error) {
 		return nil, fmt.Errorf(MSG_INSTANCE_ID_REQUIRED)
 	}
 
-	if s.Instances[id] != nil {
-		return s.Instances[id], nil
-	}
+	// if s.Instances[id] != nil {
+	// 	return s.Instances[id], nil
+	// }
 
 	return LoadInstance(id)
 }
@@ -189,6 +189,31 @@ func (s *WorkFlows) loadInstance(id string) (*Instance, error) {
 		return nil, err
 	}
 
+	flow := s.Flows[result.Tag]
+	if flow == nil {
+		return nil, fmt.Errorf(MSG_FLOW_NOT_FOUND)
+	}
+
+	result.Flow = flow
+	result.goTo = -1
+	result.setStatus(result.Status)
+	s.Instances[id] = result
+
+	return result, nil
+}
+
+/**
+* loadInstanceByTag
+* @param id string
+* @return *Flow, error
+**/
+func (s *WorkFlows) loadInstanceByTag(id string, tag string) (*Instance, error) {
+	result, err := s.getInstance(id)
+	if err != nil {
+		return nil, err
+	}
+
+	result.Tag = tag
 	flow := s.Flows[result.Tag]
 	if flow == nil {
 		return nil, fmt.Errorf(MSG_FLOW_NOT_FOUND)
@@ -245,7 +270,7 @@ func (s *WorkFlows) runNextInBackground() {
 **/
 func (s *WorkFlows) getOrCreateInstance(id, tag string, step int, tags et.Json, createdBy string) (*Instance, error) {
 	id = reg.GetUUID(id)
-	result, err := s.loadInstance(id)
+	result, err := s.loadInstanceByTag(id, tag)
 	if err != nil {
 		return s.newInstance(tag, id, tags, step, createdBy)
 	}
