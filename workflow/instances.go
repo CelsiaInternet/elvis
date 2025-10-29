@@ -65,7 +65,7 @@ type Instance struct {
 * Serialize
 * @return ([]byte, error)
 **/
-func (s *Instance) serialize() ([]byte, error) {
+func (s *Instance) Serialize() ([]byte, error) {
 	bt, err := json.Marshal(s)
 	if err != nil {
 		return nil, err
@@ -79,7 +79,7 @@ func (s *Instance) serialize() ([]byte, error) {
 * @return et.Json
 **/
 func (s *Instance) ToJson() et.Json {
-	bt, err := s.serialize()
+	bt, err := s.Serialize()
 	if err != nil {
 		return et.Json{}
 	}
