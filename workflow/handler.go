@@ -2,6 +2,7 @@ package workflow
 
 import (
 	"github.com/celsiainternet/elvis/cache"
+	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/event"
 )
@@ -66,6 +67,15 @@ func Run(instanceId, tag string, step int, tags et.Json, ctx et.Json, createdBy 
 		return et.Json{}, err
 	}
 
+	console.Debug("Run", et.Json{
+		"instanceId": instanceId,
+		"tag":        tag,
+		"step":       step,
+		"tags":       tags,
+		"ctx":        ctx,
+		"createdBy":  createdBy,
+	}.ToString())
+
 	return workFlows.run(instanceId, tag, step, tags, ctx, createdBy)
 }
 
@@ -87,12 +97,12 @@ func Reset(instanceId string) error {
 * @param instanceId string
 * @return et.Json, error
 **/
-func Rollback(instanceId string) (et.Json, error) {
+func Rollback(instanceId, tag string) (et.Json, error) {
 	if err := Load(); err != nil {
 		return et.Json{}, err
 	}
 
-	return workFlows.rollback(instanceId)
+	return workFlows.rollback(instanceId, tag)
 }
 
 /**
@@ -100,12 +110,12 @@ func Rollback(instanceId string) (et.Json, error) {
 * @param instanceId, tag string
 * @return error
 **/
-func Stop(instanceId string) error {
+func Stop(instanceId, tag string) error {
 	if err := Load(); err != nil {
 		return err
 	}
 
-	return workFlows.stop(instanceId)
+	return workFlows.stop(instanceId, tag)
 }
 
 /**

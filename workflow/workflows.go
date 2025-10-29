@@ -179,30 +179,6 @@ func (s *WorkFlows) getInstance(id string) (*Instance, error) {
 }
 
 /**
-* loadInstance
-* @param id string
-* @return *Flow, error
-**/
-func (s *WorkFlows) loadInstance(id string) (*Instance, error) {
-	result, err := s.getInstance(id)
-	if err != nil {
-		return nil, err
-	}
-
-	flow := s.Flows[result.Tag]
-	if flow == nil {
-		return nil, fmt.Errorf(MSG_FLOW_NOT_FOUND)
-	}
-
-	result.Flow = flow
-	result.goTo = -1
-	result.setStatus(result.Status)
-	s.Instances[id] = result
-
-	return result, nil
-}
-
-/**
 * loadInstanceByTag
 * @param id string
 * @return *Flow, error
@@ -212,6 +188,8 @@ func (s *WorkFlows) loadInstanceByTag(id string, tag string) (*Instance, error) 
 	if err != nil {
 		return nil, err
 	}
+
+	console.DebugF("loadInstanceByTag: %s", tag)
 
 	result.Tag = tag
 	flow := s.Flows[result.Tag]
@@ -405,8 +383,8 @@ func (s *WorkFlows) reset(instanceId string) error {
 * @return et.Json, error
 **/
 
-func (s *WorkFlows) rollback(instanceId string) (et.Json, error) {
-	instance, err := s.loadInstance(instanceId)
+func (s *WorkFlows) rollback(instanceId, tag string) (et.Json, error) {
+	instance, err := s.loadInstanceByTag(instanceId, tag)
 	if err != nil {
 		return et.Json{}, err
 	}
@@ -424,8 +402,8 @@ func (s *WorkFlows) rollback(instanceId string) (et.Json, error) {
 * @param instanceId string
 * @return error
 **/
-func (s *WorkFlows) stop(instanceId string) error {
-	instance, err := s.loadInstance(instanceId)
+func (s *WorkFlows) stop(instanceId, tag string) error {
+	instance, err := s.loadInstanceByTag(instanceId, tag)
 	if err != nil {
 		return err
 	}
