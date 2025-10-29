@@ -42,6 +42,7 @@ type Instance struct {
 	workFlows  *WorkFlows           `json:"-"`
 	CreatedAt  time.Time            `json:"created_at"`
 	UpdatedAt  time.Time            `json:"updated_at"`
+	Tag        string               `json:"tag"`
 	Id         string               `json:"id"`
 	CreatedBy  string               `json:"created_by"`
 	Current    int                  `json:"current"`
@@ -135,10 +136,6 @@ func load(id string) (*Instance, error) {
 * @return error
 **/
 func (s *Instance) Save() error {
-	if saveInstance != nil {
-		go saveInstance(s)
-	}
-
 	data := s.ToJson()
 	event.Publish(EVENT_WORKFLOW_STATUS, data)
 	key := fmt.Sprintf("workflow:%s", s.Id)
@@ -146,6 +143,10 @@ func (s *Instance) Save() error {
 	err := cache.Set(key, scr, s.RetentionTime)
 	if err != nil {
 		return err
+	}
+
+	if saveInstance != nil {
+		return saveInstance(s)
 	}
 
 	return nil
