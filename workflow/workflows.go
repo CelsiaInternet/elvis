@@ -139,6 +139,7 @@ func (s *WorkFlows) newInstance(tag, id string, tags et.Json, step int, createdB
 	result := &Instance{
 		Flow:       flow,
 		workFlows:  s,
+		Tag:        tag,
 		CreatedAt:  now,
 		UpdatedAt:  now,
 		Id:         id,
