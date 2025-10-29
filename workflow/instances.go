@@ -23,6 +23,20 @@ const (
 	FlowStatusCancel  FlowStatus = "cancel"
 )
 
+type LoadInstanceFn func(id string) (*Instance, error)
+type SaveInstanceFn func(*Instance) error
+
+var loadInstance LoadInstanceFn
+var saveInstance SaveInstanceFn
+
+func SetLoadInstance(fn LoadInstanceFn) {
+	loadInstance = fn
+}
+
+func SetSaveInstance(fn SaveInstanceFn) {
+	saveInstance = fn
+}
+
 type Instance struct {
 	*Flow
 	workFlows  *WorkFlows           `json:"-"`
@@ -89,6 +103,10 @@ func (s *Instance) ToJson() et.Json {
 * @return (*Instance, error)
 **/
 func load(id string) (*Instance, error) {
+	if loadInstance != nil {
+		return loadInstance(id)
+	}
+
 	key := fmt.Sprintf("workflow:%s", id)
 	if !cache.Exists(key) {
 		return nil, errorInstanceNotFound
@@ -117,6 +135,10 @@ func load(id string) (*Instance, error) {
 * @return error
 **/
 func (s *Instance) save() error {
+	if saveInstance != nil {
+		go saveInstance(s)
+	}
+
 	data := s.ToJson()
 	event.Publish(EVENT_WORKFLOW_STATUS, data)
 	key := fmt.Sprintf("workflow:%s", s.Id)
