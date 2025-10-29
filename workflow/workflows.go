@@ -19,7 +19,7 @@ import (
 )
 
 var (
-	errorInstanceNotFound = fmt.Errorf(MSG_INSTANCE_NOT_FOUND)
+	ErrorInstanceNotFound = fmt.Errorf(MSG_INSTANCE_NOT_FOUND)
 )
 
 const packageName = "workflow"
@@ -247,7 +247,7 @@ func (s *WorkFlows) getOrCreateInstance(id, tag string, step int, tags et.Json, 
 	id = reg.GetUUID(id)
 	if result, err := s.loadInstance(id); err == nil {
 		return result, nil
-	} else if errors.Is(err, errorInstanceNotFound) {
+	} else if errors.Is(err, ErrorInstanceNotFound) {
 		return s.newInstance(tag, id, tags, step, createdBy)
 	}
 

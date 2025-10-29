@@ -110,7 +110,7 @@ func LoadInstance(id string) (*Instance, error) {
 
 	key := fmt.Sprintf("workflow:%s", id)
 	if !cache.Exists(key) {
-		return nil, errorInstanceNotFound
+		return nil, ErrorInstanceNotFound
 	}
 
 	result := &Instance{}
@@ -120,7 +120,7 @@ func LoadInstance(id string) (*Instance, error) {
 	}
 
 	if src == "" {
-		return nil, errorInstanceNotFound
+		return nil, ErrorInstanceNotFound
 	}
 
 	err = json.Unmarshal([]byte(src), &result)
