@@ -131,10 +131,10 @@ func load(id string) (*Instance, error) {
 }
 
 /**
-* save
+* Save
 * @return error
 **/
-func (s *Instance) save() error {
+func (s *Instance) Save() error {
 	if saveInstance != nil {
 		go saveInstance(s)
 	}
@@ -177,7 +177,7 @@ func (s *Instance) setStatus(status FlowStatus) error {
 		logs.Logf(packageName, MSG_INSTANCE_STATUS, s.Id, s.Tag, s.Status, s.Current)
 	}
 
-	err := s.save()
+	err := s.Save()
 	if err != nil {
 		return fmt.Errorf("setStatus: error al guardar el estado de la instancia: %v", err)
 	}
