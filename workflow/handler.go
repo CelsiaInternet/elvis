@@ -1,6 +1,8 @@
 package workflow
 
 import (
+	"fmt"
+
 	"github.com/celsiainternet/elvis/cache"
 	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
@@ -103,6 +105,29 @@ func Rollback(instanceId, tag string) (et.Json, error) {
 	}
 
 	return workFlows.rollback(instanceId, tag)
+}
+
+/**
+* Status
+* @param instanceId, status string
+* @return FlowStatus, error
+**/
+func Status(instanceId, status string) (FlowStatus, error) {
+	if err := Load(); err != nil {
+		return "", err
+	}
+
+	if _, ok := FlowStatusList[FlowStatus(status)]; !ok {
+		return "", fmt.Errorf("status %s no es valido", status)
+	}
+
+	instance, err := workFlows.getInstance(instanceId)
+	if err != nil {
+		return "", err
+	}
+
+	instance.setStatus(FlowStatus(status))
+	return instance.Status, nil
 }
 
 /**

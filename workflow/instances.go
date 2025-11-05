@@ -23,6 +23,14 @@ const (
 	FlowStatusCancel  FlowStatus = "cancel"
 )
 
+var FlowStatusList map[FlowStatus]bool = map[FlowStatus]bool{
+	FlowStatusPending: true,
+	FlowStatusRunning: true,
+	FlowStatusDone:    true,
+	FlowStatusFailed:  true,
+	FlowStatusCancel:  true,
+}
+
 type LoadInstanceFn func(id string) (*Instance, error)
 type SaveInstanceFn func(*Instance) error
 
