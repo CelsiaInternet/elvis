@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/celsiainternet/elvis/cache"
-	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/event"
 )
@@ -69,50 +68,54 @@ func Run(instanceId, tag string, step int, tags et.Json, ctx et.Json, createdBy 
 		return et.Json{}, err
 	}
 
-	console.Debug("Run", et.Json{
-		"instanceId": instanceId,
-		"tag":        tag,
-		"step":       step,
-		"tags":       tags,
-		"ctx":        ctx,
-		"createdBy":  createdBy,
-	}.ToString())
-
-	return workFlows.run(instanceId, tag, step, tags, ctx, createdBy)
+	return workFlows.runInstance(instanceId, tag, step, tags, ctx, createdBy)
 }
 
 /**
 * Reset
-* @param instanceId string
+* @param instanceId, updatedBy string
 * @return error
 **/
-func Reset(instanceId string) error {
+func Reset(instanceId, updatedBy string) error {
 	if err := Load(); err != nil {
 		return err
 	}
 
-	return workFlows.reset(instanceId)
+	return workFlows.resetInstance(instanceId, updatedBy)
 }
 
 /**
 * Rollback
-* @param instanceId string
+* @param instanceId, updatedBy string
 * @return et.Json, error
 **/
-func Rollback(instanceId, tag string) (et.Json, error) {
+func Rollback(instanceId, updatedBy string) (et.Json, error) {
 	if err := Load(); err != nil {
 		return et.Json{}, err
 	}
 
-	return workFlows.rollback(instanceId, tag)
+	return workFlows.rollback(instanceId, updatedBy)
+}
+
+/**
+* Stop
+* @param instanceId, updatedBy string
+* @return error
+**/
+func Stop(instanceId, updatedBy string) error {
+	if err := Load(); err != nil {
+		return err
+	}
+
+	return workFlows.stop(instanceId, updatedBy)
 }
 
 /**
 * Status
-* @param instanceId, status string
+* @param instanceId, status, updatedBy string
 * @return FlowStatus, error
 **/
-func Status(instanceId, status string) (FlowStatus, error) {
+func Status(instanceId, status, updatedBy string) (FlowStatus, error) {
 	if err := Load(); err != nil {
 		return "", err
 	}
@@ -121,26 +124,13 @@ func Status(instanceId, status string) (FlowStatus, error) {
 		return "", fmt.Errorf("status %s no es valido", status)
 	}
 
-	instance, err := workFlows.getInstance(instanceId)
+	instance, err := workFlows.loadInstance(instanceId)
 	if err != nil {
 		return "", err
 	}
 
 	instance.setStatus(FlowStatus(status))
 	return instance.Status, nil
-}
-
-/**
-* Stop
-* @param instanceId, tag string
-* @return error
-**/
-func Stop(instanceId, tag string) error {
-	if err := Load(); err != nil {
-		return err
-	}
-
-	return workFlows.stop(instanceId, tag)
 }
 
 /**
@@ -166,5 +156,5 @@ func GetInstance(instanceId string) (*Instance, error) {
 		return nil, err
 	}
 
-	return workFlows.getInstance(instanceId)
+	return workFlows.loadInstance(instanceId)
 }

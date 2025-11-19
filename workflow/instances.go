@@ -20,6 +20,7 @@ const (
 	FlowStatusRunning FlowStatus = "running"
 	FlowStatusDone    FlowStatus = "done"
 	FlowStatusFailed  FlowStatus = "failed"
+	FlowStatusLoss    FlowStatus = "loss"
 	FlowStatusCancel  FlowStatus = "cancel"
 )
 
@@ -28,6 +29,7 @@ var FlowStatusList map[FlowStatus]bool = map[FlowStatus]bool{
 	FlowStatusRunning: true,
 	FlowStatusDone:    true,
 	FlowStatusFailed:  true,
+	FlowStatusLoss:    true,
 	FlowStatusCancel:  true,
 }
 
@@ -53,6 +55,7 @@ type Instance struct {
 	Tag        string               `json:"tag"`
 	Id         string               `json:"id"`
 	CreatedBy  string               `json:"created_by"`
+	UpdatedBy  string               `json:"updated_by"`
 	Current    int                  `json:"current"`
 	Ctx        et.Json              `json:"ctx"`
 	Ctxs       map[int]et.Json      `json:"ctxs"`
@@ -107,54 +110,22 @@ func (s *Instance) ToJson() et.Json {
 }
 
 /**
-* LoadInstance
-* @param id string
-* @return (*Instance, error)
-**/
-func LoadInstance(id string) (*Instance, error) {
-	if loadInstance != nil {
-		return loadInstance(id)
-	}
-
-	key := fmt.Sprintf("workflow:%s", id)
-	if !cache.Exists(key) {
-		return nil, ErrorInstanceNotFound
-	}
-
-	result := &Instance{}
-	src, err := cache.Get(key, "")
-	if err != nil {
-		return nil, err
-	}
-
-	if src == "" {
-		return nil, ErrorInstanceNotFound
-	}
-
-	err = json.Unmarshal([]byte(src), &result)
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
-}
-
-/**
 * Save
 * @return error
 **/
 func (s *Instance) Save() error {
 	data := s.ToJson()
 	event.Publish(EVENT_WORKFLOW_STATUS, data)
+
+	if saveInstance != nil {
+		return saveInstance(s)
+	}
+
 	key := fmt.Sprintf("workflow:%s", s.Id)
 	scr := data.ToString()
 	err := cache.Set(key, scr, s.RetentionTime)
 	if err != nil {
 		return err
-	}
-
-	if saveInstance != nil {
-		return saveInstance(s)
 	}
 
 	return nil
