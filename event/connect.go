@@ -3,6 +3,7 @@ package event
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/logs"
@@ -21,7 +22,21 @@ func ConnectTo(host, user, password string) (*Conn, error) {
 		return nil, fmt.Errorf(msg.MSG_ATRIB_REQUIRED, "host")
 	}
 
-	connect, err := nats.Connect(host, nats.UserInfo(user, password))
+	options := []nats.Option{
+		nats.UserInfo(user, password),
+		nats.ReconnectWait(5 * time.Second),
+		nats.MaxReconnects(-1),
+		nats.DisconnectErrHandler(func(c *nats.Conn, err error) {
+			logs.Logf("NATS", `Disconnected host:%s error:%s`, host, err.Error())
+		}),
+		nats.ReconnectHandler(func(c *nats.Conn) {
+			logs.Logf("NATS", `Reconnected host:%s`, host)
+		}),
+		nats.ClosedHandler(func(c *nats.Conn) {
+			logs.Logf("NATS", `Closed host:%s`, host)
+		}),
+	}
+	connect, err := nats.Connect(host, options...)
 	if err != nil {
 		return nil, err
 	}

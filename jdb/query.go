@@ -30,9 +30,9 @@ func TipoSQL(query string) string {
 	case "CREATE", "ALTER", "DROP", "TRUNCATE":
 		return "definition"
 	case "GRANT", "REVOKE":
-		return "definition"
+		return "control"
 	case "COMMIT", "ROLLBACK", "SAVEPOINT", "SET":
-		return "definition"
+		return "transaction"
 	default:
 		return "desconocido"
 	}

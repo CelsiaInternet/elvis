@@ -190,15 +190,19 @@ func Stack(channel string, f func(EvenMessage)) error {
 * @param event string, data et.Json
 **/
 func Work(event string, data et.Json) et.Json {
+	serviceId := data.Str("service_id")
+	if len(serviceId) == 0 {
+		serviceId = utility.UUID()
+	}
 	work := et.Json{
 		"created_at": timezone.Now(),
-		"_id":        utility.UUID(),
+		"_id":        serviceId,
 		"event":      event,
 		"data":       data,
 	}
 
-	go Publish(EVENT_WORK, work)
-	go Publish(event, work)
+	Publish(EVENT_WORK, work)
+	Publish(event, data)
 
 	return work
 }
