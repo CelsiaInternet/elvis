@@ -5,7 +5,7 @@ set -e                                                        # Detener la ejecu
 HELP=false
 MAYOR=false
 MINOR=false
-VERSION=false
+REQUEST=false
 INDEX=2
 CURRENT_VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0") # Obtener la versión actual de Git
 NEW_VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0") # Obtener la versión actual de Git
@@ -16,7 +16,7 @@ while [[ "$#" -gt 0 ]]; do
         --h | --help) HELP=true ;;                             # Activar la bandera si se proporciona --help
         --m | --major) MAYOR=true ;;                          # Activar la bandera si se proporciona --major
         --n | --minor) MINOR=true ;;                          # Activar la bandera si se proporciona --minor
-        --v | --version) VERSION=true ;;                            # Activar la bandera si se proporciona --push
+        --r | --request) REQUEST=true ;;                            # Activar la bandera si se proporciona --push
         *) echo "Opción desconocida: $1"; exit 1 ;;
     esac
     shift
@@ -77,7 +77,7 @@ help() {
   echo "  --h, --help     Muestra este mensaje de ayuda"
   echo "  --m, --major    Incrementa la versión mayor"
   echo "  --n, --minor    Incrementa la versión menor"
-  echo "  --v, --version  Incrementa la versión de la revisión"
+  echo "  --r, --request  Incrementa la versión de la revisión"
   exit 0
 }
 
@@ -86,12 +86,11 @@ if [ "$HELP" == true ]; then
 elif [ "$CURRENT_VERSION" == "v0.0.0" ]; then
   NEW_VERSION="v1.0.0"
   update_version
-elif [ "$VERSION" == true ]; then
+elif [ "$REQUEST" == true ]; then
   build_version
   update_version
 else
-  build_version
-  update_version
+  help
 fi
 
 # Línea en blanco al final
