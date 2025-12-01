@@ -63,24 +63,13 @@ update_version() {
 
   sed -i "" "s/$CURRENT_VERSION/$NEW_VERSION/g" README.md
   
-  git tag "$NEW_VERSION"
+  git tag -a "$NEW_VERSION" -m "$NEW_VERSION"
   git push origin --tags
 
   echo "Etiqueta creada y enviada a Git"
 }
 
-version() {
-  echo "Etiquetando con: $NEW_VERSION"
-
-  sed -i "" "s/$CURRENT_VERSION/$NEW_VERSION/g" README.md
-
-  git tag "$NEW_VERSION"
-  git push -u origin --tags
-  
-  echo "Etiqueta creada y enviada a Git"
-}
-
-if [ "$HELP" == true ]; then
+help() {
   echo "Uso: ./version.sh [opciones]"
   echo "Incrementa la versión de la etiqueta de Git"
   echo ""
@@ -90,12 +79,16 @@ if [ "$HELP" == true ]; then
   echo "  --n, --minor    Incrementa la versión menor"
   echo "  --v, --version  Incrementa la versión de la revisión"
   exit 0
+}
+
+if [ "$HELP" == true ]; then
+  help
 elif [ "$CURRENT_VERSION" == "v0.0.0" ]; then
   NEW_VERSION="v1.0.0"
   update_version
 elif [ "$VERSION" == true ]; then
   build_version
-  version
+  update_version
 else
   build_version
   update_version
