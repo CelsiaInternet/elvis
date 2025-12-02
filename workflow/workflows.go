@@ -221,8 +221,6 @@ func (s *WorkFlows) runInstance(instanceId, tag string, step int, tags, ctx et.J
 	instance.setTags(tags)
 	if step != -1 {
 		instance.Current = step
-		currentCtx := instance.Ctxs[instance.Current]
-		instance.setCtx(currentCtx)
 	}
 	result, err := instance.run(ctx)
 	if err != nil {
