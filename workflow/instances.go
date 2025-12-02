@@ -325,6 +325,10 @@ func (s *Instance) run(ctx et.Json) (et.Json, error) {
 		return s.ToJson(), fmt.Errorf(MSG_INSTANCE_ALREADY_DONE, s.Id)
 	} else if s.Status == FlowStatusRunning && s.isNew {
 		return s.ToJson(), fmt.Errorf(MSG_INSTANCE_ALREADY_RUNNING, s.Id)
+	} else if s.Status == FlowStatusCancel {
+		return s.ToJson(), fmt.Errorf(MSG_INSTANCE_CANCEL, s.Id)
+	} else if s.Status == FlowStatusLoss {
+		return s.ToJson(), fmt.Errorf(MSG_INSTANCE_LOSS, s.Id)
 	}
 
 	var err error
