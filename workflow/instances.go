@@ -382,6 +382,7 @@ func (s *Instance) run(ctx et.Json) (et.Json, error) {
 * @return et.Json, error
 **/
 func (s *Instance) rollback(result et.Json, err error) (et.Json, error) {
+	s.setFailed(result, err)
 	if s.startResilence() {
 		return result, err
 	}

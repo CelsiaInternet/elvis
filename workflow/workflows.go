@@ -147,28 +147,32 @@ func (s *WorkFlows) loadInstance(id string) (*Instance, error) {
 		return nil, fmt.Errorf(MSG_INSTANCE_ID_REQUIRED)
 	}
 
-	if loadInstance != nil {
-		return loadInstance(id)
-	}
-
-	key := fmt.Sprintf("workflow:%s", id)
-	if !cache.Exists(key) {
-		return nil, ErrorInstanceNotFound
-	}
-
 	result := &Instance{}
-	src, err := cache.Get(key, "")
-	if err != nil {
-		return nil, err
-	}
+	if loadInstance != nil {
+		var err error
+		result, err = loadInstance(id)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		key := fmt.Sprintf("workflow:%s", id)
+		if !cache.Exists(key) {
+			return nil, ErrorInstanceNotFound
+		}
 
-	if src == "" {
-		return nil, ErrorInstanceNotFound
-	}
+		src, err := cache.Get(key, "")
+		if err != nil {
+			return nil, err
+		}
 
-	err = json.Unmarshal([]byte(src), &result)
-	if err != nil {
-		return nil, err
+		if src == "" {
+			return nil, ErrorInstanceNotFound
+		}
+
+		err = json.Unmarshal([]byte(src), &result)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	flow := s.Flows[result.Tag]
@@ -178,7 +182,6 @@ func (s *WorkFlows) loadInstance(id string) (*Instance, error) {
 
 	result.Flow = flow
 	result.goTo = -1
-	result.setStatus(result.Status)
 	s.Instances[id] = result
 
 	logs.Log("WorkFlows", "loadInstance:", result.ToJson().ToString())

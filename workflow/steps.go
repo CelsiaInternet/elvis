@@ -41,10 +41,13 @@ func newStep(name, description string, fn FnContext, stop bool) (*Step, error) {
 * @return et.Json, error
 **/
 func (s *Step) run(flow *Instance, ctx et.Json) (et.Json, error) {
+	if s.fn == nil {
+		return ctx, fmt.Errorf("step function is nil for step: %s at index %d", s.Name, flow.Current)
+	}
+
 	flow.setStatus(FlowStatusRunning)
 	result, err := s.fn(flow, ctx)
 	if err != nil {
-		flow.setFailed(result, err)
 		return et.Json{}, err
 	}
 
