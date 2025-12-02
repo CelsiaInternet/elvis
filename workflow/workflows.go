@@ -227,7 +227,7 @@ func (s *WorkFlows) runInstance(instanceId, tag string, step int, tags, ctx et.J
 	}
 
 	s.Remove(instance)
-	logs.Log("runInstance:%s", instance.ToJson().ToString())
+	logs.Logf(fmt.Sprintf("runInstance:%s", tag), `instance:%s`, instance.ToJson().ToString())
 
 	return result, err
 }
