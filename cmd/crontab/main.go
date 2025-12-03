@@ -14,7 +14,7 @@ func main() {
 		panic(err)
 	}
 
-	err = crontab.EventJob("", "test", "*/5 * * * * *", "test", 0, true,
+	err = crontab.AddEventJobFn("", "test", "*/5 * * * * *", "test", 0, true,
 		et.Json{
 			"test": "test",
 		},

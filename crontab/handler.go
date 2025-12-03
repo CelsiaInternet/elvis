@@ -111,12 +111,12 @@ func AddJob(id, name, spec, channel string, params et.Json, repetitions int, sta
 }
 
 /**
-* PushEventJob
+* AddEventJob
 * Push job to crontab was notified by event workers
 * @param id, name, spec, channel string, repetitions int, start bool, params et.Json
 * @return error
 **/
-func PushEventJob(id, name, spec, channel string, repetitions int, start bool, params et.Json) error {
+func AddEventJob(id, name, spec, channel string, repetitions int, start bool, params et.Json) error {
 	err := Server()
 	if err != nil {
 		return err
@@ -134,12 +134,12 @@ func PushEventJob(id, name, spec, channel string, repetitions int, start bool, p
 }
 
 /**
-* EventJob
+* AddEventJobFn
 * Event job to crontab function execute was notified by event workers
 * @param id, name, spec, channel string, repetitions int, start bool, params et.Json, fn func(event.EvenMessage)
 * @return *Job, error
 **/
-func EventJob(id, name, spec, channel string, repetitions int, start bool, params et.Json, fn func(event.EvenMessage)) error {
+func AddEventJobFn(id, name, spec, channel string, repetitions int, start bool, params et.Json, fn func(event.EvenMessage)) error {
 	event.Publish(EVENT_CRONTAB_SET, et.Json{
 		"id":          id,
 		"name":        name,

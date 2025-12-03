@@ -81,6 +81,10 @@ func DecrCtx(ctx context.Context, key string) int64 {
 		return 0
 	}
 
+	if result < 0 {
+		result = 0
+	}
+
 	return result
 }
 
