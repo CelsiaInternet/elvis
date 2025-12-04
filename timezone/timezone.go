@@ -25,6 +25,24 @@ func NowTime() time.Time {
 }
 
 /**
+* Location
+* @return *time.Location
+* Remember to this function use ZONEINFO variable
+**/
+func Location() *time.Location {
+	return loc
+}
+
+/**
+* Parse
+* @param layout, value string
+* @return time.Time, error
+**/
+func Parse(layout string, value string) (time.Time, error) {
+	return time.ParseInLocation(layout, value, loc)
+}
+
+/**
 * Add
 * @param d time.Duration
 * @return time.Time

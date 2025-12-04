@@ -9,20 +9,18 @@ import (
 )
 
 func main() {
-	err := crontab.Server()
+	err := crontab.Load("test")
 	if err != nil {
 		panic(err)
 	}
 
-	err = crontab.AddEventJobFn("", "test", "*/5 * * * * *", "test", 0, true,
+	err = crontab.AddEventJob("test", "*/5 * * * * *", "test", 0, true,
 		et.Json{
 			"test": "test",
 		},
 		func(msg event.EvenMessage) {
 			worker := msg.Data
-			crontab.EventStatusRunning(worker)
 			console.Debug("test by event:", worker.ToString())
-			crontab.EventStatusDone(worker)
 		})
 	if err != nil {
 		panic(err)
