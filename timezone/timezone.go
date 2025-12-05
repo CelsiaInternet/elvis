@@ -1,6 +1,8 @@
 package timezone
 
 import (
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/celsiainternet/elvis/envar"
@@ -39,7 +41,47 @@ func Location() *time.Location {
 * @return time.Time, error
 **/
 func Parse(layout string, value string) (time.Time, error) {
-	return time.ParseInLocation(layout, value, loc)
+	current, err := time.ParseInLocation(layout, value, loc)
+	if err != nil {
+		if strings.Count(value, "+") == 2 || strings.Count(value, "-") == 2 {
+			layout = "2006-01-02 15:04:05 -0700 -0700"
+		} else {
+			layout = "2006-01-02 15:04:05 -0700"
+		}
+
+		return time.ParseInLocation(layout, value, loc)
+	}
+
+	return current, nil
+}
+
+/**
+* FormatMDYYYY
+* @param layout, value string
+* @return string
+**/
+func FormatMDYYYY(value string) string {
+	t, err := time.Parse("2006-01-02T15:04:05", value)
+	if err != nil {
+		return value
+	}
+
+	months := map[time.Month]string{
+		time.January:   "Ene",
+		time.February:  "Feb",
+		time.March:     "Mar",
+		time.April:     "Abr",
+		time.May:       "May",
+		time.June:      "Jun",
+		time.July:      "Jul",
+		time.August:    "Ago",
+		time.September: "Sep",
+		time.October:   "Oct",
+		time.November:  "Nov",
+		time.December:  "Dic",
+	}
+
+	return fmt.Sprintf("%s %02d %d", months[t.Month()], t.Day(), t.Year())
 }
 
 /**

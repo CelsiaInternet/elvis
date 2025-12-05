@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -505,16 +506,13 @@ func GetItem(key string) (et.Item, error) {
 		return et.Item{}, IsNil
 	}
 
-	var result et.Json
-	err = result.Scan(val)
+	var result et.Item
+	err = json.Unmarshal([]byte(val), &result)
 	if err != nil {
 		return et.Item{}, err
 	}
 
-	return et.Item{
-		Ok:     true,
-		Result: result,
-	}, nil
+	return result, nil
 }
 
 /**
@@ -538,7 +536,7 @@ func GetItems(key string) (et.Items, error) {
 	}
 
 	var result et.Items
-	err = result.Scan(val)
+	err = json.Unmarshal([]byte(val), &result)
 	if err != nil {
 		return et.Items{}, err
 	}

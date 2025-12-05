@@ -250,7 +250,7 @@ func (it *Items) ToByte() []byte {
 }
 
 func (it *Items) ToString() string {
-	return ArrayToString(it.Result)
+	return it.ToJson().ToString()
 }
 
 func (it *Items) ToJson() Json {
