@@ -10,12 +10,36 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+var IncrSetTTLScript = redis.NewScript(`
+    local ttl = tonumber(ARGV[1])
+
+    local newVal = redis.call("INCR", KEYS[1])
+
+    if ttl > 0 then
+        redis.call("PEXPIRE", KEYS[1], ttl)
+    end
+
+    return newVal
+`)
+
+var DecrKeepTTLScript = redis.NewScript(`
+    local val = redis.call("GET", KEYS[1])
+    if not val then
+        return -1
+    end
+
+    val = tonumber(val)
+
+    if val > 0 then
+        return redis.call("DECR", KEYS[1])
+    else
+        return -1
+    end
+`)
+
 /**
 * SetCtx
-* @params ctx context.Context
-* @params key string
-* @params val string
-* @params second time.Duration
+* @params ctx context.Context, key string, val string, second time.Duration
 * @return error
 **/
 func SetCtx(ctx context.Context, key, val string, second time.Duration) error {
@@ -98,6 +122,51 @@ func DeleteCtx(ctx context.Context, key string) (int64, error) {
 	intCmd := conn.Del(ctx, key)
 
 	return intCmd.Val(), intCmd.Err()
+}
+
+/**
+* IncrCtx
+* @params ctx context.Context, key string, second time.Duration
+* @return int64
+**/
+func IncrCtx(ctx context.Context, key string, second time.Duration) int64 {
+	if conn == nil {
+		return 0
+	}
+
+	result, err := IncrSetTTLScript.Run(
+		ctx,
+		conn,
+		[]string{key},
+		second.Milliseconds(),
+	).Int64()
+	if err != nil {
+		return 0
+	}
+
+	return result
+}
+
+/**
+* DecrCtx
+* @params ctx context.Context, key string
+* @return int64
+**/
+func DecrCtx(ctx context.Context, key string) int64 {
+	if conn == nil {
+		return 0
+	}
+
+	result, err := DecrKeepTTLScript.Run(
+		ctx,
+		conn,
+		[]string{key},
+	).Int64()
+	if err != nil {
+		return 0
+	}
+
+	return result
 }
 
 /**

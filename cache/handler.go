@@ -19,33 +19,6 @@ import (
 
 const IsNil = redis.Nil
 
-var IncrSetTTLScript = redis.NewScript(`
-    local ttl = tonumber(ARGV[1])
-
-    local newVal = redis.call("INCR", KEYS[1])
-
-    if ttl > 0 then
-        redis.call("PEXPIRE", KEYS[1], ttl)
-    end
-
-    return newVal
-`)
-
-var DecrKeepTTLScript = redis.NewScript(`
-    local val = redis.call("GET", KEYS[1])
-    if not val then
-        return -1
-    end
-
-    val = tonumber(val)
-
-    if val > 0 then
-        return redis.call("DECR", KEYS[1])
-    else
-        return -1
-    end
-`)
-
 /**
 * GenId
 * @params args ...interface{}
@@ -72,9 +45,7 @@ func GenKey(args ...interface{}) string {
 
 /**
 * Set
-* @params key string
-* @params val interface{}
-* @params second time.Duration
+* @params key string, val interface{}, second time.Duration
 * @return error
 **/
 func Set(key string, val interface{}, second time.Duration) error {
@@ -117,8 +88,7 @@ func Set(key string, val interface{}, second time.Duration) error {
 
 /**
 * Get
-* @params key string
-* @params def string
+* @params key string, def string
 * @return string, error
 **/
 func Get(key, def string) (string, error) {
@@ -170,21 +140,7 @@ func Expire(key string, second time.Duration) error {
 * @return int64
 **/
 func Incr(key string, second time.Duration) int64 {
-	if conn == nil {
-		return 0
-	}
-
-	result, err := IncrSetTTLScript.Run(
-		conn.ctx,
-		conn,
-		[]string{key},
-		second.Milliseconds(),
-	).Int64()
-	if err != nil {
-		return 0
-	}
-
-	return result
+	return IncrCtx(conn.ctx, key, second)
 }
 
 /**
@@ -193,20 +149,7 @@ func Incr(key string, second time.Duration) int64 {
 * @return int64
 **/
 func Decr(key string) int64 {
-	if conn == nil {
-		return 0
-	}
-
-	result, err := DecrKeepTTLScript.Run(
-		conn.ctx,
-		conn,
-		[]string{key},
-	).Int64()
-	if err != nil {
-		return 0
-	}
-
-	return result
+	return DecrCtx(conn.ctx, key)
 }
 
 /**
@@ -263,8 +206,7 @@ func LTrim(key string, start, stop int64) error {
 
 /**
 * SetH
-* @params key string
-* @params val interface{}
+* @params key string, val interface{}
 * @return error
 **/
 func SetH(key string, val interface{}) error {
@@ -273,8 +215,7 @@ func SetH(key string, val interface{}) error {
 
 /**
 * SetD
-* @params key string
-* @params val interface{}
+* @params key string, val interface{}
 * @return error
 **/
 func SetD(key string, val interface{}) error {
@@ -283,8 +224,7 @@ func SetD(key string, val interface{}) error {
 
 /**
 * SetW
-* @params key string
-* @params val interface{}
+* @params key string, val interface{}
 * @return error
 **/
 func SetW(key string, val interface{}) error {
@@ -293,8 +233,7 @@ func SetW(key string, val interface{}) error {
 
 /**
 * SetM
-* @params key string
-* @params val interface{}
+* @params key string, val interface{}
 * @return error
 **/
 func SetM(key string, val interface{}) error {
@@ -303,8 +242,7 @@ func SetM(key string, val interface{}) error {
 
 /**
 * SetY
-* @params key string
-* @params val interface{}
+* @params key string, interface{}
 * @return error
 **/
 func SetY(key string, val interface{}) error {
@@ -331,8 +269,7 @@ func Empty(match string) error {
 
 /**
 * More
-* @params key string
-* @params second time.Duration
+* @params key string, time.Duration
 * @return int
 **/
 func More(key string, second time.Duration) int {
@@ -358,8 +295,7 @@ func More(key string, second time.Duration) int {
 
 /**
 * HSet
-* @params key string
-* @params val map[string]string
+* @params key string, map[string]string
 * @return error
 **/
 func HSet(key string, val map[string]string) error {
