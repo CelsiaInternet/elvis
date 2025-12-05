@@ -94,7 +94,7 @@ func AddEventJob(tag, spec, channel string, repetitions int, started bool, param
 		return fmt.Errorf(MSG_CRONTAB_UNLOAD)
 	}
 
-	event.Publish(EVENT_CRONTAB_SET, et.Json{
+	data := et.Json{
 		"type":        TypeJobCron,
 		"tag":         tag,
 		"spec":        spec,
@@ -102,12 +102,15 @@ func AddEventJob(tag, spec, channel string, repetitions int, started bool, param
 		"repetitions": repetitions,
 		"started":     started,
 		"params":      params,
-	})
+	}
+	event.Publish(EVENT_CRONTAB_SET, data)
 
 	err := event.Stack(channel, fn)
 	if err != nil {
 		return err
 	}
+
+	logs.Logf(packageName, "Add OneShotEventJob: %s", data.ToString())
 
 	return nil
 }
@@ -123,19 +126,22 @@ func AddOneShotEventJob(tag, spec, channel string, started bool, params et.Json,
 		return fmt.Errorf(MSG_CRONTAB_UNLOAD)
 	}
 
-	event.Publish(EVENT_CRONTAB_SET, et.Json{
+	data := et.Json{
 		"type":    TypeJobOneShot,
 		"tag":     tag,
 		"spec":    spec,
 		"channel": channel,
 		"started": started,
 		"params":  params,
-	})
+	}
+	event.Publish(EVENT_CRONTAB_SET, data)
 
 	err := event.Stack(channel, fn)
 	if err != nil {
 		return err
 	}
+
+	logs.Logf(packageName, "Add OneShotEventJob: %s", data.ToString())
 
 	return nil
 }

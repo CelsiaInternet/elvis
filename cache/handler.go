@@ -19,6 +19,33 @@ import (
 
 const IsNil = redis.Nil
 
+var IncrSetTTLScript = redis.NewScript(`
+    local ttl = tonumber(ARGV[1])
+
+    local newVal = redis.call("INCR", KEYS[1])
+
+    if ttl > 0 then
+        redis.call("PEXPIRE", KEYS[1], ttl)
+    end
+
+    return newVal
+`)
+
+var DecrKeepTTLScript = redis.NewScript(`
+    local val = redis.call("GET", KEYS[1])
+    if not val then
+        return -1
+    end
+
+    val = tonumber(val)
+
+    if val > 0 then
+        return redis.call("DECR", KEYS[1])
+    else
+        return -1
+    end
+`)
+
 /**
 * GenId
 * @params args ...interface{}
@@ -143,7 +170,20 @@ func Expire(key string, second time.Duration) error {
 * @return int64
 **/
 func Incr(key string, second time.Duration) int64 {
-	result := IncrCtx(conn.ctx, key, second)
+	if conn == nil {
+		return 0
+	}
+
+	result, err := IncrSetTTLScript.Run(
+		conn.ctx,
+		conn,
+		[]string{key},
+		second.Milliseconds(),
+	).Int64()
+	if err != nil {
+		return 0
+	}
+
 	return result
 }
 
@@ -157,7 +197,16 @@ func Decr(key string) int64 {
 		return 0
 	}
 
-	return DecrCtx(conn.ctx, key)
+	result, err := DecrKeepTTLScript.Run(
+		conn.ctx,
+		conn,
+		[]string{key},
+	).Int64()
+	if err != nil {
+		return 0
+	}
+
+	return result
 }
 
 /**

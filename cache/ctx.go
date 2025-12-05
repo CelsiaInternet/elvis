@@ -45,50 +45,6 @@ func ExpireCtx(ctx context.Context, key string, second time.Duration) error {
 }
 
 /**
-* IncrCtx
-* @params ctx context.Context, key string, second time.Duration
-* @return int64
-**/
-func IncrCtx(ctx context.Context, key string, second time.Duration) int64 {
-	if conn == nil {
-		return 0
-	}
-
-	result, err := conn.Incr(ctx, key).Result()
-	if err != nil {
-		return 0
-	}
-
-	if result == 1 {
-		ExpireCtx(ctx, key, second)
-	}
-
-	return result
-}
-
-/**
-* DecrCtx
-* @params ctx context.Context, key string
-* @return int64
-**/
-func DecrCtx(ctx context.Context, key string) int64 {
-	if conn == nil {
-		return 0
-	}
-
-	result, err := conn.Decr(ctx, key).Result()
-	if err != nil {
-		return 0
-	}
-
-	if result < 0 {
-		result = 0
-	}
-
-	return result
-}
-
-/**
 * GetCtx
 * @params ctx context.Context, key string
 * @params def string
