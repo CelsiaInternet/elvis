@@ -443,10 +443,102 @@ func AllCache(search string, page, rows int) (et.List, error) {
 }
 
 /**
+* GetInt
+* @params key string
+* @return int64, error
+**/
+func GetInt(key string) (int, error) {
+	if conn == nil {
+		return 0, fmt.Errorf(msg.ERR_NOT_CACHE_SERVICE)
+	}
+
+	val, err := Get(key, "0")
+	if err != nil {
+		return 0, err
+	}
+
+	result, err := strconv.Atoi(val)
+	if err != nil {
+		return 0, err
+	}
+
+	return result, nil
+}
+
+/**
+* GetInt64
+* @params key string
+* @return int64, error
+**/
+func GetInt64(key string) (int64, error) {
+	if conn == nil {
+		return 0, fmt.Errorf(msg.ERR_NOT_CACHE_SERVICE)
+	}
+
+	val, err := Get(key, "0")
+	if err != nil {
+		return 0, err
+	}
+
+	result, err := strconv.ParseInt(val, 10, 64)
+	if err != nil {
+		return 0, err
+	}
+
+	return result, nil
+}
+
+/**
+* GetFloat
+* @params key string
+* @result float64, error
+**/
+func GetFloat(key string) (float64, error) {
+	if conn == nil {
+		return 0, fmt.Errorf(msg.ERR_NOT_CACHE_SERVICE)
+	}
+
+	val, err := Get(key, "0")
+	if err != nil {
+		return 0, err
+	}
+
+	result, err := strconv.ParseFloat(val, 64)
+	if err != nil {
+		return 0, err
+	}
+
+	return result, nil
+}
+
+/**
+* @params key string
+* @return bool, error
+**/
+func GetBool(key string) (bool, error) {
+	if conn == nil {
+		return false, fmt.Errorf(msg.ERR_NOT_CACHE_SERVICE)
+	}
+
+	val, err := Get(key, "0")
+	if err != nil {
+		return false, err
+	}
+
+	result, err := strconv.ParseBool(val)
+	if err != nil {
+		return false, err
+	}
+
+	return result, nil
+}
+
+/**
 * GetJson
 * @params key string
 * @return Json, error
-**/
+*
+ */
 func GetJson(key string) (et.Json, error) {
 	if conn == nil {
 		return et.Json{}, fmt.Errorf(msg.ERR_NOT_CACHE_SERVICE)
