@@ -45,6 +45,10 @@ func Load(tag string) error {
 	return nil
 }
 
+/**
+* Close
+* @return void
+**/
 func Close() {
 	if crontab == nil {
 		return

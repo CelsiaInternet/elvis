@@ -72,7 +72,7 @@ func eventSet(msg event.EvenMessage) {
 		return
 	}
 
-	logs.Logf(packageName, fmt.Sprintf("Crontab %s added", tag))
+	logs.Logf(packageName, fmt.Sprintf("Crontab %s added spec %s", tag, spec))
 }
 
 /**
