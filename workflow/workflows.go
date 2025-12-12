@@ -1,11 +1,9 @@
 package workflow
 
 import (
-	"encoding/json"
 	"fmt"
 	"sync"
 
-	"github.com/celsiainternet/elvis/cache"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/event"
 	"github.com/celsiainternet/elvis/logs"
@@ -142,51 +140,37 @@ func (s *WorkFlows) newInstance(tag, id string, tags et.Json, step int, createdB
 * @param id string
 * @return *Flow, error
 **/
-func (s *WorkFlows) loadInstance(id string) (*Instance, error) {
+func (s *WorkFlows) loadInstance(id string) (*Instance, bool) {
 	if id == "" {
-		return nil, fmt.Errorf(MSG_INSTANCE_ID_REQUIRED)
+		return nil, false
 	}
 
-	result := &Instance{}
+	result, ok := s.Instances[id]
+	if ok {
+		return result, true
+	}
+
 	if loadInstance != nil {
-		var err error
-		result, err = loadInstance(id)
+		result, err := loadInstance(id)
 		if err != nil {
-			return nil, err
-		}
-	} else {
-		key := fmt.Sprintf("workflow:%s", id)
-		if !cache.Exists(key) {
-			return nil, ErrorInstanceNotFound
+			return nil, false
 		}
 
-		src, err := cache.Get(key, "")
-		if err != nil {
-			return nil, err
+		flow := s.Flows[result.Tag]
+		if flow == nil {
+			return nil, false
 		}
 
-		if src == "" {
-			return nil, ErrorInstanceNotFound
-		}
+		result.Flow = flow
+		result.goTo = -1
+		s.Add(result)
 
-		err = json.Unmarshal([]byte(src), &result)
-		if err != nil {
-			return nil, err
-		}
+		logs.Log("WorkFlows", "loadInstance:", result.ToJson().ToString())
+
+		return result, true
 	}
 
-	flow := s.Flows[result.Tag]
-	if flow == nil {
-		return nil, fmt.Errorf(MSG_FLOW_NOT_FOUND)
-	}
-
-	result.Flow = flow
-	result.goTo = -1
-	s.Instances[id] = result
-
-	logs.Log("WorkFlows", "loadInstance:", result.ToJson().ToString())
-
-	return result, nil
+	return nil, false
 }
 
 /**
@@ -196,12 +180,12 @@ func (s *WorkFlows) loadInstance(id string) (*Instance, error) {
 **/
 func (s *WorkFlows) getOrCreateInstance(id, tag string, step int, tags et.Json, createdBy string) (*Instance, error) {
 	id = reg.GetUUID(id)
-	result, err := s.loadInstance(id)
-	if err != nil {
+	result, exists := s.loadInstance(id)
+	if !exists {
 		return s.newInstance(tag, id, tags, step, createdBy)
 	}
 
-	return result, err
+	return result, nil
 }
 
 /**
@@ -217,9 +201,8 @@ func (s *WorkFlows) runInstance(instanceId, tag string, step int, tags, ctx et.J
 	}
 
 	instance.UpdatedBy = createdBy
-	s.Add(instance)
 	instance.setTags(tags)
-	if step != -1 {
+	if step > 0 {
 		instance.Current = step
 	}
 	result, err := instance.run(ctx)
@@ -239,9 +222,9 @@ func (s *WorkFlows) runInstance(instanceId, tag string, step int, tags, ctx et.J
 * @return error
 **/
 func (s *WorkFlows) resetInstance(instanceId, updatedBy string) error {
-	instance, err := s.loadInstance(instanceId)
-	if err != nil {
-		return err
+	instance, exists := s.loadInstance(instanceId)
+	if !exists {
+		return fmt.Errorf("instance not found")
 	}
 
 	instance.UpdatedBy = updatedBy
@@ -256,9 +239,9 @@ func (s *WorkFlows) resetInstance(instanceId, updatedBy string) error {
 * @return et.Json, error
 **/
 func (s *WorkFlows) rollback(instanceId, updatedBy string) (et.Json, error) {
-	instance, err := s.loadInstance(instanceId)
-	if err != nil {
-		return et.Json{}, err
+	instance, exists := s.loadInstance(instanceId)
+	if !exists {
+		return et.Json{}, fmt.Errorf("instance not found")
 	}
 
 	instance.UpdatedBy = updatedBy
@@ -276,9 +259,9 @@ func (s *WorkFlows) rollback(instanceId, updatedBy string) (et.Json, error) {
 * @return error
 **/
 func (s *WorkFlows) stop(instanceId, updatedBy string) error {
-	instance, err := s.loadInstance(instanceId)
-	if err != nil {
-		return err
+	instance, exists := s.loadInstance(instanceId)
+	if !exists {
+		return fmt.Errorf("instance not found")
 	}
 
 	instance.UpdatedBy = updatedBy

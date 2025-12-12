@@ -124,9 +124,9 @@ func Status(instanceId, status, updatedBy string) (FlowStatus, error) {
 		return "", fmt.Errorf("status %s no es valido", status)
 	}
 
-	instance, err := workFlows.loadInstance(instanceId)
-	if err != nil {
-		return "", err
+	instance, exists := workFlows.loadInstance(instanceId)
+	if !exists {
+		return "", fmt.Errorf("instance not found")
 	}
 
 	instance.setStatus(FlowStatus(status))
@@ -156,5 +156,10 @@ func GetInstance(instanceId string) (*Instance, error) {
 		return nil, err
 	}
 
-	return workFlows.loadInstance(instanceId)
+	instance, exists := workFlows.loadInstance(instanceId)
+	if !exists {
+		return nil, fmt.Errorf("instance not found")
+	}
+
+	return instance, nil
 }
