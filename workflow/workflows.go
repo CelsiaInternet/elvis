@@ -18,8 +18,6 @@ var (
 
 const packageName = "workflow"
 
-type instanceFn func(instanceId, tag string, startId int, tags, ctx et.Json, createdBy string) (et.Json, error)
-
 type WorkFlows struct {
 	Flows     map[string]*Flow     `json:"flows"`
 	Instances map[string]*Instance `json:"instances"`
