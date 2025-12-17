@@ -202,7 +202,7 @@ func Work(event string, data et.Json) et.Json {
 	}
 
 	Publish(EVENT_WORK, work)
-	Publish(event, data)
+	Publish(event, work)
 
 	return work
 }
