@@ -200,7 +200,7 @@ func (s *WorkFlows) runInstance(instanceId, tag string, step int, tags, ctx et.J
 
 	instance.UpdatedBy = createdBy
 	instance.setTags(tags)
-	if step > 0 {
+	if step != instance.Current {
 		instance.Current = step
 	}
 	result, err := instance.run(ctx)
