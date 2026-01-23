@@ -220,7 +220,10 @@ func (s *Instance) setCtx(ctx et.Json) et.Json {
 func (s *Instance) setDone(result et.Json, err error) (et.Json, error) {
 	s.setCtx(result)
 	s.setResult(result, err)
-	s.setStatus(FlowStatusDone)
+	errStatus := s.setStatus(FlowStatusDone)
+	if errStatus != nil {
+		return result, errStatus
+	}
 
 	return result, err
 }
@@ -229,9 +232,14 @@ func (s *Instance) setDone(result et.Json, err error) (et.Json, error) {
 * setFailed
 * @param result et.Json, err error
 **/
-func (s *Instance) setFailed(result et.Json, err error) {
+func (s *Instance) setFailed(result et.Json, err error) error {
 	s.setResult(result, err)
-	s.setStatus(FlowStatusFailed)
+	errStatus := s.setStatus(FlowStatusFailed)
+	if errStatus != nil {
+		return errStatus
+	}
+
+	return nil
 }
 
 /**
@@ -243,7 +251,10 @@ func (s *Instance) setStop(result et.Json, err error) (et.Json, error) {
 	s.setCtx(result)
 	s.setResult(result, err)
 	s.Current++
-	s.setStatus(FlowStatusPending)
+	errStatus := s.setStatus(FlowStatusPending)
+	if errStatus != nil {
+		return result, errStatus
+	}
 
 	return result, err
 }
@@ -252,10 +263,15 @@ func (s *Instance) setStop(result et.Json, err error) (et.Json, error) {
 * setNext
 * @return error
 **/
-func (s *Instance) setNext(result et.Json, err error) {
+func (s *Instance) setNext(result et.Json, err error) error {
 	s.setResult(result, err)
 	s.Current++
-	s.setStatus(s.Status)
+	errStatus := s.setStatus(s.Status)
+	if errStatus != nil {
+		return errStatus
+	}
+
+	return nil
 }
 
 /**
@@ -263,17 +279,22 @@ func (s *Instance) setNext(result et.Json, err error) {
 * @param step int, result et.Json, err error
 * @return et.Json, error
 **/
-func (s *Instance) setGoto(step int, message string, result et.Json, err error) {
+func (s *Instance) setGoto(step int, message string, result et.Json, err error) error {
 	if step == -1 {
-		return
+		return nil
 	}
 
 	s.setCtx(result)
 	s.setResult(result, err)
 	s.Current = step
 	s.goTo = -1
-	s.setStatus(s.Status)
+	errStatus := s.setStatus(s.Status)
+	if errStatus != nil {
+		return errStatus
+	}
+
 	logs.Logf(packageName, MSG_INSTANCE_GOTO, s.Id, s.Tag, step, message)
+	return nil
 }
 
 /**
@@ -419,9 +440,7 @@ func (s *Instance) rollback(result et.Json, err error) (et.Json, error) {
 **/
 func (s *Instance) Stop() error {
 	s.Steps[s.Current].Stop = true
-	s.setStatus(s.Status)
-
-	return nil
+	return s.setStatus(s.Status)
 }
 
 /**
@@ -429,9 +448,7 @@ func (s *Instance) Stop() error {
 * @return error
 **/
 func (s *Instance) Done() error {
-	s.setStatus(FlowStatusDone)
-
-	return nil
+	return s.setStatus(FlowStatusDone)
 }
 
 /**
@@ -441,9 +458,7 @@ func (s *Instance) Done() error {
 **/
 func (s *Instance) Goto(step int) error {
 	s.goTo = step
-	s.setStatus(s.Status)
-
-	return nil
+	return s.setStatus(s.Status)
 }
 
 /**
@@ -452,7 +467,5 @@ func (s *Instance) Goto(step int) error {
 * @return error
 **/
 func (s *Instance) SetStatus(status FlowStatus) error {
-	s.setStatus(status)
-
-	return nil
+	return s.setStatus(status)
 }
