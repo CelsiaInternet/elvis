@@ -16,6 +16,8 @@ var dependencies = []string{
 	"github.com/manifoldco/promptui",
 	"github.com/schollz/progressbar/v3",
 	"github.com/spf13/cobra",
+	"github.com/dimiro1/banner",
+	"github.com/mattn/go-colorable",
 }
 
 func main() {
