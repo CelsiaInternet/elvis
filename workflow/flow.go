@@ -32,7 +32,6 @@ type Flow struct {
 	Description   string        `json:"description"`
 	TotalAttempts int           `json:"total_attempts"`
 	TimeAttempts  time.Duration `json:"time_attempts"`
-	RetentionTime time.Duration `json:"retention_time"`
 	Steps         []*Step       `json:"steps"`
 	TpConsistency TpConsistency `json:"tp_consistency"`
 	Team          string        `json:"team"`
@@ -53,7 +52,6 @@ func newFlow(tag, version, name, description string, fn FnContext, stop bool, cr
 		Name:          name,
 		Description:   description,
 		TpConsistency: TpConsistencyEventual,
-		RetentionTime: 48 * time.Hour,
 		Steps:         make([]*Step, 0),
 		CreatedBy:     createdBy,
 	}
@@ -160,13 +158,9 @@ func (s *Flow) Consistency(consistency TpConsistency) *Flow {
 func (s *Flow) Resilence(totalAttempts int, timeAttempts time.Duration, team string, level string) *Flow {
 	s.TotalAttempts = totalAttempts
 	s.TimeAttempts = timeAttempts
-	retentionTime := time.Duration(s.TotalAttempts * int(timeAttempts))
-	if s.RetentionTime < retentionTime {
-		s.RetentionTime = retentionTime
-	}
 	s.Team = team
 	s.Level = level
-	s.setConfig(MSG_INSTANCE_RESILIENCE, s.Tag, totalAttempts, timeAttempts, retentionTime)
+	s.setConfig(MSG_INSTANCE_RESILIENCE, s.Tag, totalAttempts, timeAttempts)
 
 	return s
 }
@@ -177,7 +171,6 @@ func (s *Flow) Resilence(totalAttempts int, timeAttempts time.Duration, team str
 * @return *Flow
 **/
 func (s *Flow) Retention(retentionTime time.Duration) *Flow {
-	s.RetentionTime = retentionTime
 	s.setConfig(MSG_INSTANCE_RETENTION, s.Tag, retentionTime)
 
 	return s

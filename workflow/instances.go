@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/celsiainternet/elvis/cache"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/event"
 	"github.com/celsiainternet/elvis/logs"
@@ -107,14 +106,7 @@ func (s *Instance) Save() error {
 		return saveInstance(s)
 	}
 
-	key := fmt.Sprintf("workflow:%s", s.Id)
-	scr := data.ToString()
-	err := cache.Set(key, scr, s.RetentionTime)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return fmt.Errorf("Save: saveInstance is nil")
 }
 
 /**
@@ -196,6 +188,7 @@ func (s *Instance) setTags(tags et.Json) {
 **/
 func (s *Instance) SetParam(key string, value interface{}) {
 	s.Params[key] = value
+	s.Save()
 }
 
 /**
@@ -311,7 +304,7 @@ func (s *Instance) startResilence() bool {
 	}
 
 	description := fmt.Sprintf("flow: %s,  %s", s.Name, s.Description)
-	s.resilence = resilience.AddCustom(s.Id, s.Tag, description, s.TotalAttempts, s.TimeAttempts, s.RetentionTime, s.Tags, s.Team, s.Level, s.run, s.Ctx)
+	s.resilence = resilience.AddCustom(s.Id, s.Tag, description, s.TotalAttempts, s.TimeAttempts, s.Tags, s.Team, s.Level, s.run, s.Ctx)
 	return true
 }
 
