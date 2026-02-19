@@ -47,7 +47,7 @@ type Instance struct {
 	Results    map[int]*Result      `json:"results"`
 	Rollbacks  map[int]*Result      `json:"rollbacks"`
 	Params     et.Json              `json:"params"`
-	Trace      []et.Json            `json:"trace"`
+	Traces     []et.Json            `json:"traces"`
 	Status     FlowStatus           `json:"status"`
 	DoneAt     time.Time            `json:"done_at"`
 	Tags       et.Json              `json:"tags"`
@@ -237,6 +237,44 @@ func (s *Instance) PutParam(value et.Json) (et.Json, error) {
 **/
 func (s *Instance) GetParam(key string) interface{} {
 	return s.Params[key]
+}
+
+/**
+* SetTrace
+* @param step int, ctx et.Json, err error
+* @return error
+**/
+func (s *Instance) SetTrace(step int, ctx et.Json, err error) error {
+	s.Traces = append(s.Traces, et.Json{
+		"step":  step,
+		"ctx":   ctx,
+		"error": err,
+	})
+	return s.Save()
+}
+
+/**
+* GetTraces
+* @return []et.Json
+**/
+func (s *Instance) GetTraces() []et.Json {
+	return s.Traces
+}
+
+/**
+* GetTraceByStep
+* @params step int
+* @return []et.Json
+**/
+func (s *Instance) GetTraceByStep(step int) []et.Json {
+	result := []et.Json{}
+	for _, trace := range s.Traces {
+		if trace["step"] == step {
+			result = append(result, trace)
+		}
+	}
+
+	return result
 }
 
 /**
