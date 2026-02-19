@@ -1,12 +1,10 @@
 package resilience
 
 import (
-	"encoding/json"
 	"fmt"
 	"reflect"
 	"time"
 
-	"github.com/celsiainternet/elvis/cache"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/reg"
 )
@@ -44,22 +42,14 @@ func NewInstance(id, tag, description string, totalAttempts int, timeAttempts ti
 * @return *Instance, error
 **/
 func LoadById(id string) (*Instance, error) {
-	key := fmt.Sprintf("resilience:%s", id)
-	exists := cache.Exists(key)
-	if !exists {
-		return nil, fmt.Errorf(MSG_INSTANCE_NOT_FOUND)
+	if loadInstance == nil {
+		return nil, fmt.Errorf("loadInstance function not set")
 	}
 
-	bt, err := cache.Get(key, "")
+	result, err := loadInstance(id)
 	if err != nil {
 		return nil, err
 	}
 
-	var result Instance
-	err = json.Unmarshal([]byte(bt), &result)
-	if err != nil {
-		return nil, err
-	}
-
-	return &result, nil
+	return result, nil
 }

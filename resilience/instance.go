@@ -19,14 +19,12 @@ type TpStore string
 type Status string
 
 const (
-	packageName           = "resilience"
-	TpStoreCache  TpStore = "cache"
-	TpStoreMemory TpStore = "memory"
-	StatusPending Status  = "pending"
-	StatusRunning Status  = "running"
-	StatusDone    Status  = "done"
-	StatusStop    Status  = "stop"
-	StatusFailed  Status  = "failed"
+	packageName          = "resilience"
+	StatusPending Status = "pending"
+	StatusRunning Status = "running"
+	StatusDone    Status = "done"
+	StatusStop    Status = "stop"
+	StatusFailed  Status = "failed"
 )
 
 type Instance struct {

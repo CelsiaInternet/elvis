@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/celsiainternet/elvis/cache"
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/event"
@@ -24,12 +23,7 @@ func load() error {
 		return nil
 	}
 
-	_, err := cache.Load()
-	if err != nil {
-		return err
-	}
-
-	_, err = event.Load()
+	_, err := event.Load()
 	if err != nil {
 		return err
 	}
@@ -47,10 +41,6 @@ func load() error {
 **/
 func HealthCheck() bool {
 	if err := load(); err != nil {
-		return false
-	}
-
-	if !cache.HealthCheck() {
 		return false
 	}
 
