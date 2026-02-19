@@ -173,6 +173,11 @@ func (s *Instance) setResult(result et.Json, err error) (et.Json, error) {
 	return result, err
 }
 
+/**
+* SetTag
+* @param key string, value interface{}
+* @return error
+**/
 func (s *Instance) SetTag(key string, value interface{}) error {
 	s.Tags[key] = value
 	return s.Save()
