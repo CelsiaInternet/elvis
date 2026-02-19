@@ -46,11 +46,12 @@ type Instance struct {
 	Ctxs       map[int]et.Json      `json:"ctxs"`
 	Results    map[int]*Result      `json:"results"`
 	Rollbacks  map[int]*Result      `json:"rollbacks"`
+	Params     et.Json              `json:"params"`
+	Trace      []et.Json            `json:"trace"`
 	Status     FlowStatus           `json:"status"`
 	DoneAt     time.Time            `json:"done_at"`
 	Tags       et.Json              `json:"tags"`
 	WorkerHost string               `json:"worker_host"`
-	Params     et.Json              `json:"params"`
 	done       bool                 `json:"-"`
 	goTo       int                  `json:"-"`
 	err        error                `json:"-"`
@@ -172,23 +173,70 @@ func (s *Instance) setResult(result et.Json, err error) (et.Json, error) {
 	return result, err
 }
 
+func (s *Instance) SetTag(key string, value interface{}) error {
+	s.Tags[key] = value
+	return s.Save()
+}
+
 /**
-* setTags
+* PutTag
 * @param tags et.Json
+* @return error
 **/
-func (s *Instance) setTags(tags et.Json) {
+func (s *Instance) PutTag(tags et.Json) error {
 	for k, v := range tags {
 		s.Tags[k] = v
 	}
+	return s.Save()
+}
+
+/**
+* GetTag
+* @param key string
+* @return interface{}
+**/
+func (s *Instance) GetTag(key string) interface{} {
+	return s.Tags[key]
 }
 
 /**
 * SetParam
 * @param key string, value interface{}
 **/
-func (s *Instance) SetParam(key string, value interface{}) {
+func (s *Instance) SetParam(key string, value interface{}) (et.Json, error) {
 	s.Params[key] = value
-	s.Save()
+	err := s.Save()
+	if err != nil {
+		return s.Params, err
+	}
+
+	return s.Params, nil
+}
+
+/**
+* PutParam
+* @param value et.Json
+* @return et.Json, error
+**/
+func (s *Instance) PutParam(value et.Json) (et.Json, error) {
+	for k, v := range value {
+		s.Params[k] = v
+	}
+	err := s.Save()
+	if err != nil {
+		return s.Params, err
+	}
+
+	return s.Params, nil
+}
+
+/**
+* GetParam
+* @param key string
+* @return interface{}
+**/
+func (s *Instance) GetParam(key string) interface{} {
+	return s.Params[key]
 }
 
 /**

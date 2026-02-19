@@ -128,8 +128,6 @@ func (s *WorkFlows) newInstance(tag, id string, tags et.Json, step int, createdB
 	}
 	result.setStatus(FlowStatusPending)
 
-	logs.Log("WorkFlows", "newInstance:", result.ToJson().ToString())
-
 	return result, nil
 }
 
@@ -199,7 +197,7 @@ func (s *WorkFlows) runInstance(instanceId, tag string, step int, tags, ctx et.J
 	}
 
 	instance.UpdatedBy = createdBy
-	instance.setTags(tags)
+	instance.PutTag(tags)
 	if step != instance.Current {
 		instance.Current = step
 	}

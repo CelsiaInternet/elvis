@@ -166,17 +166,6 @@ func (s *Flow) Resilence(totalAttempts int, timeAttempts time.Duration, team str
 }
 
 /**
-* Retention
-* @param retentionTime time.Duration
-* @return *Flow
-**/
-func (s *Flow) Retention(retentionTime time.Duration) *Flow {
-	s.setConfig(MSG_INSTANCE_RETENTION, s.Tag, retentionTime)
-
-	return s
-}
-
-/**
 * IfElse
 * @param expression string, yesGoTo int, noGoTo int
 * @return *Flow, error
