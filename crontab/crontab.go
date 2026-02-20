@@ -47,10 +47,10 @@ func New() *Jobs {
 
 /**
 * addJob
-* @param tp TypeJob, tag, spec, channel string, params et.Json, repetitions int, fn func(job *Job)
+* @param tp TypeJob, tag, spec, channel string, started bool, params et.Json, repetitions int, fn func(job *Job)
 * @return *Job, error
 **/
-func (s *Jobs) addJob(tp TypeJob, tag, spec, channel string, params et.Json, repetitions int, fn func(job *Job)) (*Job, error) {
+func (s *Jobs) addJob(tp TypeJob, tag, spec, channel string, started bool, params et.Json, repetitions int, fn func(job *Job)) (*Job, error) {
 	if !utility.ValidStr(tag, 0, []string{"", " "}) {
 		return nil, fmt.Errorf(msg.MSG_ATRIB_REQUIRED, "tag")
 	}
@@ -81,7 +81,14 @@ func (s *Jobs) addJob(tp TypeJob, tag, spec, channel string, params et.Json, rep
 		mu:          &sync.Mutex{},
 	}
 	s.Jobs[tag] = result
-	result.setStatus(Pending)
+	if started {
+		err := result.Start()
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		result.setStatus(Pending)
+	}
 
 	return result, nil
 }

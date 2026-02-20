@@ -166,12 +166,12 @@ func (s *Job) start() error {
 * Start
 * @return error
 **/
-func (s *Job) Start() {
+func (s *Job) Start() error {
 	if s.Started {
-		return
+		return nil
 	}
 
-	s.start()
+	return s.start()
 }
 
 /**
