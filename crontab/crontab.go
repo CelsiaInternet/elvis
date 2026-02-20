@@ -58,45 +58,29 @@ func (s *Jobs) addJob(tp TypeJob, tag, spec, channel string, params et.Json, rep
 	result, ok := s.Jobs[tag]
 	if ok {
 		if !result.Started {
-			result.Stop()
 			result.Spec = spec
-		}
-
-		return result, nil
-	}
-
-	shot, err := timezone.Parse("2006-01-02T15:04:05", spec)
-	if err != nil {
-		shot = timezone.NowTime()
-	}
-
-	idx := s.indexJobByTag(tag)
-	if idx != -1 {
-		result := s.jobs[idx]
-		if result.Spec != spec {
-			result.Spec = spec
-			result.ShotTime = shot
 			result.Stop()
 		}
 
 		return result, nil
 	}
 
-	result := &Job{
+	result = &Job{
 		Type:        tp,
 		Tag:         tag,
 		Channel:     channel,
 		Params:      params,
 		Spec:        spec,
-		ShotTime:    shot,
 		Started:     false,
-		Idx:         len(s.jobs),
+		HostName:    hostName,
+		Attempts:    0,
 		Repetitions: repetitions,
+		idx:         -1,
 		fn:          fn,
 		jobs:        s,
 		mu:          &sync.Mutex{},
 	}
-	s.jobs = append(s.jobs, result)
+	s.Jobs[tag] = result
 	result.setStatus(Pending)
 
 	return result, nil
