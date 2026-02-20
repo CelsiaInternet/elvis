@@ -66,7 +66,7 @@ func eventSet(msg event.EvenMessage) {
 	params := data.Json("params")
 	repetitions := data.Int("repetitions")
 	tp := TypeJob(tpStr)
-	_, err := crontab.addEventJob(tp, tag, spec, channel, started, params, repetitions, nil)
+	_, err := crontab.addJob(tp, tag, spec, channel, started, params, repetitions, nil)
 	if err != nil {
 		logs.Logf(packageName, fmt.Sprintf("Crontab %s; Error adding job %s", tag, err))
 		return

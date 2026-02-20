@@ -94,29 +94,6 @@ func (s *Jobs) addJob(tp TypeJob, tag, spec, channel string, started bool, param
 }
 
 /**
-* addEventJob
-* @param tp TypeJob, tag, spec, channel string, started bool, params et.Json, repetitions int
-* @return *Job, error
-**/
-func (s *Jobs) addEventJob(tp TypeJob, tag, spec, channel string, started bool, params et.Json, repetitions int, fn func(job *Job)) (*Job, error) {
-	result, err := s.addJob(tp, tag, spec, channel, params, repetitions, fn)
-	if err != nil {
-		return nil, err
-	}
-
-	if !started {
-		return result, nil
-	}
-
-	err = result.Start()
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
-}
-
-/**
 * removeJob
 * @param tag string
 * @return error
@@ -129,7 +106,7 @@ func (s *Jobs) removeJob(tag string) error {
 		return fmt.Errorf("job not found")
 	}
 
-	job.Stop()
+	job.stop()
 
 	s.mu.Lock()
 	delete(s.Jobs, tag)
