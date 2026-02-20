@@ -29,6 +29,11 @@ func eventInit(tag string) error {
 		return err
 	}
 
+	err = event.Subscribe(EVENT_CRONTAB_DELETE, eventDelete)
+	if err != nil {
+		return err
+	}
+
 	err = event.Subscribe(EVENT_CRONTAB_STOP, eventStop)
 	if err != nil {
 		return err
@@ -68,6 +73,27 @@ func eventSet(msg event.EvenMessage) {
 	}
 
 	logs.Logf(packageName, fmt.Sprintf("Crontab %s added spec %s", tag, spec))
+}
+
+/**
+* eventDelete
+* @param msg event.EvenMessage
+* @return error
+**/
+func eventDelete(msg event.EvenMessage) {
+	if crontab == nil {
+		return
+	}
+
+	data := msg.Data
+	tag := data.Str("tag")
+	err := crontab.removeJobByTag(tag)
+	if err != nil {
+		logs.Logf(packageName, fmt.Sprintf("Crontab %s; Error removing job %s", tag, err))
+		return
+	}
+
+	logs.Logf(packageName, fmt.Sprintf("Crontab %s removed", tag))
 }
 
 /**

@@ -157,6 +157,20 @@ func (s *Jobs) removeJob(idx int) error {
 }
 
 /**
+* removeJobByTag
+* @param tag string
+* @return error
+**/
+func (s *Jobs) removeJobByTag(tag string) error {
+	idx := s.indexJobByTag(tag)
+	if idx == -1 {
+		return fmt.Errorf("job not found")
+	}
+
+	return s.removeJob(idx)
+}
+
+/**
 * stopJobByTag
 * @param tag string
 * @return error
