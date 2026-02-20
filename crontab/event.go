@@ -87,7 +87,7 @@ func eventDelete(msg event.EvenMessage) {
 
 	data := msg.Data
 	tag := data.Str("tag")
-	err := crontab.removeJobByTag(tag)
+	err := crontab.removeJob(tag)
 	if err != nil {
 		logs.Logf(packageName, fmt.Sprintf("Crontab %s; Error removing job %s", tag, err))
 		return
@@ -108,7 +108,7 @@ func eventStop(msg event.EvenMessage) {
 
 	data := msg.Data
 	tag := data.Str("tag")
-	err := crontab.stopJobByTag(tag)
+	err := crontab.startJob(tag)
 	if err != nil {
 		logs.Logf(packageName, fmt.Sprintf("Crontab %s; Error stopping job %s", tag, err))
 		return
@@ -129,7 +129,7 @@ func eventStart(msg event.EvenMessage) {
 
 	data := msg.Data
 	tag := data.Str("tag")
-	_, err := crontab.startJobByTag(tag)
+	err := crontab.startJob(tag)
 	if err != nil {
 		logs.Logf(packageName, fmt.Sprintf("Crontab %s; Error starting job %s", tag, err))
 		return
