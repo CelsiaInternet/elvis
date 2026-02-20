@@ -56,10 +56,6 @@ type Model struct {
 	BeforeDelete       []Trigger
 	AfterDelete        []Trigger
 	OnListener         Listener
-	EventError         Event
-	EventInsert        Event
-	EventUpdate        Event
-	EventDelete        Event
 	Version            int
 	mutation           bool
 }

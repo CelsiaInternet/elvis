@@ -22,7 +22,6 @@ func main() {
 		return ctx, nil
 	}, true, "test").
 		// Debug().
-		Retention(24*time.Hour).
 		Resilence(3, 3*time.Second, "test", "1").
 		Step("Step 1", "Step 1", func(flow *workflow.Instance, ctx et.Json) (et.Json, error) {
 			console.Debug("Respuesta desde step 1, contexto:", ctx.ToString())
