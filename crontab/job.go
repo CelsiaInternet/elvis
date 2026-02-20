@@ -26,8 +26,8 @@ const (
 type TypeJob string
 
 const (
-	TypeJobCron    TypeJob = "cron"
-	TypeJobOneShot TypeJob = "one-shot"
+	CronJob TypeJob = "cronJob"
+	CronTab TypeJob = "cronTab"
 )
 
 type Job struct {
@@ -140,8 +140,8 @@ func (s *Job) Start() error {
 		return nil
 	}
 
-	if s.Type == TypeJobCron {
-		id, err := s.jobs.crontab.AddFunc(s.Spec, fn)
+	if s.Type == CronJob {
+		id, err := s.jobs.cronJobs.AddFunc(s.Spec, fn)
 		if err != nil {
 			return err
 		}
@@ -175,8 +175,8 @@ func (s *Job) Stop() {
 
 	s.Started = false
 	time.AfterFunc(time.Second*1, func() {
-		if s.Type == TypeJobCron {
-			s.jobs.crontab.Remove(cron.EntryID(s.Idx))
+		if s.Type == CronJob {
+			s.jobs.cronJobs.Remove(cron.EntryID(s.Idx))
 			s.Idx = -1
 		} else if s.shot != nil {
 			s.shot.Stop()

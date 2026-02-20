@@ -70,7 +70,7 @@ func AddJob(tag, spec string, params et.Json, repetitions int, started bool, fn 
 		return nil, fmt.Errorf(MSG_CRONTAB_UNLOAD)
 	}
 
-	return crontab.addEventJob(TypeJobCron, tag, spec, "", started, params, repetitions, fn)
+	return crontab.addEventJob(CronJob, tag, spec, "", started, params, repetitions, fn)
 }
 
 /**
@@ -84,7 +84,7 @@ func AddOneShotJob(tag, spec string, params et.Json, repetitions int, started bo
 		return nil, fmt.Errorf(MSG_CRONTAB_UNLOAD)
 	}
 
-	return crontab.addEventJob(TypeJobOneShot, tag, spec, "", started, params, repetitions, fn)
+	return crontab.addEventJob(CronTab, tag, spec, "", started, params, repetitions, fn)
 }
 
 /**
@@ -99,7 +99,7 @@ func AddEventJob(tag, spec, channel string, repetitions int, started bool, param
 	}
 
 	data := et.Json{
-		"type":        TypeJobCron,
+		"type":        CronJob,
 		"tag":         tag,
 		"spec":        spec,
 		"channel":     channel,
@@ -131,7 +131,7 @@ func AddOneShotEventJob(tag, spec, channel string, started bool, params et.Json,
 	}
 
 	data := et.Json{
-		"type":    TypeJobOneShot,
+		"type":    CronTab,
 		"tag":     tag,
 		"spec":    spec,
 		"channel": channel,

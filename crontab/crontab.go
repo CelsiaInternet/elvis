@@ -28,7 +28,7 @@ type Jobs struct {
 	Id         string     `json:"id"`
 	HostName   string     `json:"host_name"`
 	jobs       []*Job     `json:"-"`
-	crontab    *cron.Cron `json:"-"`
+	cronJobs   *cron.Cron `json:"-"`
 	storageKey string     `json:"-"`
 	running    bool       `json:"-"`
 }
@@ -39,7 +39,7 @@ func New() *Jobs {
 		Id:         utility.UUID(),
 		HostName:   hostName,
 		jobs:       make([]*Job, 0),
-		crontab:    cron.New(cron.WithSeconds()),
+		cronJobs:   cron.New(cron.WithSeconds()),
 		storageKey: fmt.Sprintf("crontab_%s", version),
 	}
 }
@@ -212,7 +212,7 @@ func (s *Jobs) startJobByTag(tag string) (int, error) {
 * @return error
 **/
 func (s *Jobs) start() error {
-	if s.crontab == nil {
+	if s.cronJobs == nil {
 		return fmt.Errorf("crontab not initialized")
 	}
 
@@ -220,7 +220,7 @@ func (s *Jobs) start() error {
 		return nil
 	}
 
-	s.crontab.Start()
+	s.cronJobs.Start()
 	s.running = true
 
 	logs.Logf(packageName, `Crontab started`)
@@ -233,11 +233,11 @@ func (s *Jobs) start() error {
 * @return error
 **/
 func (s *Jobs) stop() error {
-	if s.crontab == nil {
+	if s.cronJobs == nil {
 		return fmt.Errorf("crontab not initialized")
 	}
 
-	s.crontab.Stop()
+	s.cronJobs.Stop()
 	s.running = false
 
 	logs.Logf(packageName, `Crontab stopped`)
