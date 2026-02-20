@@ -3,7 +3,6 @@ package workflow
 import (
 	"fmt"
 
-	"github.com/celsiainternet/elvis/cache"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/event"
 )
@@ -19,12 +18,7 @@ func Load() error {
 		return nil
 	}
 
-	_, err := cache.Load()
-	if err != nil {
-		return err
-	}
-
-	_, err = event.Load()
+	_, err := event.Load()
 	if err != nil {
 		return err
 	}
