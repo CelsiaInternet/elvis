@@ -298,7 +298,7 @@ func (s *Instance) SetCheckList(tag string, ok bool, data et.Json) error {
 	if idx != -1 {
 		s.CheckList[idx].Ok = ok
 		s.CheckList[idx].Data = data
-		return nil
+		return s.Save()
 	}
 
 	return fmt.Errorf("check list not found")
@@ -316,6 +316,16 @@ func (s *Instance) setCtx(ctx et.Json) et.Json {
 	s.Ctxs[s.Current] = ctx.Clone()
 
 	return s.Ctx
+}
+
+/**
+* SetCtx
+* @param ctx et.Json
+* @return error
+**/
+func (s *Instance) SetCtx(ctx et.Json) error {
+	s.setCtx(ctx)
+	return s.Save()
 }
 
 /**
