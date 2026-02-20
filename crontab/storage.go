@@ -1,68 +1,27 @@
 package crontab
 
-import (
-	"github.com/celsiainternet/elvis/et"
-	"github.com/celsiainternet/elvis/logs"
-)
+import "github.com/celsiainternet/elvis/logs"
 
-type GetInstanceFn func(tag string) (*Job, error)
-type SetInstanceFn func(*Job) error
-type DeleteInstanceFn func(tag string) error
-type QueryInstanceFn func(query string) (et.Items, error)
+type LoadInstanceFn func(id string) (*Job, error)
+type SaveInstanceFn func(*Job) error
 
-var getInstance GetInstanceFn
-var setInstance SetInstanceFn
-var deleteInstance DeleteInstanceFn
-var queryInstance QueryInstanceFn
+var loadInstance LoadInstanceFn
+var saveInstance SaveInstanceFn
 
-/**
-* SetGetInstanceFn
-* @param fn GetInstanceFn
-**/
-func SetGetInstanceFn(fn GetInstanceFn) {
+func SetLoadInstance(fn LoadInstanceFn) {
 	if fn == nil {
 		return
 	}
 
-	logs.Log("workflow", "SetGetInstanceFn")
-	getInstance = fn
+	logs.Log("workflow", "SetLoadInstance")
+	loadInstance = fn
 }
 
-/**
-* SetSetInstanceFn
-* @param fn SetInstanceFn
-**/
-func SetSetInstanceFn(fn SetInstanceFn) {
+func SetSaveInstance(fn SaveInstanceFn) {
 	if fn == nil {
 		return
 	}
 
-	logs.Log("workflow", "SetSetInstanceFn")
-	setInstance = fn
-}
-
-/**
-* SetDeleteInstanceFn
-* @param fn DeleteInstanceFn
-**/
-func SetDeleteInstanceFn(fn DeleteInstanceFn) {
-	if fn == nil {
-		return
-	}
-
-	logs.Log("workflow", "SetDeleteInstanceFn")
-	deleteInstance = fn
-}
-
-/**
-* SetQueryInstanceFn
-* @param fn QueryInstanceFn
-**/
-func SetQueryInstanceFn(fn QueryInstanceFn) {
-	if fn == nil {
-		return
-	}
-
-	logs.Log("workflow", "SetQueryInstanceFn")
-	queryInstance = fn
+	logs.Log("workflow", "SetSaveInstance")
+	saveInstance = fn
 }

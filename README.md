@@ -30,7 +30,8 @@
 - [⚙️ Configuración de Desarrollo](#️-configuración-de-desarrollo)
 - [🚀 Quick Start](#-quick-start)
 - [Características Principales](#características-principales)
-- [📁 Estructura del Proyecto](#-estructura-del-proyecto)
+- [� Eventos (event)](#-eventos-event)
+- [� Estructura del Proyecto](#-estructura-del-proyecto)
 - [🔧 Comandos Disponibles](#-comandos-disponibles)
 - [Configuración de Variables de Entorno](#configuración-de-variables-de-entorno)
 - [💡 FAQ y Mejores Prácticas](#-faq-y-mejores-prácticas)
@@ -46,6 +47,7 @@ Elvis es un framework moderno y robusto diseñado para facilitar el desarrollo d
 - 🛡️ **Sistema de resiliencia** y recuperación automática
 - 📅 **Tareas programadas** (Crontab)
 - 🗄️ **Base de datos avanzada** con triggers automáticos
+- 🔁 **Workflows** para orquestación de procesos (pasos, rollback, consistencia)
 - 🔄 **Sistema de eventos** distribuidos
 - 💾 **Cache inteligente** multi-backend
 - 🔐 **Middleware de seguridad** integrado
@@ -150,15 +152,90 @@ Donde:
 - 🛡️ **Sistema de resiliencia** y recuperación automática
 
 ```go
-// Configurar resiliencia
-resilience.SetNotifyType(resilience.TpNotifyEmail)
-resilience.SetContactNumbers([]string{"+573160479724"})
+package main
 
-// Agregar transacción con reintentos automáticos
-transaction := resilience.Add("email-send", "Enviar email de confirmación", sendEmail, userEmail, content)
+import (
+    "github.com/celsiainternet/elvis/et"
+    "github.com/celsiainternet/elvis/resilience"
+)
+
+func main() {
+    // Agregar transacción con reintentos automáticos
+    // Firma actual:
+    // resilience.Add(id, tag, description, tags, team, level, fn, fnArgs...)
+    instance := resilience.Add(
+        "", // id (si viene vacío, se genera automáticamente)
+        "email-send",
+        "Enviar email de confirmación",
+        et.Json{"user_id": "123"},
+        "growth",
+        "critical",
+        func(to string, content string) error {
+            return nil
+        },
+        "user@example.com",
+        "Bienvenido!",
+    )
+    _ = instance
+}
 ```
 
-- 📅 **Tareas programadas** (Crontab)
+- 🔁 **Workflows** (orquestación de procesos)
+
+```go
+package main
+
+import (
+    "time"
+
+    "github.com/celsiainternet/elvis/et"
+    "github.com/celsiainternet/elvis/workflow"
+)
+
+func main() {
+    // Definir un flujo
+    flow := workflow.New(
+        "user-onboarding",
+        "v1",
+        "Onboarding",
+        "Proceso de creación y bienvenida",
+        func(inst *workflow.Instance, ctx et.Json) (et.Json, error) {
+            return et.Json{"step": "start"}, nil
+        },
+        false,
+        "system",
+    )
+
+    // Modo debug
+    flow.Debug()
+
+    // Resiliencia del flujo (reintentos)
+    flow.Resilence(3, 30*time.Second, "growth", "critical")
+
+    // Agregar pasos
+    flow.Step("CreateUser", "Crear usuario", func(inst *workflow.Instance, ctx et.Json) (et.Json, error) {
+        return et.Json{"user_id": "123"}, nil
+    }, false)
+    flow.Rollback(func(inst *workflow.Instance, ctx et.Json) (et.Json, error) {
+        return et.Json{"rollback": true}, nil
+    })
+
+    // Ejecutar instancia
+    result, err := workflow.Run(
+        "",                 // instanceId (si viene vacío, se genera automáticamente)
+        "user-onboarding",  // tag del flow
+        -1,                 // step (-1 ejecuta el siguiente)
+        et.Json{"env": "dev"},
+        et.Json{"email": "user@example.com"},
+        "system",
+    )
+    _ = result
+    _ = err
+    _ = flow
+}
+```
+
+- • **Tareas programadas** (Crontab)
 
 ```go
 // Configurar crontab
@@ -173,13 +250,13 @@ jobs.AddJob("backup-daily", "Backup diario", "0 2 * * *", "backup-channel", map[
 jobs.Start()
 ```
 
-- 🗄️ **Base de datos avanzada** con triggers automáticos
+- • **Base de datos avanzada** con triggers automáticos
 
 ```go
 // Configurar base de datos
 // Definir modelo con triggers
 model := linq.NewModel(db, "users", "Usuarios", 1)
-model.DefineColum("_id", "", "VARCHAR(80)", "-1")
+model.DefineColum(jdb.KEY, "", "VARCHAR(80)", "-1")
 model.DefineColum("name", "", "VARCHAR(250)", "")
 model.DefineColum("email", "", "VARCHAR(250)", "")
 
@@ -195,7 +272,7 @@ model.Trigger(linq.AfterInsert, func(model *linq.Model, old, new *et.Json, data 
 })
 ```
 
-- 🔄 **Sistema de eventos** distribuidos
+- • **Sistema de eventos** distribuidos
 
 ```go
 // Configurar eventos
@@ -217,7 +294,7 @@ work := event.Work("email.send", map[string]interface{}{
 })
 ```
 
-- 💾 **Cache inteligente** multi-backend
+- • **Cache inteligente** multi-backend
 
 ```go
 // Configurar cache
@@ -236,7 +313,7 @@ cache.SetH("user:123", map[string]interface{}{
 })
 ```
 
-- 🔐 **Middleware de seguridad** integrado
+- • **Middleware de seguridad** integrado
 
 ```go
 // Configurar seguridad
@@ -253,7 +330,7 @@ r.Use(middleware.CORS)
 r.Use(middleware.Logger)
 ```
 
-- 📊 **Telemetría, logging y monitoreo**
+- • **Telemetría, logging y monitoreo**
 
 ```go
 // Configurar telemetría
@@ -261,6 +338,25 @@ r.Use(middleware.Logger)
 logs.Log("user-service", "Usuario creado exitosamente")
 logs.Alert(fmt.Errorf("Error de conexión"))
 ```
+
+## 🔔 Eventos (event)
+
+- **Workflows**
+  - `workflow:set`
+  - `workflow:delete`
+  - `workflow:status`
+  - `workflow:awaiting`
+  - `workflow:results`
+- **Resilience**
+  - `resilience:status`
+  - `resilience:stop`
+  - `resilience:restart`
+  - `resilience:failed`
+- **JDB (SQL)**
+  - `sql:error`
+  - `sql:query`
+  - `sql:definition`
+  - `sql:command`
 
 ## 📁 Estructura del Proyecto
 
@@ -309,10 +405,11 @@ elvis/
 
 ## 🚀 Quick Start
 
-```bash
+```go
 package main
 
 import (
+    "net/http"
     "github.com/celsiainternet/elvis/router"
     "github.com/celsiainternet/elvis/middleware"
     "github.com/celsiainternet/elvis/response"
@@ -338,5 +435,3 @@ func main() {
     r.Listen(":3400")
 }
 ```
-
-workflow:f2334584-71f5-4be7-9c2c-0c3352bc9d50

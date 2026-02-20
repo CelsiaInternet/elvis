@@ -88,12 +88,12 @@ func (s *Job) ToJson() et.Json {
 * save
 * @return error
 **/
-func (s *Job) save() error {
-	if setInstance == nil {
+func (s *Job) Save() error {
+	if saveInstance == nil {
 		return nil
 	}
 
-	return setInstance(s)
+	return saveInstance(s)
 }
 
 /**
@@ -107,7 +107,7 @@ func (s *Job) setStatus(status JobStatus) {
 
 	s.Status = status
 	logs.Logf(packageName, fmt.Sprintf("Job %s status:%s host:%s attempt:%d", s.Tag, s.Status, s.HostName, s.Attempts))
-	go s.save()
+	go s.Save()
 }
 
 /**
