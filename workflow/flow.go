@@ -3,6 +3,7 @@ package workflow
 import (
 	"encoding/json"
 	"os"
+	"slices"
 	"time"
 
 	"github.com/celsiainternet/elvis/et"
@@ -23,6 +24,13 @@ func init() {
 	workerHost, _ = os.Hostname()
 }
 
+type CheckList struct {
+	Tag         string  `json:"tag"`
+	Description string  `json:"description"`
+	Ok          bool    `json:"ok"`
+	Data        et.Json `json:"data"`
+}
+
 type FnContext func(flow *Instance, ctx et.Json) (et.Json, error)
 
 type Flow struct {
@@ -34,6 +42,7 @@ type Flow struct {
 	TimeAttempts  time.Duration `json:"time_attempts"`
 	Steps         []*Step       `json:"steps"`
 	TpConsistency TpConsistency `json:"tp_consistency"`
+	CheckList     []*CheckList  `json:"check_list"`
 	Team          string        `json:"team"`
 	Level         string        `json:"level"`
 	CreatedBy     string        `json:"created_by"`
@@ -53,6 +62,7 @@ func newFlow(tag, version, name, description string, fn FnContext, stop bool, cr
 		Description:   description,
 		TpConsistency: TpConsistencyEventual,
 		Steps:         make([]*Step, 0),
+		CheckList:     make([]*CheckList, 0),
 		CreatedBy:     createdBy,
 	}
 	logs.Logf(packageName, MSG_FLOW_CREATED, tag, version, name)
@@ -175,6 +185,35 @@ func (s *Flow) IfElse(expression string, yesGoTo int, noGoTo int) *Flow {
 	step := s.Steps[n-1]
 	step.ifElse(expression, yesGoTo, noGoTo)
 	s.setConfig(MSG_INSTANCE_IFELSE, n-1, step.Name, expression, yesGoTo, noGoTo, s.Tag)
+
+	return s
+}
+
+/**
+* DefineCheckList
+* @param tag string, description string, ok bool, data et.Json
+* @return *Flow
+**/
+func (s *Flow) DefineCheckList(tag string, description string) *Flow {
+	s.CheckList = append(s.CheckList, &CheckList{
+		Tag:         tag,
+		Description: description,
+		Ok:          false,
+		Data:        et.Json{},
+	})
+	return s
+}
+
+/**
+* RemoveCheckList
+* @param tag string
+* @return *Flow
+**/
+func (s *Flow) RemoveCheckList(tag string) *Flow {
+	idx := slices.IndexFunc(s.CheckList, func(check *CheckList) bool { return check.Tag == tag })
+	if idx != -1 {
+		s.CheckList = append(s.CheckList[:idx], s.CheckList[idx+1:]...)
+	}
 
 	return s
 }

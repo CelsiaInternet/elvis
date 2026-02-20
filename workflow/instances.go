@@ -3,6 +3,7 @@ package workflow
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/celsiainternet/elvis/et"
@@ -260,10 +261,15 @@ func (s *Instance) SetTrace(step int, ctx et.Json, err error) error {
 
 /**
 * GetTraces
-* @return []et.Json
+* @param idx int
+* @return (et.Json, error)
 **/
-func (s *Instance) GetTraces() []et.Json {
-	return s.Traces
+func (s *Instance) GetTraces(idx int) (et.Json, error) {
+	if idx < 0 || idx >= len(s.Traces) {
+		return et.Json{}, fmt.Errorf("trace not found")
+	}
+
+	return s.Traces[idx], nil
 }
 
 /**
@@ -280,6 +286,22 @@ func (s *Instance) GetTraceByStep(step int) []et.Json {
 	}
 
 	return result
+}
+
+/**
+* SetCheckList
+* @param tag string, ok bool, data et.Json
+* @return error
+**/
+func (s *Instance) SetCheckList(tag string, ok bool, data et.Json) error {
+	idx := slices.IndexFunc(s.CheckList, func(check *CheckList) bool { return check.Tag == tag })
+	if idx != -1 {
+		s.CheckList[idx].Ok = ok
+		s.CheckList[idx].Data = data
+		return nil
+	}
+
+	return fmt.Errorf("check list not found")
 }
 
 /**

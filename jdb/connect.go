@@ -2,7 +2,9 @@ package jdb
 
 import (
 	"database/sql"
+	"fmt"
 
+	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/msg"
@@ -73,6 +75,76 @@ func (c *DB) HealthCheck() bool {
 }
 
 /**
+* connectTo
+* @param driver, chain string
+* @return *sql.DB, error
+**/
+func connectTo(driver, chain string) (*sql.DB, error) {
+	db, err := sql.Open(driver, chain)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := db.Ping(); err != nil {
+		return nil, err
+	}
+
+	return db, nil
+}
+
+/**
+* ExistDatabase
+* @param db *DB, name string
+* @return bool, error
+**/
+func existDatabase(db *sql.DB, name string) (bool, error) {
+	sql := `
+	SELECT EXISTS(
+	SELECT 1
+	FROM pg_database
+	WHERE UPPER(datname) = UPPER($1));`
+	rows, err := db.Query(sql, name)
+	if err != nil {
+		return false, err
+	}
+	defer rows.Close()
+
+	items := rowsItems(rows)
+
+	if items.Count == 0 {
+		return false, nil
+	}
+
+	return items.Bool(0, "exists"), nil
+}
+
+/**
+* CreateDatabase
+* @param db *sql.DB, name string
+* @return error
+**/
+func createDatabase(db *sql.DB, name string) error {
+	exist, err := existDatabase(db, name)
+	if err != nil {
+		return err
+	}
+
+	if exist {
+		return nil
+	}
+
+	sql := fmt.Sprintf(`CREATE DATABASE %s;`, name)
+	_, err = db.Exec(sql)
+	if err != nil {
+		return err
+	}
+
+	console.LogKF("postgres", `Database %s created`, name)
+
+	return nil
+}
+
+/**
 * ConnectTo
 * @param params et.Json
 * @return *DB, error
@@ -108,6 +180,25 @@ func ConnectTo(params et.Json) (*DB, error) {
 			return nil, logs.Errorf(msg.MSG_ATRIB_REQUIRED, "application_name")
 		}
 
+		connStr = strs.Format(`%s://%s:%s@%s:%d/%s?sslmode=disable&application_name=%s`, driver, user, password, host, port, "postgres", application_name)
+		db, err := connectTo(driver, connStr)
+		if err != nil {
+			return nil, err
+		}
+
+		exist, err := existDatabase(db, dbname)
+		if err != nil {
+			return nil, err
+		}
+
+		if !exist {
+			err := createDatabase(db, dbname)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		db.Close()
 		connStr = strs.Format(`%s://%s:%s@%s:%d/%s?sslmode=disable&application_name=%s`, driver, user, password, host, port, dbname, application_name)
 	case Oracle:
 		user := params.Str("user")
@@ -151,7 +242,7 @@ func ConnectTo(params et.Json) (*DB, error) {
 		return nil, logs.Errorm("jdb", msg.NOT_SELECT_DRIVE)
 	}
 
-	db, err := sql.Open(driver, connStr)
+	db, err := connectTo(driver, connStr)
 	if err != nil {
 		return nil, err
 	}
