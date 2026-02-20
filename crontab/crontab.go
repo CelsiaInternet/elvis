@@ -99,7 +99,7 @@ func (s *Jobs) addJob(tp TypeJob, tag, spec, channel string, params et.Json, rep
 		mu:          &sync.Mutex{},
 	}
 	s.jobs = append(s.jobs, result)
-	result.setStatus(JobStatusPending)
+	result.setStatus(Pending)
 
 	return result, nil
 }

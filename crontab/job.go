@@ -16,12 +16,11 @@ import (
 type JobStatus string
 
 const (
-	JobStatusPending  JobStatus = "pending"
-	JobStatusRunning  JobStatus = "running"
-	JobStatusDone     JobStatus = "done"
-	JobStatusFailed   JobStatus = "failed"
-	JobStatusStop     JobStatus = "stop"
-	JobStatusFinished JobStatus = "finished"
+	Pending  JobStatus = "pending"
+	Running  JobStatus = "running"
+	Done     JobStatus = "done"
+	Failed   JobStatus = "failed"
+	Finished JobStatus = "finished"
 )
 
 type TypeJob string
@@ -119,20 +118,20 @@ func (s *Job) Start() error {
 		s.fn = func(job *Job) {
 			err := event.Publish(job.Channel, job.Params)
 			if err != nil {
-				s.setStatus(JobStatusFailed)
+				s.setStatus(Failed)
 			}
 		}
 	}
 
 	fn := func() {
 		if s.fn != nil && s.Started {
-			s.setStatus(JobStatusRunning)
+			s.setStatus(Running)
 			s.Attempts++
 			s.fn(s)
 			if s.Repetitions != 0 && s.Attempts >= s.Repetitions {
 				s.Remove()
 			} else {
-				s.setStatus(JobStatusPending)
+				s.setStatus(Pending)
 			}
 		}
 	}
@@ -182,7 +181,7 @@ func (s *Job) Stop() {
 		} else if s.shot != nil {
 			s.shot.Stop()
 		}
-		s.setStatus(JobStatusStop)
+		s.setStatus(Pending)
 	})
 }
 
@@ -191,7 +190,7 @@ func (s *Job) Stop() {
 * @return error
 **/
 func (s *Job) Remove() {
-	s.setStatus(JobStatusFinished)
+	s.setStatus(Finished)
 	idx := s.jobs.indexJobByTag(s.Tag)
 	if idx == -1 {
 		return
