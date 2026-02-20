@@ -38,16 +38,14 @@ type Job struct {
 	Spec        string         `json:"spec"`
 	Started     bool           `json:"started"`
 	Status      JobStatus      `json:"status"`
-	Idx         int            `json:"idx"`
 	HostName    string         `json:"host_name"`
 	Attempts    int            `json:"attempts"`
 	Repetitions int            `json:"repetitions"`
 	Duration    time.Duration  `json:"duration"`
-	ShotTime    time.Time      `json:"shot_time"`
+	idx         cron.EntryID   `json:"-"`
 	fn          func(job *Job) `json:"-"`
 	shot        *time.Timer    `json:"-"`
 	jobs        *Jobs          `json:"-"`
-	isEventUp   bool           `json:"-"`
 	mu          *sync.Mutex    `json:"-"`
 }
 
@@ -110,10 +108,10 @@ func (s *Job) setStatus(status JobStatus) {
 }
 
 /**
-* Start
+* start
 * @return error
 **/
-func (s *Job) Start() error {
+func (s *Job) start() error {
 	if s.fn == nil {
 		s.fn = func(job *Job) {
 			err := event.Publish(job.Channel, job.Params)
@@ -125,19 +123,15 @@ func (s *Job) Start() error {
 
 	fn := func() {
 		if s.fn != nil && s.Started {
-			s.setStatus(Running)
 			s.Attempts++
 			s.fn(s)
+			s.setStatus(Running)
 			if s.Repetitions != 0 && s.Attempts >= s.Repetitions {
-				s.Remove()
+				s.Finish()
 			} else {
 				s.setStatus(Pending)
 			}
 		}
-	}
-
-	if s.Started {
-		return nil
 	}
 
 	if s.Type == CronJob {
@@ -146,16 +140,20 @@ func (s *Job) Start() error {
 			return err
 		}
 
-		s.Idx = int(id)
+		s.idx = id
 	} else {
 		now := timezone.NowTime()
-		shotTime := s.ShotTime
+		shotTime, err := timezone.Parse("2006-01-02T15:04:05", s.Spec)
+		if err != nil {
+			return err
+		}
 		if shotTime.After(now) {
-			duration := s.ShotTime.Sub(now)
+			duration := shotTime.Sub(now)
 			s.Duration = duration
 			s.shot = time.AfterFunc(duration, fn)
+			return s.Save()
 		} else if s.shot != nil {
-			s.shot.Stop()
+			s.Stop()
 		}
 	}
 
@@ -165,10 +163,22 @@ func (s *Job) Start() error {
 }
 
 /**
-* Stop
+* Start
 * @return error
 **/
-func (s *Job) Stop() {
+func (s *Job) Start() {
+	if s.Started {
+		return
+	}
+
+	s.start()
+}
+
+/**
+* stop
+* @return error
+**/
+func (s *Job) stop() {
 	if !s.Started {
 		return
 	}
@@ -176,8 +186,8 @@ func (s *Job) Stop() {
 	s.Started = false
 	time.AfterFunc(time.Second*1, func() {
 		if s.Type == CronJob {
-			s.jobs.cronJobs.Remove(cron.EntryID(s.Idx))
-			s.Idx = -1
+			s.jobs.cronJobs.Remove(s.idx)
+			s.idx = -1
 		} else if s.shot != nil {
 			s.shot.Stop()
 		}
@@ -186,15 +196,19 @@ func (s *Job) Stop() {
 }
 
 /**
-* Remove
+* Stop
 * @return error
 **/
-func (s *Job) Remove() {
-	s.setStatus(Finished)
-	idx := s.jobs.indexJobByTag(s.Tag)
-	if idx == -1 {
-		return
-	}
+func (s *Job) Stop() error {
+	s.stop()
+	return s.Save()
+}
 
-	s.jobs.removeJob(idx)
+/**
+* Finish
+* @return error
+**/
+func (s *Job) Finish() {
+	s.stop()
+	s.setStatus(Finished)
 }

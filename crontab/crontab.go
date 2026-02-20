@@ -3,11 +3,9 @@ package crontab
 import (
 	"fmt"
 	"os"
-	"slices"
 	"sync"
 
 	"github.com/celsiainternet/elvis/et"
-	"github.com/celsiainternet/elvis/event"
 	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/msg"
 	"github.com/celsiainternet/elvis/timezone"
@@ -25,36 +23,26 @@ var (
 )
 
 type Jobs struct {
-	Id         string     `json:"id"`
-	HostName   string     `json:"host_name"`
-	jobs       []*Job     `json:"-"`
-	cronJobs   *cron.Cron `json:"-"`
-	storageKey string     `json:"-"`
-	running    bool       `json:"-"`
+	Id       string          `json:"id"`
+	HostName string          `json:"host_name"`
+	Jobs     map[string]*Job `json:"jobs"`
+	cronJobs *cron.Cron      `json:"-"`
+	running  bool            `json:"-"`
+	mu       *sync.Mutex     `json:"-"`
 }
 
 func New() *Jobs {
-	version := "v0.0.1"
+	loc := timezone.Location()
 	return &Jobs{
-		Id:         utility.UUID(),
-		HostName:   hostName,
-		jobs:       make([]*Job, 0),
-		cronJobs:   cron.New(cron.WithSeconds()),
-		storageKey: fmt.Sprintf("crontab_%s", version),
+		Id:       utility.UUID(),
+		HostName: hostName,
+		Jobs:     make(map[string]*Job),
+		cronJobs: cron.New(
+			cron.WithSeconds(),
+			cron.WithLocation(loc),
+		),
+		mu: &sync.Mutex{},
 	}
-}
-
-/**
-* load
-* @return error
-**/
-func (s *Jobs) load() error {
-	_, err := event.Load()
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 /**
@@ -65,6 +53,16 @@ func (s *Jobs) load() error {
 func (s *Jobs) addJob(tp TypeJob, tag, spec, channel string, params et.Json, repetitions int, fn func(job *Job)) (*Job, error) {
 	if !utility.ValidStr(tag, 0, []string{"", " "}) {
 		return nil, fmt.Errorf(msg.MSG_ATRIB_REQUIRED, "tag")
+	}
+
+	result, ok := s.Jobs[tag]
+	if ok {
+		if !result.Started {
+			result.Stop()
+			result.Spec = spec
+		}
+
+		return result, nil
 	}
 
 	shot, err := timezone.Parse("2006-01-02T15:04:05", spec)
@@ -128,83 +126,46 @@ func (s *Jobs) addEventJob(tp TypeJob, tag, spec, channel string, started bool, 
 }
 
 /**
-* indexJobByTag
-* @param tag string
-* @return int
-**/
-func (s *Jobs) indexJobByTag(tag string) int {
-	return slices.IndexFunc(s.jobs, func(s *Job) bool { return s.Tag == tag })
-}
-
-/**
 * removeJob
-* @param idx int
-* @return error
-**/
-func (s *Jobs) removeJob(idx int) error {
-	job := s.jobs[idx]
-	if job == nil {
-		return nil
-	}
-
-	if job.Started {
-		job.Stop()
-	}
-
-	s.jobs = append(s.jobs[:idx], s.jobs[idx+1:]...)
-
-	return nil
-}
-
-/**
-* removeJobByTag
 * @param tag string
 * @return error
 **/
-func (s *Jobs) removeJobByTag(tag string) error {
-	idx := s.indexJobByTag(tag)
-	if idx == -1 {
+func (s *Jobs) removeJob(tag string) error {
+	s.mu.Lock()
+	job, exists := s.Jobs[tag]
+	s.mu.Unlock()
+	if !exists {
 		return fmt.Errorf("job not found")
 	}
 
-	return s.removeJob(idx)
-}
-
-/**
-* stopJobByTag
-* @param tag string
-* @return error
-**/
-func (s *Jobs) stopJobByTag(tag string) error {
-	idx := s.indexJobByTag(tag)
-	if idx == -1 {
-		return fmt.Errorf("job not found")
-	}
-
-	job := s.jobs[idx]
 	job.Stop()
 
+	s.mu.Lock()
+	delete(s.Jobs, tag)
+	s.mu.Unlock()
+
 	return nil
 }
 
 /**
-* startJobByTag
+* startJob
 * @param tag string
-* @return int, error
+* @return error
 **/
-func (s *Jobs) startJobByTag(tag string) (int, error) {
-	idx := s.indexJobByTag(tag)
-	if idx == -1 {
-		return 0, fmt.Errorf("job not found")
+func (s *Jobs) startJob(tag string) error {
+	s.mu.Lock()
+	job, exists := s.Jobs[tag]
+	s.mu.Unlock()
+	if !exists {
+		return fmt.Errorf("job not found")
 	}
 
-	job := s.jobs[idx]
 	err := job.Start()
 	if err != nil {
-		return 0, err
+		return err
 	}
 
-	return job.Idx, nil
+	return nil
 }
 
 /**

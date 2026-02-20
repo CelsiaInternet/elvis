@@ -24,14 +24,14 @@ func Load(tag string) error {
 		return nil
 	}
 
-	tag = strings.ReplaceAll(tag, " ", "_")
-	tag = strings.ToLower(tag)
-	crontab = New()
-	err := crontab.load()
+	_, err := event.Load()
 	if err != nil {
 		return err
 	}
 
+	tag = strings.ReplaceAll(tag, " ", "_")
+	tag = strings.ToLower(tag)
+	crontab = New()
 	err = crontab.start()
 	if err != nil {
 		return err
