@@ -246,17 +246,22 @@ func (s *Instance) GetParam(key string) interface{} {
 }
 
 /**
-* SetTrace
+* setTrace
 * @param step int, ctx et.Json, err error
 * @return error
 **/
-func (s *Instance) SetTrace(step int, ctx et.Json, err error) error {
+func (s *Instance) setTrace(step int, ctx et.Json, err error) error {
 	s.Traces = append(s.Traces, et.Json{
 		"step":  step,
 		"ctx":   ctx,
 		"error": err,
 	})
-	return s.Save()
+	er := s.Save()
+	if er != nil {
+		return er
+	}
+
+	return err
 }
 
 /**
@@ -437,17 +442,25 @@ func (s *Instance) startResilence() bool {
 * @return et.Json, error
 **/
 func (s *Instance) run(ctx et.Json) (et.Json, error) {
+	var err error
+	defer func() {
+		s.setTrace(s.Current, ctx, err)
+	}()
+
 	if s.Status == FlowStatusDone {
-		return s.ToJson(), fmt.Errorf(MSG_INSTANCE_ALREADY_DONE, s.Id)
+		err = fmt.Errorf(MSG_INSTANCE_ALREADY_DONE, s.Id)
+		return et.Json{}, err
 	} else if s.Status == FlowStatusRunning && s.isNew {
-		return s.ToJson(), fmt.Errorf(MSG_INSTANCE_ALREADY_RUNNING, s.Id)
+		err = fmt.Errorf(MSG_INSTANCE_ALREADY_RUNNING, s.Id)
+		return et.Json{}, err
 	} else if s.Status == FlowStatusCancel {
-		return s.ToJson(), fmt.Errorf(MSG_INSTANCE_CANCEL, s.Id)
+		err = fmt.Errorf(MSG_INSTANCE_CANCEL, s.Id)
+		return et.Json{}, err
 	} else if s.Status == FlowStatusLoss {
-		return s.ToJson(), fmt.Errorf(MSG_INSTANCE_LOSS, s.Id)
+		err = fmt.Errorf(MSG_INSTANCE_LOSS, s.Id)
+		return et.Json{}, err
 	}
 
-	var err error
 	for s.Current < len(s.Steps) {
 		step := s.Steps[s.Current]
 		ctx = s.setCtx(ctx)

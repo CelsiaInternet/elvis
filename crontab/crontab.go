@@ -55,7 +55,9 @@ func (s *Jobs) addJob(tp TypeJob, tag, spec, channel string, started bool, param
 		return nil, fmt.Errorf(msg.MSG_ATRIB_REQUIRED, "tag")
 	}
 
+	s.mu.Lock()
 	result, ok := s.Jobs[tag]
+	s.mu.Unlock()
 	if ok {
 		if !result.Started {
 			result.Spec = spec
@@ -65,6 +67,17 @@ func (s *Jobs) addJob(tp TypeJob, tag, spec, channel string, started bool, param
 		return result, nil
 	}
 
+	if loadInstance == nil {
+		return nil, fmt.Errorf("load instance not found")
+	}
+
+	result, err := loadInstance(tag)
+	if err != nil {
+		if err.Error() != "instance not found" {
+			return nil, err
+		}
+	}
+
 	result = &Job{
 		Type:        tp,
 		Tag:         tag,
@@ -72,6 +85,7 @@ func (s *Jobs) addJob(tp TypeJob, tag, spec, channel string, started bool, param
 		Params:      params,
 		Spec:        spec,
 		Started:     false,
+		Status:      Pending,
 		HostName:    hostName,
 		Attempts:    0,
 		Repetitions: repetitions,
@@ -80,7 +94,10 @@ func (s *Jobs) addJob(tp TypeJob, tag, spec, channel string, started bool, param
 		jobs:        s,
 		mu:          &sync.Mutex{},
 	}
+
+	s.mu.Lock()
 	s.Jobs[tag] = result
+	s.mu.Unlock()
 	if started {
 		err := result.Start()
 		if err != nil {
