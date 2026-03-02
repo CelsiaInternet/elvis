@@ -3,6 +3,7 @@ package linq
 import (
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/strs"
+	"github.com/celsiainternet/elvis/utility"
 )
 
 func (c *Linq) Sql() string {
@@ -421,6 +422,10 @@ func (c *Linq) SqlInsert() string {
 	for key, val := range *c.new {
 		field := strs.Uppcase(key)
 		value := et.Unquote(val)
+
+		if field == IdTFiled.Upp() {
+			value = utility.UUID()
+		}
 
 		fields = strs.Append(fields, field, ", ")
 		values = strs.Append(values, strs.Format(`%v`, value), ", ")
