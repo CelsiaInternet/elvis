@@ -420,12 +420,12 @@ func (c *Linq) SqlInsert() string {
 	var values string
 
 	for key, val := range *c.new {
+		if strs.Uppcase(key) == IdTFiled.Upp() {
+			val = utility.UUID()
+		}
+
 		field := strs.Uppcase(key)
 		value := et.Unquote(val)
-
-		if field == IdTFiled.Upp() {
-			value = utility.UUID()
-		}
 
 		fields = strs.Append(fields, field, ", ")
 		values = strs.Append(values, strs.Format(`%v`, value), ", ")
