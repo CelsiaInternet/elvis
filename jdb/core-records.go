@@ -78,19 +78,11 @@ func defineRecordsFunction(db *DB) error {
 
 	CREATE OR REPLACE FUNCTION core.RECORDS_BEFORE_INSERT()
   RETURNS
-    TRIGGER AS $$
-	DECLARE
-		VSYNC BOOLEAN;
+    TRIGGER AS $$	
   BEGIN
     IF NEW._IDT = '-1' THEN
-      NEW._IDT = uuid_generate_v4();
-			VSYNC = FALSE;
-		ELSE
-			VSYNC = TRUE;
+      NEW._IDT = uuid_generate_v4();		
 		END IF;
-
-		INSERT INTO core.RECORDS(TABLE_SCHEMA, TABLE_NAME, OPTION, SYNC, _IDT)
-		VALUES (TG_TABLE_SCHEMA, TG_TABLE_NAME, TG_OP, VSYNC, NEW._IDT);
 
   	RETURN NEW;
   END;
@@ -98,22 +90,12 @@ func defineRecordsFunction(db *DB) error {
 
 	CREATE OR REPLACE FUNCTION core.RECORDS_BEFORE_UPDATE()
   RETURNS
-    TRIGGER AS $$
-	DECLARE
-		VSYNC BOOLEAN;
+    TRIGGER AS $$	
   BEGIN
 		IF OLD._IDT = NEW._IDT THEN
-			VSYNC = FALSE;
 		ELSE
 			NEW._IDT = OLD._IDT;
-			VSYNC = TRUE;
 		END IF;
-
-		UPDATE core.RECORDS SET
-		DATE_UPDATE=NOW(),
-		OPTION=TG_OP,
-		SYNC=VSYNC
-		WHERE _IDT=NEW._IDT;
 
   	RETURN NEW;
   END;
@@ -123,11 +105,6 @@ func defineRecordsFunction(db *DB) error {
   RETURNS
     TRIGGER AS $$  
   BEGIN
-		UPDATE core.RECORDS SET
-		DATE_UPDATE=NOW(),
-		OPTION=TG_OP,
-		SYNC=FALSE
-		WHERE _IDT=OLD._IDT;
 		
   	RETURN OLD;
   END;
