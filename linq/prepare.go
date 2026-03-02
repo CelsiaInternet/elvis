@@ -15,6 +15,7 @@ func (c *Model) Consolidate(linq *Linq) *Linq {
 	var new = et.Json{}
 
 	setValue := func(key string, val interface{}) {
+		key = strs.Uppcase(key)
 		new.Set(key, val)
 	}
 
