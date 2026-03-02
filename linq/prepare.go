@@ -16,6 +16,9 @@ func (c *Model) Consolidate(linq *Linq) *Linq {
 
 	setValue := func(key string, val interface{}) {
 		key = strs.Uppcase(key)
+		if key == IdTFiled.Upp() && val == "-1" {
+			val = utility.UUID()
+		}
 		new.Set(key, val)
 	}
 
