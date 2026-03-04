@@ -24,6 +24,7 @@ var (
 
 type Jobs struct {
 	Id       string          `json:"id"`
+	Tag      string          `json:"tag"`
 	HostName string          `json:"host_name"`
 	Jobs     map[string]*Job `json:"jobs"`
 	cronJobs *cron.Cron      `json:"-"`
@@ -31,10 +32,11 @@ type Jobs struct {
 	mu       *sync.Mutex     `json:"-"`
 }
 
-func New() *Jobs {
+func New(tag string) *Jobs {
 	loc := timezone.Location()
 	return &Jobs{
 		Id:       utility.UUID(),
+		Tag:      tag,
 		HostName: hostName,
 		Jobs:     make(map[string]*Job),
 		cronJobs: cron.New(
@@ -47,10 +49,10 @@ func New() *Jobs {
 
 /**
 * addJob
-* @param tp TypeJob, tag, spec, channel string, started bool, params et.Json, repetitions int, fn func(job *Job)
+* @param tp TypeJob, tag, spec, channel string, started bool, params et.Json, repetitions int
 * @return *Job, error
 **/
-func (s *Jobs) addJob(tp TypeJob, tag, spec, channel string, started bool, params et.Json, repetitions int, fn func(job *Job)) (*Job, error) {
+func (s *Jobs) addJob(tp TypeJob, tag, spec, channel string, started bool, params et.Json, repetitions int) (*Job, error) {
 	if !utility.ValidStr(tag, 0, []string{"", " "}) {
 		return nil, fmt.Errorf(msg.MSG_ATRIB_REQUIRED, "tag")
 	}

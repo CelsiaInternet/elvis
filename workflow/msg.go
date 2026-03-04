@@ -18,7 +18,7 @@ const (
 	MSG_INSTANCE_PENDING            = "Instancia pendiente Id:%s"
 	MSG_INSTANCE_CANCEL             = "Instancia cancelada Id:%s"
 	MSG_INSTANCE_LOSS               = "Instancia perdida Id:%s"
-	MSG_INSTANCE_WORKFLOWS_IS_NIL   = "workFlows es nil"
+	MSG_WORKFLOWS_NOT_LOAD          = "workFlows not loaded"
 	MSG_ID_REQUIRED                 = "id es requerido"
 	MSG_INSTANCE_EXPRESSION_TRUE    = "Resultado de la expresion es true"
 	MSG_INSTANCE_EXPRESSION_FALSE   = "Resultado de la expresion es false"

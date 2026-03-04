@@ -148,7 +148,7 @@ func (s *WorkFlows) loadInstance(id string) (*Instance, bool) {
 	}
 
 	if loadInstance != nil {
-		result, err := loadInstance(id)
+		err := loadInstance(id, &result)
 		if err != nil {
 			return nil, false
 		}

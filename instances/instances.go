@@ -2,20 +2,14 @@ package instances
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
-	"net/http"
-	"strings"
 
-	"github.com/celsiainternet/elvis/claim"
 	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/jdb"
 	"github.com/celsiainternet/elvis/linq"
-	"github.com/celsiainternet/elvis/msg"
-	"github.com/celsiainternet/elvis/response"
 	"github.com/celsiainternet/elvis/utility"
-	"github.com/celsiainternet/elvis/workflow"
-	"github.com/go-chi/chi"
 )
 
 var Instances *linq.Model
@@ -52,11 +46,11 @@ func Define(db *jdb.DB, schemaName string) error {
 }
 
 /**
-* loadInstance
-* @param id string, v any
+* Load
+* @param id string, dest any
 * @return error
 **/
-func loadInstance(id string, v any) error {
+func Load(id string, dest any) error {
 	if Instances == nil {
 		return fmt.Errorf("model not found")
 	}
@@ -70,7 +64,7 @@ func loadInstance(id string, v any) error {
 	}
 
 	if !items.Ok {
-		return workflow.ErrorInstanceNotFound
+		return errors.New("Instance not found")
 	}
 
 	scr, err := items.Byte("definition")
@@ -78,7 +72,7 @@ func loadInstance(id string, v any) error {
 		return err
 	}
 
-	err = json.Unmarshal(scr, v)
+	err = json.Unmarshal(scr, dest)
 	if err != nil {
 		return err
 	}
@@ -87,13 +81,22 @@ func loadInstance(id string, v any) error {
 }
 
 /**
-* saveInstance
+* Save
 * @param id string, tag string, definition []byte
 * @return error
 **/
-func saveInstance(id, tag string, definition []byte) error {
+func Save(id, tag string, obj any) error {
 	if Instances == nil {
 		return nil
+	}
+
+	bt, ok := obj.([]byte)
+	if !ok {
+		var err error
+		bt, err = json.Marshal(obj)
+		if err != nil {
+			return err
+		}
 	}
 
 	items, err := Instances.
@@ -113,7 +116,7 @@ func saveInstance(id, tag string, definition []byte) error {
 				"_state":      utility.ACTIVE,
 				"_id":         id,
 				"tag":         tag,
-				"definition":  definition,
+				"definition":  bt,
 			}).
 			CommandOne()
 		if err != nil {
@@ -128,7 +131,7 @@ func saveInstance(id, tag string, definition []byte) error {
 			"date_update": now,
 			"_id":         id,
 			"tag":         tag,
-			"definition":  definition,
+			"definition":  bt,
 		}).
 		Where(Instances.Column("_id").Eq(id)).
 		CommandOne()
@@ -137,40 +140,6 @@ func saveInstance(id, tag string, definition []byte) error {
 	}
 
 	return nil
-}
-
-/**
-* Status - Update the status of a suspension instance
-* @param id string, status string, createdBy string
-* @return et.Item, error
-**/
-func Status(id, status, createdBy string) (et.Item, error) {
-	if !utility.ValidStr(status, 0, []string{""}) {
-		return et.Item{}, fmt.Errorf(msg.MSG_ATRIB_REQUIRED, "status")
-	}
-
-	if !utility.ValidStr(id, 0, []string{""}) {
-		return et.Item{}, fmt.Errorf(msg.MSG_ATRIB_REQUIRED, jdb.KEY)
-	}
-
-	st := workflow.FlowStatus(status)
-	if _, exists := workflow.FlowStatusList[st]; !exists {
-		return et.Item{}, fmt.Errorf("invalid status: %s", status)
-	}
-
-	instance, err := Load(id)
-	if err != nil {
-		return et.Item{}, err
-	}
-
-	instance.SetStatus(st)
-
-	return et.Item{
-		Ok: true,
-		Result: et.Json{
-			"message": msg.RECORD_UPDATE,
-		},
-	}, nil
 }
 
 /**
@@ -192,123 +161,4 @@ func Delete(id string) error {
 	}
 
 	return nil
-}
-
-/**
-* Load
-* @param id string
-* @return workflow.Instance, error
-**/
-func Load(id string) (*workflow.Instance, error) {
-	var instance *workflow.Instance
-
-	err := loadInstance(id, &instance)
-	if err != nil {
-		return nil, err
-	}
-
-	return instance, nil
-}
-
-/**
-* Save
-* @param instance workflow.Instance
-* @return error
-**/
-func Save(instance *workflow.Instance) error {
-	bt, err := instance.Serialize()
-	if err != nil {
-		return err
-	}
-
-	err = saveInstance(instance.Id, instance.Tag, bt)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-/**
-* HttpGet
-* @params w http.ResponseWriter, r *http.Request
-**/
-func HttpGet(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
-	instance, err := Load(id)
-	if err != nil {
-		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	response.ITEM(w, r, http.StatusOK, et.Item{
-		Ok:     true,
-		Result: instance.ToJson(),
-	})
-}
-
-/**
-* HttpGetInstance
-* @params w http.ResponseWriter, r *http.Request
-**/
-func HttpState(w http.ResponseWriter, r *http.Request) {
-	body, err := response.GetBody(r)
-	if err != nil {
-		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	id := body.Str("id")
-	status := body.Str("status")
-	username := claim.ClientName(r)
-	result, err := Status(id, status, username)
-	if err != nil {
-		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	response.ITEM(w, r, http.StatusOK, result)
-}
-
-/**
-* HttpGetInstance
-* @params w http.ResponseWriter, r *http.Request
-**/
-func HttpSetParams(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
-	body, err := response.GetBody(r)
-	if err != nil {
-		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	instance, err := Load(id)
-	if err != nil {
-		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	jsonData := instance.ToJson()
-	for k, v := range body {
-		keys := strings.Split(k, "->")
-		jsonData = et.SetNested(jsonData, keys, v)
-	}
-
-	bt := jsonData.ToByte()
-	var result workflow.Instance
-	err = json.Unmarshal(bt, &result)
-	if err != nil {
-		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	response.ITEM(w, r, http.StatusOK, et.Item{
-		Ok:     true,
-		Result: result.ToJson(),
-	})
-}
-
-func init() {
-	workflow.SetLoadInstance(Load)
-	workflow.SetSaveInstance(Save)
 }

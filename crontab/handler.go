@@ -112,15 +112,15 @@ func AddEventJob(tag, spec string, repetitions int, started bool, params et.Json
 	}
 
 	tag = strs.Name(tag)
-	channel := fmt.Sprintf("eventjob:%s", tag)
+	channel := fmt.Sprintf("cronjob:%s", tag)
 	data := et.Json{
 		"type":        CronJob,
 		"tag":         tag,
 		"spec":        spec,
 		"channel":     channel,
-		"repetitions": repetitions,
 		"started":     started,
 		"params":      params,
+		"repetitions": repetitions,
 	}
 
 	event.Publish(EVENT_CRONTAB_SET, data)

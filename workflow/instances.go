@@ -106,7 +106,7 @@ func (s *Instance) Save() error {
 	event.Publish(EVENT_WORKFLOW_STATUS, data)
 
 	if saveInstance != nil {
-		return saveInstance(s)
+		return saveInstance(s.Id, s.Tag, s)
 	}
 
 	debug := envar.GetBool(false, "DEBUG")

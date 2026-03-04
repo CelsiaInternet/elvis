@@ -1,10 +1,19 @@
 package workflow
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
+	"net/http"
+	"strings"
 
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/event"
+	"github.com/celsiainternet/elvis/instances"
+	"github.com/celsiainternet/elvis/jdb"
+	"github.com/celsiainternet/elvis/logs"
+	"github.com/celsiainternet/elvis/response"
+	"github.com/go-chi/chi"
 )
 
 var workFlows *WorkFlows
@@ -13,7 +22,7 @@ var workFlows *WorkFlows
 * Load
 * @return error
  */
-func Load() error {
+func Load(db *jdb.DB, schemaName string) error {
 	if workFlows != nil {
 		return nil
 	}
@@ -24,6 +33,14 @@ func Load() error {
 	}
 
 	workFlows = newWorkFlows()
+	err = instances.Define(db, schemaName)
+	if err != nil {
+		return err
+	}
+
+	SetLoadInstance(instances.Load)
+	SetSaveInstance(instances.Save)
+
 	return nil
 }
 
@@ -32,7 +49,7 @@ func Load() error {
 * @return bool
 **/
 func HealthCheck() bool {
-	if err := Load(); err != nil {
+	if workFlows == nil {
 		return false
 	}
 
@@ -45,7 +62,8 @@ func HealthCheck() bool {
 * @return *Flow
 **/
 func New(tag, version, name, description string, fn FnContext, stop bool, createdBy string) *Flow {
-	if err := Load(); err != nil {
+	if workFlows == nil {
+		logs.Panic(MSG_WORKFLOWS_NOT_LOAD)
 		return nil
 	}
 
@@ -58,8 +76,8 @@ func New(tag, version, name, description string, fn FnContext, stop bool, create
 * @return et.Json, error
 **/
 func Run(instanceId, tag string, step int, tags et.Json, ctx et.Json, createdBy string) (et.Json, error) {
-	if err := Load(); err != nil {
-		return et.Json{}, err
+	if workFlows == nil {
+		return et.Json{}, errors.New(MSG_WORKFLOWS_NOT_LOAD)
 	}
 
 	return workFlows.runInstance(instanceId, tag, step, tags, ctx, createdBy)
@@ -71,8 +89,8 @@ func Run(instanceId, tag string, step int, tags et.Json, ctx et.Json, createdBy 
 * @return error
 **/
 func Reset(instanceId, updatedBy string) error {
-	if err := Load(); err != nil {
-		return err
+	if workFlows == nil {
+		return errors.New(MSG_WORKFLOWS_NOT_LOAD)
 	}
 
 	return workFlows.resetInstance(instanceId, updatedBy)
@@ -84,8 +102,8 @@ func Reset(instanceId, updatedBy string) error {
 * @return et.Json, error
 **/
 func Rollback(instanceId, updatedBy string) (et.Json, error) {
-	if err := Load(); err != nil {
-		return et.Json{}, err
+	if workFlows == nil {
+		return et.Json{}, errors.New(MSG_WORKFLOWS_NOT_LOAD)
 	}
 
 	return workFlows.rollback(instanceId, updatedBy)
@@ -97,21 +115,21 @@ func Rollback(instanceId, updatedBy string) (et.Json, error) {
 * @return error
 **/
 func Stop(instanceId, updatedBy string) error {
-	if err := Load(); err != nil {
-		return err
+	if workFlows == nil {
+		return errors.New(MSG_WORKFLOWS_NOT_LOAD)
 	}
 
 	return workFlows.stop(instanceId, updatedBy)
 }
 
 /**
-* Status
+* SetStatus
 * @param instanceId, status, updatedBy string
 * @return FlowStatus, error
 **/
 func Status(instanceId, status, updatedBy string) (FlowStatus, error) {
-	if err := Load(); err != nil {
-		return "", err
+	if workFlows == nil {
+		return "", errors.New(MSG_WORKFLOWS_NOT_LOAD)
 	}
 
 	if _, ok := FlowStatusList[FlowStatus(status)]; !ok {
@@ -133,8 +151,8 @@ func Status(instanceId, status, updatedBy string) (FlowStatus, error) {
 * @return (bool, error)
 **/
 func DeleteFlow(tag string) (bool, error) {
-	if err := Load(); err != nil {
-		return false, err
+	if workFlows == nil {
+		return false, errors.New(MSG_WORKFLOWS_NOT_LOAD)
 	}
 
 	return workFlows.deleteFlow(tag), nil
@@ -146,8 +164,8 @@ func DeleteFlow(tag string) (bool, error) {
 * @return (*Instance, error)
 **/
 func GetInstance(instanceId string) (*Instance, error) {
-	if err := Load(); err != nil {
-		return nil, err
+	if workFlows == nil {
+		return nil, errors.New(MSG_WORKFLOWS_NOT_LOAD)
 	}
 
 	instance, exists := workFlows.loadInstance(instanceId)
@@ -156,4 +174,93 @@ func GetInstance(instanceId string) (*Instance, error) {
 	}
 
 	return instance, nil
+}
+
+/**
+* HttpGet
+* @params w http.ResponseWriter, r *http.Request
+**/
+func HttpGet(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	var instance Instance
+	err := loadInstance(id, &instance)
+	if err != nil {
+		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	response.ITEM(w, r, http.StatusOK, et.Item{
+		Ok:     true,
+		Result: instance.ToJson(),
+	})
+}
+
+/**
+* HttpGetInstance
+* @params w http.ResponseWriter, r *http.Request
+**/
+func HttpState(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	var instance Instance
+	err := loadInstance(id, &instance)
+	if err != nil {
+		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	body, err := response.GetBody(r)
+	if err != nil {
+		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	status := body.Str("status")
+	err = instance.setStatus(FlowStatus(status))
+	if err != nil {
+		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	response.ITEM(w, r, http.StatusOK, et.Item{
+		Ok:     true,
+		Result: instance.ToJson(),
+	})
+}
+
+/**
+* HttpGetInstance
+* @params w http.ResponseWriter, r *http.Request
+**/
+func HttpSetParams(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	var instance Instance
+	err := loadInstance(id, &instance)
+	if err != nil {
+		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	body, err := response.GetBody(r)
+	if err != nil {
+		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	jsonData := instance.ToJson()
+	for k, v := range body {
+		keys := strings.Split(k, "->")
+		jsonData = et.SetNested(jsonData, keys, v)
+	}
+
+	bt := jsonData.ToByte()
+	err = json.Unmarshal(bt, &instance)
+	if err != nil {
+		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	response.ITEM(w, r, http.StatusOK, et.Item{
+		Ok:     true,
+		Result: instance.ToJson(),
+	})
 }

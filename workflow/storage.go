@@ -2,8 +2,8 @@ package workflow
 
 import "github.com/celsiainternet/elvis/logs"
 
-type LoadInstanceFn func(id string) (*Instance, error)
-type SaveInstanceFn func(*Instance) error
+type LoadInstanceFn func(id string, dest any) error
+type SaveInstanceFn func(id, tag string, obj any) error
 
 var loadInstance LoadInstanceFn
 var saveInstance SaveInstanceFn
