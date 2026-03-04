@@ -274,21 +274,20 @@ func HttpState(w http.ResponseWriter, r *http.Request) {
 * @params w http.ResponseWriter, r *http.Request
 **/
 func HttpSetParams(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
 	body, err := response.GetBody(r)
 	if err != nil {
 		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	id := body.Str("id")
-	params := body.Json("params")
 	instance, err := Load(id)
 	if err != nil {
 		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	for k, v := range params {
+	for k, v := range body {
 		instance.SetParam(k, v)
 	}
 
