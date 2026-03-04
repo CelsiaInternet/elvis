@@ -463,11 +463,9 @@ func (c *Linq) SqlUpdate() string {
 		fieldValues = strs.Append(fieldValues, fieldValue, ",\n")
 	}
 
-	c.sql = strs.Format(`UPDATE %s AS A SET %s`, model.Table, fieldValues)
+	c.sql = strs.Format(`UPDATE %s SET %s`, model.Table, fieldValues)
 
 	c.SqlWhere()
-
-	c.SetAs(model, "A")
 
 	c.SqlReturn()
 
