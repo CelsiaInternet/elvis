@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/event"
 	"github.com/celsiainternet/elvis/logs"
@@ -161,7 +162,10 @@ func (s *WorkFlows) loadInstance(id string) (*Instance, bool) {
 		result.goTo = -1
 		s.Add(result)
 
-		logs.Log("WorkFlows", "loadInstance:", result.ToJson().ToString())
+		debug := envar.GetBool(false, "DEBUG")
+		if debug {
+			logs.Log("WorkFlows", "loadInstance:", result.ToJson().ToString())
+		}
 
 		return result, true
 	}

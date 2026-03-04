@@ -1,7 +1,9 @@
 package et
 
 import (
+	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"strconv"
 	"time"
@@ -89,6 +91,9 @@ func Unquote(val interface{}) any {
 			}
 		}
 		return strs.Format(`'[%s]'`, r)
+	case []uint8:
+		b := []byte(val.([]uint8))
+		return fmt.Sprintf("'\\x%s'", hex.EncodeToString(b))
 	case nil:
 		return strs.Format(`%s`, "NULL")
 	default:
@@ -156,6 +161,9 @@ func Quote(val interface{}) any {
 			}
 		}
 		return strs.Format(`[%s]`, r)
+	case []uint8:
+		b := []byte(val.([]uint8))
+		return fmt.Sprintf("'\\x%s'", hex.EncodeToString(b))
 	case nil:
 		return strs.Format(`%s`, "NULL")
 	default:

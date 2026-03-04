@@ -6,6 +6,7 @@ import (
 	"slices"
 	"time"
 
+	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/event"
 	"github.com/celsiainternet/elvis/logs"
@@ -106,6 +107,11 @@ func (s *Instance) Save() error {
 
 	if saveInstance != nil {
 		return saveInstance(s)
+	}
+
+	debug := envar.GetBool(false, "DEBUG")
+	if debug {
+		logs.Log("WorkFlows", "save:", data.ToString())
 	}
 
 	return fmt.Errorf("Save: saveInstance is nil")
@@ -250,11 +256,13 @@ func (s *Instance) GetParam(key string) interface{} {
 * @param step int, ctx et.Json, err error
 * @return error
 **/
-func (s *Instance) setTrace(step int, ctx et.Json, err error) error {
+func (s *Instance) setTrace(step int, result et.Json, err error) error {
+	ctx := s.getCtx(step)
 	s.Traces = append(s.Traces, et.Json{
-		"step":  step,
-		"ctx":   ctx,
-		"error": err,
+		"step":   step,
+		"ctx":    ctx,
+		"result": result,
+		"error":  err,
 	})
 	er := s.Save()
 	if er != nil {
@@ -307,6 +315,19 @@ func (s *Instance) SetCheckList(tag string, ok bool, data et.Json) error {
 	}
 
 	return fmt.Errorf("check list not found")
+}
+
+/**
+* @param ctx et.Json
+* @return error
+**/
+func (s *Instance) getCtx(idx int) et.Json {
+	result, ok := s.Ctxs[idx]
+	if !ok {
+		return et.Json{}
+	}
+
+	return result
 }
 
 /**
