@@ -98,9 +98,7 @@ func (s *Instance) Save() error {
 		return saveInstance(s)
 	}
 
-	// fmt.Errorf("Save: saveInstance is nil")
-
-	return nil
+	return fmt.Errorf("Save: saveInstance is nil")
 }
 
 /**
