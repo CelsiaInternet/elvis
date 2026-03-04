@@ -147,7 +147,7 @@ func (s Json) IsEmpty() bool {
 func (s Json) ToByte() []byte {
 	result, err := json.Marshal(s)
 	if err != nil {
-		return nil
+		return []byte{}
 	}
 
 	return result

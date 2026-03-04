@@ -2,6 +2,7 @@ package et
 
 import (
 	"database/sql"
+	"encoding/json"
 	"reflect"
 	"strings"
 	"time"
@@ -194,18 +195,24 @@ func (it *Item) ToString() string {
 	return it.Result.ToString()
 }
 
-func (it *Item) ToJson() Json {
-	return Json{
-		"Ok":     it.Ok,
-		"Result": it.Result,
+func (it Item) ToByte() []byte {
+	result, err := json.Marshal(it)
+	if err != nil {
+		return []byte{}
 	}
+
+	return result
 }
 
-func (it *Item) ToByte() []byte {
-	return Json{
-		"Ok":     it.Ok,
-		"Result": it.Result,
-	}.ToByte()
+func (it *Item) ToJson() Json {
+	bt := it.ToByte()
+
+	var result Json
+	err := json.Unmarshal(bt, &result)
+	if err != nil {
+		return Json{}
+	}
+	return result
 }
 
 func (it *Item) Consolidate(toField string, ruleOut ...string) Json {

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/celsiainternet/elvis/claim"
 	"github.com/celsiainternet/elvis/console"
@@ -287,13 +288,23 @@ func HttpSetParams(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	jsonData := instance.ToJson()
 	for k, v := range body {
-		instance.SetParam(k, v)
+		keys := strings.Split(k, "->")
+		jsonData = et.SetNested(jsonData, keys, v)
+	}
+
+	bt := jsonData.ToByte()
+	var result workflow.Instance
+	err = json.Unmarshal(bt, &result)
+	if err != nil {
+		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
 	}
 
 	response.ITEM(w, r, http.StatusOK, et.Item{
 		Ok:     true,
-		Result: instance.ToJson(),
+		Result: result.ToJson(),
 	})
 }
 

@@ -241,24 +241,28 @@ func (it *Items) Json(idx int, atribs ...string) Json {
 	}
 }
 
-func (it *Items) ToByte() []byte {
-	return Json{
-		"ok":     it.Ok,
-		"count":  it.Count,
-		"result": it.Result,
-	}.ToByte()
+func (it Items) ToByte() []byte {
+	result, err := json.Marshal(it)
+	if err != nil {
+		return []byte{}
+	}
+
+	return result
+}
+
+func (it *Items) ToJson() Json {
+	bt := it.ToByte()
+
+	var result Json
+	err := json.Unmarshal(bt, &result)
+	if err != nil {
+		return Json{}
+	}
+	return result
 }
 
 func (it *Items) ToString() string {
 	return it.ToJson().ToString()
-}
-
-func (it *Items) ToJson() Json {
-	return Json{
-		"ok":     it.Ok,
-		"count":  it.Count,
-		"result": it.Result,
-	}
 }
 
 func (it *Items) ToList(all, page, rows int) List {

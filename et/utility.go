@@ -515,7 +515,7 @@ func PayloadEncoded(data Json) string {
 /**
 * PayloadDecoded
 * @param token string
-* @return et.Json
+* @return Json, error
 **/
 func PayloadDecoded(token string) (Json, error) {
 	data := utility.FromBase64(token)
@@ -525,4 +525,27 @@ func PayloadDecoded(token string) (Json, error) {
 	}
 
 	return result, nil
+}
+
+/**
+* SetNested
+* @param data Json, keys []string, value interface{}
+* @return Json
+**/
+func SetNested(data Json, keys []string, value interface{}) Json {
+	result := data.Clone()
+	for i, key := range keys {
+		_, ok := result[key]
+		if !ok {
+			return Json{}
+		}
+
+		if i == len(keys)-1 {
+			result[key] = value
+		} else {
+			result = result.Json(key)
+		}
+	}
+
+	return result
 }
