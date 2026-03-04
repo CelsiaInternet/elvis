@@ -2,7 +2,7 @@ package workflow
 
 import "github.com/celsiainternet/elvis/logs"
 
-type LoadInstanceFn func(id string, dest any) error
+type LoadInstanceFn func(id string, dest any) (bool, error)
 type SaveInstanceFn func(id, tag string, obj any) error
 
 var loadInstance LoadInstanceFn
@@ -13,7 +13,7 @@ func SetLoadInstance(fn LoadInstanceFn) {
 		return
 	}
 
-	logs.Log("workflow", "SetLoadInstance")
+	logs.Log(packageName, "SetLoadInstance")
 	loadInstance = fn
 }
 
@@ -22,6 +22,6 @@ func SetSaveInstance(fn SaveInstanceFn) {
 		return
 	}
 
-	logs.Log("workflow", "SetSaveInstance")
+	logs.Log(packageName, "SetSaveInstance")
 	saveInstance = fn
 }

@@ -183,9 +183,17 @@ func GetInstance(instanceId string) (*Instance, error) {
 func HttpGet(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	var instance Instance
-	err := loadInstance(id, &instance)
+	exists, err := loadInstance(id, &instance)
 	if err != nil {
 		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if !exists {
+		response.ITEM(w, r, http.StatusNotFound, et.Item{
+			Ok:     true,
+			Result: et.Json{"message": "instance not found"},
+		})
 		return
 	}
 
@@ -202,9 +210,17 @@ func HttpGet(w http.ResponseWriter, r *http.Request) {
 func HttpState(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	var instance Instance
-	err := loadInstance(id, &instance)
+	exists, err := loadInstance(id, &instance)
 	if err != nil {
 		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if !exists {
+		response.ITEM(w, r, http.StatusNotFound, et.Item{
+			Ok:     true,
+			Result: et.Json{"message": "instance not found"},
+		})
 		return
 	}
 
@@ -234,9 +250,17 @@ func HttpState(w http.ResponseWriter, r *http.Request) {
 func HttpSetParams(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	var instance Instance
-	err := loadInstance(id, &instance)
+	exists, err := loadInstance(id, &instance)
 	if err != nil {
 		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if !exists {
+		response.ITEM(w, r, http.StatusNotFound, et.Item{
+			Ok:     true,
+			Result: et.Json{"message": "instance not found"},
+		})
 		return
 	}
 

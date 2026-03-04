@@ -14,10 +14,9 @@ import (
 )
 
 var (
+	packageName           = "workflow"
 	ErrorInstanceNotFound = fmt.Errorf(MSG_INSTANCE_NOT_FOUND)
 )
-
-const packageName = "workflow"
 
 type WorkFlows struct {
 	Flows     map[string]*Flow     `json:"flows"`
@@ -148,8 +147,12 @@ func (s *WorkFlows) loadInstance(id string) (*Instance, bool) {
 	}
 
 	if loadInstance != nil {
-		err := loadInstance(id, &result)
+		exists, err := loadInstance(id, &result)
 		if err != nil {
+			return nil, false
+		}
+
+		if !exists {
 			return nil, false
 		}
 

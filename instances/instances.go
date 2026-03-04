@@ -2,7 +2,6 @@ package instances
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/celsiainternet/elvis/console"
@@ -48,11 +47,11 @@ func Define(db *jdb.DB, schemaName string) error {
 /**
 * Load
 * @param id string, dest any
-* @return error
+* @return bool, error
 **/
-func Load(id string, dest any) error {
+func Load(id string, dest any) (bool, error) {
 	if Instances == nil {
-		return fmt.Errorf("model not found")
+		return false, fmt.Errorf("model not found")
 	}
 
 	items, err := Instances.
@@ -60,24 +59,24 @@ func Load(id string, dest any) error {
 		Where(Instances.Column("_id").Eq(id)).
 		First()
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	if !items.Ok {
-		return errors.New("Instance not found")
+		return false, nil
 	}
 
 	scr, err := items.Byte("definition")
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	err = json.Unmarshal(scr, dest)
 	if err != nil {
-		return err
+		return false, err
 	}
 
-	return nil
+	return true, nil
 }
 
 /**

@@ -73,7 +73,7 @@ func (s *Jobs) addJob(tp TypeJob, tag, spec, channel string, started bool, param
 		return nil, fmt.Errorf("load instance not found")
 	}
 
-	result, err := loadInstance(tag)
+	err := loadInstance(tag, &result)
 	if err != nil {
 		if err.Error() != "instance not found" {
 			return nil, err
