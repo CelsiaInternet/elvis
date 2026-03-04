@@ -92,89 +92,34 @@ func addJob(jobType TypeJob, tag, spec, channel string, started bool, params et.
 
 /**
 * AddEventJob
-* Event job to crontab function execute was notified by event workers
 * @param tag, spec string, repetitions int, started bool, params et.Json, fn func(event.EvenMessage)
 * @return error
 **/
 func AddEventJob(tag, spec string, repetitions int, started bool, params et.Json, fn func(event.EvenMessage)) error {
-	if crontab == nil {
-		return fmt.Errorf(MSG_CRONTAB_UNLOAD)
-	}
-
 	tag = strs.Name(tag)
 	channel := fmt.Sprintf("cronjob:%s", tag)
-	data := et.Json{
-		"type":        CronJob,
-		"tag":         tag,
-		"spec":        spec,
-		"channel":     channel,
-		"started":     started,
-		"params":      params,
-		"repetitions": repetitions,
-	}
-
-	event.Publish(EVENT_CRONTAB_SET, data)
-	err := event.Stack(channel, fn)
-	if err != nil {
-		return err
-	}
-
-	logs.Logf(packageName, "Add EventJob: %s", data.ToString())
-
-	return nil
+	return addJob(CronJob, tag, spec, channel, started, params, repetitions, fn)
 }
 
 /**
 * AddCronJob
-* Add cron job to crontab in execute local
-* @param tag, spec string, params et.Json, repetitions int, started bool
-* @return *Job, error
+* @param tag, spec string, repetitions int, started bool, params et.Json, fn func(event.EvenMessage)
+* @return error
 **/
-func AddCronJob(tag, spec string, params et.Json, repetitions int, started bool) (*Job, error) {
-	tag = strs.Name(tag)
-	channel := fmt.Sprintf("cronjob:%s", tag)
-	return addJob(CronJob, tag, spec, channel, started, params, repetitions)
+func AddCronJob(tag, spec string, repetitions int, started bool, params et.Json, fn func(event.EvenMessage)) error {
+	return AddEventJob(tag, spec, repetitions, started, params, fn)
 }
 
 /**
-* AddJob
+* AddScheduleJob
 * Add job to crontab in execute local
-* @param tag, spec string, params et.Json, repetitions int, started bool, fn func(job *Job)
-* @return *Job, error
+* @param tag, schedule string, params et.Json, repetitions int, started bool, fn func(event.EvenMessage)
+* @return error
 **/
-func AddJob(tag, spec string, params et.Json, repetitions int, started bool, fn func(job *Job)) (*Job, error) {
-	return addJob(CronJob, tag, spec, "", started, params, repetitions, fn)
-}
-
-/**
-* AddOneShotEventJob
-* Event job to crontab function execute was notified by event workers
-* @param tag, spec, channel string, repetitions int, started bool, params et.Json, fn func(event.EvenMessage)
-* @return *Job, error
-**/
-func AddOneShotEventJob(tag, spec, channel string, started bool, params et.Json, fn func(event.EvenMessage)) error {
-	if crontab == nil {
-		return fmt.Errorf(MSG_CRONTAB_UNLOAD)
-	}
-
-	data := et.Json{
-		"type":    CronTab,
-		"tag":     tag,
-		"spec":    spec,
-		"channel": channel,
-		"started": started,
-		"params":  params,
-	}
-	event.Publish(EVENT_CRONTAB_SET, data)
-
-	err := event.Stack(channel, fn)
-	if err != nil {
-		return err
-	}
-
-	logs.Logf(packageName, "Add OneShotEventJob: %s", data.ToString())
-
-	return nil
+func AddScheduleJob(tag, schedule string, params et.Json, repetitions int, started bool, fn func(event.EvenMessage)) error {
+	tag = strs.Name(tag)
+	channel := fmt.Sprintf("schedule:%s", tag)
+	return addJob(ScheduleJob, tag, schedule, channel, started, params, repetitions, fn)
 }
 
 /**

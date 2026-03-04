@@ -108,7 +108,7 @@ func eventStop(msg event.EvenMessage) {
 
 	data := msg.Data
 	tag := data.Str("tag")
-	err := crontab.startJob(tag)
+	err := crontab.stopJob(tag)
 	if err != nil {
 		logs.Logf(packageName, fmt.Sprintf("Crontab %s; Error stopping job %s", tag, err))
 		return

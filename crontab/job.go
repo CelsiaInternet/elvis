@@ -27,8 +27,8 @@ const (
 type TypeJob string
 
 const (
-	CronJob TypeJob = "cronJob"
-	CronTab TypeJob = "cronTab"
+	CronJob     TypeJob = "cronJob"
+	ScheduleJob TypeJob = "scheduleJob"
 )
 
 type Job struct {

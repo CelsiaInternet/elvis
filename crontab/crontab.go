@@ -144,6 +144,23 @@ func (s *Jobs) startJob(tag string) error {
 }
 
 /**
+* stopJob
+* @param tag string
+* @return error
+**/
+func (s *Jobs) stopJob(tag string) error {
+	s.mu.Lock()
+	job, exists := s.Jobs[tag]
+	s.mu.Unlock()
+	if !exists {
+		return fmt.Errorf("job not found")
+	}
+
+	job.Stop()
+	return nil
+}
+
+/**
 * Start
 * @return error
 **/
