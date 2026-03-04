@@ -24,7 +24,6 @@ var (
 
 type Jobs struct {
 	Id       string          `json:"id"`
-	Tag      string          `json:"tag"`
 	HostName string          `json:"host_name"`
 	Jobs     map[string]*Job `json:"jobs"`
 	cronJobs *cron.Cron      `json:"-"`
@@ -32,11 +31,10 @@ type Jobs struct {
 	mu       *sync.Mutex     `json:"-"`
 }
 
-func New(tag string) *Jobs {
+func New() *Jobs {
 	loc := timezone.Location()
 	return &Jobs{
 		Id:       utility.UUID(),
-		Tag:      tag,
 		HostName: hostName,
 		Jobs:     make(map[string]*Job),
 		cronJobs: cron.New(

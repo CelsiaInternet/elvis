@@ -48,12 +48,6 @@ func Publish(channel string, data et.Json) error {
 
 	stage := envar.GetStr("local", "STAGE")
 	publish(strs.Format(`pipe:%s:%s`, stage, channel), data)
-
-	_, err := conn.Add(channel)
-	if err != nil {
-		return err
-	}
-
 	return publish(channel, data)
 }
 
@@ -71,15 +65,7 @@ func Subscribe(channel string, f func(EvenMessage)) error {
 		return fmt.Errorf(ERR_CHANNEL_REQUIRED)
 	}
 
-	ok, err := conn.Add(channel)
-	if err != nil {
-		return err
-	}
-
-	if ok {
-		publish(EVENT_SUBSCRIBED, et.Json{"channel": channel})
-	}
-
+	publish(EVENT_SUBSCRIBED, et.Json{"channel": channel})
 	subscribe, err := conn.Subscribe(channel,
 		func(m *nats.Msg) {
 			msg, err := DecodeMessage(m.Data)
@@ -144,14 +130,7 @@ func Queue(channel, queue string, f func(EvenMessage)) error {
 		return fmt.Errorf(ERR_CHANNEL_REQUIRED)
 	}
 
-	ok, err := conn.Add(channel)
-	if err != nil {
-		return err
-	}
-
-	if ok {
-		publish(EVENT_SUBSCRIBED, et.Json{"channel": channel})
-	}
+	publish(EVENT_SUBSCRIBED, et.Json{"channel": channel})
 
 	subscribe, err := conn.QueueSubscribe(
 		channel,

@@ -29,13 +29,13 @@ func Load(tag string) error {
 		return err
 	}
 
-	tag = strs.Name(tag)
-	crontab = New(tag)
+	crontab = New()
 	err = crontab.start()
 	if err != nil {
 		return err
 	}
 
+	tag = strs.Name(tag)
 	err = eventInit(tag)
 	if err != nil {
 		return err
