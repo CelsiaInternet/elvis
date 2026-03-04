@@ -30,7 +30,7 @@ func Load(tag string) error {
 	}
 
 	tag = strs.Name(tag)
-	crontab = New()
+	crontab = New(tag)
 	err = crontab.start()
 	if err != nil {
 		return err
@@ -58,46 +58,36 @@ func Close() {
 	logs.Log(packageName, `Disconnect...`)
 }
 
-func addJob(jobType TypeJob, tag, spec, channel string, started bool, params et.Json, repetitions int, fn func(job *Job)) (*Job, error) {
+/**
+* addJob
+* @param jobType TypeJob, tag, spec, channel string, started bool, params et.Json, repetitions int, fn func(event.EvenMessage)
+* @return error
+**/
+func addJob(jobType TypeJob, tag, spec, channel string, started bool, params et.Json, repetitions int, fn func(event.EvenMessage)) error {
 	if crontab == nil {
-		return nil, fmt.Errorf(MSG_CRONTAB_UNLOAD)
+		return fmt.Errorf(MSG_CRONTAB_UNLOAD)
 	}
 
-	return crontab.addJob(jobType, tag, spec, channel, started, params, repetitions, fn)
-}
-
-/**
-* AddJob
-* Add job to crontab in execute local
-* @param tag, spec string, params et.Json, repetitions int, started bool, fn func(job *Job)
-* @return *Job, error
-**/
-func AddJob(tag, spec string, params et.Json, repetitions int, started bool, fn func(job *Job)) (*Job, error) {
-	return addJob(CronJob, tag, spec, "", started, params, repetitions, fn)
-}
-
-/**
-* AddCronJob
-* Add cron job to crontab in execute local
-* @param tag, spec string, params et.Json, repetitions int, started bool, fn func(job *Job)
-* @return *Job, error
-**/
-func AddCronJob(tag, spec string, params et.Json, repetitions int, started bool, fn func(job *Job)) (*Job, error) {
 	tag = strs.Name(tag)
-	channel := fmt.Sprintf("cronjob:%s", tag)
-	return addJob(CronJob, tag, spec, channel, started, params, repetitions, fn)
-}
+	data := et.Json{
+		"type":        jobType,
+		"tag":         tag,
+		"spec":        spec,
+		"channel":     channel,
+		"started":     started,
+		"params":      params,
+		"repetitions": repetitions,
+	}
 
-/**
-* AddOneShotJob
-* Add job to crontab in execute local
-* @param tag, spec string, params et.Json, repetitions int, started bool, fn func(job *Job)
-* @return *Job, error
-**/
-func AddOneShotJob(tag, spec string, params et.Json, repetitions int, started bool, fn func(job *Job)) (*Job, error) {
-	tag = strs.Name(tag)
-	channel := fmt.Sprintf("oneshot:%s", tag)
-	return addJob(CronJob, tag, spec, channel, started, params, repetitions, fn)
+	event.Publish(EVENT_CRONTAB_SET, data)
+	err := event.Stack(channel, fn)
+	if err != nil {
+		return err
+	}
+
+	logs.Logf(packageName, "Add EventJob: %s", data.ToString())
+
+	return nil
 }
 
 /**
@@ -132,6 +122,28 @@ func AddEventJob(tag, spec string, repetitions int, started bool, params et.Json
 	logs.Logf(packageName, "Add EventJob: %s", data.ToString())
 
 	return nil
+}
+
+/**
+* AddCronJob
+* Add cron job to crontab in execute local
+* @param tag, spec string, params et.Json, repetitions int, started bool
+* @return *Job, error
+**/
+func AddCronJob(tag, spec string, params et.Json, repetitions int, started bool) (*Job, error) {
+	tag = strs.Name(tag)
+	channel := fmt.Sprintf("cronjob:%s", tag)
+	return addJob(CronJob, tag, spec, channel, started, params, repetitions)
+}
+
+/**
+* AddJob
+* Add job to crontab in execute local
+* @param tag, spec string, params et.Json, repetitions int, started bool, fn func(job *Job)
+* @return *Job, error
+**/
+func AddJob(tag, spec string, params et.Json, repetitions int, started bool, fn func(job *Job)) (*Job, error) {
+	return addJob(CronJob, tag, spec, "", started, params, repetitions, fn)
 }
 
 /**

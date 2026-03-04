@@ -2,7 +2,7 @@ package crontab
 
 import "github.com/celsiainternet/elvis/logs"
 
-type LoadInstanceFn func(id string, dest any) error
+type LoadInstanceFn func(id string, dest any) (bool, error)
 type SaveInstanceFn func(id, tag string, obj any) error
 
 var loadInstance LoadInstanceFn

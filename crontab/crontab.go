@@ -69,17 +69,6 @@ func (s *Jobs) addJob(tp TypeJob, tag, spec, channel string, started bool, param
 		return result, nil
 	}
 
-	if loadInstance == nil {
-		return nil, fmt.Errorf("load instance not found")
-	}
-
-	err := loadInstance(tag, &result)
-	if err != nil {
-		if err.Error() != "instance not found" {
-			return nil, err
-		}
-	}
-
 	result = &Job{
 		Type:        tp,
 		Tag:         tag,
@@ -92,7 +81,6 @@ func (s *Jobs) addJob(tp TypeJob, tag, spec, channel string, started bool, param
 		Attempts:    0,
 		Repetitions: repetitions,
 		idx:         -1,
-		fn:          fn,
 		jobs:        s,
 		mu:          &sync.Mutex{},
 	}
@@ -125,7 +113,7 @@ func (s *Jobs) removeJob(tag string) error {
 		return fmt.Errorf("job not found")
 	}
 
-	job.stop()
+	job.Stop()
 
 	s.mu.Lock()
 	delete(s.Jobs, tag)

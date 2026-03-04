@@ -32,22 +32,21 @@ const (
 )
 
 type Job struct {
-	Type        TypeJob        `json:"type"`
-	Tag         string         `json:"tag"`
-	Channel     string         `json:"channel"`
-	Params      et.Json        `json:"params"`
-	Spec        string         `json:"spec"`
-	Started     bool           `json:"started"`
-	Status      JobStatus      `json:"status"`
-	HostName    string         `json:"host_name"`
-	Attempts    int            `json:"attempts"`
-	Repetitions int            `json:"repetitions"`
-	Duration    time.Duration  `json:"duration"`
-	idx         cron.EntryID   `json:"-"`
-	fn          func(job *Job) `json:"-"`
-	shot        *time.Timer    `json:"-"`
-	jobs        *Jobs          `json:"-"`
-	mu          *sync.Mutex    `json:"-"`
+	Type        TypeJob       `json:"type"`
+	Tag         string        `json:"tag"`
+	Channel     string        `json:"channel"`
+	Params      et.Json       `json:"params"`
+	Spec        string        `json:"spec"`
+	Started     bool          `json:"started"`
+	Status      JobStatus     `json:"status"`
+	HostName    string        `json:"host_name"`
+	Attempts    int           `json:"attempts"`
+	Repetitions int           `json:"repetitions"`
+	Duration    time.Duration `json:"duration"`
+	idx         cron.EntryID  `json:"-"`
+	shot        *time.Timer   `json:"-"`
+	jobs        *Jobs         `json:"-"`
+	mu          *sync.Mutex   `json:"-"`
 }
 
 /**
@@ -91,7 +90,7 @@ func (s *Job) Save() error {
 		return nil
 	}
 
-	return saveInstance(s)
+	return saveInstance(s.Tag, s.Tag, s)
 }
 
 /**
@@ -109,29 +108,21 @@ func (s *Job) setStatus(status JobStatus) {
 }
 
 /**
-* start
+* Start
 * @return error
 **/
-func (s *Job) start() error {
-	if s.fn == nil {
-		s.fn = func(job *Job) {
-			err := event.Publish(job.Channel, job.Params)
-			if err != nil {
-				s.setStatus(Failed)
-			}
-		}
-	}
-
+func (s *Job) Start() error {
 	fn := func() {
-		if s.fn != nil && s.Started {
-			s.Attempts++
-			s.fn(s)
-			s.setStatus(Running)
-			if s.Repetitions != 0 && s.Attempts >= s.Repetitions {
-				s.Finish()
-			} else {
-				s.setStatus(Pending)
-			}
+		s.Attempts++
+		err := event.Publish(s.Channel, s.Params)
+		if err != nil {
+			s.setStatus(Failed)
+		}
+		s.setStatus(Running)
+		if s.Repetitions != 0 && s.Attempts >= s.Repetitions {
+			s.Finish()
+		} else {
+			s.setStatus(Pending)
 		}
 	}
 
@@ -164,28 +155,16 @@ func (s *Job) start() error {
 }
 
 /**
-* Start
+* Stop
 * @return error
 **/
-func (s *Job) Start() error {
-	if s.Started {
-		return nil
-	}
-
-	return s.start()
-}
-
-/**
-* stop
-* @return error
-**/
-func (s *Job) stop() {
+func (s *Job) Stop() {
 	if !s.Started {
 		return
 	}
 
 	s.Started = false
-	time.AfterFunc(time.Second*1, func() {
+	time.AfterFunc(1*time.Second, func() {
 		if s.Type == CronJob {
 			s.jobs.cronJobs.Remove(s.idx)
 			s.idx = -1
@@ -197,19 +176,12 @@ func (s *Job) stop() {
 }
 
 /**
-* Stop
-* @return error
-**/
-func (s *Job) Stop() error {
-	s.stop()
-	return s.Save()
-}
-
-/**
 * Finish
 * @return error
 **/
 func (s *Job) Finish() {
-	s.stop()
-	s.setStatus(Finished)
+	s.Stop()
+	time.AfterFunc(1*time.Second, func() {
+		s.setStatus(Finished)
+	})
 }
