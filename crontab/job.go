@@ -86,11 +86,11 @@ func (s *Job) ToJson() et.Json {
 * @return error
 **/
 func (s *Job) Save() error {
-	if saveInstance == nil {
+	if setInstance == nil {
 		return nil
 	}
 
-	return saveInstance(s.Tag, s.Tag, s)
+	return setInstance(s.Tag, s.Tag, s)
 }
 
 /**

@@ -49,7 +49,7 @@ func Define(db *jdb.DB, schemaName string) error {
 * @param id string, dest any
 * @return bool, error
 **/
-func Load(id string, dest any) (bool, error) {
+func Get(id string, dest any) (bool, error) {
 	if Instances == nil {
 		return false, fmt.Errorf("model not found")
 	}
@@ -84,7 +84,7 @@ func Load(id string, dest any) (bool, error) {
 * @param id string, tag string, definition []byte
 * @return error
 **/
-func Save(id, tag string, obj any) error {
+func Set(id, tag string, obj any) error {
 	if Instances == nil {
 		return nil
 	}

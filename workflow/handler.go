@@ -10,7 +10,6 @@ import (
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/event"
 	"github.com/celsiainternet/elvis/instances"
-	"github.com/celsiainternet/elvis/jdb"
 	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/response"
 	"github.com/go-chi/chi"
@@ -22,7 +21,7 @@ var workFlows *WorkFlows
 * Load
 * @return error
  */
-func Load(db *jdb.DB, schemaName string) error {
+func Load(store instances.Store) error {
 	if workFlows != nil {
 		return nil
 	}
@@ -33,13 +32,12 @@ func Load(db *jdb.DB, schemaName string) error {
 	}
 
 	workFlows = newWorkFlows()
-	err = instances.Define(db, schemaName)
-	if err != nil {
-		return err
+	if store == nil {
+		return nil
 	}
 
-	SetLoadInstance(instances.Load)
-	SetSaveInstance(instances.Save)
+	SetGetInstance(store.Get)
+	SetSetInstance(store.Set)
 
 	return nil
 }
@@ -183,7 +181,7 @@ func GetInstance(instanceId string) (*Instance, error) {
 func HttpGet(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	var instance Instance
-	exists, err := loadInstance(id, &instance)
+	exists, err := getInstance(id, &instance)
 	if err != nil {
 		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
@@ -210,7 +208,7 @@ func HttpGet(w http.ResponseWriter, r *http.Request) {
 func HttpState(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	var instance Instance
-	exists, err := loadInstance(id, &instance)
+	exists, err := getInstance(id, &instance)
 	if err != nil {
 		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
@@ -250,7 +248,7 @@ func HttpState(w http.ResponseWriter, r *http.Request) {
 func HttpSetParams(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	var instance Instance
-	exists, err := loadInstance(id, &instance)
+	exists, err := getInstance(id, &instance)
 	if err != nil {
 		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return

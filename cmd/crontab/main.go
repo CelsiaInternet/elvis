@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	err := crontab.Load(nil, "", "test")
+	err := crontab.Load("test", nil)
 	if err != nil {
 		panic(err)
 	}

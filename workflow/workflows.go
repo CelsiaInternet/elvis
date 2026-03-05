@@ -146,8 +146,8 @@ func (s *WorkFlows) loadInstance(id string) (*Instance, bool) {
 		return result, true
 	}
 
-	if loadInstance != nil {
-		exists, err := loadInstance(id, &result)
+	if getInstance != nil {
+		exists, err := getInstance(id, &result)
 		if err != nil {
 			return nil, false
 		}

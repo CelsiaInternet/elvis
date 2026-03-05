@@ -2,26 +2,26 @@ package crontab
 
 import "github.com/celsiainternet/elvis/logs"
 
-type LoadInstanceFn func(id string, dest any) (bool, error)
-type SaveInstanceFn func(id, tag string, obj any) error
+type GetInstanceFn func(id string, dest any) (bool, error)
+type SetInstanceFn func(id, tag string, obj any) error
 
-var loadInstance LoadInstanceFn
-var saveInstance SaveInstanceFn
+var getInstance GetInstanceFn
+var setInstance SetInstanceFn
 
-func SetLoadInstance(fn LoadInstanceFn) {
+func SetGetInstance(fn GetInstanceFn) {
 	if fn == nil {
 		return
 	}
 
 	logs.Log(packageName, "SetLoadInstance")
-	loadInstance = fn
+	getInstance = fn
 }
 
-func SetSaveInstance(fn SaveInstanceFn) {
+func SetSetInstance(fn SetInstanceFn) {
 	if fn == nil {
 		return
 	}
 
 	logs.Log(packageName, "SetSaveInstance")
-	saveInstance = fn
+	setInstance = fn
 }
