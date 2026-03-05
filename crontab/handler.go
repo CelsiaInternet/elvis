@@ -14,9 +14,15 @@ import (
 	"github.com/go-chi/chi"
 )
 
-var (
-	crontab *Jobs
-)
+var crontab *Jobs
+
+func init() {
+	crontab = New("crontab")
+	_, err := event.Load()
+	if err != nil {
+		panic(err)
+	}
+}
 
 /**
 * Load
@@ -24,28 +30,17 @@ var (
 * @return error
 **/
 func Load(tag string, store instances.Store) error {
-	if crontab != nil {
-		return nil
-	}
-
-	_, err := event.Load()
-	if err != nil {
-		return err
-	}
-
 	tag = strs.Name(tag)
 	crontab = New(tag)
-	err = crontab.start()
+	err := crontab.start()
 	if err != nil {
 		return err
 	}
 
-	if store == nil {
-		return nil
+	if store != nil {
+		SetGetInstance(store.Get)
+		SetSetInstance(store.Set)
 	}
-
-	SetGetInstance(store.Get)
-	SetSetInstance(store.Set)
 
 	return nil
 }
@@ -199,6 +194,11 @@ func Stop() error {
 * @params w http.ResponseWriter, r *http.Request
 **/
 func HttpGet(w http.ResponseWriter, r *http.Request) {
+	if getInstance == nil {
+		response.HTTPError(w, r, http.StatusBadRequest, "get instance not found")
+		return
+	}
+
 	id := chi.URLParam(r, "id")
 	var instance Job
 	exists, err := getInstance(id, &instance)
@@ -226,6 +226,11 @@ func HttpGet(w http.ResponseWriter, r *http.Request) {
 * @params w http.ResponseWriter, r *http.Request
 **/
 func HttpStart(w http.ResponseWriter, r *http.Request) {
+	if getInstance == nil {
+		response.HTTPError(w, r, http.StatusBadRequest, "get instance not found")
+		return
+	}
+
 	id := chi.URLParam(r, "id")
 	var instance Job
 	exists, err := getInstance(id, &instance)
@@ -259,6 +264,11 @@ func HttpStart(w http.ResponseWriter, r *http.Request) {
 * @params w http.ResponseWriter, r *http.Request
 **/
 func HttpStop(w http.ResponseWriter, r *http.Request) {
+	if getInstance == nil {
+		response.HTTPError(w, r, http.StatusBadRequest, "get instance not found")
+		return
+	}
+
 	id := chi.URLParam(r, "id")
 	var instance Job
 	exists, err := getInstance(id, &instance)

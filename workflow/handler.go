@@ -17,27 +17,23 @@ import (
 
 var workFlows *WorkFlows
 
+func init() {
+	workFlows = newWorkFlows()
+	_, err := event.Load()
+	if err != nil {
+		panic(err)
+	}
+}
+
 /**
 * Load
 * @return error
  */
 func Load(store instances.Store) error {
-	if workFlows != nil {
-		return nil
+	if store != nil {
+		SetGetInstance(store.Get)
+		SetSetInstance(store.Set)
 	}
-
-	_, err := event.Load()
-	if err != nil {
-		return err
-	}
-
-	workFlows = newWorkFlows()
-	if store == nil {
-		return nil
-	}
-
-	SetGetInstance(store.Get)
-	SetSetInstance(store.Set)
 
 	return nil
 }

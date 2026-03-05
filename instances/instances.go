@@ -11,37 +11,48 @@ import (
 	"github.com/celsiainternet/elvis/utility"
 )
 
-var Instances *linq.Model
+type Instance struct {
+	schema *linq.Schema
+	model  *linq.Model
+}
 
-func Define(db *jdb.DB, schemaName string) error {
-	if err := defineSchema(db, schemaName); err != nil {
-		return console.Panic(err)
+var instance *Instance
+
+func Define(db *jdb.DB, schema, name string) (*Instance, error) {
+	if instance != nil {
+		return instance, nil
 	}
 
-	if Instances != nil {
-		return nil
+	instance = &Instance{}
+
+	if err := instance.defineSchema(db, schema); err != nil {
+		return nil, console.Panic(err)
 	}
 
-	Instances = linq.NewModel(schema, "INSTANCES", "Tabla", 1)
-	Instances.DefineColum("date_make", "", "TIMESTAMP", "NOW()")
-	Instances.DefineColum("date_update", "", "TIMESTAMP", "NOW()")
-	Instances.DefineColum("_state", "", "VARCHAR(80)", utility.ACTIVE)
-	Instances.DefineColum("_id", "", "VARCHAR(80)", "-1")
-	Instances.DefineColum("tag", "", "VARCHAR(80)", "-1")
-	Instances.DefineColum("definition", "", "BYTEA", "")
-	Instances.DefinePrimaryKey([]string{"_id"})
-	Instances.DefineIndex([]string{
+	if name == "" {
+		name = "instances"
+	}
+
+	instance.model = linq.NewModel(instance.schema, name, "Tabla", 1)
+	instance.model.DefineColum("date_make", "", "TIMESTAMP", "NOW()")
+	instance.model.DefineColum("date_update", "", "TIMESTAMP", "NOW()")
+	instance.model.DefineColum("_state", "", "VARCHAR(80)", utility.ACTIVE)
+	instance.model.DefineColum("_id", "", "VARCHAR(80)", "-1")
+	instance.model.DefineColum("tag", "", "VARCHAR(80)", "-1")
+	instance.model.DefineColum("definition", "", "BYTEA", "")
+	instance.model.DefinePrimaryKey([]string{"_id"})
+	instance.model.DefineIndex([]string{
 		"date_make",
 		"date_update",
 		"_state",
 		"index",
 	})
 
-	if err := Instances.Init(); err != nil {
-		return console.Panic(err)
+	if err := instance.model.Init(); err != nil {
+		return nil, err
 	}
 
-	return nil
+	return instance, nil
 }
 
 /**
@@ -49,14 +60,14 @@ func Define(db *jdb.DB, schemaName string) error {
 * @param id string, dest any
 * @return bool, error
 **/
-func Get(id string, dest any) (bool, error) {
-	if Instances == nil {
+func (s *Instance) Get(id string, dest any) (bool, error) {
+	if s.model == nil {
 		return false, fmt.Errorf("model not found")
 	}
 
-	items, err := Instances.
+	items, err := s.model.
 		Data().
-		Where(Instances.Column("_id").Eq(id)).
+		Where(s.model.Column("_id").Eq(id)).
 		First()
 	if err != nil {
 		return false, err
@@ -84,8 +95,8 @@ func Get(id string, dest any) (bool, error) {
 * @param id string, tag string, definition []byte
 * @return error
 **/
-func Set(id, tag string, obj any) error {
-	if Instances == nil {
+func (s *Instance) Set(id, tag string, obj any) error {
+	if s.model == nil {
 		return nil
 	}
 
@@ -98,9 +109,9 @@ func Set(id, tag string, obj any) error {
 		}
 	}
 
-	items, err := Instances.
+	items, err := s.model.
 		Data().
-		Where(Instances.Column("_id").Eq(id)).
+		Where(s.model.Column("_id").Eq(id)).
 		First()
 	if err != nil {
 		return err
@@ -108,7 +119,7 @@ func Set(id, tag string, obj any) error {
 
 	now := utility.Now()
 	if !items.Ok {
-		_, err := Instances.
+		_, err := s.model.
 			Insert(et.Json{
 				"date_make":   now,
 				"date_update": now,
@@ -125,14 +136,14 @@ func Set(id, tag string, obj any) error {
 		return nil
 	}
 
-	_, err = Instances.
+	_, err = s.model.
 		Update(et.Json{
 			"date_update": now,
 			"_id":         id,
 			"tag":         tag,
 			"definition":  bt,
 		}).
-		Where(Instances.Column("_id").Eq(id)).
+		Where(s.model.Column("_id").Eq(id)).
 		CommandOne()
 	if err != nil {
 		return err
@@ -146,14 +157,14 @@ func Set(id, tag string, obj any) error {
 * @param id string
 * @return error
 **/
-func Delete(id string) error {
-	if Instances == nil {
+func (s *Instance) Delete(id string) error {
+	if s.model == nil {
 		return nil
 	}
 
-	_, err := Instances.
+	_, err := s.model.
 		Delete().
-		Where(Instances.Column("_id").Eq(id)).
+		Where(s.model.Column("_id").Eq(id)).
 		CommandOne()
 	if err != nil {
 		return err

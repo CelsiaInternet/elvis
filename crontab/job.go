@@ -10,6 +10,7 @@ import (
 	"github.com/celsiainternet/elvis/event"
 	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/timezone"
+	"github.com/celsiainternet/elvis/utility"
 	"github.com/robfig/cron/v3"
 )
 
@@ -32,6 +33,8 @@ const (
 )
 
 type Job struct {
+	ID          string        `json:"id"`
+	ExecuteAt   time.Time     `json:"execute_at"`
 	Type        TypeJob       `json:"type"`
 	Tag         string        `json:"tag"`
 	Channel     string        `json:"channel"`
@@ -90,7 +93,9 @@ func (s *Job) Save() error {
 		return nil
 	}
 
-	return setInstance(s.Tag, s.Tag, s)
+	s.ID = utility.UUID()
+	s.ExecuteAt = timezone.NowTime()
+	return setInstance(s.ID, s.Tag, s)
 }
 
 /**

@@ -18,7 +18,7 @@ func main() {
 		panic(err)
 	}
 
-	err = crontab.AddEventJob("test", "0 50 8 * * *", 0, true,
+	err = crontab.AddEventJob("test", "0 30 11 * * *", 0, true,
 		et.Json{
 			"test": "test",
 		},
@@ -30,7 +30,7 @@ func main() {
 		panic(err)
 	}
 
-	err = crontab.AddScheduleJob("test2", "2026-03-05T08:51:00", true,
+	err = crontab.AddScheduleJob("test2", "2026-03-05T11:31:00", true,
 		et.Json{
 			"test": "test2",
 		},
