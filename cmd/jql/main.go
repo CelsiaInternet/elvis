@@ -14,6 +14,7 @@ func main() {
 			},
 		},
 	}
-	data = et.SetNested(data, []string{"a", "b", "c"}, "value")
+	data.SetNested([]string{"a", "b", "c"}, "value")
+	data.SetNested([]string{"a", "b", "d"}, "value2")
 	fmt.Println(data.ToString())
 }

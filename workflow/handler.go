@@ -273,7 +273,7 @@ func HttpSetParams(w http.ResponseWriter, r *http.Request) {
 	jsonData := instance.ToJson()
 	for k, v := range body {
 		keys := strings.Split(k, "->")
-		jsonData = et.SetNested(jsonData, keys, v)
+		jsonData.SetNested(keys, v)
 	}
 
 	bt := jsonData.ToByte()
