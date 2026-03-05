@@ -105,13 +105,13 @@ func (s *Instance) Save() error {
 	data := s.ToJson()
 	event.Publish(EVENT_WORKFLOW_STATUS, data)
 
-	if setInstance != nil {
-		return setInstance(s.Id, s.Tag, s)
-	}
-
 	debug := envar.GetBool(false, "DEBUG")
 	if debug {
 		logs.Log("WorkFlows", "save:", data.ToString())
+	}
+
+	if setInstance != nil {
+		return setInstance(s.Id, s.Tag, s)
 	}
 
 	return fmt.Errorf("Save: saveInstance is nil")
