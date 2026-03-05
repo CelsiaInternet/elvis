@@ -2,12 +2,17 @@ package crontab
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/celsiainternet/elvis/cache"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/event"
+	"github.com/celsiainternet/elvis/instances"
+	"github.com/celsiainternet/elvis/jdb"
 	"github.com/celsiainternet/elvis/logs"
+	"github.com/celsiainternet/elvis/response"
 	"github.com/celsiainternet/elvis/strs"
+	"github.com/go-chi/chi"
 )
 
 var (
@@ -16,10 +21,10 @@ var (
 
 /**
 * Load
-* @params tag string
+* @params db *jdb.DB, schemaName, tag string
 * @return error
 **/
-func Load(tag string) error {
+func Load(db *jdb.DB, schemaName, tag string) error {
 	if crontab != nil {
 		return nil
 	}
@@ -29,16 +34,21 @@ func Load(tag string) error {
 		return err
 	}
 
-	crontab = New()
+	tag = strs.Name(tag)
+	crontab = New(tag)
 	err = crontab.start()
 	if err != nil {
 		return err
 	}
 
-	tag = strs.Name(tag)
-	err = eventInit(tag)
-	if err != nil {
-		return err
+	if db != nil {
+		err = instances.Define(db, schemaName)
+		if err != nil {
+			return err
+		}
+
+		SetLoadInstance(instances.Load)
+		SetSaveInstance(instances.Save)
 	}
 
 	return nil
@@ -113,13 +123,13 @@ func AddCronJob(tag, spec string, repetitions int, started bool, params et.Json,
 /**
 * AddScheduleJob
 * Add job to crontab in execute local
-* @param tag, schedule string, params et.Json, repetitions int, started bool, fn func(event.EvenMessage)
+* @param tag, schedule string, started bool, params et.Json, fn func(event.EvenMessage)
 * @return error
 **/
-func AddScheduleJob(tag, schedule string, params et.Json, repetitions int, started bool, fn func(event.EvenMessage)) error {
+func AddScheduleJob(tag, schedule string, started bool, params et.Json, fn func(event.EvenMessage)) error {
 	tag = strs.Name(tag)
 	channel := fmt.Sprintf("schedule:%s", tag)
-	return addJob(ScheduleJob, tag, schedule, channel, started, params, repetitions, fn)
+	return addJob(ScheduleJob, tag, schedule, channel, started, params, 0, fn)
 }
 
 /**
@@ -143,19 +153,19 @@ func DeleteJob(tag string) error {
 /**
 * StartJob
 * @param tag string
-* @return int, error
+* @return error
 **/
-func StartJob(tag string) (int, error) {
+func StartJob(tag string) error {
 	if crontab == nil {
-		return 0, fmt.Errorf(MSG_CRONTAB_UNLOAD)
+		return fmt.Errorf(MSG_CRONTAB_UNLOAD)
 	}
 
 	err := event.Publish(EVENT_CRONTAB_START, et.Json{"tag": tag})
 	if err != nil {
-		return 0, err
+		return err
 	}
 
-	return 1, nil
+	return nil
 }
 
 /**
@@ -186,4 +196,97 @@ func Stop() error {
 	}
 
 	return crontab.stop()
+}
+
+/**
+* HttpGet
+* @params w http.ResponseWriter, r *http.Request
+**/
+func HttpGet(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	var instance Job
+	exists, err := loadInstance(id, &instance)
+	if err != nil {
+		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if !exists {
+		response.ITEM(w, r, http.StatusNotFound, et.Item{
+			Ok:     true,
+			Result: et.Json{"message": "instance not found"},
+		})
+		return
+	}
+
+	response.ITEM(w, r, http.StatusOK, et.Item{
+		Ok:     true,
+		Result: instance.ToJson(),
+	})
+}
+
+/**
+* HttpStart
+* @params w http.ResponseWriter, r *http.Request
+**/
+func HttpStart(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	var instance Job
+	exists, err := loadInstance(id, &instance)
+	if err != nil {
+		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if !exists {
+		response.ITEM(w, r, http.StatusNotFound, et.Item{
+			Ok:     true,
+			Result: et.Json{"message": "instance not found"},
+		})
+		return
+	}
+
+	err = StartJob(instance.Tag)
+	if err != nil {
+		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	response.ITEM(w, r, http.StatusOK, et.Item{
+		Ok:     true,
+		Result: instance.ToJson(),
+	})
+}
+
+/**
+* HttpStop
+* @params w http.ResponseWriter, r *http.Request
+**/
+func HttpStop(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	var instance Job
+	exists, err := loadInstance(id, &instance)
+	if err != nil {
+		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if !exists {
+		response.ITEM(w, r, http.StatusNotFound, et.Item{
+			Ok:     true,
+			Result: et.Json{"message": "instance not found"},
+		})
+		return
+	}
+
+	err = StopJob(instance.Tag)
+	if err != nil {
+		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	response.ITEM(w, r, http.StatusOK, et.Item{
+		Ok:     true,
+		Result: instance.ToJson(),
+	})
 }

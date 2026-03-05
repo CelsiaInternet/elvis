@@ -8,6 +8,14 @@
       "mode": "debug",
       "program": "${workspaceFolder}/cmd/crontab",
       "envFile": "${workspaceFolder}/.env"
+    },
+    {
+      "name": "jql",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/cmd/jql",
+      "envFile": "${workspaceFolder}/.env"
     }
   ],
   "compounds": [

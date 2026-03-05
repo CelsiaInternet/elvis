@@ -82,7 +82,7 @@ func (s *Job) ToJson() et.Json {
 }
 
 /**
-* save
+* Save
 * @return error
 **/
 func (s *Job) Save() error {
@@ -103,7 +103,7 @@ func (s *Job) setStatus(status JobStatus) {
 	defer s.mu.Unlock()
 
 	s.Status = status
-	logs.Logf(packageName, fmt.Sprintf("Job %s status:%s host:%s attempt:%d", s.Tag, s.Status, s.HostName, s.Attempts))
+	logs.Logf(packageName, fmt.Sprintf("Status: %s | job: %s | host: %s | attempt: %d", status, s.Tag, s.HostName, s.Attempts))
 	go s.Save()
 }
 
@@ -117,8 +117,9 @@ func (s *Job) Start() error {
 		err := event.Publish(s.Channel, s.Params)
 		if err != nil {
 			s.setStatus(Failed)
+		} else {
+			s.setStatus(Running)
 		}
-		s.setStatus(Running)
 		if s.Repetitions != 0 && s.Attempts >= s.Repetitions {
 			s.Finish()
 		} else {
@@ -143,7 +144,6 @@ func (s *Job) Start() error {
 			duration := shotTime.Sub(now)
 			s.Duration = duration
 			s.shot = time.AfterFunc(duration, fn)
-			return s.Save()
 		} else if s.shot != nil {
 			s.Stop()
 		}
@@ -151,7 +151,7 @@ func (s *Job) Start() error {
 
 	s.Started = true
 
-	return nil
+	return s.Save()
 }
 
 /**

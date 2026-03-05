@@ -13,18 +13,30 @@ import (
 )
 
 func main() {
-	err := crontab.Load("test")
+	err := crontab.Load(nil, "", "test")
 	if err != nil {
 		panic(err)
 	}
 
-	err = crontab.AddEventJob("test", "10 4 * * *", 0, true,
+	err = crontab.AddEventJob("test", "0 50 8 * * *", 0, true,
 		et.Json{
 			"test": "test",
 		},
 		func(msg event.EvenMessage) {
-			worker := msg.Data
-			console.Debug("test by event:", worker.ToString())
+			// worker := msg.Data
+			console.Debug("Hol run test by event:", msg.ToString())
+		})
+	if err != nil {
+		panic(err)
+	}
+
+	err = crontab.AddScheduleJob("test2", "2026-03-05T08:51:00", true,
+		et.Json{
+			"test": "test2",
+		},
+		func(msg event.EvenMessage) {
+			// worker := msg.Data
+			console.Debug("Hol run test2 by event:", msg.ToString())
 		})
 	if err != nil {
 		panic(err)

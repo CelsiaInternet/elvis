@@ -543,7 +543,8 @@ func SetNested(data Json, keys []string, value interface{}) Json {
 		if i == len(keys)-1 {
 			result[key] = value
 		} else {
-			result = result.Json(key)
+			dt := result.Json(key)
+			result = SetNested(dt, keys[i+1:], value)
 		}
 	}
 
