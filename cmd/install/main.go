@@ -6,27 +6,26 @@ import (
 )
 
 var dependencies = []string{
-	"github.com/joho/godotenv/autoload",
-	"github.com/bwmarrin/snowflake",
-	"github.com/google/uuid",
-	"github.com/matoous/go-nanoid/v2",
-	"github.com/oklog/ulid",
-	"golang.org/x/crypto/bcrypt",
-	"golang.org/x/exp/slices",
-	"github.com/manifoldco/promptui",
-	"github.com/schollz/progressbar/v3",
-	"github.com/spf13/cobra",
-	"github.com/dimiro1/banner",
-	"github.com/mattn/go-colorable",
+	"github.com/joho/godotenv@v1.5.1",
+	"github.com/bwmarrin/snowflake@v0.3.0",
+	"github.com/google/uuid@v1.6.0",
+	"github.com/matoous/go-nanoid/v2@v2.1.0",
+	"github.com/oklog/ulid@v1.3.1",
+	"golang.org/x/crypto@v0.37.0",
+	"golang.org/x/exp@v0.0.0-20250408133849-7e4ce0ab07d0",
+	"github.com/manifoldco/promptui@v0.9.0",
+	"github.com/schollz/progressbar/v3@v3.18.0",
+	"github.com/spf13/cobra@v1.9.1",
 }
 
 func main() {
-	total := 100
+	total := len(dependencies)
 	for i, dep := range dependencies {
-		p := (i + 1) * 100 / len(dependencies)
-		fmt.Printf("\r[%-50s] %d%% Installing %s", progressBar(p, total, 50), p, dep)
+		p := (i + 1) * 100 / total
+		fmt.Printf("\r[%-50s] %d%% Installing %s", progressBar(i+1, total, 50), p, dep)
 		err := installLibrary(dep)
 		if err != nil {
+			fmt.Printf("\r[%-50s] %d%% Error installing %s - %v", progressBar(i+1, total, 50), p, dep, err)
 			return
 		}
 	}
