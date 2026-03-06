@@ -6,7 +6,6 @@ import (
 	"slices"
 	"time"
 
-	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/event"
 	"github.com/celsiainternet/elvis/logs"
@@ -59,6 +58,7 @@ type Instance struct {
 	err        error                `json:"-"`
 	resilence  *resilience.Instance `json:"-"`
 	isNew      bool                 `json:"-"`
+	isDebug    bool                 `json:"-"`
 }
 
 /**
@@ -98,6 +98,14 @@ func (s *Instance) ToJson() et.Json {
 }
 
 /**
+* ToString
+* @return string
+**/
+func (s *Instance) ToString() string {
+	return s.ToJson().ToString()
+}
+
+/**
 * Save
 * @return error
 **/
@@ -105,8 +113,7 @@ func (s *Instance) Save() error {
 	data := s.ToJson()
 	event.Publish(EVENT_WORKFLOW_STATUS, data)
 
-	debug := envar.GetBool(false, "DEBUG")
-	if debug {
+	if s.isDebug {
 		logs.Log("WorkFlows", "save:", data.ToString())
 	}
 
@@ -114,7 +121,7 @@ func (s *Instance) Save() error {
 		return setInstance(s.Id, s.Tag, s)
 	}
 
-	return fmt.Errorf("Save: saveInstance is nil")
+	return nil
 }
 
 /**

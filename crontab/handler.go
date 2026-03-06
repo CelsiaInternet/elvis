@@ -65,10 +65,6 @@ func Close() {
 * @return error
 **/
 func addJob(jobType TypeJob, tag, spec, channel string, started bool, params et.Json, repetitions int, fn func(event.EvenMessage)) error {
-	if crontab == nil {
-		return fmt.Errorf(MSG_CRONTAB_UNLOAD)
-	}
-
 	tag = strs.Name(tag)
 	data := et.Json{
 		"type":        jobType,

@@ -65,24 +65,22 @@ func (s *Jobs) addJob(tp TypeJob, tag, spec, channel string, started bool, param
 			result.Spec = spec
 			result.Stop()
 		}
-
-		return result, nil
-	}
-
-	result = &Job{
-		Type:        tp,
-		Tag:         tag,
-		Channel:     channel,
-		Params:      params,
-		Spec:        spec,
-		Started:     false,
-		Status:      Pending,
-		HostName:    hostName,
-		Attempts:    0,
-		Repetitions: repetitions,
-		idx:         -1,
-		jobs:        s,
-		mu:          &sync.Mutex{},
+	} else {
+		result = &Job{
+			Type:        tp,
+			Tag:         tag,
+			Channel:     channel,
+			Params:      params,
+			Spec:        spec,
+			Started:     false,
+			Status:      Pending,
+			HostName:    hostName,
+			Attempts:    0,
+			Repetitions: repetitions,
+			idx:         -1,
+			jobs:        s,
+			mu:          &sync.Mutex{},
+		}
 	}
 
 	s.mu.Lock()

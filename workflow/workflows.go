@@ -23,6 +23,7 @@ type WorkFlows struct {
 	Instances map[string]*Instance `json:"instances"`
 	Results   map[string]et.Json   `json:"results"`
 	mu        sync.Mutex           `json:"-"`
+	isDebug   bool                 `json:"-"`
 }
 
 /**
@@ -35,6 +36,7 @@ func newWorkFlows() *WorkFlows {
 		Instances: make(map[string]*Instance),
 		Results:   make(map[string]et.Json),
 		mu:        sync.Mutex{},
+		isDebug:   envar.GetBool(false, "DEBUG"),
 	}
 
 	return result
@@ -165,8 +167,7 @@ func (s *WorkFlows) loadInstance(id string) (*Instance, bool) {
 		result.goTo = -1
 		s.Add(result)
 
-		debug := envar.GetBool(false, "DEBUG")
-		if debug {
+		if s.isDebug {
 			logs.Log("WorkFlows", "loadInstance:", result.ToJson().ToString())
 		}
 
@@ -203,6 +204,7 @@ func (s *WorkFlows) runInstance(instanceId, tag string, step int, tags, ctx et.J
 		return et.Json{}, err
 	}
 
+	instance.isDebug = s.isDebug
 	instance.UpdatedBy = createdBy
 	instance.PutTag(tags)
 	if step != instance.Current {
@@ -214,7 +216,10 @@ func (s *WorkFlows) runInstance(instanceId, tag string, step int, tags, ctx et.J
 	}
 
 	s.Remove(instance)
-	logs.Logf(fmt.Sprintf("runInstance:%s", tag), `instance:%s`, instance.ToJson().ToString())
+	logs.Logf(packageName, "runInstance: %s", tag)
+	if s.isDebug {
+		logs.Debugf("instance: %s", instance.ToString())
+	}
 
 	return result, err
 }
