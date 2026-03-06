@@ -18,7 +18,11 @@ var crontab *Jobs
 
 func init() {
 	crontab = New("crontab")
-	_, err := event.Load()
+	_, err := cache.Load()
+	if err != nil {
+		panic(err)
+	}
+	_, err = event.Load()
 	if err != nil {
 		panic(err)
 	}
@@ -65,6 +69,10 @@ func Close() {
 * @return error
 **/
 func addJob(jobType TypeJob, tag, spec, channel string, started bool, params et.Json, repetitions int, fn func(event.EvenMessage)) error {
+	if crontab == nil {
+		return fmt.Errorf(MSG_CRONTAB_UNLOAD)
+	}
+
 	tag = strs.Name(tag)
 	data := et.Json{
 		"type":        jobType,
@@ -120,16 +128,16 @@ func AddScheduleJob(tag, schedule string, started bool, params et.Json, fn func(
 }
 
 /**
-* DeleteJob
+* RemoveJob
 * @param tag string
 * @return error
 **/
-func DeleteJob(tag string) error {
+func RemoveJob(tag string) error {
 	if crontab == nil {
 		return fmt.Errorf(MSG_CRONTAB_UNLOAD)
 	}
 
-	err := event.Publish(EVENT_CRONTAB_DELETE, et.Json{"tag": tag})
+	err := event.Publish(EVENT_CRONTAB_REMOVE, et.Json{"tag": tag})
 	if err != nil {
 		return err
 	}

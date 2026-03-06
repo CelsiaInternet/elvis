@@ -2,14 +2,16 @@ package crontab
 
 import (
 	"fmt"
+	"time"
 
+	"github.com/celsiainternet/elvis/cache"
 	"github.com/celsiainternet/elvis/event"
 	"github.com/celsiainternet/elvis/logs"
 )
 
 var (
 	EVENT_CRONTAB_SET    = "event:crontab:set"
-	EVENT_CRONTAB_DELETE = "event:crontab:delete"
+	EVENT_CRONTAB_REMOVE = "event:crontab:remove"
 	EVENT_CRONTAB_STOP   = "event:crontab:stop"
 	EVENT_CRONTAB_START  = "event:crontab:start"
 )
@@ -20,7 +22,7 @@ var (
 **/
 func (s *Jobs) eventInit() error {
 	EVENT_CRONTAB_SET = fmt.Sprintf("event:crontab:set:%s", s.Tag)
-	EVENT_CRONTAB_DELETE = fmt.Sprintf("event:crontab:delete:%s", s.Tag)
+	EVENT_CRONTAB_REMOVE = fmt.Sprintf("event:crontab:remove:%s", s.Tag)
 	EVENT_CRONTAB_STOP = fmt.Sprintf("event:crontab:stop:%s", s.Tag)
 	EVENT_CRONTAB_START = fmt.Sprintf("event:crontab:start:%s", s.Tag)
 
@@ -29,7 +31,7 @@ func (s *Jobs) eventInit() error {
 		return err
 	}
 
-	err = event.Subscribe(EVENT_CRONTAB_DELETE, s.eventDelete)
+	err = event.Subscribe(EVENT_CRONTAB_REMOVE, s.eventRemove)
 	if err != nil {
 		return err
 	}
@@ -53,6 +55,12 @@ func (s *Jobs) eventInit() error {
 * @return error
 **/
 func (s *Jobs) eventSet(msg event.EvenMessage) {
+	n := cache.Incr(msg.Channel, 3*time.Minute)
+	if n != 1 {
+		logs.Errorf(packageName, "eventSet: %s", "job already exists")
+		return
+	}
+
 	data := msg.Data
 	tpStr := data.Str("type")
 	tag := data.Str("tag")
@@ -62,7 +70,14 @@ func (s *Jobs) eventSet(msg event.EvenMessage) {
 	params := data.Json("params")
 	repetitions := data.Int("repetitions")
 	tp := TypeJob(tpStr)
-	_, err := s.addJob(tp, tag, spec, channel, started, params, repetitions)
+
+	err := RemoveJob(tag)
+	if err != nil {
+		logs.Logf(packageName, fmt.Sprintf("%s: %s; Error removing job %s", tpStr, tag, err))
+		return
+	}
+
+	_, err = s.addJob(tp, tag, spec, channel, started, params, repetitions)
 	if err != nil {
 		logs.Logf(packageName, fmt.Sprintf("%s: %s; Error adding job %s", tpStr, tag, err))
 		return
@@ -72,11 +87,11 @@ func (s *Jobs) eventSet(msg event.EvenMessage) {
 }
 
 /**
-* eventDelete
+* eventRemove
 * @param msg event.EvenMessage
 * @return error
 **/
-func (s *Jobs) eventDelete(msg event.EvenMessage) {
+func (s *Jobs) eventRemove(msg event.EvenMessage) {
 	data := msg.Data
 	tag := data.Str("tag")
 	err := s.removeJob(tag)
