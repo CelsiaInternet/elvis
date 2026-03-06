@@ -1,6 +1,8 @@
 package jdb
 
 import (
+	"errors"
+
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
 )
@@ -15,6 +17,10 @@ const (
 * @return *DB, error
 **/
 func LoadTo(dbname string) (*DB, error) {
+	if dbname == "" {
+		return nil, errors.New("dbname is required")
+	}
+
 	conn, err := ConnectTo(et.Json{
 		"driver":           envar.GetStr("", "DB_DRIVER"),
 		"host":             envar.GetStr("", "DB_HOST"),
