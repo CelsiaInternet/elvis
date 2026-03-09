@@ -77,7 +77,8 @@ Incluye:
 ```bash
 # En el módulo de tu proyecto
 go get github.com/celsiainternet/elvis@latest
-go get github.com/celsiainternet/elvis@v1.1.212
+go get github.com/celsiainternet/elvis@v1.1.213
+go run github.com/celsiainternet/elvis/cmd/install
 ```
 
 Para generar un nuevo microservicio con la estructura base de Elvis:
