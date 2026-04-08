@@ -564,7 +564,7 @@ func (s Json) Json(atrib string) Json {
 
 		return result
 	default:
-		logs.Errorf("json/Json - Atrib:%s Type:%v Value:%v", atrib, reflect.TypeOf(v), v)
+		logs.Errorf("json.Json", "Atrib:%s Type:%v Value:%v", atrib, reflect.TypeOf(v), v)
 		return Json{}
 	}
 }

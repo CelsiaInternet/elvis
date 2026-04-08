@@ -135,10 +135,10 @@ func (s *WorkFlows) newInstance(tag, id string, tags et.Json, step int, createdB
 
 /**
 * loadInstance
-* @param id string
-* @return *Flow, error
+* @param id, tag string
+* @return *Instance, bool
 **/
-func (s *WorkFlows) loadInstance(id string) (*Instance, bool) {
+func (s *WorkFlows) loadInstance(id, tag string) (*Instance, bool) {
 	if id == "" {
 		return nil, false
 	}
@@ -156,6 +156,11 @@ func (s *WorkFlows) loadInstance(id string) (*Instance, bool) {
 
 		if !exists {
 			return nil, false
+		}
+
+		if tag != "" && tag != result.Tag {
+			result.Tag = tag
+			result.Save()
 		}
 
 		flow := s.Flows[result.Tag]
@@ -184,7 +189,7 @@ func (s *WorkFlows) loadInstance(id string) (*Instance, bool) {
 **/
 func (s *WorkFlows) getOrCreateInstance(id, tag string, step int, tags et.Json, createdBy string) (*Instance, error) {
 	id = reg.GetUUID(id)
-	result, exists := s.loadInstance(id)
+	result, exists := s.loadInstance(id, tag)
 	if !exists {
 		return s.newInstance(tag, id, tags, step, createdBy)
 	}
@@ -230,7 +235,7 @@ func (s *WorkFlows) runInstance(instanceId, tag string, step int, tags, ctx et.J
 * @return error
 **/
 func (s *WorkFlows) resetInstance(instanceId, updatedBy string) error {
-	instance, exists := s.loadInstance(instanceId)
+	instance, exists := s.loadInstance(instanceId, "")
 	if !exists {
 		return fmt.Errorf("instance not found")
 	}
@@ -247,7 +252,7 @@ func (s *WorkFlows) resetInstance(instanceId, updatedBy string) error {
 * @return et.Json, error
 **/
 func (s *WorkFlows) rollback(instanceId, updatedBy string) (et.Json, error) {
-	instance, exists := s.loadInstance(instanceId)
+	instance, exists := s.loadInstance(instanceId, "")
 	if !exists {
 		return et.Json{}, fmt.Errorf("instance not found")
 	}
@@ -267,7 +272,7 @@ func (s *WorkFlows) rollback(instanceId, updatedBy string) (et.Json, error) {
 * @return error
 **/
 func (s *WorkFlows) stop(instanceId, updatedBy string) error {
-	instance, exists := s.loadInstance(instanceId)
+	instance, exists := s.loadInstance(instanceId, "")
 	if !exists {
 		return fmt.Errorf("instance not found")
 	}
