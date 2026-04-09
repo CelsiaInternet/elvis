@@ -136,6 +136,9 @@ func (s *Instance) setStatus(status FlowStatus) error {
 	case FlowStatusDone:
 		s.DoneAt = s.UpdatedAt
 		s.done = true
+		if s.onDone != nil {
+			s.onDone(s)
+		}
 	case FlowStatusFailed:
 		if s.resilence != nil && s.resilence.IsEnd() {
 			s.done = true

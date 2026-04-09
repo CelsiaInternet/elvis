@@ -623,6 +623,26 @@ func (s Json) ArrayStr(atrib string) []string {
 	return result
 }
 
+func (s Json) ArrayInt(atrib string) []int {
+	val := Val(s, nil, atrib)
+	if val == nil {
+		return []int{}
+	}
+
+	data, err := json.MarshalIndent(val, "", "  ")
+	if err != nil {
+		return []int{}
+	}
+
+	var result []int
+	err = json.Unmarshal(data, &result)
+	if err != nil {
+		return []int{}
+	}
+
+	return result
+}
+
 func (s Json) Update(fromJson Json) error {
 	var result bool = false
 	for k, new := range fromJson {
