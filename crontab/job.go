@@ -190,6 +190,8 @@ func (s *Job) start() error {
 			duration := shotTime.Sub(now)
 			s.Duration = duration
 			s.shot = time.AfterFunc(duration, s.trigger)
+		} else {
+			s.owner.removeJob(s.Tag)
 		}
 	}
 
