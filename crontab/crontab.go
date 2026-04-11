@@ -34,9 +34,15 @@ type Jobs struct {
 	mu       *sync.Mutex     `json:"-"`
 }
 
-func New(tag string) *Jobs {
+func New(tag string) (*Jobs, error) {
 	loc := timezone.Location()
-	return &Jobs{
+
+	_, err := event.Load()
+	if err != nil {
+		return nil, err
+	}
+
+	result := &Jobs{
 		Id:       utility.UUID(),
 		Tag:      tag,
 		HostName: hostName,
@@ -47,6 +53,8 @@ func New(tag string) *Jobs {
 		),
 		mu: &sync.Mutex{},
 	}
+
+	return result, nil
 }
 
 /**

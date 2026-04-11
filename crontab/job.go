@@ -9,6 +9,7 @@ import (
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/event"
 	"github.com/celsiainternet/elvis/logs"
+	"github.com/celsiainternet/elvis/reg"
 	"github.com/celsiainternet/elvis/timezone"
 	"github.com/celsiainternet/elvis/utility"
 	"github.com/robfig/cron/v3"
@@ -59,6 +60,7 @@ type Job struct {
 **/
 func newJob(owner *Jobs, tp TypeJob, tag, spec, channel string, params et.Json, repetitions int) *Job {
 	result := &Job{
+		ID:          reg.UUID(),
 		Type:        tp,
 		Tag:         tag,
 		Channel:     channel,

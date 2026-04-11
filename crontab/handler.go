@@ -21,12 +21,12 @@ var crontab *Jobs
 * @return error
 **/
 func Load(tag string, store instances.Store) error {
-	_, err := event.Load()
+	var err error
+	crontab, err = New(tag)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
-	crontab = New(tag)
 	err = crontab.start()
 	if err != nil {
 		return err
