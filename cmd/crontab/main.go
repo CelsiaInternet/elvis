@@ -18,28 +18,31 @@ func main() {
 		panic(err)
 	}
 
-	err = crontab.AddEventJob("test", "0 30 11 * * *", 0, true,
-		et.Json{
-			"test": "test",
-		},
-		func(msg event.EvenMessage) {
-			// worker := msg.Data
-			console.Debug("Hol run test by event:", msg.ToString())
-		})
-	if err != nil {
-		panic(err)
-	}
+	// err = crontab.AddEventJob("test", "0 30 11 * * *", 0, true,
+	// 	et.Json{
+	// 		"test": "test",
+	// 	},
+	// 	func(msg event.EvenMessage) {
+	// 		// worker := msg.Data
+	// 		console.Debug("Hol run test by event:", msg.ToString())
+	// 	})
+	// if err != nil {
+	// 	panic(err)
+	// }
 
-	err = crontab.AddScheduleJob("test2", "2026-03-05T11:31:00", true,
-		et.Json{
-			"test": "test2",
-		},
-		func(msg event.EvenMessage) {
-			// worker := msg.Data
-			console.Debug("Hol run test2 by event:", msg.ToString())
-		})
-	if err != nil {
-		panic(err)
+	for i := 0; i < 5; i++ {
+		timeStr := time.Now().Add(time.Second * 5).Format("2006-01-02T15:04:05")
+		err = crontab.AddScheduleJob(fmt.Sprintf("test_%d", i), timeStr, true,
+			et.Json{
+				"test": fmt.Sprintf("test_%d", i),
+			},
+			func(msg event.EvenMessage) {
+				// worker := msg.Data
+				console.Debug("Hola run test by event:", msg.ToString())
+			})
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	utility.AppWait()

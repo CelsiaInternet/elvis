@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/event"
 	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/msg"
 	"github.com/celsiainternet/elvis/timezone"
@@ -48,6 +50,42 @@ func New(tag string) *Jobs {
 }
 
 /**
+* addEventJob
+* @param jobType TypeJob, tag, spec, channel string, started bool, params et.Json, repetitions int, fn func(event.EvenMessage)
+* @return error
+**/
+func (s *Jobs) addEventJob(jobType TypeJob, tag, spec, channel string, started bool, params et.Json, repetitions int, fn func(event.EvenMessage)) error {
+	data := et.Json{
+		"type":        jobType,
+		"tag":         tag,
+		"spec":        spec,
+		"channel":     channel,
+		"started":     started,
+		"params":      params,
+		"repetitions": repetitions,
+	}
+
+	err := event.Publish(EVENT_CRONTAB_REMOVE, et.Json{"tag": tag})
+	if err != nil {
+		return err
+	}
+
+	time.Sleep(1 * time.Second)
+
+	err = event.Publish(EVENT_CRONTAB_SET, data)
+	if err != nil {
+		return err
+	}
+
+	err = event.Stack(channel, fn)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+/**
 * addJob
 * @param tp TypeJob, tag, spec, channel string, started bool, params et.Json, repetitions int
 * @return *Job, error
@@ -58,41 +96,21 @@ func (s *Jobs) addJob(tp TypeJob, tag, spec, channel string, started bool, param
 	}
 
 	s.mu.Lock()
-	result, ok := s.Jobs[tag]
+	result, exists := s.Jobs[tag]
 	s.mu.Unlock()
-	if ok {
-		if !result.Started {
-			result.Spec = spec
-			result.Stop()
-		}
-	} else {
-		result = &Job{
-			Type:        tp,
-			Tag:         tag,
-			Channel:     channel,
-			Params:      params,
-			Spec:        spec,
-			Started:     false,
-			Status:      Pending,
-			HostName:    hostName,
-			Attempts:    0,
-			Repetitions: repetitions,
-			idx:         -1,
-			jobs:        s,
-			mu:          &sync.Mutex{},
-		}
+	if exists {
+		return result, nil
 	}
 
+	result = newJob(s, tp, tag, spec, channel, params, repetitions)
 	s.mu.Lock()
 	s.Jobs[tag] = result
 	s.mu.Unlock()
+
+	logs.Logf(packageName, fmt.Sprintf("job:%s | status:add | type:%s | spec:%s", tag, tp, spec))
+
 	if started {
-		err := result.Start()
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		result.setStatus(Pending)
+		result.Start()
 	}
 
 	return result, nil
@@ -101,14 +119,14 @@ func (s *Jobs) addJob(tp TypeJob, tag, spec, channel string, started bool, param
 /**
 * removeJob
 * @param tag string
-* @return error
+* @return bool
 **/
-func (s *Jobs) removeJob(tag string) error {
+func (s *Jobs) removeJob(tag string) bool {
 	s.mu.Lock()
 	job, exists := s.Jobs[tag]
 	s.mu.Unlock()
 	if !exists {
-		return fmt.Errorf("job not found")
+		return false
 	}
 
 	job.Stop()
@@ -117,7 +135,8 @@ func (s *Jobs) removeJob(tag string) error {
 	delete(s.Jobs, tag)
 	s.mu.Unlock()
 
-	return nil
+	logs.Logf(packageName, fmt.Sprintf("job:%s removed", tag))
+	return true
 }
 
 /**
@@ -194,6 +213,11 @@ func (s *Jobs) stop() error {
 	}
 
 	s.cronJobs.Stop()
+
+	for _, job := range s.Jobs {
+		job.Stop()
+	}
+
 	s.running = false
 
 	logs.Logf(packageName, `Crontab stopped`)

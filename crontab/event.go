@@ -2,9 +2,7 @@ package crontab
 
 import (
 	"fmt"
-	"time"
 
-	"github.com/celsiainternet/elvis/cache"
 	"github.com/celsiainternet/elvis/event"
 	"github.com/celsiainternet/elvis/logs"
 )
@@ -55,12 +53,6 @@ func (s *Jobs) eventInit() error {
 * @return error
 **/
 func (s *Jobs) eventSet(msg event.EvenMessage) {
-	n := cache.Incr(msg.Channel, 3*time.Minute)
-	if n != 1 {
-		logs.Errorf(packageName, "eventSet: %s", "job already exists")
-		return
-	}
-
 	data := msg.Data
 	tpStr := data.Str("type")
 	tag := data.Str("tag")
@@ -70,20 +62,11 @@ func (s *Jobs) eventSet(msg event.EvenMessage) {
 	params := data.Json("params")
 	repetitions := data.Int("repetitions")
 	tp := TypeJob(tpStr)
-
-	err := RemoveJob(tag)
+	_, err := s.addJob(tp, tag, spec, channel, started, params, repetitions)
 	if err != nil {
-		logs.Logf(packageName, fmt.Sprintf("%s: %s; Error removing job %s", tpStr, tag, err))
+		logs.Logf(packageName, fmt.Sprintf("error adding job: %s:%s; %s", tpStr, tag, err))
 		return
 	}
-
-	_, err = s.addJob(tp, tag, spec, channel, started, params, repetitions)
-	if err != nil {
-		logs.Logf(packageName, fmt.Sprintf("%s: %s; Error adding job %s", tpStr, tag, err))
-		return
-	}
-
-	logs.Logf(packageName, fmt.Sprintf("%s: %s added spec %s", tpStr, tag, spec))
 }
 
 /**
@@ -94,13 +77,7 @@ func (s *Jobs) eventSet(msg event.EvenMessage) {
 func (s *Jobs) eventRemove(msg event.EvenMessage) {
 	data := msg.Data
 	tag := data.Str("tag")
-	err := s.removeJob(tag)
-	if err != nil {
-		logs.Logf(packageName, fmt.Sprintf("Crontab %s; Error removing job %s", tag, err))
-		return
-	}
-
-	logs.Logf(packageName, fmt.Sprintf("Crontab %s removed", tag))
+	s.removeJob(tag)
 }
 
 /**
@@ -113,11 +90,9 @@ func (s *Jobs) eventStop(msg event.EvenMessage) {
 	tag := data.Str("tag")
 	err := s.stopJob(tag)
 	if err != nil {
-		logs.Logf(packageName, fmt.Sprintf("Crontab %s; Error stopping job %s", tag, err))
+		logs.Logf(packageName, fmt.Sprintf("job:%s; error stopping job %s", tag, err))
 		return
 	}
-
-	logs.Logf(packageName, fmt.Sprintf("Crontab %s stopped", tag))
 }
 
 /**
@@ -130,9 +105,7 @@ func (s *Jobs) eventStart(msg event.EvenMessage) {
 	tag := data.Str("tag")
 	err := s.startJob(tag)
 	if err != nil {
-		logs.Logf(packageName, fmt.Sprintf("Crontab %s; Error starting job %s", tag, err))
+		logs.Logf(packageName, fmt.Sprintf("job:%s; error starting job %s", tag, err))
 		return
 	}
-
-	logs.Logf(packageName, fmt.Sprintf("Crontab %s started", tag))
 }

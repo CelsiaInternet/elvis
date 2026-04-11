@@ -109,11 +109,11 @@ func Panicm(v string) error {
 }
 
 func Ping(args ...any) {
-	printLn("PONG", "Cyan", args...)
+	printLn("PING", "Cyan", args...)
 }
 
 func Pong(args ...any) {
-	printLn("PING", "Cyan", args...)
+	printLn("PONG", "Cyan", args...)
 }
 
 func Debug(v ...any) {

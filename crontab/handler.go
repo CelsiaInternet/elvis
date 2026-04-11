@@ -3,30 +3,17 @@ package crontab
 import (
 	"fmt"
 	"net/http"
+	"time"
 
-	"github.com/celsiainternet/elvis/cache"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/event"
 	"github.com/celsiainternet/elvis/instances"
 	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/response"
-	"github.com/celsiainternet/elvis/strs"
 	"github.com/go-chi/chi"
 )
 
 var crontab *Jobs
-
-func init() {
-	crontab = New("crontab")
-	_, err := cache.Load()
-	if err != nil {
-		panic(err)
-	}
-	_, err = event.Load()
-	if err != nil {
-		panic(err)
-	}
-}
 
 /**
 * Load
@@ -34,9 +21,13 @@ func init() {
 * @return error
 **/
 func Load(tag string, store instances.Store) error {
-	tag = strs.Name(tag)
+	_, err := event.Load()
+	if err != nil {
+		panic(err)
+	}
+
 	crontab = New(tag)
-	err := crontab.start()
+	err = crontab.start()
 	if err != nil {
 		return err
 	}
@@ -45,6 +36,8 @@ func Load(tag string, store instances.Store) error {
 		SetGetInstance(store.Get)
 		SetSetInstance(store.Set)
 	}
+
+	time.Sleep(1 * time.Second)
 
 	return nil
 }
@@ -58,41 +51,19 @@ func Close() {
 		return
 	}
 
-	cache.Delete("crontab:nodes")
-
 	logs.Log(packageName, `Disconnect...`)
 }
 
 /**
-* addJob
-* @param jobType TypeJob, tag, spec, channel string, started bool, params et.Json, repetitions int, fn func(event.EvenMessage)
+* Stop
 * @return error
 **/
-func addJob(jobType TypeJob, tag, spec, channel string, started bool, params et.Json, repetitions int, fn func(event.EvenMessage)) error {
+func Stop() error {
 	if crontab == nil {
 		return fmt.Errorf(MSG_CRONTAB_UNLOAD)
 	}
 
-	tag = strs.Name(tag)
-	data := et.Json{
-		"type":        jobType,
-		"tag":         tag,
-		"spec":        spec,
-		"channel":     channel,
-		"started":     started,
-		"params":      params,
-		"repetitions": repetitions,
-	}
-
-	event.Publish(EVENT_CRONTAB_SET, data)
-	err := event.Stack(channel, fn)
-	if err != nil {
-		return err
-	}
-
-	logs.Logf(packageName, "Add EventJob: %s", data.ToString())
-
-	return nil
+	return crontab.stop()
 }
 
 /**
@@ -101,9 +72,12 @@ func addJob(jobType TypeJob, tag, spec, channel string, started bool, params et.
 * @return error
 **/
 func AddEventJob(tag, spec string, repetitions int, started bool, params et.Json, fn func(event.EvenMessage)) error {
-	tag = strs.Name(tag)
+	if crontab == nil {
+		return fmt.Errorf(MSG_CRONTAB_UNLOAD)
+	}
+
 	channel := fmt.Sprintf("cronjob:%s", tag)
-	return addJob(CronJob, tag, spec, channel, started, params, repetitions, fn)
+	return crontab.addEventJob(CronJob, tag, spec, channel, started, params, repetitions, fn)
 }
 
 /**
@@ -122,9 +96,12 @@ func AddCronJob(tag, spec string, repetitions int, started bool, params et.Json,
 * @return error
 **/
 func AddScheduleJob(tag, schedule string, started bool, params et.Json, fn func(event.EvenMessage)) error {
-	tag = strs.Name(tag)
+	if crontab == nil {
+		return fmt.Errorf(MSG_CRONTAB_UNLOAD)
+	}
+
 	channel := fmt.Sprintf("schedule:%s", tag)
-	return addJob(ScheduleJob, tag, schedule, channel, started, params, 0, fn)
+	return crontab.addEventJob(ScheduleJob, tag, schedule, channel, started, params, 0, fn)
 }
 
 /**
@@ -179,18 +156,6 @@ func StopJob(tag string) error {
 	}
 
 	return nil
-}
-
-/**
-* Stop
-* @return error
-**/
-func Stop() error {
-	if crontab == nil {
-		return fmt.Errorf(MSG_CRONTAB_UNLOAD)
-	}
-
-	return crontab.stop()
 }
 
 /**
