@@ -125,16 +125,6 @@ func (s *Flow) Debug() *Flow {
 /**
 * OnDone
 * @param fn func(*Instance)
-* @return *Instance
-**/
-func (s *Instance) OnDone(fn func(*Instance)) *Instance {
-	s.onDone = fn
-	return s
-}
-
-/**
-* OnDone
-* @param fn func(*Instance)
 * @return *Flow
 **/
 func (s *Flow) OnDone(fn func(*Instance)) *Flow {
