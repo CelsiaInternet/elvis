@@ -448,7 +448,7 @@ func (c *Linq) SqlUpdate() string {
 
 		if model.UseSource && field == strs.Uppcase(SourceField.Upp()) {
 			vals := strs.Uppcase(SourceField.Upp())
-			atribs := c.new.Json(strs.Lowcase(field))
+			atribs := c.new.Json(field)
 
 			for ak, av := range atribs {
 				ak = strs.Lowcase(ak)
