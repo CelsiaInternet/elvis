@@ -206,10 +206,10 @@ func (c *Model) Init() error {
 	}
 
 	if exists {
-		err = c.db.Ddl(c.Functions)
-		if err != nil {
-			return err
-		}
+		// err = c.db.Ddl(c.Functions)
+		// if err != nil {
+		// 	return err
+		// }
 
 		return nil
 	}
