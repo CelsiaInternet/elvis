@@ -43,7 +43,7 @@ func (it *Items) Scan(src interface{}) error {
 
 func (it *Items) First() Item {
 	if !it.Ok {
-		return Item{}
+		return Item{Result: Json{}}
 	}
 
 	return Item{
