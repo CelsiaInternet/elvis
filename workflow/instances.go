@@ -263,11 +263,10 @@ func (s *Instance) GetParam(key string) interface{} {
 
 /**
 * setTrace
-* @param step int, ctx et.Json, err error
+* @param step int, ctx, result et.Json, err error
 * @return error
 **/
-func (s *Instance) setTrace(step int, result et.Json, err error) error {
-	ctx := s.getCtx(step)
+func (s *Instance) setTrace(step int, ctx, result et.Json, err error) error {
 	s.Traces = append(s.Traces, et.Json{
 		"step":   step,
 		"ctx":    ctx,
@@ -474,8 +473,9 @@ func (s *Instance) startResilence() bool {
 **/
 func (s *Instance) run(ctx et.Json) (et.Json, error) {
 	var err error
+	originCtx := ctx.Clone()
 	defer func() {
-		s.setTrace(s.Current, ctx, err)
+		s.setTrace(s.Current, originCtx, ctx, err)
 	}()
 
 	if s.Status == FlowStatusDone {
