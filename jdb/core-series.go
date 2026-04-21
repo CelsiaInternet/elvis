@@ -109,6 +109,8 @@ func defineSeriesFunction(db *DB) error {
 		return logs.Panice(err)
 	}
 
+	DefineSeries(db)
+
 	return nil
 }
 
