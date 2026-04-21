@@ -1,6 +1,9 @@
 package jdb
 
 import (
+	"errors"
+	"fmt"
+
 	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/strs"
 )
@@ -207,4 +210,108 @@ func LastSerie(db *DB, tag string) int {
 	result := item.Int("serie")
 
 	return result
+}
+
+type series struct {
+	db  *DB
+	tag map[string]string
+}
+
+var seriesInstance *series
+
+/**
+* DefineSeries
+* @param db *DB
+* @return *series
+**/
+func DefineSeries(db *DB) *series {
+	if seriesInstance == nil {
+		seriesInstance = &series{
+			db:  db,
+			tag: make(map[string]string),
+		}
+	}
+
+	return seriesInstance
+}
+
+/**
+* NewSeries
+* @param kind, tag, format string
+**/
+func (s *series) NewSeries(kind, tag, format string) {
+	tg := fmt.Sprintf("%s:%s", kind, tag)
+	s.tag[tg] = format
+}
+
+/**
+* SetSeries
+* @param kind, tag string, val int
+* @return int, error
+**/
+func (s *series) SetSeries(kind, tag string, val int) (int, error) {
+	tg := fmt.Sprintf("%s:%s", kind, tag)
+	return SetSerie(s.db, tg, val)
+}
+
+/**
+* GetSeries
+* @param kind, tag string
+* @return string
+**/
+func (s *series) GetSeries(kind, tag string) string {
+	tg := fmt.Sprintf("%s:%s", kind, tag)
+	format, ok := seriesInstance.tag[tg]
+	if !ok {
+		format = ""
+		seriesInstance.tag[tg] = format
+	}
+
+	result := NextCode(seriesInstance.db, tg, format)
+	return result
+}
+
+/**
+* GetSeries
+* @param kind, tag string
+* @return string, error
+**/
+func GetSeries(kind, tag string) (string, error) {
+	if seriesInstance == nil {
+		return "", errors.New("Series not defined")
+	}
+
+	tg := fmt.Sprintf("%s:%s", kind, tag)
+	format, ok := seriesInstance.tag[tg]
+	if !ok {
+		format = ""
+		seriesInstance.tag[tg] = format
+	}
+
+	result := NextCode(seriesInstance.db, tg, format)
+	return result, nil
+}
+
+/**
+* SetSeries
+* @param kind, tag string, val int
+* @return int, error
+**/
+func SetSeries(kind, tag string, val int) (int, error) {
+	if seriesInstance == nil {
+		return 0, errors.New("Series not defined")
+	}
+
+	tg := fmt.Sprintf("%s:%s", kind, tag)
+	return SetSerie(seriesInstance.db, tg, val)
+}
+
+/**
+* GetLast
+* @param kind, tag string
+* @return int
+**/
+func (s *series) GetLast(kind, tag string) int {
+	tg := fmt.Sprintf("%s:%s", kind, tag)
+	return LastSerie(s.db, tg)
 }
