@@ -102,9 +102,11 @@ func (c *Model) Changue(current et.Json, linq *Linq) *Linq {
 }
 
 /**
-*	Prepare command data
+*	prepareInsertData consolidates and validates insert data without
+*	running the pre-check SELECT. Used internally by commandInsert so
+*	that duplicate detection is delegated to ON CONFLICT in the SQL.
 **/
-func (c *Linq) PrepareInsert() (et.Items, error) {
+func (c *Linq) prepareInsertData() error {
 	model := c.from[0].model
 	model.Consolidate(c)
 	c.idT = "-1"
@@ -112,8 +114,21 @@ func (c *Linq) PrepareInsert() (et.Items, error) {
 
 	for _, validate := range c.validates {
 		if err := validate.Col.Valid(validate.Value); err != nil {
-			return et.Items{}, err
+			return err
 		}
+	}
+
+	return nil
+}
+
+/**
+*	PrepareInsert consolidates data, validates required fields, and runs a
+*	pre-check SELECT to detect existing records. Kept for backward compatibility.
+*	@return et.Items, error
+**/
+func (c *Linq) PrepareInsert() (et.Items, error) {
+	if err := c.prepareInsertData(); err != nil {
+		return et.Items{}, err
 	}
 
 	result, err := c.Current()

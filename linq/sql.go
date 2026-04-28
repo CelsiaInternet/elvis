@@ -482,6 +482,14 @@ func (c *Linq) SqlInsert() string {
 
 	c.sql = strs.Format("INSERT INTO %s(%s)\nVALUES (%s)", model.Table, fields, values)
 
+	if len(model.PrimaryKeys) > 0 {
+		var conflictCols string
+		for _, pk := range model.PrimaryKeys {
+			conflictCols = strs.Append(conflictCols, strs.Uppcase(pk), ", ")
+		}
+		c.sql = strs.Append(c.sql, strs.Format(`ON CONFLICT (%s) DO NOTHING`, conflictCols), "\n")
+	}
+
 	c.SqlReturn()
 
 	c.sql = strs.Format(`%s;`, c.sql)

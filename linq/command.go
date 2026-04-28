@@ -68,20 +68,13 @@ func (c *Linq) Go() (et.Item, error) {
 }
 
 /**
-* Exec
+* commandInsert uses ON CONFLICT DO NOTHING in the SQL so duplicate
+* detection is atomic and requires only one round-trip to the database.
+* result.Ok == false means the record already existed (conflict).
 **/
 func (c *Linq) commandInsert() (et.Items, error) {
-	currents, err := c.PrepareInsert()
-	if err != nil {
+	if err := c.prepareInsertData(); err != nil {
 		return et.Items{}, err
-	}
-
-	if currents.Count > 0 {
-		return et.Items{
-			Ok:     false,
-			Count:  currents.Count,
-			Result: currents.Result,
-		}, nil
 	}
 
 	result, err := c.insert()
@@ -90,11 +83,11 @@ func (c *Linq) commandInsert() (et.Items, error) {
 	}
 
 	if !result.Ok {
-		return et.Items{}, nil
+		return et.Items{Ok: false, Count: 0}, nil
 	}
 
 	return et.Items{
-		Ok:     result.Ok,
+		Ok:     true,
 		Count:  1,
 		Result: []et.Json{result.Result},
 	}, nil
