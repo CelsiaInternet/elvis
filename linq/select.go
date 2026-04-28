@@ -149,12 +149,17 @@ func (s *Linq) Count() int {
 }
 
 func (s *Linq) List(page, rows int) (et.List, error) {
-	all := s.Count()
+	offset := (page - 1) * rows
+	s.sql = s.SqlOffsetWithCount(rows, offset)
 
-	items, err := s.Page(page, rows)
+	items, total, err := s.queryWithCount()
 	if err != nil {
 		return et.List{}, err
 	}
 
-	return items.ToList(all, page, rows), nil
+	for _, data := range items.Result {
+		s.Details(&data)
+	}
+
+	return items.ToList(total, page, rows), nil
 }

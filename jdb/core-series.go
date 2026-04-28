@@ -126,24 +126,6 @@ func NextSerie(db *DB, tag string) int64 {
 
 	sql := `SELECT core.nextserie($1) AS SERIE;`
 
-	if db.dm != nil {
-		rows, err := db.dm.Query(sql, tag)
-		if err != nil {
-			logs.Error("jdb", err)
-			return 0
-		}
-		defer rows.Close()
-
-		item := rowsItem(rows)
-		if !item.Ok {
-			return 0
-		}
-
-		result := item.Int64("serie")
-
-		return result
-	}
-
 	items, err := db.Query(sql, tag)
 	if err != nil {
 		logs.Error("jdb", err)
@@ -155,9 +137,7 @@ func NextSerie(db *DB, tag string) int64 {
 		return 0
 	}
 
-	result := item.Int64("serie")
-
-	return result
+	return item.Int64("serie")
 }
 
 /**

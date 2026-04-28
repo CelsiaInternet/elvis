@@ -90,6 +90,7 @@ type Linq struct {
 	Tp        int
 	Act       int
 	db        *jdb.DB
+	tx        *jdb.Tx
 	_select   []*Column
 	from      []*FRom
 	where     []*Where
@@ -108,6 +109,8 @@ type Linq struct {
 	debug     bool
 	sql       string
 	idT       string
+	refJoins  map[string]string
+	rawJoins  []string
 }
 
 /**
@@ -136,6 +139,8 @@ func NewLinq(act int, model *Model, as ...string) *Linq {
 		data:      et.Json{},
 		new:       &et.Json{},
 		as:        1,
+		refJoins:  make(map[string]string),
+		rawJoins:  []string{},
 	}
 }
 

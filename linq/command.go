@@ -1,6 +1,8 @@
 package linq
 
 import (
+	"context"
+
 	"github.com/celsiainternet/elvis/et"
 )
 
@@ -105,24 +107,45 @@ func (c *Linq) commandUpdate() (et.Items, error) {
 		return et.Items{}, err
 	}
 
+	if currents.Count == 0 {
+		return result, nil
+	}
+
+	tx, err := c.db.BeginTx(context.Background())
+	if err != nil {
+		return et.Items{}, err
+	}
+	c.tx = tx
+
+	rollback := func() {
+		tx.Rollback()
+		c.tx = nil
+	}
+
 	model := c.from[0].model
 	for _, current := range currents.Result {
 		model.Changue(current, c)
 		if c.change {
 			item, err := c.update(current)
 			if err != nil {
+				rollback()
 				return et.Items{}, err
-			} else {
-				result.Result = append(result.Result, item.Result)
-				result.Ok = true
-				result.Count++
 			}
+			result.Result = append(result.Result, item.Result)
+			result.Ok = true
+			result.Count++
 		} else {
 			result.Result = append(result.Result, current)
 			result.Ok = true
 			result.Count++
 		}
 	}
+
+	if err := tx.Commit(); err != nil {
+		rollback()
+		return et.Items{}, err
+	}
+	c.tx = nil
 
 	return result, nil
 }
@@ -134,16 +157,37 @@ func (c *Linq) commandDelete() (et.Items, error) {
 		return et.Items{}, err
 	}
 
+	if currents.Count == 0 {
+		return result, nil
+	}
+
+	tx, err := c.db.BeginTx(context.Background())
+	if err != nil {
+		return et.Items{}, err
+	}
+	c.tx = tx
+
+	rollback := func() {
+		tx.Rollback()
+		c.tx = nil
+	}
+
 	for _, current := range currents.Result {
 		item, err := c.delete(current)
 		if err != nil {
+			rollback()
 			return et.Items{}, err
-		} else {
-			result.Result = append(result.Result, item.Result)
-			result.Ok = true
-			result.Count++
 		}
+		result.Result = append(result.Result, item.Result)
+		result.Ok = true
+		result.Count++
 	}
+
+	if err := tx.Commit(); err != nil {
+		rollback()
+		return et.Items{}, err
+	}
+	c.tx = nil
 
 	return result, nil
 }

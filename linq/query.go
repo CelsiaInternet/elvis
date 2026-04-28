@@ -14,6 +14,13 @@ func (c *Linq) command() (et.Items, error) {
 		logs.Debug(c.sql)
 	}
 
+	if c.tx != nil {
+		if c.Tp == TpData {
+			return c.tx.CommandSource(SourceField.Upp(), c.sql)
+		}
+		return c.tx.Command(c.sql)
+	}
+
 	if c.Tp == TpData {
 		result, err := c.db.CommandSource(SourceField.Upp(), c.sql)
 		if err != nil {
@@ -77,4 +84,21 @@ func (c *Linq) queryCount() int {
 	}
 
 	return item.Int("count")
+}
+
+/**
+* queryWithCount executes a query that includes COUNT(*) OVER() AS _total
+* and returns items plus the total count in a single round-trip.
+* @return et.Items, int, error
+**/
+func (c *Linq) queryWithCount() (et.Items, int, error) {
+	if c.debug {
+		logs.Debug(c.sql)
+	}
+
+	if c.Tp == TpData {
+		return c.db.SourceWithTotal("_total", SourceField.Upp(), c.sql)
+	}
+
+	return c.db.QueryWithTotal("_total", c.sql)
 }

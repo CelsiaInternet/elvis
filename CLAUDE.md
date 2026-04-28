@@ -25,6 +25,24 @@ go build -o bin/create ./cmd/create
 go build -o bin/jdb ./cmd/jdb
 ```
 
+## Code style
+
+### Comments
+
+All doc comments for functions, methods, and types must use this block style:
+
+```go
+/**
+* FunctionName: Brief description.
+* @param paramName type
+* @return type
+**/
+```
+
+- Use `@param` for each parameter and `@return` for the return value(s).
+- Inline comments inside function bodies stay as `//`.
+- Never use single-line `//` doc comments above a function or type declaration.
+
 ## Architecture Overview
 
 **elvis** is a Go library (`github.com/celsiainternet/elvis`) providing infrastructure primitives for building microservices. It is not an application—it is a shared library consumed by other services.
@@ -32,6 +50,7 @@ go build -o bin/jdb ./cmd/jdb
 ### Core Data Types (`et/`)
 
 The `et` package is the foundation used throughout the library:
+
 - `et.Json` — `map[string]interface{}` with rich accessor methods (`.Str()`, `.Int()`, `.Bool()`, `.Key()`, etc.)
 - `et.Item` — single result with `Ok bool` and `Result et.Json`
 - `et.Items` — paginated result set with `Ok`, `Count`, `Result []et.Json`
@@ -42,6 +61,7 @@ The `et` package is the foundation used throughout the library:
 ### Database Layer (`jdb/`)
 
 Multi-driver database abstraction supporting **PostgreSQL**, **MySQL**, and **Oracle**:
+
 - `jdb.DB` is the main connection struct wrapping `database/sql`
 - `jdb.Load()` / `jdb.LoadTo(dbname)` — connect using env vars (`DB_DRIVER`, `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_APPLICATION_NAME`)
 - `InitCore()` initializes three internal tables: series (auto-increment sequences), records (audit), and recycling (soft deletes)
@@ -51,6 +71,7 @@ Multi-driver database abstraction supporting **PostgreSQL**, **MySQL**, and **Or
 ### ORM / Query Builder (`linq/`)
 
 LINQ-style query builder that sits on top of `jdb`:
+
 - `linq.Schema` — maps to a PostgreSQL schema (calls `CREATE SCHEMA IF NOT EXISTS`)
 - `linq.Model` — maps to a table; defined with typed `Column` fields
 - `linq.Linq` — fluent query builder with `From()`, `Where()`, `And()`, `Or()`, `OrderBy()`, `GroupBy()`, `Returns()`
@@ -62,6 +83,7 @@ LINQ-style query builder that sits on top of `jdb`:
 ### Cache (`cache/`)
 
 Redis client wrapper using `go-redis/v9`:
+
 - `cache.Load()` — singleton connect using `REDIS_HOST`, `REDIS_PASSWORD`, `REDIS_DB`
 - Supports pub/sub via `cache/pubsub.go`
 - `cache.GenKey(parts...)` — builds cache keys
@@ -73,6 +95,7 @@ Thread-safe in-memory store with TTL support, initialized automatically via `ini
 ### Event System (`event/`)
 
 Dual-mode event system:
+
 - **Local events** (in-process): `event.On(channel, handler)` / `event.Emit(channel, data)` via `EventEmiter`
 - **Distributed events** (NATS): `event.Stack(channel, handler)` / `event.Publish(channel, data)` via NATS connection (`NATS_HOST`, `NATS_USER`, `NATS_PASSWORD`)
 - `event.Stack` re-registers the handler automatically on reconnect; use it for reset/sync subscriptions
@@ -88,6 +111,7 @@ Dual-mode event system:
 ### HTTP Router (`router/`, `response/`)
 
 Built on **go-chi/chi v5**:
+
 - Route registration helpers: `router.PublicRoute()`, `router.ProtectRoute()` (requires auth), `router.EphemeralRoute()`, `router.AuthorizationRoute()` (auth + permissions), `router.With()` (custom middleware)
 - All routes automatically publish themselves to the API Gateway via NATS (`apigateway/set/resolve`)
 - `response` package provides HTTP helpers: `ITEM`, `ITEMS`, `JSON`, `HTTPError`, `HTTPAlert`, `Unauthorized`, `Forbidden`, `Stream` (streaming paginated JSON)
@@ -96,6 +120,7 @@ Built on **go-chi/chi v5**:
 ### RPC (`jrpc/`)
 
 TCP-based RPC for inter-service calls using Go's `net/rpc`; Redis is used only to store package/solver registrations:
+
 - `jrpc.Load(name)` — initialize package with service name; registers host/port from `RPC_HOST`/`RPC_PORT`
 - `jrpc.Mount(services)` — registers a struct's exported methods as RPC endpoints; method keys are `<package>.<Struct>.<Method>` (exactly 3 dot-separated parts)
 - `jrpc.Call()`, `CallJson()`, `CallItem()`, `CallItems()`, `CallList()`, `CallPermitios()` — typed call helpers that dispatch to the right TCP host via Redis-stored solver registry
@@ -104,42 +129,42 @@ TCP-based RPC for inter-service calls using Go's `net/rpc`; Redis is used only t
 
 ### Other Packages
 
-| Package | Purpose |
-|---|---|
-| `envar/` | Environment variable helpers (`GetStr`, `GetInt`, `GetBool`, `SetStr`, etc.); auto-loads `.env` via `godotenv` |
-| `logs/` | Structured logging with levels (Log, Logf, Alert, Debug, Panic) |
-| `strs/` | String utilities (Uppcase, Lowcase, Format, Append, DaskSpace, etc.) |
-| `utility/` | General utilities: UUID, OTP, validation, crypto, password hashing, ID generation |
-| `config/` | Application config loading |
-| `health/` | Health check endpoint helpers |
-| `resilience/` | Retry/resilience pattern; `resilience.Add()` wraps any function with automatic retries; env vars `RESILIENCE_TOTAL_ATTEMPTS` (default 3) and `RESILIENCE_TIME_ATTEMPTS` (seconds, default 30) |
-| `workflow/` | Multi-step workflow orchestration with rollback support and conditional expressions |
-| `instances/` | Persistent service/workflow instance registry backed by a `linq` model in the database |
-| `request/` | HTTP client utilities for outbound calls (GET, POST, PUT, DELETE with TLS support) |
-| `race/` | Concurrency race helpers |
-| `dt/` | Data transfer object utilities |
-| `reg/` | ID registry helpers |
-| `service/` | HTTP service client |
-| `console/` | Low-level internal logging (used by other elvis packages; prefer `logs/` in application code) |
-| `timezone/` | Timezone parsing and conversion helpers |
-| `stdrout/` | Standard output / terminal rendering |
-| `crontab/` | Cron job scheduling wrapper (`robfig/cron/v3`) |
-| `create/v1`, `create/v2` | CLI scaffolding for new microservice projects |
-| `cmd/create`, `cmd/jdb` | CLI entry points |
+| Package                  | Purpose                                                                                                                                                                                       |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `envar/`                 | Environment variable helpers (`GetStr`, `GetInt`, `GetBool`, `SetStr`, etc.); auto-loads `.env` via `godotenv`                                                                                |
+| `logs/`                  | Structured logging with levels (Log, Logf, Alert, Debug, Panic)                                                                                                                               |
+| `strs/`                  | String utilities (Uppcase, Lowcase, Format, Append, DaskSpace, etc.)                                                                                                                          |
+| `utility/`               | General utilities: UUID, OTP, validation, crypto, password hashing, ID generation                                                                                                             |
+| `config/`                | Application config loading                                                                                                                                                                    |
+| `health/`                | Health check endpoint helpers                                                                                                                                                                 |
+| `resilience/`            | Retry/resilience pattern; `resilience.Add()` wraps any function with automatic retries; env vars `RESILIENCE_TOTAL_ATTEMPTS` (default 3) and `RESILIENCE_TIME_ATTEMPTS` (seconds, default 30) |
+| `workflow/`              | Multi-step workflow orchestration with rollback support and conditional expressions                                                                                                           |
+| `instances/`             | Persistent service/workflow instance registry backed by a `linq` model in the database                                                                                                        |
+| `request/`               | HTTP client utilities for outbound calls (GET, POST, PUT, DELETE with TLS support)                                                                                                            |
+| `race/`                  | Concurrency race helpers                                                                                                                                                                      |
+| `dt/`                    | Data transfer object utilities                                                                                                                                                                |
+| `reg/`                   | ID registry helpers                                                                                                                                                                           |
+| `service/`               | HTTP service client                                                                                                                                                                           |
+| `console/`               | Low-level internal logging (used by other elvis packages; prefer `logs/` in application code)                                                                                                 |
+| `timezone/`              | Timezone parsing and conversion helpers                                                                                                                                                       |
+| `stdrout/`               | Standard output / terminal rendering                                                                                                                                                          |
+| `crontab/`               | Cron job scheduling wrapper (`robfig/cron/v3`)                                                                                                                                                |
+| `create/v1`, `create/v2` | CLI scaffolding for new microservice projects                                                                                                                                                 |
+| `cmd/create`, `cmd/jdb`  | CLI entry points                                                                                                                                                                              |
 
 ### Key Environment Variables
 
-| Variable | Used By | Default |
-|---|---|---|
-| `DB_DRIVER` | jdb | — |
-| `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` | jdb | — |
-| `DB_APPLICATION_NAME` | jdb | `elvis` |
-| `USE_CORE` | jdb | `true` |
-| `REDIS_HOST`, `REDIS_PASSWORD`, `REDIS_DB` | cache | — |
-| `NATS_HOST`, `NATS_USER`, `NATS_PASSWORD` | event | — |
-| `SECRET` | claim | `"1977"` |
-| `HOST`, `RPC_HOST`, `RPC_PORT` | jrpc | `localhost`, `4200` |
-| `PIPE_HOST` | jrpc | — |
-| `AUTHORIZATION_METHOD` | router/middleware | — |
-| `RESILIENCE_TOTAL_ATTEMPTS` | resilience | `3` |
-| `RESILIENCE_TIME_ATTEMPTS` | resilience | `30` (seconds) |
+| Variable                                                  | Used By           | Default             |
+| --------------------------------------------------------- | ----------------- | ------------------- |
+| `DB_DRIVER`                                               | jdb               | —                   |
+| `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` | jdb               | —                   |
+| `DB_APPLICATION_NAME`                                     | jdb               | `elvis`             |
+| `USE_CORE`                                                | jdb               | `true`              |
+| `REDIS_HOST`, `REDIS_PASSWORD`, `REDIS_DB`                | cache             | —                   |
+| `NATS_HOST`, `NATS_USER`, `NATS_PASSWORD`                 | event             | —                   |
+| `SECRET`                                                  | claim             | `"1977"`            |
+| `HOST`, `RPC_HOST`, `RPC_PORT`                            | jrpc              | `localhost`, `4200` |
+| `PIPE_HOST`                                               | jrpc              | —                   |
+| `AUTHORIZATION_METHOD`                                    | router/middleware | —                   |
+| `RESILIENCE_TOTAL_ATTEMPTS`                               | resilience        | `3`                 |
+| `RESILIENCE_TIME_ATTEMPTS`                                | resilience        | `30` (seconds)      |

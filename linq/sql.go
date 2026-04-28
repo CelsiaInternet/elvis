@@ -1,6 +1,8 @@
 package linq
 
 import (
+	"strings"
+
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/strs"
 )
@@ -237,6 +239,38 @@ func (c *Linq) SqlFrom() string {
 }
 
 /**
+* addRefJoin registers a LEFT JOIN for a TpReference/TpCaption column (if not
+* already registered) and returns the alias assigned to the joined table.
+* @param col *Column
+* @return string
+**/
+func (c *Linq) addRefJoin(col *Column) string {
+	fkey := strs.Uppcase(col.Reference.Fkey)
+	refKey := strs.Uppcase(col.Reference.Key)
+	refTable := col.Reference.Reference.Model.Table
+	mapKey := strs.Format(`%s.%s.%s`, refTable, fkey, refKey)
+
+	if as, ok := c.refJoins[mapKey]; ok {
+		return as
+	}
+
+	from := c.GetFrom(col)
+	as := strs.Format(`R%s`, c.GetAs())
+
+	joinSQL := strs.Format(
+		`LEFT JOIN %s AS %s ON %s.%s = %s.%s`,
+		refTable, as,
+		as, refKey,
+		from.As(), fkey,
+	)
+
+	c.refJoins[mapKey] = as
+	c.rawJoins = append(c.rawJoins, joinSQL)
+
+	return as
+}
+
+/**
 * SqlJoin
 **/
 func (c *Linq) SqlJoin() string {
@@ -246,6 +280,10 @@ func (c *Linq) SqlJoin() string {
 		def := strs.Append(join.join.model.Table, join.join.as, " AS ")
 		def = strs.Format(`%s %s ON %s`, join.kind, def, where)
 		result = strs.Append(result, def, "\n")
+	}
+
+	for _, raw := range c.rawJoins {
+		result = strs.Append(result, raw, "\n")
 	}
 
 	c.sql = strs.Append(c.sql, result, "\n")
@@ -340,6 +378,22 @@ func (c *Linq) SqlLimit(limit int) string {
 **/
 func (c *Linq) SqlOffset(limit, offset int) string {
 	c.SqlSelect()
+
+	result := strs.Format(`LIMIT %d OFFSET %d;`, limit, offset)
+
+	c.sql = strs.Append(c.sql, result, "\n")
+
+	return c.sql
+}
+
+/**
+* SqlOffsetWithCount builds the same query as SqlOffset but injects
+* COUNT(*) OVER() AS _total so total and page data come in one round-trip.
+**/
+func (c *Linq) SqlOffsetWithCount(limit, offset int) string {
+	c.SqlSelect()
+
+	c.sql = strings.Replace(c.sql, "SELECT ", "SELECT COUNT(*) OVER() AS _total, ", 1)
 
 	result := strs.Format(`LIMIT %d OFFSET %d;`, limit, offset)
 

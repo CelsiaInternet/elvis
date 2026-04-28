@@ -33,7 +33,6 @@ type DB struct {
 	UseCore     bool
 	channels    map[string]HandlerListend
 	db          *sql.DB
-	dm          *sql.DB
 }
 
 /**
@@ -41,12 +40,7 @@ type DB struct {
 * @return error
 **/
 func (c *DB) Close() error {
-	err := c.db.Close()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return c.db.Close()
 }
 
 /**

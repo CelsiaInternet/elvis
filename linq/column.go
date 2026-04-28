@@ -358,13 +358,15 @@ func (c *Column) Def(linq *Linq) string {
 		case TpClone:
 			return c.As(linq)
 		case TpReference:
+			joinAs := linq.addRefJoin(c)
+			colRef := strs.Format(`%s.%s`, joinAs, c.Reference.Reference.Up())
 			Fkey := strs.Append(from.As(), c.Reference.Fkey, ".")
-			def := c.As(linq)
-			def = strs.Format(`jsonb_build_object('_id', %s, 'name', %s)`, Fkey, def)
+			def := strs.Format(`jsonb_build_object('_id', %s, 'name', %s)`, Fkey, colRef)
 			return strs.Format(`'%s', %s`, c.Title, def)
 		case TpCaption:
-			def := c.As(linq)
-			return strs.Format(`'%s', %s`, c.Title, def)
+			joinAs := linq.addRefJoin(c)
+			colRef := strs.Format(`%s.%s`, joinAs, c.Reference.Reference.Up())
+			return strs.Format(`'%s', %s`, c.Title, colRef)
 		case TpDetail:
 			def := et.Unquote(c.Default)
 			return strs.Format(`'%s', %s`, c.Low(), def)
@@ -391,11 +393,13 @@ func (c *Column) Def(linq *Linq) string {
 	case TpClone:
 		return strs.Append(strs.Uppcase(c.from), c.Up(), ".")
 	case TpReference:
-		def := c.As(linq)
-		return strs.Format(`%s AS %s`, def, strs.Uppcase(c.Title))
+		joinAs := linq.addRefJoin(c)
+		colRef := strs.Format(`%s.%s`, joinAs, c.Reference.Reference.Up())
+		return strs.Format(`%s AS %s`, colRef, strs.Uppcase(c.Title))
 	case TpCaption:
-		def := c.As(linq)
-		return strs.Format(`%s AS %s`, def, strs.Uppcase(c.Title))
+		joinAs := linq.addRefJoin(c)
+		colRef := strs.Format(`%s.%s`, joinAs, c.Reference.Reference.Up())
+		return strs.Format(`%s AS %s`, colRef, strs.Uppcase(c.Title))
 	case TpDetail:
 		def := et.Unquote(c.Default)
 		return strs.Format(`%v AS %s`, def, c.Up())

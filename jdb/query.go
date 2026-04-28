@@ -244,3 +244,45 @@ func (d *DB) BulckContext(ctx context.Context, sql string, args ...any) error {
 func (d *DB) Bulck(sql string, args ...any) error {
 	return d.BulckContext(context.Background(), sql, args...)
 }
+
+/**
+* QueryWithTotal runs a query that includes COUNT(*) OVER() AS <totalField>,
+* strips that column from each row, and returns items + total count.
+* @param ctx context.Context, totalField string, sql string, args ...any
+* @return et.Items, int, error
+**/
+func (d *DB) QueryWithTotalContext(ctx context.Context, totalField, sql string, args ...any) (et.Items, int, error) {
+	rows, err := d.queryContext(ctx, sql, args...)
+	if err != nil {
+		return et.Items{}, 0, err
+	}
+	defer rows.Close()
+
+	items, total := rowsItemsWithTotal(rows, totalField)
+	return items, total, nil
+}
+
+func (d *DB) QueryWithTotal(totalField, sql string, args ...any) (et.Items, int, error) {
+	return d.QueryWithTotalContext(context.Background(), totalField, sql, args...)
+}
+
+/**
+* SourceWithTotal runs a query that includes COUNT(*) OVER() AS <totalField>,
+* extracts the JSONB source field per row, and returns items + total count.
+* @param ctx context.Context, totalField string, sourceField string, sql string, args ...any
+* @return et.Items, int, error
+**/
+func (d *DB) SourceWithTotalContext(ctx context.Context, totalField, sourceField, sql string, args ...any) (et.Items, int, error) {
+	rows, err := d.queryContext(ctx, sql, args...)
+	if err != nil {
+		return et.Items{}, 0, err
+	}
+	defer rows.Close()
+
+	items, total := sourceItemsWithTotal(rows, totalField, sourceField)
+	return items, total, nil
+}
+
+func (d *DB) SourceWithTotal(totalField, sourceField, sql string, args ...any) (et.Items, int, error) {
+	return d.SourceWithTotalContext(context.Background(), totalField, sourceField, sql, args...)
+}
