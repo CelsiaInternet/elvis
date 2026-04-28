@@ -1,6 +1,7 @@
 package jdb
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"strings"
@@ -91,16 +92,16 @@ func SQLParse(sql string, args ...any) string {
 }
 
 /**
-* query
-* @param db *DB, sql string, args ...any
+* queryContext
+* @param ctx context.Context, sql string, args ...any
 * @return *sql.Rows, error
 **/
-func (s *DB) query(sql string, args ...any) (*sql.Rows, error) {
+func (s *DB) queryContext(ctx context.Context, sql string, args ...any) (*sql.Rows, error) {
 	if s == nil {
 		return nil, logs.Alertf(msg.NOT_CONNECT_DB)
 	}
 
-	rows, err := s.db.Query(sql, args...)
+	rows, err := s.db.QueryContext(ctx, sql, args...)
 	if err != nil {
 		event.Publish(EVENT_SQL_ERROR, et.Json{
 			"db_name": s.Dbname,
@@ -123,26 +124,26 @@ func (s *DB) query(sql string, args ...any) (*sql.Rows, error) {
 }
 
 /**
-* Ddl
-* @param sql string, args ...any
+* DdlContext
+* @param ctx context.Context, sql string, args ...any
 * @return error
 **/
-func (d *DB) Ddl(sql string, args ...any) error {
-	_, err := d.query(sql, args...)
-	if err != nil {
-		return err
-	}
+func (d *DB) DdlContext(ctx context.Context, sql string, args ...any) error {
+	_, err := d.queryContext(ctx, sql, args...)
+	return err
+}
 
-	return nil
+func (d *DB) Ddl(sql string, args ...any) error {
+	return d.DdlContext(context.Background(), sql, args...)
 }
 
 /**
-* Query
-* @param sql string, args ...any
+* QueryContext
+* @param ctx context.Context, sql string, args ...any
 * @return et.Items, error
 **/
-func (d *DB) Query(sql string, args ...any) (et.Items, error) {
-	rows, err := d.query(sql, args...)
+func (d *DB) QueryContext(ctx context.Context, sql string, args ...any) (et.Items, error) {
+	rows, err := d.queryContext(ctx, sql, args...)
 	if err != nil {
 		return et.Items{}, err
 	}
@@ -151,13 +152,17 @@ func (d *DB) Query(sql string, args ...any) (et.Items, error) {
 	return rowsItems(rows), nil
 }
 
+func (d *DB) Query(sql string, args ...any) (et.Items, error) {
+	return d.QueryContext(context.Background(), sql, args...)
+}
+
 /**
-* QueryOne
-* @param sql string, args ...any
+* QueryOneContext
+* @param ctx context.Context, sql string, args ...any
 * @return et.Item, error
 **/
-func (d *DB) QueryOne(sql string, args ...any) (et.Item, error) {
-	result, err := d.Query(sql, args...)
+func (d *DB) QueryOneContext(ctx context.Context, sql string, args ...any) (et.Item, error) {
+	result, err := d.QueryContext(ctx, sql, args...)
 	if err != nil {
 		return et.Item{}, err
 	}
@@ -165,13 +170,17 @@ func (d *DB) QueryOne(sql string, args ...any) (et.Item, error) {
 	return result.First(), nil
 }
 
+func (d *DB) QueryOne(sql string, args ...any) (et.Item, error) {
+	return d.QueryOneContext(context.Background(), sql, args...)
+}
+
 /**
-* Source
-* @param sourceField string, sql string, args ...any
+* SourceContext
+* @param ctx context.Context, sourceField string, sql string, args ...any
 * @return et.Items, error
 **/
-func (d *DB) Source(sourceField string, sql string, args ...any) (et.Items, error) {
-	rows, err := d.query(sql, args...)
+func (d *DB) SourceContext(ctx context.Context, sourceField string, sql string, args ...any) (et.Items, error) {
+	rows, err := d.queryContext(ctx, sql, args...)
 	if err != nil {
 		return et.Items{}, err
 	}
@@ -180,13 +189,17 @@ func (d *DB) Source(sourceField string, sql string, args ...any) (et.Items, erro
 	return sourceItems(rows, sourceField), nil
 }
 
+func (d *DB) Source(sourceField string, sql string, args ...any) (et.Items, error) {
+	return d.SourceContext(context.Background(), sourceField, sql, args...)
+}
+
 /**
-* Command
-* @param sql string, args ...any
+* CommandContext
+* @param ctx context.Context, sql string, args ...any
 * @return et.Items, error
 **/
-func (d *DB) Command(sql string, args ...any) (et.Items, error) {
-	rows, err := d.query(sql, args...)
+func (d *DB) CommandContext(ctx context.Context, sql string, args ...any) (et.Items, error) {
+	rows, err := d.queryContext(ctx, sql, args...)
 	if err != nil {
 		return et.Items{}, err
 	}
@@ -195,13 +208,17 @@ func (d *DB) Command(sql string, args ...any) (et.Items, error) {
 	return rowsItems(rows), nil
 }
 
+func (d *DB) Command(sql string, args ...any) (et.Items, error) {
+	return d.CommandContext(context.Background(), sql, args...)
+}
+
 /**
-* CommandSource
-* @param sourceField string, sql string, args ...any
+* CommandSourceContext
+* @param ctx context.Context, sourceField string, sql string, args ...any
 * @return et.Items, error
 **/
-func (d *DB) CommandSource(sourceField string, sql string, args ...any) (et.Items, error) {
-	rows, err := d.query(sql, args...)
+func (d *DB) CommandSourceContext(ctx context.Context, sourceField string, sql string, args ...any) (et.Items, error) {
+	rows, err := d.queryContext(ctx, sql, args...)
 	if err != nil {
 		return et.Items{}, err
 	}
@@ -210,16 +227,20 @@ func (d *DB) CommandSource(sourceField string, sql string, args ...any) (et.Item
 	return sourceItems(rows, sourceField), nil
 }
 
+func (d *DB) CommandSource(sourceField string, sql string, args ...any) (et.Items, error) {
+	return d.CommandSourceContext(context.Background(), sourceField, sql, args...)
+}
+
 /**
-* Bulck
-* @param sql string, args ...any
+* BulckContext
+* @param ctx context.Context, sql string, args ...any
 * @return error
 **/
-func (d *DB) Bulck(sql string, args ...any) error {
-	_, err := d.query(sql, args...)
-	if err != nil {
-		return err
-	}
+func (d *DB) BulckContext(ctx context.Context, sql string, args ...any) error {
+	_, err := d.queryContext(ctx, sql, args...)
+	return err
+}
 
-	return nil
+func (d *DB) Bulck(sql string, args ...any) error {
+	return d.BulckContext(context.Background(), sql, args...)
 }
