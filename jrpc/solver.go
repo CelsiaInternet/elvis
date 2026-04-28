@@ -3,8 +3,10 @@ package jrpc
 import (
 	"fmt"
 	"slices"
+	"strconv"
 	"strings"
 
+	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/logs"
 )
 
@@ -15,6 +17,14 @@ type Solver struct {
 	Method      string   `json:"method"`
 	Inputs      []string `json:"inputs"`
 	Output      []string `json:"outputs"`
+}
+
+var (
+	pipeHost string
+)
+
+func init() {
+	pipeHost = envar.GetStr("", "PIPE_HOST")
 }
 
 /**
@@ -36,22 +46,30 @@ func Mount(services any) error {
 * @return error
 **/
 func UnMount(host, name string) error {
-	routers, err := getRouters()
+	packages, err := getPackages()
 	if err != nil {
 		return logs.Alert(err)
 	}
 
-	idx := slices.IndexFunc(routers, func(e *Package) bool { return e.Name == name && e.Host == host })
+	idx := slices.IndexFunc(packages, func(e *Package) bool { return e.Name == name && e.Host == host })
 	if idx != -1 {
-		routers = append(routers[:idx], routers[idx+1:]...)
+		packages = append(packages[:idx], packages[idx+1:]...)
 	}
 
-	err = setRoutes(routers)
+	err = setPackages(packages)
 	if err != nil {
 		return logs.Alert(err)
 	}
 
 	return nil
+}
+
+/**
+* SetPipeHost
+* @param host string
+**/
+func SetPipeHost(host string) {
+	pipeHost = host
 }
 
 /**
@@ -62,23 +80,45 @@ func UnMount(host, name string) error {
 **/
 func GetSolver(method string) (*Solver, error) {
 	method = strings.TrimSpace(method)
-	routers, err := getRouters()
+	methodList := strings.Split(method, ".")
+	if len(methodList) != 3 {
+		return nil, fmt.Errorf(ERR_METHOD_NAME_INVALID, method)
+	}
+
+	if pipeHost != "" {
+		pipeParam := strings.Split(pipeHost, ":")
+		if len(pipeParam) != 2 {
+			return nil, fmt.Errorf("PIPE_HOST format is invalid <host>:<port>")
+		}
+
+		pHost := pipeParam[0]
+		pPort, err := strconv.Atoi(pipeParam[1])
+		if err != nil {
+			return nil, fmt.Errorf("PIPE_HOST port is invalid")
+		}
+		result := &Solver{
+			PackageName: methodList[0],
+			Host:        pHost,
+			Port:        pPort,
+			Method:      method,
+			Inputs:      []string{},
+			Output:      []string{},
+		}
+		return result, nil
+	}
+
+	packages, err := getPackages()
 	if err != nil {
 		return nil, err
 	}
 
-	lst := strings.Split(method, ".")
-	if len(lst) != 3 {
-		return nil, fmt.Errorf(ERR_METHOD_NAME_INVALID, method)
-	}
-
-	packageName := lst[0]
-	idx := slices.IndexFunc(routers, func(e *Package) bool { return e.Name == packageName })
+	packageName := methodList[0]
+	idx := slices.IndexFunc(packages, func(e *Package) bool { return e.Name == packageName })
 	if idx == -1 {
 		return nil, fmt.Errorf(ERR_METHOD_NOT_FOUND, method)
 	}
 
-	router := routers[idx]
+	router := packages[idx]
 	solver := router.Solvers[method]
 
 	if solver == nil {

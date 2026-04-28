@@ -37,14 +37,16 @@ The `et` package is the foundation used throughout the library:
 - `et.Items` — paginated result set with `Ok`, `Count`, `Result []et.Json`
 - `et.List` — list with pagination metadata (rows, all, count, page, start, end)
 - `et.Any` — generic value wrapper with typed conversion methods
+- `et.MapBool` — `map[string]bool` used for permission maps; implements `ToString()`
 
 ### Database Layer (`jdb/`)
 
 Multi-driver database abstraction supporting **PostgreSQL**, **MySQL**, and **Oracle**:
 - `jdb.DB` is the main connection struct wrapping `database/sql`
-- `jdb.Load()` / `jdb.LoadTo(dbname)` — connect using env vars (`DB_DRIVER`, `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`)
+- `jdb.Load()` / `jdb.LoadTo(dbname)` — connect using env vars (`DB_DRIVER`, `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_APPLICATION_NAME`)
 - `InitCore()` initializes three internal tables: series (auto-increment sequences), records (audit), and recycling (soft deletes)
 - `USE_CORE=true` env var controls whether core tables are initialized on connect
+- `jdb.NextSerie(db, tag)` / `jdb.NextCode(db, tag, prefix)` — generate sequential numbers and prefixed codes (e.g. `"USR000001"`)
 
 ### ORM / Query Builder (`linq/`)
 
@@ -55,6 +57,7 @@ LINQ-style query builder that sits on top of `jdb`:
 - Column types: `TpColumn` (real column), `TpAtrib` (JSONB sub-key), `TpReference` (foreign lookup), `TpCaption`, `TpDetail`, `TpFunction`, `TpClone`, `TpField`
 - Default special fields: `_DATA` (JSONB source), `DATE_MAKE`, `DATE_UPDATE`, `INDEX` (series), `CODE`, `PROJECT_ID`, `_STATE`, `_IDT`
 - Two query modes: `TpData` (returns JSONB-built object) vs standard row query
+- Triggers: `linq.BeforeInsert`, `AfterInsert`, `BeforeUpdate`, `AfterUpdate`, `BeforeDelete`, `AfterDelete`
 
 ### Cache (`cache/`)
 
@@ -72,6 +75,7 @@ Thread-safe in-memory store with TTL support, initialized automatically via `ini
 Dual-mode event system:
 - **Local events** (in-process): `event.On(channel, handler)` / `event.Emit(channel, data)` via `EventEmiter`
 - **Distributed events** (NATS): `event.Stack(channel, handler)` / `event.Publish(channel, data)` via NATS connection (`NATS_HOST`, `NATS_USER`, `NATS_PASSWORD`)
+- `event.Stack` re-registers the handler automatically on reconnect; use it for reset/sync subscriptions
 
 ### Authentication & Authorization (`claim/`, `middleware/`)
 
@@ -79,6 +83,7 @@ Dual-mode event system:
 - `claim.NewToken()` / `claim.ValidToken()` — JWT generation and validation; tokens stored in Redis for invalidation
 - `SECRET` env var is the JWT signing key (defaults to `"1977"`)
 - Middleware stack in `middleware/`: `Autentication` (JWT validation), `Authorization` (permission check via jRPC), `Ephemeral` (short-lived tokens), `Cors`, `Logger`, `RequestId`, `Recoverer`, `Telemetry`
+- `claim.ClientId(r)`, `claim.GetClient(r)` — extract identity from authenticated requests
 
 ### HTTP Router (`router/`, `response/`)
 
@@ -86,11 +91,15 @@ Built on **go-chi/chi v5**:
 - Route registration helpers: `router.PublicRoute()`, `router.ProtectRoute()` (requires auth), `router.EphemeralRoute()`, `router.AuthorizationRoute()` (auth + permissions), `router.With()` (custom middleware)
 - All routes automatically publish themselves to the API Gateway via NATS (`apigateway/set/resolve`)
 - `response` package provides HTTP helpers: `ITEM`, `ITEMS`, `JSON`, `HTTPError`, `HTTPAlert`, `Unauthorized`, `Forbidden`, `Stream` (streaming paginated JSON)
+- `response.GetBody(r)` — parses request body as `et.Json`; `response.GetQuery(r)` — query params; `response.GetParam(r, key)` — chi URL params
 
 ### RPC (`jrpc/`)
 
-Redis-based RPC mechanism for inter-service calls:
+TCP-based RPC for inter-service calls using Go's `net/rpc`; Redis is used only to store package/solver registrations:
 - `jrpc.Load(name)` — initialize package with service name; registers host/port from `RPC_HOST`/`RPC_PORT`
+- `jrpc.Mount(services)` — registers a struct's exported methods as RPC endpoints; method keys are `<package>.<Struct>.<Method>` (exactly 3 dot-separated parts)
+- `jrpc.Call()`, `CallJson()`, `CallItem()`, `CallItems()`, `CallList()`, `CallPermitios()` — typed call helpers that dispatch to the right TCP host via Redis-stored solver registry
+- `PIPE_HOST` env var (`host:port`) overrides solver lookup and routes all RPC calls through a single proxy host
 - Used by the authorization middleware to call `AUTHORIZATION_METHOD` env var
 
 ### Other Packages
@@ -103,13 +112,18 @@ Redis-based RPC mechanism for inter-service calls:
 | `utility/` | General utilities: UUID, OTP, validation, crypto, password hashing, ID generation |
 | `config/` | Application config loading |
 | `health/` | Health check endpoint helpers |
-| `resilience/` | Retry/resilience pattern with configurable attempts and backoff |
-| `workflow/` | Multi-step workflow execution |
+| `resilience/` | Retry/resilience pattern; `resilience.Add()` wraps any function with automatic retries; env vars `RESILIENCE_TOTAL_ATTEMPTS` (default 3) and `RESILIENCE_TIME_ATTEMPTS` (seconds, default 30) |
+| `workflow/` | Multi-step workflow orchestration with rollback support and conditional expressions |
+| `instances/` | Persistent service/workflow instance registry backed by a `linq` model in the database |
+| `request/` | HTTP client utilities for outbound calls (GET, POST, PUT, DELETE with TLS support) |
 | `race/` | Concurrency race helpers |
 | `dt/` | Data transfer object utilities |
 | `reg/` | ID registry helpers |
 | `service/` | HTTP service client |
-| `crontab/` | Cron job scheduling wrapper |
+| `console/` | Low-level internal logging (used by other elvis packages; prefer `logs/` in application code) |
+| `timezone/` | Timezone parsing and conversion helpers |
+| `stdrout/` | Standard output / terminal rendering |
+| `crontab/` | Cron job scheduling wrapper (`robfig/cron/v3`) |
 | `create/v1`, `create/v2` | CLI scaffolding for new microservice projects |
 | `cmd/create`, `cmd/jdb` | CLI entry points |
 
@@ -119,9 +133,13 @@ Redis-based RPC mechanism for inter-service calls:
 |---|---|---|
 | `DB_DRIVER` | jdb | — |
 | `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` | jdb | — |
+| `DB_APPLICATION_NAME` | jdb | `elvis` |
 | `USE_CORE` | jdb | `true` |
 | `REDIS_HOST`, `REDIS_PASSWORD`, `REDIS_DB` | cache | — |
 | `NATS_HOST`, `NATS_USER`, `NATS_PASSWORD` | event | — |
 | `SECRET` | claim | `"1977"` |
 | `HOST`, `RPC_HOST`, `RPC_PORT` | jrpc | `localhost`, `4200` |
+| `PIPE_HOST` | jrpc | — |
 | `AUTHORIZATION_METHOD` | router/middleware | — |
+| `RESILIENCE_TOTAL_ATTEMPTS` | resilience | `3` |
+| `RESILIENCE_TIME_ATTEMPTS` | resilience | `30` (seconds) |

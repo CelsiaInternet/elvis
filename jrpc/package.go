@@ -107,19 +107,19 @@ func (s *Package) Start() error {
 * @return error
 **/
 func (s *Package) Save() error {
-	routers, err := getRouters()
+	packages, err := getPackages()
 	if err != nil {
 		return err
 	}
 
-	idx := slices.IndexFunc(routers, func(e *Package) bool { return e.Host == s.Host && e.Name == s.Name })
+	idx := slices.IndexFunc(packages, func(e *Package) bool { return e.Host == s.Host && e.Name == s.Name })
 	if idx == -1 {
-		routers = append(routers, s)
+		packages = append(packages, s)
 	} else {
-		routers[idx] = s
+		packages[idx] = s
 	}
 
-	err = setRoutes(routers)
+	err = setPackages(packages)
 	if err != nil {
 		return err
 	}
@@ -128,13 +128,13 @@ func (s *Package) Save() error {
 }
 
 /**
-* getRouters
-* @return []*Router
+* getPackages
+* @return []*Package
 * @return error
 **/
-func getRouters() ([]*Package, error) {
-	routers := make([]*Package, 0)
-	bt, err := json.Marshal(routers)
+func getPackages() ([]*Package, error) {
+	packages := make([]*Package, 0)
+	bt, err := json.Marshal(packages)
 	if err != nil {
 		return nil, err
 	}
@@ -144,21 +144,21 @@ func getRouters() ([]*Package, error) {
 		return nil, err
 	}
 
-	err = json.Unmarshal([]byte(str), &routers)
+	err = json.Unmarshal([]byte(str), &packages)
 	if err != nil {
 		return nil, err
 	}
 
-	return routers, nil
+	return packages, nil
 }
 
 /**
-* setRoutes
-* @param routers []*Router
+* setPackages
+* @param packages []*Package
 * @return error
 **/
-func setRoutes(routers []*Package) error {
-	bt, err := json.Marshal(routers)
+func setPackages(packages []*Package) error {
+	bt, err := json.Marshal(packages)
 	if err != nil {
 		return err
 	}

@@ -24,6 +24,32 @@ type JsonD struct {
 	Value interface{}
 }
 
+type JAny interface {
+	ToString() string
+}
+
+type MapBool map[string]bool
+
+/**
+* ToJson
+* @return Json
+**/
+func (s MapBool) ToJson() Json {
+	result := Json{}
+	for k, v := range s {
+		result[k] = v
+	}
+	return result
+}
+
+/**
+* ToString
+* @return string
+**/
+func (s MapBool) ToString() string {
+	return s.ToJson().ToString()
+}
+
 type Json map[string]interface{}
 
 func JsonToArrayJson(src map[string]interface{}) ([]Json, error) {

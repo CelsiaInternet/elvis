@@ -2,6 +2,7 @@ package request
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
@@ -10,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/celsiainternet/elvis/et"
@@ -24,6 +26,23 @@ var (
 		"DELETE":  true,
 		"PATCH":   true,
 		"OPTIONS": true,
+	}
+
+	defaultTransport = &http.Transport{
+		MaxIdleConns:        100,
+		MaxIdleConnsPerHost: 10,
+		IdleConnTimeout:     90 * time.Second,
+	}
+
+	defaultClient = &http.Client{
+		Timeout:   30 * time.Second,
+		Transport: defaultTransport,
+	}
+
+	bufPool = sync.Pool{
+		New: func() interface{} {
+			return new(bytes.Buffer)
+		},
 	}
 )
 
@@ -232,11 +251,9 @@ func bodyParams(header, body et.Json) []byte {
 }
 
 /**
-* Http
-* @param method, url string, header, body et.Json
-* @return *Body, Status
+* httpDo executes an HTTP request with context and buffer pool support.
 **/
-func Http(method, url string, header, body et.Json, tlsConfig *tls.Config) (*Body, Status) {
+func httpDo(ctx context.Context, method, url string, header, body et.Json, tlsConfig *tls.Config) (*Body, Status) {
 	if _, ok := methods[method]; !ok {
 		return nil, Status{
 			Ok:      false,
@@ -246,12 +263,19 @@ func Http(method, url string, header, body et.Json, tlsConfig *tls.Config) (*Bod
 	}
 
 	var ioBody io.Reader
+	var buf *bytes.Buffer
 	if body != nil {
-		bodyParams := bodyParams(header, body)
-		ioBody = bytes.NewBuffer(bodyParams)
+		buf = bufPool.Get().(*bytes.Buffer)
+		buf.Reset()
+		buf.Write(bodyParams(header, body))
+		ioBody = buf
 	}
-	req, err := http.NewRequest(method, url, ioBody)
+
+	req, err := http.NewRequestWithContext(ctx, method, url, ioBody)
 	if err != nil {
+		if buf != nil {
+			bufPool.Put(buf)
+		}
 		return nil, Status{
 			Ok:      false,
 			Code:    http.StatusBadRequest,
@@ -263,14 +287,23 @@ func Http(method, url string, header, body et.Json, tlsConfig *tls.Config) (*Bod
 		req.Header.Set(k, v.(string))
 	}
 
-	client := &http.Client{}
+	client := defaultClient
 	if tlsConfig != nil {
-		client.Transport = &http.Transport{
-			TLSClientConfig: tlsConfig,
+		client = &http.Client{
+			Timeout: defaultClient.Timeout,
+			Transport: &http.Transport{
+				TLSClientConfig:     tlsConfig,
+				MaxIdleConns:        defaultTransport.MaxIdleConns,
+				MaxIdleConnsPerHost: defaultTransport.MaxIdleConnsPerHost,
+				IdleConnTimeout:     defaultTransport.IdleConnTimeout,
+			},
 		}
 	}
 
 	res, err := client.Do(req)
+	if buf != nil {
+		bufPool.Put(buf)
+	}
 	if err != nil {
 		return nil, Status{
 			Ok:      false,
@@ -294,6 +327,24 @@ func Http(method, url string, header, body et.Json, tlsConfig *tls.Config) (*Bod
 		Code:    res.StatusCode,
 		Message: res.Status,
 	}
+}
+
+/**
+* Http
+* @param method, url string, header, body et.Json
+* @return *Body, Status
+**/
+func Http(method, url string, header, body et.Json, tlsConfig *tls.Config) (*Body, Status) {
+	return httpDo(context.Background(), method, url, header, body, tlsConfig)
+}
+
+/**
+* HttpCtx executes an HTTP request honoring the provided context for cancellation and deadlines.
+* @param ctx context.Context, method, url string, header, body et.Json
+* @return *Body, Status
+**/
+func HttpCtx(ctx context.Context, method, url string, header, body et.Json, tlsConfig *tls.Config) (*Body, Status) {
+	return httpDo(ctx, method, url, header, body, tlsConfig)
 }
 
 /**
