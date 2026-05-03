@@ -23,10 +23,14 @@ func ConnectTo(host, password string, dbname int) (*Conn, error) {
 		return nil, fmt.Errorf(msg.MSG_ATRIB_REQUIRED, "redist_host")
 	}
 
+	poolSize := envar.GetInt(10, "REDIS_POOL_SIZE")
+	minIdle := envar.GetInt(2, "REDIS_MIN_IDLE_CONNS")
 	client := redis.NewClient(&redis.Options{
-		Addr:     host,
-		Password: password,
-		DB:       dbname,
+		Addr:         host,
+		Password:     password,
+		DB:           dbname,
+		PoolSize:     poolSize,
+		MinIdleConns: minIdle,
 	})
 
 	ctx := context.Background()

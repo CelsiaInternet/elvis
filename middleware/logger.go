@@ -7,11 +7,16 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"sync"
 	"time"
 
 	"github.com/celsiainternet/elvis/claim"
 	lg "github.com/celsiainternet/elvis/stdrout"
 )
+
+var bufPool = sync.Pool{
+	New: func() interface{} { return new(bytes.Buffer) },
+}
 
 var (
 	// LogEntryCtxKey is the context.Context key to store the request log entry.
@@ -107,10 +112,12 @@ type DefaultLogFormatter struct {
 
 // NewLogEntry creates a new LogEntry for the request.
 func (l *DefaultLogFormatter) NewLogEntry(r *http.Request) LogEntry {
+	buf := bufPool.Get().(*bytes.Buffer)
+	buf.Reset()
 	entry := &defaultLogEntry{
 		DefaultLogFormatter: l,
 		request:             r,
-		buf:                 &bytes.Buffer{},
+		buf:                 buf,
 	}
 
 	reqID := GetReqID(r.Context())
@@ -165,6 +172,9 @@ func (l *defaultLogEntry) Write(status, bytes int, header http.Header, elapsed t
 	}
 
 	l.Logger.Print(l.buf.String())
+	l.buf.Reset()
+	bufPool.Put(l.buf)
+	l.buf = nil
 }
 
 func (l *defaultLogEntry) Panic(v interface{}, stack []byte) {

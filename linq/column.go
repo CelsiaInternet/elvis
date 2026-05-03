@@ -306,23 +306,11 @@ func (c *Column) As(linq *Linq) string {
 	case TpClone:
 		return strs.Append(strs.Uppcase(c.from), c.Up(), ".")
 	case TpReference:
-		from := linq.GetFrom(c)
-		as := linq.GetAs()
-		as = strs.Format(`A%s`, as)
-		fn := strs.Format(`%s.%s`, as, c.Reference.Reference.Up())
-		fm := strs.Format(`%s AS %s`, c.Reference.Reference.Model.Table, as)
-		key := strs.Format(`%s.%s`, as, c.Reference.Key)
-		Fkey := strs.Append(from.As(), c.Reference.Fkey, ".")
-		return strs.Format(`(SELECT %s FROM %s WHERE %s=%v LIMIT 1)`, fn, fm, key, Fkey)
+		joinAs := linq.addRefJoin(c)
+		return strs.Format(`%s.%s`, joinAs, c.Reference.Reference.Up())
 	case TpCaption:
-		from := linq.GetFrom(c)
-		as := linq.GetAs()
-		as = strs.Format(`A%s`, as)
-		fn := strs.Format(`%s.%s`, as, c.Reference.Reference.Up())
-		fm := strs.Format(`%s AS %s`, c.Reference.Reference.Model.Table, as)
-		key := strs.Format(`%s.%s`, as, c.Reference.Key)
-		Fkey := strs.Append(from.As(), c.Reference.Fkey, ".")
-		return strs.Format(`(SELECT %s FROM %s WHERE %s=%v LIMIT 1)`, fn, fm, key, Fkey)
+		joinAs := linq.addRefJoin(c)
+		return strs.Format(`%s.%s`, joinAs, c.Reference.Reference.Up())
 	case TpDetail:
 		return strs.Format(`%v`, et.Unquote(c.Default))
 	case TpFunction:

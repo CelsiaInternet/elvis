@@ -8,6 +8,7 @@ import (
 
 	"github.com/celsiainternet/elvis/cache"
 	"github.com/celsiainternet/elvis/envar"
+	"github.com/celsiainternet/elvis/mem"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/timezone"
@@ -324,6 +325,11 @@ func ValidToken(token string) (*Claim, error) {
 	}
 
 	key := GetTokenKey(result.App, result.Device, result.ID)
+	localKey := "claim:" + key
+	if cached, err := mem.Get(localKey, ""); err == nil && cached == token {
+		return result, nil
+	}
+
 	val, err := cache.Get(key, "")
 	if err != nil {
 		return nil, err
@@ -331,9 +337,11 @@ func ValidToken(token string) (*Claim, error) {
 
 	if val != token {
 		cache.Delete(key)
+		mem.Del(localKey)
 		return nil, err
 	}
 
+	mem.Set(localKey, token, 10)
 	return result, nil
 }
 

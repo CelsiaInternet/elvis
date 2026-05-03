@@ -1,15 +1,21 @@
 package workflow
 
 import (
+	"bytes"
 	"encoding/json"
 	"os"
 	"slices"
+	"sync"
 	"time"
 
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/event"
 	"github.com/celsiainternet/elvis/logs"
 )
+
+var flowBufPool = sync.Pool{
+	New: func() interface{} { return new(bytes.Buffer) },
+}
 
 type TpConsistency string
 
@@ -77,12 +83,17 @@ func newFlow(tag, version, name, description string, fn FnContext, stop bool, cr
 * @return ([]byte, error)
 **/
 func (s *Flow) serialize() ([]byte, error) {
-	bt, err := json.Marshal(s)
+	buf := flowBufPool.Get().(*bytes.Buffer)
+	buf.Reset()
+	err := json.NewEncoder(buf).Encode(s)
 	if err != nil {
+		flowBufPool.Put(buf)
 		return nil, err
 	}
-
-	return bt, nil
+	result := make([]byte, buf.Len())
+	copy(result, buf.Bytes())
+	flowBufPool.Put(buf)
+	return result, nil
 }
 
 /**
@@ -90,17 +101,18 @@ func (s *Flow) serialize() ([]byte, error) {
 * @return et.Json
 **/
 func (s *Flow) ToJson() et.Json {
-	bt, err := s.serialize()
-	if err != nil {
+	buf := flowBufPool.Get().(*bytes.Buffer)
+	buf.Reset()
+	if err := json.NewEncoder(buf).Encode(s); err != nil {
+		flowBufPool.Put(buf)
 		return et.Json{}
 	}
-
 	var result et.Json
-	err = json.Unmarshal(bt, &result)
+	err := json.Unmarshal(buf.Bytes(), &result)
+	flowBufPool.Put(buf)
 	if err != nil {
 		return et.Json{}
 	}
-
 	return result
 }
 

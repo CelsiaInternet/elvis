@@ -50,8 +50,8 @@ const ROWS = 30
 const QUEUE_STACK = "stack"
 
 var ping = 0
-var locks = make(map[string]*sync.RWMutex)
-var count = make(map[string]int64)
+var locks sync.Map // map[string]*sync.RWMutex — replaced to eliminate unbounded map growth
+var count sync.Map // map[string]int64
 
 /**
 * AppWait
@@ -101,31 +101,24 @@ func GetPassword(length int) string {
 * @return int
 **/
 func More(tag string, expiration time.Duration) int64 {
-	lock := locks[tag]
-	if lock == nil {
-		lock = &sync.RWMutex{}
-		locks[tag] = lock
-	}
+	actual, _ := locks.LoadOrStore(tag, &sync.RWMutex{})
+	lock := actual.(*sync.RWMutex)
 
 	lock.Lock()
 	defer lock.Unlock()
 
-	n, ok := count[tag]
-	if !ok {
-		n = 0
-	} else {
-		n++
+	var n int64
+	if v, ok := count.Load(tag); ok {
+		n = v.(int64) + 1
 	}
-	count[tag] = 0
-
-	clean := func() {
-		delete(count, tag)
-		delete(locks, tag)
-	}
+	count.Store(tag, int64(0))
 
 	duration := expiration * time.Second
 	if duration != 0 {
-		go time.AfterFunc(duration, clean)
+		go time.AfterFunc(duration, func() {
+			count.Delete(tag)
+			locks.Delete(tag)
+		})
 	}
 
 	return n

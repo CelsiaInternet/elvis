@@ -2,22 +2,24 @@ package race
 
 import (
 	"fmt"
-	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/celsiainternet/elvis/utility"
 )
 
+type valueContainer struct {
+	v interface{}
+}
+
 type Value struct {
-	value interface{}
-	mutex sync.RWMutex
+	ptr atomic.Pointer[valueContainer]
 }
 
 func NewValue(value interface{}) *Value {
-	return &Value{
-		value: value,
-		mutex: sync.RWMutex{},
-	}
+	r := &Value{}
+	r.ptr.Store(&valueContainer{v: value})
+	return r
 }
 
 /**
@@ -25,20 +27,14 @@ func NewValue(value interface{}) *Value {
 * @param interface{}
 **/
 func (s *Value) Set(value interface{}) {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
-	s.value = value
+	s.ptr.Store(&valueContainer{v: value})
 }
 
 /**
 * Delete: Delete value
 **/
 func (s *Value) Delete() {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
-	s.value = nil
+	s.ptr.Store(nil)
 }
 
 /**
@@ -46,10 +42,11 @@ func (s *Value) Delete() {
 * @return interface{}
 **/
 func (s *Value) Get() interface{} {
-	s.mutex.RLock()
-	defer s.mutex.RUnlock()
-
-	return s.value
+	c := s.ptr.Load()
+	if c == nil {
+		return nil
+	}
+	return c.v
 }
 
 /**
@@ -235,10 +232,22 @@ func (s *Value) Range(f func(key, value interface{}) bool) {
 }
 
 func (s *Value) Increase(n int) {
-	switch v := s.Get().(type) {
-	case int:
-		s.Set(v + n)
-	case float64:
-		s.Set(v + float64(n))
+	for {
+		old := s.ptr.Load()
+		if old == nil {
+			return
+		}
+		var newV interface{}
+		switch v := old.v.(type) {
+		case int:
+			newV = v + n
+		case float64:
+			newV = v + float64(n)
+		default:
+			return
+		}
+		if s.ptr.CompareAndSwap(old, &valueContainer{v: newV}) {
+			return
+		}
 	}
 }

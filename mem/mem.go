@@ -12,8 +12,8 @@ import (
 )
 
 type Mem struct {
+	mu    sync.RWMutex
 	items map[string]*Item
-	locks map[string]*sync.RWMutex
 }
 
 var conn *Mem
@@ -21,10 +21,11 @@ var conn *Mem
 func Load() (*Mem, error) {
 	result := &Mem{
 		items: make(map[string]*Item),
-		locks: make(map[string]*sync.RWMutex),
 	}
 
 	logs.Logf("Mem", "Load memory cache")
+
+	go result.sweeper()
 
 	return result, nil
 }
@@ -42,17 +43,39 @@ func init() {
 	}
 }
 
-/**
-* lock return a lock
-* @param tag string
-* @return *sync.RWMutex
-**/
-func (c *Mem) lock(tag string) *sync.RWMutex {
-	if c.locks[tag] == nil {
-		c.locks[tag] = &sync.RWMutex{}
-	}
+// sweeper runs a single goroutine that expires items instead of spawning one
+// goroutine per Set call. It wakes every second, collects expired keys under a
+// read lock, then removes them under a write lock with a fresh expiry check to
+// avoid evicting a key that was just refreshed between the two lock windows.
+func (c *Mem) sweeper() {
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+	for range ticker.C {
+		now := time.Now()
+		var expired []string
 
-	return c.locks[tag]
+		c.mu.RLock()
+		for key, item := range c.items {
+			if !item.expiry.IsZero() && now.After(item.expiry) {
+				expired = append(expired, key)
+			}
+		}
+		c.mu.RUnlock()
+
+		if len(expired) == 0 {
+			continue
+		}
+
+		c.mu.Lock()
+		for _, key := range expired {
+			if item, ok := c.items[key]; ok {
+				if !item.expiry.IsZero() && time.Now().After(item.expiry) {
+					delete(c.items, key)
+				}
+			}
+		}
+		c.mu.Unlock()
+	}
 }
 
 /**
@@ -71,9 +94,8 @@ func (c *Mem) Type() string {
 * @return string
 **/
 func (c *Mem) Set(key string, value string, expiration time.Duration) string {
-	lock := c.lock(key)
-	lock.Lock()
-	defer lock.Unlock()
+	c.mu.Lock()
+	defer c.mu.Unlock()
 
 	item, ok := c.items[key]
 	if ok {
@@ -83,13 +105,10 @@ func (c *Mem) Set(key string, value string, expiration time.Duration) string {
 		c.items[key] = item
 	}
 
-	clean := func() {
-		c.Del(key)
-	}
-
-	duration := expiration * time.Second
-	if duration != 0 {
-		go time.AfterFunc(duration, clean)
+	if expiration > 0 {
+		item.expiry = time.Now().Add(expiration * time.Second)
+	} else {
+		item.expiry = time.Time{}
 	}
 
 	return value
@@ -101,9 +120,8 @@ func (c *Mem) Set(key string, value string, expiration time.Duration) string {
 * @return string, error
 **/
 func (c *Mem) Get(key, def string) (string, error) {
-	lock := c.lock(key)
-	lock.RLock()
-	defer lock.RUnlock()
+	c.mu.RLock()
+	defer c.mu.RUnlock()
 
 	if item, ok := c.items[key]; ok {
 		return item.Str(), nil
@@ -118,9 +136,8 @@ func (c *Mem) Get(key, def string) (string, error) {
 * @return bool
 **/
 func (c *Mem) Del(key string) bool {
-	lock := c.lock(key)
-	lock.Lock()
-	defer lock.Unlock()
+	c.mu.Lock()
+	defer c.mu.Unlock()
 
 	if _, ok := c.items[key]; !ok {
 		return false
@@ -135,38 +152,54 @@ func (c *Mem) Del(key string) bool {
 * More
 * @param key string
 * @param expiration time.Duration
-* @return int
+* @return int64
 **/
 func (c *Mem) More(key string, expiration time.Duration) int64 {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	item, ok := c.items[key]
 	if !ok {
-		c.Set(key, "0", expiration)
+		newItem := New(key, "0")
+		if expiration > 0 {
+			newItem.expiry = time.Now().Add(expiration * time.Second)
+		}
+		c.items[key] = newItem
 		return 0
-	} else {
-		result := item.Int64() + 1
-		str := strconv.FormatInt(result, 10)
-		c.Set(key, str, expiration)
-		return result
 	}
+
+	result := item.Int64() + 1
+	item.Value = strconv.FormatInt(result, 10)
+	item.Dateupdate = time.Now()
+	if expiration > 0 {
+		item.expiry = time.Now().Add(expiration * time.Second)
+	}
+
+	return result
 }
 
 /**
-* Clear
+* Clear removes all keys whose name contains the match substring.
+* The regexp is compiled once before the loop instead of per-key.
 * @param match string
 **/
 func (c *Mem) Clear(match string) {
-	matchPattern := func(substring, str string) bool {
-		pattern := fmt.Sprintf(".*%s.*", regexp.QuoteMeta(substring))
-		re, err := regexp.Compile(pattern)
-		if err != nil {
-			fmt.Println("Error compilando la expresión regular:", err)
-			return false
-		}
-		return re.MatchString(str)
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if match == "" {
+		c.items = make(map[string]*Item)
+		return
+	}
+
+	pattern := fmt.Sprintf(".*%s.*", regexp.QuoteMeta(match))
+	re, err := regexp.Compile(pattern)
+	if err != nil {
+		return
 	}
 
 	for key := range c.items {
-		if matchPattern(match, key) {
+		if re.MatchString(key) {
 			delete(c.items, key)
 		}
 	}
@@ -181,6 +214,9 @@ func (c *Mem) Empty() {
 * @return int
 **/
 func (c *Mem) Len() int {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
 	return len(c.items)
 }
 
@@ -189,6 +225,9 @@ func (c *Mem) Len() int {
 * @return []string
 **/
 func (c *Mem) Keys() []string {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
 	keys := make([]string, 0, len(c.items))
 
 	for key := range c.items {
@@ -203,11 +242,13 @@ func (c *Mem) Keys() []string {
 * @return []string
 **/
 func (c *Mem) Values() []string {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
 	values := make([]string, 0, len(c.items))
 
 	for _, item := range c.items {
-		str := item.Str()
-		values = append(values, str)
+		values = append(values, item.Str())
 	}
 
 	return values

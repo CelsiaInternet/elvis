@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 
 	"github.com/celsiainternet/elvis/cache"
@@ -9,6 +10,8 @@ import (
 	"github.com/celsiainternet/elvis/event"
 	"github.com/celsiainternet/elvis/utility"
 )
+
+var serviceTraceEnabled = os.Getenv("SERVICE_TRACE") != "false"
 
 // Type message
 type TpMessage int
@@ -94,13 +97,15 @@ func ServiceId(serviceId string, path string, context ...interface{}) string {
 		serviceId = utility.UUID()
 	}
 
-	event.Work("service/trace", et.Json{
-		"created_at":   utility.Now(),
-		"service_id":   serviceId,
-		"package_name": packageName,
-		"path":         path,
-		"context":      context,
-	})
+	if serviceTraceEnabled {
+		event.Work("service/trace", et.Json{
+			"created_at":   utility.Now(),
+			"service_id":   serviceId,
+			"package_name": packageName,
+			"path":         path,
+			"context":      context,
+		})
+	}
 
 	return serviceId
 }

@@ -3,6 +3,7 @@ package resilience
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"reflect"
 	"time"
 
@@ -43,11 +44,12 @@ type Instance struct {
 	Tags          et.Json         `json:"tags"`
 	Team          string          `json:"team"`
 	Level         string          `json:"level"`
-	stop          bool            `json:"-"`
-	err           error           `json:"-"`
-	fn            interface{}     `json:"-"`
-	fnArgs        []interface{}   `json:"-"`
-	fnResult      []reflect.Value `json:"-"`
+	stop        bool            `json:"-"`
+	err         error           `json:"-"`
+	fn          interface{}     `json:"-"`
+	fnArgs      []interface{}   `json:"-"`
+	fnArgsRefl  []reflect.Value `json:"-"` // pre-computed to avoid reflect.ValueOf per retry
+	fnResult    []reflect.Value `json:"-"`
 }
 
 /**
@@ -206,15 +208,10 @@ func (s *Instance) run() ([]reflect.Value, error) {
 	s.Attempt++
 	s.setStatus(StatusRunning)
 
-	argsValues := make([]reflect.Value, len(s.fnArgs))
-	for i, arg := range s.fnArgs {
-		argsValues[i] = reflect.ValueOf(arg)
-	}
-
 	var err error
 	var ok bool
 	fn := reflect.ValueOf(s.fn)
-	s.fnResult = fn.Call(argsValues)
+	s.fnResult = fn.Call(s.fnArgsRefl)
 	for _, r := range s.fnResult {
 		if r.Type().Implements(errorInterface) {
 			err, ok = r.Interface().(error)
@@ -247,12 +244,29 @@ func (s *Instance) done() {
 * runAttempt
 * @return error
 **/
-func (s *Instance) runAttempt() {
+// backoff returns the delay before the next retry attempt using exponential
+// backoff capped at 16x the base TimeAttempts, plus up to 25% random jitter
+// to avoid thundering herd when multiple instances fail simultaneously.
+func (s *Instance) backoff() time.Duration {
 	if s.TimeAttempts == 0 {
+		return 0
+	}
+	exp := s.Attempt
+	if exp > 4 {
+		exp = 4
+	}
+	dur := s.TimeAttempts * (1 << exp)
+	jitter := time.Duration(rand.Int63n(int64(dur)/4 + 1))
+	return dur + jitter
+}
+
+func (s *Instance) runAttempt() {
+	delay := s.backoff()
+	if delay == 0 {
 		return
 	}
 
-	time.AfterFunc(s.TimeAttempts, func() {
+	time.AfterFunc(delay, func() {
 		if s.Status != StatusDone && s.Attempt < s.TotalAttempts {
 			_, err := s.run()
 			if err != nil {

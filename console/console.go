@@ -13,13 +13,23 @@ import (
 	"github.com/celsiainternet/elvis/utility"
 )
 
+// logEvents gates NATS publishing per log call. Enabled by default; set
+// CONSOLE_LOG_EVENTS=false to disable for high-throughput environments.
+var logEvents = os.Getenv("CONSOLE_LOG_EVENTS") != "false"
+
+// rpcCallerEnabled gates runtime.Caller in Rpc(). Enabled by default; set
+// CONSOLE_RPC_CALLER=false to skip caller introspection in hot paths.
+var rpcCallerEnabled = os.Getenv("CONSOLE_RPC_CALLER") != "false"
+
 func printLn(kind string, color string, args ...any) {
 	stdrout.Printl(kind, color, args...)
 
-	event.Publish("logs", et.Json{
-		"kind":    kind,
-		"message": fmt.Sprint(args...),
-	})
+	if logEvents {
+		event.Publish("logs", et.Json{
+			"kind":    kind,
+			"message": fmt.Sprint(args...),
+		})
+	}
 }
 
 func LogK(kind string, args ...any) error {
@@ -43,11 +53,13 @@ func LogF(format string, args ...any) error {
 }
 
 func Rpc(args ...any) error {
-	pc, _, _, _ := runtime.Caller(1)
-	fullFuncName := runtime.FuncForPC(pc).Name()
-	funcName := fullFuncName[strings.LastIndex(fullFuncName, "/")+1:]
-	message := append([]any{funcName, ":"}, args...)
-	printLn("Rpc", "Blue", message...)
+	if rpcCallerEnabled {
+		pc, _, _, _ := runtime.Caller(1)
+		fullFuncName := runtime.FuncForPC(pc).Name()
+		funcName := fullFuncName[strings.LastIndex(fullFuncName, "/")+1:]
+		args = append([]any{funcName, ":"}, args...)
+	}
+	printLn("Rpc", "Blue", args...)
 
 	return nil
 }
