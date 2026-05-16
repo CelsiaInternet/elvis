@@ -168,7 +168,10 @@ func ConnectTo(params et.Json) (*DB, error) {
 	}
 	dbname := params.Str("dbname")
 	if dbname == "" {
-		return nil, logs.Errorf("ConnectTo", msg.MSG_ATRIB_REQUIRED, "dbname")
+		dbname = params.Str("service_name")
+		if dbname == "" {
+			return nil, logs.Errorf("ConnectTo", msg.MSG_ATRIB_REQUIRED, "dbname")
+		}
 	}
 
 	result, ok := dbs[dbname]
@@ -259,8 +262,8 @@ func ConnectTo(params et.Json) (*DB, error) {
 		return nil, err
 	}
 
-	maxOpen := envar.GetInt(5, "DB_POOL_MAX_OPEN")
-	maxIdle := envar.GetInt(2, "DB_POOL_MAX_IDLE")
+	maxOpen := envar.GetInt(3, "DB_POOL_MAX_OPEN")
+	maxIdle := envar.GetInt(1, "DB_POOL_MAX_IDLE")
 	connLifetime := envar.GetInt(30, "DB_POOL_CONN_LIFETIME")
 	connIdleTime := envar.GetInt(2, "DB_POOL_CONN_IDLE_TIME")
 
