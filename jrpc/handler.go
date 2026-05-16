@@ -6,18 +6,16 @@ import (
 	"net/http"
 	"net/rpc"
 	"slices"
+	"time"
 
+	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/jtls"
 	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/middleware"
 	"github.com/celsiainternet/elvis/response"
 	"github.com/celsiainternet/elvis/strs"
 )
-
-type Args struct {
-	TypeRequest string  `json:"type_request"`
-	Args        et.Json `json:"args"`
-}
 
 /**
 * GetRouters
@@ -63,6 +61,30 @@ func GetRouters() (et.Items, error) {
 func call(host string, port int, method string, args et.Json, result any) (*middleware.Metrics, error) {
 	metric := middleware.NewRpcMetric(method)
 	address := strs.Format(`%s:%d`, host, port)
+	if pipeHost == address {
+		token := envar.GetStr("", "PIPE_TOKEN")
+		args.Set("Authorization", fmt.Sprintf(`Bearer %s`, token))
+
+		pipePath := envar.GetStr("./.keys", "PIPE_PATH")
+		conn, err := jtls.Deal(pipePath, host, port, 365*24*time.Hour)
+		if err != nil {
+			metric.DoneRpc(err.Error())
+			return metric, err
+		}
+		defer conn.Close()
+
+		client := rpc.NewClient(conn)
+		defer client.Close()
+
+		err = client.Call(method, args, result)
+		if err != nil {
+			metric.DoneRpc(err.Error())
+			return metric, err
+		}
+
+		return metric, nil
+	}
+
 	client, err := rpc.Dial("tcp", address)
 	if err != nil {
 		metric.DoneRpc(err.Error())

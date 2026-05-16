@@ -35,6 +35,14 @@ type DB struct {
 	db          *sql.DB
 }
 
+var (
+	dbs map[string]*DB
+)
+
+func init() {
+	dbs = make(map[string]*DB)
+}
+
 /**
 * Close
 * @return error
@@ -84,16 +92,6 @@ func connectTo(driver, chain string) (*sql.DB, error) {
 	if err := db.Ping(); err != nil {
 		return nil, err
 	}
-
-	maxOpen := envar.GetInt(25, "DB_POOL_MAX_OPEN")
-	maxIdle := envar.GetInt(5, "DB_POOL_MAX_IDLE")
-	connLifetime := envar.GetInt(900, "DB_POOL_CONN_LIFETIME")
-	connIdleTime := envar.GetInt(300, "DB_POOL_CONN_IDLE_TIME")
-
-	db.SetMaxOpenConns(maxOpen)
-	db.SetMaxIdleConns(maxIdle)
-	db.SetConnMaxLifetime(time.Duration(connLifetime) * time.Second)
-	db.SetConnMaxIdleTime(time.Duration(connIdleTime) * time.Second)
 
 	return db, nil
 }
@@ -169,6 +167,14 @@ func ConnectTo(params et.Json) (*DB, error) {
 		return nil, logs.Errorf("ConnectTo", msg.MSG_ATRIB_REQUIRED, "port")
 	}
 	dbname := params.Str("dbname")
+	if dbname == "" {
+		return nil, logs.Errorf("ConnectTo", msg.MSG_ATRIB_REQUIRED, "dbname")
+	}
+
+	result, ok := dbs[dbname]
+	if ok {
+		return result, nil
+	}
 
 	var connStr string
 	switch driver {
@@ -220,11 +226,11 @@ func ConnectTo(params et.Json) (*DB, error) {
 			return nil, logs.Errorf("ConnectTo", msg.MSG_ATRIB_REQUIRED, "service_name")
 		}
 		ssl := params.Str("ssl")
-		if !utility.ValidIn(ssl, 0, []string{"TREU", "FALSE", "true", "false"}) {
+		if !utility.ValidIn(ssl, 0, []string{"TRUE", "FALSE", "true", "false"}) {
 			return nil, logs.Errorf("ConnectTo", msg.MSG_ATRIB_REQUIRED, "ssl (boolean)")
 		}
 		sslVerify := params.Str("ssl_verify")
-		if !utility.ValidIn(sslVerify, 0, []string{"TREU", "FALSE", "true", "false"}) {
+		if !utility.ValidIn(sslVerify, 0, []string{"TRUE", "FALSE", "true", "false"}) {
 			return nil, logs.Errorf("ConnectTo", msg.MSG_ATRIB_REQUIRED, "ssl_verify (boolean)")
 		}
 
@@ -253,6 +259,16 @@ func ConnectTo(params et.Json) (*DB, error) {
 		return nil, err
 	}
 
+	maxOpen := envar.GetInt(5, "DB_POOL_MAX_OPEN")
+	maxIdle := envar.GetInt(2, "DB_POOL_MAX_IDLE")
+	connLifetime := envar.GetInt(30, "DB_POOL_CONN_LIFETIME")
+	connIdleTime := envar.GetInt(2, "DB_POOL_CONN_IDLE_TIME")
+
+	db.SetMaxOpenConns(maxOpen)
+	db.SetMaxIdleConns(maxIdle)
+	db.SetConnMaxLifetime(time.Duration(connLifetime) * time.Minute)
+	db.SetConnMaxIdleTime(time.Duration(connIdleTime) * time.Minute)
+
 	err = db.Ping()
 	if err != nil {
 		return nil, err
@@ -260,7 +276,7 @@ func ConnectTo(params et.Json) (*DB, error) {
 
 	logs.Logf(driver, "Connected host:%s:%d", host, port)
 
-	return &DB{
+	result = &DB{
 		Driver:     driver,
 		Host:       host,
 		Port:       port,
@@ -269,5 +285,7 @@ func ConnectTo(params et.Json) (*DB, error) {
 		UseCore:    false,
 		channels:   make(map[string]HandlerListend),
 		db:         db,
-	}, nil
+	}
+	dbs[dbname] = result
+	return result, nil
 }
