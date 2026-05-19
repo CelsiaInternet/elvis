@@ -69,6 +69,16 @@ func Subscribe(channel string, f func(EvenMessage)) error {
 	publish(EVENT_SUBSCRIBED, et.Json{"channel": channel})
 	subscribe, err := conn.Subscribe(channel,
 		func(m *nats.Msg) {
+			defer func() {
+				if r := recover(); r != nil {
+					logs.Errorf("event", "panic in Subscribe channel:%s err:%v", channel, r)
+				}
+			}()
+
+			if m == nil {
+				return
+			}
+
 			msg, err := DecodeMessage(m.Data)
 			if err != nil {
 				logs.Error("event", err)
@@ -110,6 +120,16 @@ func Queue(channel, queue string, f func(EvenMessage)) error {
 
 	subscribe, err := conn.QueueSubscribe(channel, queue,
 		func(m *nats.Msg) {
+			defer func() {
+				if r := recover(); r != nil {
+					logs.Errorf("event", "panic in Queue channel:%s err:%v", channel, r)
+				}
+			}()
+
+			if m == nil {
+				return
+			}
+
 			msg, err := DecodeMessage(m.Data)
 			if err != nil {
 				logs.Error("event", err)

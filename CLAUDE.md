@@ -23,6 +23,11 @@ go mod tidy
 # Build CLI tools
 go build -o bin/create ./cmd/create
 go build -o bin/jdb ./cmd/jdb
+
+# Bump patch/minor/major version tag and push
+./version.sh --request   # patch: v1.0.X
+./version.sh --minor     # minor: v1.X.0
+./version.sh --major     # major: vX.0.0
 ```
 
 ## Code style
@@ -73,7 +78,8 @@ Multi-driver database abstraction supporting **PostgreSQL**, **MySQL**, and **Or
 LINQ-style query builder that sits on top of `jdb`:
 
 - `linq.Schema` — maps to a PostgreSQL schema (calls `CREATE SCHEMA IF NOT EXISTS`)
-- `linq.Model` — maps to a table; defined with typed `Column` fields
+- `linq.NewModel(schema, name, description, version)` — maps to a table; call `.DefineColum()`, `.DefinePrimaryKey()`, `.DefineIndex()` to configure, then `.Init()` to create the table in the DB
+- `linq.Mutation(schema, name, description, version)` — like `NewModel` but marks the model write-only (no queries)
 - `linq.Linq` — fluent query builder with `From()`, `Where()`, `And()`, `Or()`, `OrderBy()`, `GroupBy()`, `Returns()`
 - Column types: `TpColumn` (real column), `TpAtrib` (JSONB sub-key), `TpReference` (foreign lookup), `TpCaption`, `TpDetail`, `TpFunction`, `TpClone`, `TpField`
 - Default special fields: `_DATA` (JSONB source), `DATE_MAKE`, `DATE_UPDATE`, `INDEX` (series), `CODE`, `PROJECT_ID`, `_STATE`, `_IDT`
@@ -137,12 +143,14 @@ TCP-based RPC for inter-service calls using Go's `net/rpc`; Redis is used only t
 | `utility/`               | General utilities: UUID, OTP, validation, crypto, password hashing, ID generation                                                                                                             |
 | `config/`                | Application config loading                                                                                                                                                                    |
 | `health/`                | Health check endpoint helpers                                                                                                                                                                 |
-| `resilience/`            | Retry/resilience pattern; `resilience.Add()` wraps any function with automatic retries; env vars `RESILIENCE_TOTAL_ATTEMPTS` (default 3) and `RESILIENCE_TIME_ATTEMPTS` (seconds, default 30) |
-| `workflow/`              | Multi-step workflow orchestration with rollback support and conditional expressions                                                                                                           |
+| `resilience/`            | Retry/resilience pattern; `resilience.Add(id, tag, description, tags, team, level, fn, fnArgs...)` wraps any function with automatic retries; env vars `RESILIENCE_TOTAL_ATTEMPTS` (default 3) and `RESILIENCE_TIME_ATTEMPTS` (seconds, default 30) |
+| `workflow/`              | Multi-step workflow orchestration (`Flow`, `Step`, `FnContext`) with rollback support, conditional expressions, and configurable consistency (`strong`/`eventual`)                            |
 | `instances/`             | Persistent service/workflow instance registry backed by a `linq` model in the database                                                                                                        |
 | `request/`               | HTTP client utilities for outbound calls (GET, POST, PUT, DELETE with TLS support)                                                                                                            |
+| `jtls/`                  | Self-signed TLS certificate generation (`jtls.Create(certFile, keyFile, expire)`) used by services that need mTLS                                                                             |
+| `file/`                  | File system helpers: `MakeFolder`, `MakeFile`, `ReadFile`, `RemoveFile`, `ExistPath`, `ExtencionFile`                                                                                        |
 | `race/`                  | Concurrency race helpers                                                                                                                                                                      |
-| `dt/`                    | Data transfer object utilities                                                                                                                                                                |
+| `dt/`                    | Step-based resilience counter (`dt.Resilience`) and Redis-backed object cache (`dt.Object`)                                                                                                   |
 | `reg/`                   | ID registry helpers                                                                                                                                                                           |
 | `service/`               | HTTP service client                                                                                                                                                                           |
 | `console/`               | Low-level internal logging (used by other elvis packages; prefer `logs/` in application code)                                                                                                 |
@@ -168,3 +176,4 @@ TCP-based RPC for inter-service calls using Go's `net/rpc`; Redis is used only t
 | `AUTHORIZATION_METHOD`                                    | router/middleware | —                   |
 | `RESILIENCE_TOTAL_ATTEMPTS`                               | resilience        | `3`                 |
 | `RESILIENCE_TIME_ATTEMPTS`                                | resilience        | `30` (seconds)      |
+| `PRODUCTION`                                              | dt                | `true`              |
