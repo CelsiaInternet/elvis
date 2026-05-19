@@ -6,6 +6,7 @@ import (
 
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/response"
 	"github.com/celsiainternet/elvis/strs"
 	"github.com/celsiainternet/elvis/timezone"
@@ -132,14 +133,19 @@ func Queue(channel, queue string, f func(EvenMessage)) error {
 
 	publish(EVENT_SUBSCRIBED, et.Json{"channel": channel})
 
-	subscribe, err := conn.QueueSubscribe(
-		channel,
-		queue,
+	subscribe, err := conn.QueueSubscribe(channel, queue,
 		func(m *nats.Msg) {
 			msg, err := DecodeMessage(m.Data)
 			if err != nil {
 				return
 			}
+
+			jsonData, err := msg.ToJson()
+			if err != nil {
+				return
+			}
+
+			logs.Log("event", jsonData.ToString())
 
 			f(msg)
 		},
