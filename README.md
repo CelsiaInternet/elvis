@@ -77,7 +77,7 @@ Incluye:
 ```bash
 # En el módulo de tu proyecto
 go get github.com/celsiainternet/elvis@latest
-go get github.com/celsiainternet/elvis@v1.1.234
+go get github.com/celsiainternet/elvis@v1.1.235
 go run github.com/celsiainternet/elvis/cmd/install
 ```
 
@@ -469,18 +469,40 @@ event.Emit("usuario.creado", et.Json{"nombre": "Juan"})
 conn, err := event.Load()
 defer event.Close()
 
-// Suscribirse
+// Suscribirse (un consumidor por mensaje)
 err = event.Subscribe("pedido.nuevo", func(msg event.EvenMessage) {
     fmt.Println("Pedido:", msg.Data)
 })
 
-// Publicar
-event.Publish("pedido.nuevo", et.Json{"pedido_id": "123"})
+// Queue: reparto de carga entre múltiples instancias del mismo servicio
+err = event.Queue("pedido.nuevo", "mi-grupo", func(msg event.EvenMessage) {
+    fmt.Println("Pedido:", msg.Data)
+})
 
-// Stack: handler persistente que se re-registra tras reconexión
+// Stack: Queue con grupo fijo ("stack"); se re-registra automáticamente tras reconexión
 event.Stack("canal/reset", func(msg event.EvenMessage) {
     // re-sincronización
 })
+
+// Publicar
+event.Publish("pedido.nuevo", et.Json{"pedido_id": "123"})
+```
+
+> Los handlers de `Subscribe`, `Queue` y `Stack` están protegidos con `recover()`. Un panic dentro del handler se loguea como error en lugar de matar el goroutine de NATS.
+
+### Work y WorkState
+
+Utilidades para trazabilidad de tareas asíncronas:
+
+```go
+// Emite EVENT_WORK ("event:worker") y el evento propio del canal
+work := event.Work("factura.generar", et.Json{"factura_id": "F-001"})
+workId := work.Str("_id")
+
+// Actualizar estado de la tarea (emite EVENT_WORK_STATE)
+event.WorkState(workId, event.WorkStatusProcessing, et.Json{})
+event.WorkState(workId, event.WorkStatusCompleted, et.Json{"url": "..."})
+// Estados: WorkStatusPending, WorkStatusAccepted, WorkStatusProcessing, WorkStatusCompleted, WorkStatusFailed
 ```
 
 ---
@@ -760,6 +782,9 @@ result, err := workflow.Run(
 | `AUTHORIZATION_METHOD`      | router        | —           | Método RPC para verificar permisos                   |
 | `RESILIENCE_TOTAL_ATTEMPTS` | resilience    | `3`         | Intentos totales por operación                       |
 | `RESILIENCE_TIME_ATTEMPTS`  | resilience    | `30`        | Segundos entre reintentos                            |
+| `PIPE_HOST`                 | jrpc          | —           | `host:port` que enruta todas las llamadas RPC por un proxy único |
+| `STAGE`                     | event         | `local`     | Prefijo de entorno para canal pipe (`pipe:<stage>:<canal>`) |
+| `PRODUCTION`                | dt            | `true`      | Habilita persistencia en Redis del cache de objetos `dt.Object` |
 
 ---
 
@@ -802,14 +827,16 @@ elvis/
 │   ├── v1/         # Generador de proyectos v1
 │   └── v2/         # Generador de proyectos v2
 ├── crontab/        # Tareas programadas (cron)
-├── dt/             # Objetos de transferencia de datos
+├── dt/             # Contador de pasos por resiliencia y cache de objetos respaldado en Redis
 ├── envar/          # Helpers de variables de entorno
 ├── et/             # Tipos centrales: Json, Item, Items, List, Any
 ├── event/          # Eventos local (emitter) y distribuido (NATS)
 ├── file/           # Manejo de archivos
 ├── health/         # Health check helpers
+├── instances/      # Registro persistente de instancias de workflow/resiliencia en BD
 ├── jdb/            # Abstracción de base de datos (Postgres/MySQL/Oracle)
 ├── jrpc/           # RPC entre servicios vía Redis
+├── jtls/           # Generación de certificados TLS auto-firmados
 ├── linq/           # ORM / query builder
 ├── logs/           # Logging estructurado
 ├── mem/            # Cache in-memory con TTL
@@ -833,6 +860,15 @@ elvis/
 ## 🔔 Eventos del Sistema
 
 Eventos internos que emite la librería y a los que se puede suscribir:
+
+**Event / Workers**
+| Canal | Descripción |
+|---|---|
+| `event:worker` | Se disparó un trabajo (`event.Work`) |
+| `event:worker:state` | Cambio de estado de un trabajo (`event.WorkState`) |
+| `event:source` | Acción de modelo publicada (`event.Source`) |
+| `event:subscribed` | Nueva suscripción registrada |
+| `event:requests:overflow` | Desbordamiento de solicitudes |
 
 **Workflows**
 | Evento | Descripción |
