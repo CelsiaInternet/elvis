@@ -6,7 +6,6 @@ import (
 
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
-	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/response"
 	"github.com/celsiainternet/elvis/strs"
 	"github.com/celsiainternet/elvis/timezone"
@@ -75,7 +74,9 @@ func Subscribe(channel string, f func(EvenMessage)) error {
 			}
 
 			msg.MySelf = msg.FromId == conn.id
-			f(msg)
+			if f != nil {
+				f(msg)
+			}
 		},
 	)
 	if err != nil {
@@ -86,7 +87,55 @@ func Subscribe(channel string, f func(EvenMessage)) error {
 	conn.eventCreatedSub[channel] = subscribe
 	conn.mutex.Unlock()
 
-	return err
+	return nil
+}
+
+/**
+* Queue
+* @param string channel, string queue, func(EvenMessage) f
+* @return error
+**/
+func Queue(channel, queue string, f func(EvenMessage)) error {
+	if conn == nil {
+		return fmt.Errorf(ERR_NOT_CONNECT)
+	}
+
+	if len(channel) == 0 {
+		return fmt.Errorf(ERR_CHANNEL_REQUIRED)
+	}
+
+	publish(EVENT_SUBSCRIBED, et.Json{"channel": channel})
+
+	subscribe, err := conn.QueueSubscribe(channel, queue,
+		func(m *nats.Msg) {
+			msg, err := DecodeMessage(m.Data)
+			if err != nil {
+				return
+			}
+
+			if f != nil {
+				f(msg)
+			}
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	conn.mutex.Lock()
+	conn.eventCreatedSub[channel] = subscribe
+	conn.mutex.Unlock()
+
+	return nil
+}
+
+/**
+* Stack
+* @param channel string, f func(EvenMessage)
+* @return error
+**/
+func Stack(channel string, f func(EvenMessage)) error {
+	return Queue(channel, utility.QUEUE_STACK, f)
 }
 
 /**
@@ -115,59 +164,6 @@ func Unsubscribe(channel string) error {
 	delete(conn.eventCreatedSub, channel)
 
 	return nil
-}
-
-/**
-* Queue
-* @param string channel, string queue, func(EvenMessage) f
-* @return error
-**/
-func Queue(channel, queue string, f func(EvenMessage)) error {
-	if conn == nil {
-		return fmt.Errorf(ERR_NOT_CONNECT)
-	}
-
-	if len(channel) == 0 {
-		return fmt.Errorf(ERR_CHANNEL_REQUIRED)
-	}
-
-	publish(EVENT_SUBSCRIBED, et.Json{"channel": channel})
-
-	subscribe, err := conn.QueueSubscribe(channel, queue,
-		func(m *nats.Msg) {
-			msg, err := DecodeMessage(m.Data)
-			if err != nil {
-				return
-			}
-
-			jsonData, err := msg.ToJson()
-			if err != nil {
-				return
-			}
-
-			logs.Log("event", jsonData.ToString())
-
-			f(msg)
-		},
-	)
-	if err != nil {
-		return err
-	}
-
-	conn.mutex.Lock()
-	conn.eventCreatedSub[channel] = subscribe
-	conn.mutex.Unlock()
-
-	return nil
-}
-
-/**
-* Stack
-* @param channel string, f func(EvenMessage)
-* @return error
-**/
-func Stack(channel string, f func(EvenMessage)) error {
-	return Queue(channel, utility.QUEUE_STACK, f)
 }
 
 /**
