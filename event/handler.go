@@ -6,6 +6,7 @@ import (
 
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/response"
 	"github.com/celsiainternet/elvis/strs"
 	"github.com/celsiainternet/elvis/timezone"
@@ -70,6 +71,7 @@ func Subscribe(channel string, f func(EvenMessage)) error {
 		func(m *nats.Msg) {
 			msg, err := DecodeMessage(m.Data)
 			if err != nil {
+				logs.Error("event", err)
 				return
 			}
 
@@ -110,6 +112,7 @@ func Queue(channel, queue string, f func(EvenMessage)) error {
 		func(m *nats.Msg) {
 			msg, err := DecodeMessage(m.Data)
 			if err != nil {
+				logs.Error("event", err)
 				return
 			}
 
