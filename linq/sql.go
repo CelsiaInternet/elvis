@@ -1,6 +1,7 @@
 package linq
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/celsiainternet/elvis/et"
@@ -140,6 +141,20 @@ func (c *Linq) SqlColums(cols ...*Column) string {
 **/
 func (c *Linq) SqlSelect() string {
 	result := c.SqlColums(c._select...)
+
+	// Pre-register LEFT JOINs for any TpReference/TpCaption columns that appear
+	// in GROUP BY or ORDER BY but may not be in SELECT. This must happen before
+	// SqlJoin() builds the JOIN clause so addRefJoin deduplication is effective.
+	for _, col := range c.groupBy {
+		if col.Tp == TpReference || col.Tp == TpCaption {
+			c.addRefJoin(col)
+		}
+	}
+	for _, order := range c.orderBy {
+		if order.colum.Tp == TpReference || order.colum.Tp == TpCaption {
+			c.addRefJoin(order.colum)
+		}
+	}
 
 	c.sql = strs.Format(`SELECT %s`, result)
 
@@ -469,25 +484,32 @@ func (c *Linq) SqlKeys() string {
 **/
 func (c *Linq) SqlInsert() string {
 	model := c.from[0].model
-	var fields string
-	var values string
+	var fields, values strings.Builder
+	first := true
 
 	for key, val := range *c.new {
-		field := strs.Uppcase(key)
-		value := et.Unquote(val)
-
-		fields = strs.Append(fields, field, ", ")
-		values = strs.Append(values, strs.Format(`%v`, value), ", ")
+		if !first {
+			fields.WriteString(", ")
+			values.WriteString(", ")
+		}
+		first = false
+		fields.WriteString(strs.Uppcase(key))
+		fmt.Fprintf(&values, `%v`, et.Unquote(val))
 	}
 
-	c.sql = strs.Format("INSERT INTO %s(%s)\nVALUES (%s)", model.Table, fields, values)
+	c.sql = fmt.Sprintf("INSERT INTO %s(%s)\nVALUES (%s)", model.Table, fields.String(), values.String())
 
 	if len(model.PrimaryKeys) > 0 {
-		var conflictCols string
+		var conflictCols strings.Builder
+		first = true
 		for _, pk := range model.PrimaryKeys {
-			conflictCols = strs.Append(conflictCols, strs.Uppcase(pk), ", ")
+			if !first {
+				conflictCols.WriteString(", ")
+			}
+			first = false
+			conflictCols.WriteString(strs.Uppcase(pk))
 		}
-		c.sql = strs.Append(c.sql, strs.Format(`ON CONFLICT (%s) DO NOTHING`, conflictCols), "\n")
+		c.sql = strs.Append(c.sql, fmt.Sprintf(`ON CONFLICT (%s) DO NOTHING`, conflictCols.String()), "\n")
 	}
 
 	c.SqlReturn()
@@ -502,30 +524,33 @@ func (c *Linq) SqlInsert() string {
 **/
 func (c *Linq) SqlUpdate() string {
 	model := c.from[0].model
-	var fieldValues string
+	var fieldValues strings.Builder
+	first := true
 
 	for key, val := range *c.new {
 		field := strs.Uppcase(key)
 		value := et.Unquote(val)
 
+		if !first {
+			fieldValues.WriteString(",\n")
+		}
+		first = false
+
 		if model.UseSource && field == strs.Uppcase(SourceField.Upp()) {
 			vals := strs.Uppcase(SourceField.Upp())
 			atribs := c.new.Json(field)
-
 			for ak, av := range atribs {
 				ak = strs.Lowcase(ak)
 				av = et.Quote(av)
-
-				vals = strs.Format(`jsonb_set(%s, '{%s}', '%v', true)`, vals, ak, av)
+				vals = fmt.Sprintf(`jsonb_set(%s, '{%s}', '%v', true)`, vals, ak, av)
 			}
-			value = vals
+			fmt.Fprintf(&fieldValues, `%s=%s`, field, vals)
+		} else {
+			fmt.Fprintf(&fieldValues, `%s=%v`, field, value)
 		}
-
-		fieldValue := strs.Format(`%s=%v`, field, value)
-		fieldValues = strs.Append(fieldValues, fieldValue, ",\n")
 	}
 
-	c.sql = strs.Format(`UPDATE %s SET %s`, model.Table, fieldValues)
+	c.sql = fmt.Sprintf(`UPDATE %s SET %s`, model.Table, fieldValues.String())
 
 	c.SqlWhere()
 

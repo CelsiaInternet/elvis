@@ -1,9 +1,11 @@
 package workflow
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"slices"
+	"sync"
 	"time"
 
 	"github.com/celsiainternet/elvis/et"
@@ -12,6 +14,10 @@ import (
 	"github.com/celsiainternet/elvis/resilience"
 	"github.com/celsiainternet/elvis/utility"
 )
+
+var instanceBufPool = sync.Pool{
+	New: func() interface{} { return new(bytes.Buffer) },
+}
 
 type FlowStatus string
 
@@ -66,12 +72,17 @@ type Instance struct {
 * @return ([]byte, error)
 **/
 func (s *Instance) Serialize() ([]byte, error) {
-	bt, err := json.Marshal(s)
+	buf := instanceBufPool.Get().(*bytes.Buffer)
+	buf.Reset()
+	err := json.NewEncoder(buf).Encode(s)
 	if err != nil {
+		instanceBufPool.Put(buf)
 		return nil, err
 	}
-
-	return bt, nil
+	result := make([]byte, buf.Len())
+	copy(result, buf.Bytes())
+	instanceBufPool.Put(buf)
+	return result, nil
 }
 
 /**
@@ -79,21 +90,21 @@ func (s *Instance) Serialize() ([]byte, error) {
 * @return et.Json
 **/
 func (s *Instance) ToJson() et.Json {
-	bt, err := s.Serialize()
-	if err != nil {
+	buf := instanceBufPool.Get().(*bytes.Buffer)
+	buf.Reset()
+	if err := json.NewEncoder(buf).Encode(s); err != nil {
+		instanceBufPool.Put(buf)
 		return et.Json{}
 	}
-
 	var result et.Json
-	err = json.Unmarshal(bt, &result)
+	err := json.Unmarshal(buf.Bytes(), &result)
+	instanceBufPool.Put(buf)
 	if err != nil {
 		return et.Json{}
 	}
-
 	for k, v := range s.Tags {
 		result.Set(k, v)
 	}
-
 	return result
 }
 

@@ -34,36 +34,49 @@ func init() {
 	}
 }
 
+func colorFor(color string) string {
+	switch color {
+	case "Reset":
+		return Reset
+	case "Red":
+		return Red
+	case "Green":
+		return Green
+	case "Yellow":
+		return Yellow
+	case "Blue":
+		return Blue
+	case "Purple":
+		return Purple
+	case "Cyan":
+		return Cyan
+	case "Gray":
+		return Gray
+	case "White":
+		return White
+	default:
+		return Green
+	}
+}
+
 func Printl(kind string, color string, args ...any) string {
 	kind = strings.ToUpper(kind)
 	message := fmt.Sprint(args...)
 	now := timezone.Now()
-	var result string
 
-	switch color {
-	case "Reset":
-		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + message + Reset
-	case "Red":
-		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Red + message + Reset
-	case "Green":
-		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Green + message + Reset
-	case "Yellow":
-		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Yellow + message + Reset
-	case "Blue":
-		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Blue + message + Reset
-	case "Purple":
-		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Purple + message + Reset
-	case "Cyan":
-		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Cyan + message + Reset
-	case "Gray":
-		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Gray + message + Reset
-	case "White":
-		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + White + message + Reset
-	default:
-		result = now + Purple + fmt.Sprintf(" [%s]: ", kind) + Reset + Green + message + Reset
-	}
+	var b strings.Builder
+	b.Grow(len(now) + len(Purple) + 2 + len(kind) + 4 + len(Reset) + len(colorFor(color)) + len(message) + len(Reset))
+	b.WriteString(now)
+	b.WriteString(Purple)
+	b.WriteString(" [")
+	b.WriteString(kind)
+	b.WriteString("]: ")
+	b.WriteString(Reset)
+	b.WriteString(colorFor(color))
+	b.WriteString(message)
+	b.WriteString(Reset)
 
+	result := b.String()
 	println(result)
-
 	return result
 }

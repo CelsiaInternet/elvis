@@ -109,47 +109,19 @@ func (s *Instance) Set(id, tag string, obj any) error {
 		}
 	}
 
-	items, err := s.model.
-		Data().
-		Where(s.model.Column("_id").Eq(id)).
-		First()
-	if err != nil {
-		return err
-	}
-
 	now := utility.Now()
-	if !items.Ok {
-		_, err := s.model.
-			Insert(et.Json{
-				"date_make":   now,
-				"date_update": now,
-				"_state":      utility.ACTIVE,
-				"_id":         id,
-				"tag":         tag,
-				"definition":  bt,
-			}).
-			CommandOne()
-		if err != nil {
-			return err
-		}
-
-		return nil
-	}
-
-	_, err = s.model.
-		Update(et.Json{
+	_, err := s.model.
+		Upsert(et.Json{
+			"date_make":   now,
 			"date_update": now,
+			"_state":      utility.ACTIVE,
 			"_id":         id,
 			"tag":         tag,
 			"definition":  bt,
 		}).
-		Where(s.model.Column("_id").Eq(id)).
 		CommandOne()
-	if err != nil {
-		return err
-	}
 
-	return nil
+	return err
 }
 
 /**

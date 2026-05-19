@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/celsiainternet/elvis/logs"
@@ -56,41 +57,26 @@ func Unquote(val interface{}) any {
 		j := Json(v)
 		return strs.Format(`%s`, j.ToUnquote())
 	case []Json:
-		var r string
+		parts := make([]string, len(v))
 		for i, _v := range v {
-			j := Json(_v)
-			if i == 0 {
-				r = strs.Format(`%s`, j.ToUnquote())
-			} else {
-				r = strs.Format(`%s, %s`, r, j.ToUnquote())
-			}
+			parts[i] = Json(_v).ToUnquote()
 		}
-		return strs.Format(`'[%s]'`, r)
+		return `'[` + strings.Join(parts, ", ") + `]'`
 	case []interface{}:
-		var r string
+		parts := make([]string, len(v))
 		for i, _v := range v {
-			q := Unquote(_v)
-			if i == 0 {
-				r = strs.Format(`%v`, q)
-			} else {
-				r = strs.Format(`%s, %v`, r, q)
-			}
+			parts[i] = fmt.Sprintf(`%v`, Unquote(_v))
 		}
-		return strs.Format(`'[%s]'`, r)
+		return `'[` + strings.Join(parts, ", ") + `]'`
 	case map[string]interface{}:
 		j := Json(v)
 		return strs.Format(`%s`, j.ToUnquote())
 	case []map[string]interface{}:
-		var r string
+		parts := make([]string, len(v))
 		for i, _v := range v {
-			j := Json(_v)
-			if i == 0 {
-				r = strs.Format(`%s`, j.ToUnquote())
-			} else {
-				r = strs.Format(`%s, %s`, r, j.ToUnquote())
-			}
+			parts[i] = Json(_v).ToUnquote()
 		}
-		return strs.Format(`'[%s]'`, r)
+		return `'[` + strings.Join(parts, ", ") + `]'`
 	case []uint8:
 		b := []byte(val.([]uint8))
 		return fmt.Sprintf("'\\x%s'", hex.EncodeToString(b))
@@ -210,7 +196,7 @@ func ToJson(src interface{}) (Json, error) {
 }
 
 func ToJsonArray(vals []interface{}) ([]Json, error) {
-	var result []Json
+	result := make([]Json, 0, len(vals))
 	for _, val := range vals {
 		v, err := ToJson(val)
 		if err != nil {
@@ -315,11 +301,21 @@ func ApendJson(m Json, n Json) Json {
 	return result
 }
 
+const maxJsonDepth = 32
+
 /**
 * Compara b contra a y se establece que es diferente si y solo si
 * los valor de b no estan en a o los valores de b son diferentes en a
 **/
 func IsDiferent(a, b Json) bool {
+	return isDiferent(a, b, 0)
+}
+
+func isDiferent(a, b Json, depth int) bool {
+	if depth > maxJsonDepth {
+		return false
+	}
+
 	for k, new := range b {
 		old := a[k]
 
@@ -333,7 +329,7 @@ func IsDiferent(a, b Json) bool {
 					logs.Errorf("IsDiferent", "err:%v", err)
 					return false
 				}
-				return IsDiferent(v, _new)
+				return isDiferent(v, _new, depth+1)
 			case map[string]interface{}:
 				_old, err := ToJson(old)
 				if err != nil {
@@ -345,7 +341,7 @@ func IsDiferent(a, b Json) bool {
 					logs.Errorf("IsDiferent", "err:%v", err)
 					return false
 				}
-				return IsDiferent(_old, _new)
+				return isDiferent(_old, _new, depth+1)
 			default:
 				if strs.Format(`%v`, old) != strs.Format(`%v`, new) {
 					return true
@@ -362,6 +358,14 @@ func IsDiferent(a, b Json) bool {
 * los valor de b esta en a y alguno es direfernte
 **/
 func IsChange(a, b Json) bool {
+	return isChange(a, b, 0)
+}
+
+func isChange(a, b Json, depth int) bool {
+	if depth > maxJsonDepth {
+		return false
+	}
+
 	for k, new := range b {
 		old := a[k]
 
@@ -373,7 +377,7 @@ func IsChange(a, b Json) bool {
 					logs.Errorf("IsChange", "err:%v", err)
 					return false
 				}
-				return IsChange(v, _new)
+				return isChange(v, _new, depth+1)
 			case map[string]interface{}:
 				_old, err := ToJson(old)
 				if err != nil {
@@ -385,7 +389,7 @@ func IsChange(a, b Json) bool {
 					logs.Errorf("IsChange", "err:%v", err)
 					return false
 				}
-				return IsChange(_old, _new)
+				return isChange(_old, _new, depth+1)
 			default:
 				if strs.Format(`%v`, old) != strs.Format(`%v`, new) {
 					return true

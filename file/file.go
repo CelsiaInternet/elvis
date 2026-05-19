@@ -61,11 +61,11 @@ func append(str1, str2, sp string) string {
 }
 
 /**
-* ExistPath
+* InfoPath
 * @param path string
-* @return bool
+* @return FileInfo
 **/
-func ExistPath(path string) FileInfo {
+func InfoPath(path string) FileInfo {
 	result := FileInfo{
 		Path:  path,
 		Info:  nil,
@@ -99,6 +99,15 @@ func ExistPath(path string) FileInfo {
 }
 
 /**
+* ExistPath
+* @param path string
+* @return bool
+**/
+func ExistPath(path string) bool {
+	return InfoPath(path).Exist
+}
+
+/**
 * MakeFolder
 * @param names ...string
 * @return string, error
@@ -112,7 +121,7 @@ func MakeFolder(names ...string) (string, error) {
 			return path, err
 		}
 
-		info := ExistPath(absPath)
+		info := InfoPath(absPath)
 		if info.Error != nil {
 			return info.Path, info.Error
 		} else if info.Exist {
@@ -136,7 +145,7 @@ func MakeFolder(names ...string) (string, error) {
 **/
 func MakeFile(folder, name, model string, args ...any) (string, error) {
 	path := strs.Format(`%s/%s`, folder, name)
-	info := ExistPath(path)
+	info := InfoPath(path)
 	if info.Error != nil {
 		return info.Path, info.Error
 	} else if info.IsDir {
@@ -179,6 +188,22 @@ func RemoveFile(path string) (bool, error) {
 		os.Remove(file)
 		return true, nil
 	}
+}
+
+/**
+* RemoveFiles
+* @param paths ...string
+* @return error
+**/
+func RemoveFiles(paths ...string) error {
+	for _, path := range paths {
+		_, err := RemoveFile(path)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 /**

@@ -1,7 +1,6 @@
 package dt
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/celsiainternet/elvis/cache"
@@ -64,8 +63,7 @@ func (s *Object) save() bool {
 	}
 
 	val := s.ToString()
-	key := fmt.Sprintf("object:%s", s.Key)
-	cache.Set(key, val, s.duration)
+	cache.Set("object:"+s.Key, val, s.duration)
 
 	return true
 }
@@ -76,8 +74,7 @@ func (s *Object) save() bool {
 *
  */
 func (s *Object) load() error {
-	key := fmt.Sprintf("object:%s", s.Key)
-	item, err := cache.GetItem(key)
+	item, err := cache.GetItem("object:" + s.Key)
 	if err != nil {
 		return err
 	}
@@ -129,6 +126,5 @@ func Get(key string) Object {
 * @param key string
 **/
 func Drop(key string) {
-	key = fmt.Sprintf("object:%s", key)
-	cache.Delete(key)
+	cache.Delete("object:" + key)
 }

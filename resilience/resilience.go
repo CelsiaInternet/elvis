@@ -16,6 +16,11 @@ import (
  */
 func NewInstance(id, tag, description string, totalAttempts int, timeAttempts time.Duration, tags et.Json, team string, level string, fn interface{}, fnArgs ...interface{}) *Instance {
 	id = reg.GetUUID(id)
+	preArgs := make([]reflect.Value, len(fnArgs))
+	for i, arg := range fnArgs {
+		preArgs[i] = reflect.ValueOf(arg)
+	}
+
 	result := &Instance{
 		CreatedAt:     time.Now(),
 		Id:            id,
@@ -23,6 +28,7 @@ func NewInstance(id, tag, description string, totalAttempts int, timeAttempts ti
 		Description:   description,
 		fn:            fn,
 		fnArgs:        fnArgs,
+		fnArgsRefl:    preArgs,
 		fnResult:      []reflect.Value{},
 		TotalAttempts: totalAttempts,
 		TimeAttempts:  timeAttempts,

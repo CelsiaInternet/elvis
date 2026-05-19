@@ -2,6 +2,7 @@ package jdb
 
 import (
 	"errors"
+	"sync"
 
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
@@ -9,6 +10,11 @@ import (
 
 const (
 	KEY = "_id"
+)
+
+var (
+	connections = map[string]*DB{}
+	mu          sync.Mutex
 )
 
 /**
@@ -21,6 +27,13 @@ func LoadTo(dbname string) (*DB, error) {
 		return nil, errors.New("dbname is required")
 	}
 
+	mu.Lock()
+	if conn, ok := connections[dbname]; ok {
+		mu.Unlock()
+		return conn, nil
+	}
+	mu.Unlock()
+
 	conn, err := ConnectTo(et.Json{
 		"driver":           envar.GetStr("", "DB_DRIVER"),
 		"host":             envar.GetStr("", "DB_HOST"),
@@ -30,23 +43,28 @@ func LoadTo(dbname string) (*DB, error) {
 		"password":         envar.GetStr("", "DB_PASSWORD"),
 		"application_name": envar.GetStr("elvis", "DB_APPLICATION_NAME"),
 	})
-
-	conn.UseCore = envar.GetBool(true, "USE_CORE")
-	if !conn.UseCore {
-		return conn, nil
-	}
-
-	err = InitCore(conn)
 	if err != nil {
 		return nil, err
 	}
+
+	conn.UseCore = envar.GetBool(true, "USE_CORE")
+	if conn.UseCore {
+		err = InitCore(conn)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	mu.Lock()
+	connections[dbname] = conn
+	mu.Unlock()
 
 	return conn, nil
 }
 
 /**
 * Load
-* @return *Conn, error
+* @return *DB, error
 **/
 func Load() (*DB, error) {
 	dbname := envar.GetStr("", "DB_NAME")

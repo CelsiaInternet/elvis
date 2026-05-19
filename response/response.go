@@ -1,15 +1,21 @@
 package response
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
 	"net/http"
 	"strings"
+	"sync"
 
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/request"
 	"github.com/go-chi/chi/v5"
 )
+
+var decodeBufPool = sync.Pool{
+	New: func() interface{} { return new(bytes.Buffer) },
+}
 
 type Result struct {
 	Ok     bool        `json:"ok"`
@@ -22,12 +28,19 @@ type Result struct {
 * @return et.Json, error
 **/
 func ScanBody(r io.Reader) (et.Json, error) {
+	buf := decodeBufPool.Get().(*bytes.Buffer)
+	buf.Reset()
+	_, err := buf.ReadFrom(r)
+	if err != nil {
+		decodeBufPool.Put(buf)
+		return et.Json{}, err
+	}
 	var result et.Json
-	err := json.NewDecoder(r).Decode(&result)
+	err = json.Unmarshal(buf.Bytes(), &result)
+	decodeBufPool.Put(buf)
 	if err != nil {
 		return et.Json{}, err
 	}
-
 	return result, nil
 }
 

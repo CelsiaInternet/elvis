@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/celsiainternet/elvis/et"
@@ -12,6 +13,10 @@ import (
 	"github.com/celsiainternet/elvis/msg"
 	"github.com/celsiainternet/elvis/strs"
 )
+
+// sqlDebug gates per-query NATS event publishing. Off by default to avoid
+// network overhead on every DB call; enable with JDB_SQL_DEBUG=true.
+var sqlDebug = os.Getenv("JDB_SQL_DEBUG") == "true"
 
 func TipoSQL(query string) string {
 	q := strings.TrimSpace(strings.ToUpper(query))
@@ -113,12 +118,14 @@ func (s *DB) queryContext(ctx context.Context, sql string, args ...any) (*sql.Ro
 		return nil, fmt.Errorf(msg.ERR_SQL, err.Error(), sql)
 	}
 
-	tp := TipoSQL(sql)
-	event.Publish(fmt.Sprintf("sql:%s", tp), et.Json{
-		"db_name": s.Dbname,
-		"sql":     sql,
-		"args":    args,
-	})
+	if sqlDebug {
+		tp := TipoSQL(sql)
+		event.Publish(fmt.Sprintf("sql:%s", tp), et.Json{
+			"db_name": s.Dbname,
+			"sql":     sql,
+			"args":    args,
+		})
+	}
 
 	return rows, nil
 }

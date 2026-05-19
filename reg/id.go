@@ -2,8 +2,10 @@ package reg
 
 import (
 	"fmt"
+	"io"
 	"math/rand"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/bwmarrin/snowflake"
@@ -28,8 +30,10 @@ func UUID() string {
 **/
 func ULID() string {
 	t := timezone.NowTime()
-	entropy := ulid.Monotonic(rand.New(rand.NewSource(t.UnixNano())), 0)
-	return ulid.MustNew(ulid.Timestamp(t), entropy).String()
+	ulidMu.Lock()
+	id := ulid.MustNew(ulid.Timestamp(t), ulidEntropy)
+	ulidMu.Unlock()
+	return id.String()
 }
 
 /**
@@ -161,7 +165,13 @@ func GetXID(id string) string {
 	return XID()
 }
 
+var (
+	ulidMu      sync.Mutex
+	ulidEntropy io.Reader
+)
+
 func init() {
 	epoch := time.Date(2020, 1, 1, 0, 0, 0, 0, timezone.NowTime().Location())
 	snowflake.Epoch = epoch.UnixNano() / 1e6
+	ulidEntropy = ulid.Monotonic(rand.New(rand.NewSource(time.Now().UnixNano())), 0)
 }

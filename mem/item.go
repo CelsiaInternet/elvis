@@ -13,6 +13,7 @@ type Item struct {
 	Dateupdate time.Time
 	Key        string
 	Value      interface{}
+	expiry     time.Time // zero means no expiry; managed by Mem.sweeper
 	lock       sync.RWMutex
 }
 

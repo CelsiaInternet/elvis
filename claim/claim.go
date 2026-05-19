@@ -2,6 +2,7 @@ package claim
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -9,7 +10,7 @@ import (
 	"github.com/celsiainternet/elvis/cache"
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
-	"github.com/celsiainternet/elvis/logs"
+	"github.com/celsiainternet/elvis/mem"
 	"github.com/celsiainternet/elvis/timezone"
 	"github.com/celsiainternet/elvis/utility"
 	"github.com/golang-jwt/jwt/v4"
@@ -172,11 +173,11 @@ func NewAuthorization(id, app, name, username, device, projectId, profileTp stri
 **/
 func NewEphemeralToken(id, app, name, username, device, tag string, duration time.Duration) (string, error) {
 	if tag == "" {
-		return "", logs.Alertm("Tag is required")
+		return "", errors.New("Tag is required")
 	}
 
 	if duration <= 0 {
-		return "", logs.Alertm("Duration is required")
+		return "", errors.New("Duration is required")
 	}
 
 	c := NewClaim(id, app, name, username, device, "", "", tag, duration)
@@ -232,46 +233,46 @@ func ParceToken(token string) (*Claim, error) {
 		return []byte(secret), nil
 	})
 	if err != nil {
-		return nil, logs.Alert(err)
+		return nil, err
 	}
 
 	if !jToken.Valid {
-		return nil, logs.Alertm(MSG_TOKEN_INVALID)
+		return nil, errors.New(MSG_TOKEN_INVALID)
 	}
 
 	claim, ok := jToken.Claims.(jwt.MapClaims)
 	if !ok {
-		return nil, logs.Alertm(MSG_REQUIRED_INVALID)
+		return nil, errors.New(MSG_REQUIRED_INVALID)
 	}
 
 	app, ok := claim["app"].(string)
 	if !ok {
-		return nil, logs.Alertf(MSG_TOKEN_INVALID_ATRIB, "app")
+		return nil, fmt.Errorf(MSG_TOKEN_INVALID_ATRIB, "app")
 	}
 
 	id, ok := claim["id"].(string)
 	if !ok {
-		return nil, logs.Alertf(MSG_TOKEN_INVALID_ATRIB, "id")
+		return nil, fmt.Errorf(MSG_TOKEN_INVALID_ATRIB, "id")
 	}
 
 	name, ok := claim["name"].(string)
 	if !ok {
-		return nil, logs.Alertf(MSG_TOKEN_INVALID_ATRIB, "name")
+		return nil, fmt.Errorf(MSG_TOKEN_INVALID_ATRIB, "name")
 	}
 
 	username, ok := claim["username"].(string)
 	if !ok {
-		return nil, logs.Alertf(MSG_TOKEN_INVALID_ATRIB, "username")
+		return nil, fmt.Errorf(MSG_TOKEN_INVALID_ATRIB, "username")
 	}
 
 	device, ok := claim["device"].(string)
 	if !ok {
-		return nil, logs.Alertf(MSG_TOKEN_INVALID_ATRIB, "device")
+		return nil, fmt.Errorf(MSG_TOKEN_INVALID_ATRIB, "device")
 	}
 
 	second, ok := claim["duration"].(float64)
 	if !ok {
-		return nil, logs.Alertf(MSG_TOKEN_INVALID_ATRIB, "duration")
+		return nil, fmt.Errorf(MSG_TOKEN_INVALID_ATRIB, "duration")
 	}
 
 	projectId, ok := claim["projectId"].(string)
@@ -324,6 +325,11 @@ func ValidToken(token string) (*Claim, error) {
 	}
 
 	key := GetTokenKey(result.App, result.Device, result.ID)
+	localKey := "claim:" + key
+	if cached, err := mem.Get(localKey, ""); err == nil && cached == token {
+		return result, nil
+	}
+
 	val, err := cache.Get(key, "")
 	if err != nil {
 		return nil, err
@@ -331,9 +337,11 @@ func ValidToken(token string) (*Claim, error) {
 
 	if val != token {
 		cache.Delete(key)
+		mem.Del(localKey)
 		return nil, err
 	}
 
+	mem.Set(localKey, token, 10)
 	return result, nil
 }
 

@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"unicode"
 )
 
 /**
@@ -169,23 +170,23 @@ func Same(str1, str2 string) bool {
 * @return string
 **/
 func Titlecase(str string) string {
-	var result string
+	var b strings.Builder
+	b.Grow(len(str))
 	var ok bool
 	for i, char := range str {
-		s := fmt.Sprintf("%c", char)
 		if i == 0 {
-			s = strings.ToUpper(s)
-		} else if s == "" {
+			b.WriteRune(unicode.ToUpper(char))
+		} else if char == 0 {
 			ok = true
+			b.WriteRune(char)
 		} else if ok {
 			ok = false
-			s = strings.ToUpper(s)
+			b.WriteRune(unicode.ToUpper(char))
+		} else {
+			b.WriteRune(char)
 		}
-
-		result = Append(result, s, "")
 	}
-
-	return result
+	return b.String()
 }
 
 /**
@@ -338,19 +339,13 @@ func HtmlToText(html string) string {
 * @param str string
 * @return string
 **/
-func RemoveAcents(str string) string {
-	str = strings.ReplaceAll(str, "á", "a")
-	str = strings.ReplaceAll(str, "é", "e")
-	str = strings.ReplaceAll(str, "í", "i")
-	str = strings.ReplaceAll(str, "ó", "o")
-	str = strings.ReplaceAll(str, "ú", "u")
+var acentsReplacer = strings.NewReplacer(
+	"á", "a", "é", "e", "í", "i", "ó", "o", "ú", "u",
+	"Á", "A", "É", "E", "Í", "I", "Ó", "O", "Ú", "U",
+)
 
-	str = strings.ReplaceAll(str, "Á", "A")
-	str = strings.ReplaceAll(str, "É", "E")
-	str = strings.ReplaceAll(str, "Í", "I")
-	str = strings.ReplaceAll(str, "Ó", "O")
-	str = strings.ReplaceAll(str, "Ú", "U")
-	return str
+func RemoveAcents(str string) string {
+	return acentsReplacer.Replace(str)
 }
 
 /**

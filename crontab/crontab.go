@@ -3,6 +3,7 @@ package crontab
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"sync"
 	"time"
 
@@ -14,6 +15,18 @@ import (
 	"github.com/celsiainternet/elvis/utility"
 	"github.com/robfig/cron/v3"
 )
+
+// syncDelay is the pause between EVENT_CRONTAB_REMOVE and EVENT_CRONTAB_SET to
+// give subscribers time to process the remove. Defaults to 100ms; override with
+// CRONTAB_SYNC_DELAY_MS (e.g. "500" for 500ms).
+var syncDelay = func() time.Duration {
+	if v := os.Getenv("CRONTAB_SYNC_DELAY_MS"); v != "" {
+		if ms, err := strconv.Atoi(v); err == nil {
+			return time.Duration(ms) * time.Millisecond
+		}
+	}
+	return 100 * time.Millisecond
+}()
 
 const (
 	packageName = "crontab"
@@ -78,7 +91,7 @@ func (s *Jobs) addEventJob(jobType TypeJob, tag, spec, channel string, started b
 		return err
 	}
 
-	time.Sleep(1 * time.Second)
+	time.Sleep(syncDelay)
 
 	err = event.Publish(EVENT_CRONTAB_SET, data)
 	if err != nil {
