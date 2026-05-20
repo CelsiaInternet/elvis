@@ -21,30 +21,41 @@ import (
 
 /**
 * Create
-* @param fileCrt, fileKey, organization string, expire time.Duration
+* @param fileCrt string
+* @param fileKey string
+* @param hosts []string
+* @param expire time.Duration
 * @return error
 **/
-func Create(fileCrt, fileKey string, expire time.Duration) error {
+func Create(fileCrt, fileKey string, hosts []string, expire time.Duration) error {
 	logs.Logf("pipe", "generate certificates TLS...")
 
 	file.RemoveFiles(fileCrt, fileKey)
 
-	// Generar llave privada
 	priv, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		return err
 	}
 
-	// Template del certificado
+	dnsNames := []string{"localhost"}
+	ipAddresses := []net.IP{net.ParseIP("127.0.0.1")}
+	for _, h := range hosts {
+		if ip := net.ParseIP(h); ip != nil {
+			ipAddresses = append(ipAddresses, ip)
+		} else if h != "" && h != "localhost" {
+			dnsNames = append(dnsNames, h)
+		}
+	}
+
 	template := x509.Certificate{
 		SerialNumber: big.NewInt(1),
 
 		Subject: pkix.Name{
-			CommonName: "localhost",
+			CommonName: dnsNames[0],
 		},
 
 		NotBefore: time.Now(),
-		NotAfter:  time.Now().Add(365 * 24 * time.Hour),
+		NotAfter:  time.Now().Add(expire),
 
 		IsCA:                  true,
 		BasicConstraintsValid: true,
@@ -57,16 +68,10 @@ func Create(fileCrt, fileKey string, expire time.Duration) error {
 			x509.ExtKeyUsageServerAuth,
 		},
 
-		DNSNames: []string{
-			"localhost",
-		},
-
-		IPAddresses: []net.IP{
-			net.ParseIP("127.0.0.1"),
-		},
+		DNSNames:    dnsNames,
+		IPAddresses: ipAddresses,
 	}
 
-	// Crear certificado
 	derBytes, err := x509.CreateCertificate(
 		rand.Reader,
 		&template,
@@ -78,7 +83,6 @@ func Create(fileCrt, fileKey string, expire time.Duration) error {
 		return err
 	}
 
-	// Guardar CRT
 	certOut, err := os.Create(fileCrt)
 	if err != nil {
 		return err
@@ -91,7 +95,6 @@ func Create(fileCrt, fileKey string, expire time.Duration) error {
 
 	certOut.Close()
 
-	// Guardar KEY
 	keyOut, err := os.Create(fileKey)
 	if err != nil {
 		return err
@@ -109,10 +112,12 @@ func Create(fileCrt, fileKey string, expire time.Duration) error {
 
 /**
 * Load
-* @param path string, expire time.Duration
+* @param path string
+* @param hosts []string
+* @param expire time.Duration
 * @return (tls.Certificate, error)
 **/
-func Load(path string, expire time.Duration) (tls.Certificate, error) {
+func Load(path string, hosts []string, expire time.Duration) (tls.Certificate, error) {
 	if !file.ExistPath(path) {
 		_, err := file.MakeFolder(path)
 		if err != nil {
@@ -130,7 +135,7 @@ func Load(path string, expire time.Duration) (tls.Certificate, error) {
 		return cert, nil
 	}
 
-	err := Create(fileCrt, fileKey, expire)
+	err := Create(fileCrt, fileKey, hosts, expire)
 	if err != nil {
 		return tls.Certificate{}, err
 	}
@@ -145,10 +150,12 @@ func Load(path string, expire time.Duration) (tls.Certificate, error) {
 
 /**
 * Pool
-* @param path string, expire time.Duration
+* @param path string
+* @param hosts []string
+* @param expire time.Duration
 * @return (*x509.CertPool, error)
 **/
-func Pool(path string, expire time.Duration) (*x509.CertPool, error) {
+func Pool(path string, hosts []string, expire time.Duration) (*x509.CertPool, error) {
 	if !file.ExistPath(path) {
 		_, err := file.MakeFolder(path)
 		if err != nil {
@@ -171,7 +178,7 @@ func Pool(path string, expire time.Duration) (*x509.CertPool, error) {
 		return certPool, nil
 	}
 
-	err := Create(fileCrt, fileKey, expire)
+	err := Create(fileCrt, fileKey, hosts, expire)
 	if err != nil {
 		return nil, err
 	}
@@ -190,17 +197,18 @@ func Pool(path string, expire time.Duration) (*x509.CertPool, error) {
 
 /**
 * Deal
-* @param path, host string, port int
+* @param path string
+* @param host string
+* @param port int
+* @param expire time.Duration
 * @return (*tls.Conn, error)
 **/
 func Deal(path, host string, port int, expire time.Duration) (*tls.Conn, error) {
-	// Cargar certificados
-	cert, err := Pool(path, expire)
+	cert, err := Pool(path, []string{host}, expire)
 	if err != nil {
 		return nil, err
 	}
 
-	// Configuración TLS
 	tlsConfig := &tls.Config{
 		RootCAs:            cert,
 		InsecureSkipVerify: envar.GetBool(false, "PIPE_INSECURE_SKIP_VERIFY"),
@@ -217,22 +225,22 @@ func Deal(path, host string, port int, expire time.Duration) (*tls.Conn, error) 
 
 /**
 * Wrapper
-* @param path string, owner net.Listener
+* @param path string
+* @param hosts []string
+* @param owner net.Listener
+* @param expire time.Duration
 * @return net.Listener
 **/
-func Wrapper(path string, owner net.Listener, expire time.Duration) net.Listener {
-	// Cargar certificados
-	cert, err := Load(path, expire)
+func Wrapper(path string, hosts []string, owner net.Listener, expire time.Duration) net.Listener {
+	cert, err := Load(path, hosts, expire)
 	if err != nil {
 		logs.Panic(err)
 	}
 
-	// Configuración TLS
 	tlsConfig := &tls.Config{
 		Certificates:       []tls.Certificate{cert},
 		InsecureSkipVerify: envar.GetBool(false, "PIPE_INSECURE_SKIP_VERIFY"),
 	}
 
-	// Envolver con TLS
 	return tls.NewListener(owner, tlsConfig)
 }

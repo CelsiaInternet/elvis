@@ -61,7 +61,10 @@ func GetRouters() (et.Items, error) {
 func call(host string, port int, method string, args et.Json, result any) (*middleware.Metrics, error) {
 	metric := middleware.NewRpcMetric(method)
 	address := strs.Format(`%s:%d`, host, port)
-	if pipeHost == address {
+	pipeHost := envar.GetStr("", "PIPE_HOST")
+	pipePort := envar.GetInt(4200, "PIPE_PORT")
+	pipeAddress := strs.Format(`%s:%d`, pipeHost, pipePort)
+	if pipeAddress == address {
 		token := envar.GetStr("", "PIPE_TOKEN")
 		args.Set("Authorization", fmt.Sprintf(`Bearer %s`, token))
 

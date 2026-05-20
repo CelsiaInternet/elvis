@@ -3,7 +3,6 @@ package jrpc
 import (
 	"fmt"
 	"slices"
-	"strconv"
 	"strings"
 
 	"github.com/celsiainternet/elvis/envar"
@@ -17,14 +16,6 @@ type Solver struct {
 	Method      string   `json:"method"`
 	Inputs      []string `json:"inputs"`
 	Output      []string `json:"outputs"`
-}
-
-var (
-	pipeHost string
-)
-
-func init() {
-	pipeHost = envar.GetStr("", "PIPE_HOST")
 }
 
 /**
@@ -65,14 +56,6 @@ func UnMount(host, name string) error {
 }
 
 /**
-* SetPipeHost
-* @param host string
-**/
-func SetPipeHost(host string) {
-	pipeHost = host
-}
-
-/**
 * GetSolver
 * @param method string
 * @return *Solver
@@ -85,21 +68,13 @@ func GetSolver(method string) (*Solver, error) {
 		return nil, fmt.Errorf(ERR_METHOD_NAME_INVALID, method)
 	}
 
+	pipeHost := envar.GetStr("", "PIPE_HOST")
+	pipePort := envar.GetInt(4200, "PIPE_PORT")
 	if pipeHost != "" {
-		pipeParam := strings.Split(pipeHost, ":")
-		if len(pipeParam) != 2 {
-			return nil, fmt.Errorf("PIPE_HOST format is invalid <host>:<port>")
-		}
-
-		pHost := pipeParam[0]
-		pPort, err := strconv.Atoi(pipeParam[1])
-		if err != nil {
-			return nil, fmt.Errorf("PIPE_HOST port is invalid")
-		}
 		result := &Solver{
 			PackageName: methodList[0],
-			Host:        pHost,
-			Port:        pPort,
+			Host:        pipeHost,
+			Port:        pipePort,
 			Method:      method,
 			Inputs:      []string{},
 			Output:      []string{},
