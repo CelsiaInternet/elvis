@@ -3,10 +3,8 @@ package jdb
 import (
 	"database/sql"
 	"fmt"
-	"time"
 
 	"github.com/celsiainternet/elvis/console"
-	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/msg"
@@ -261,16 +259,6 @@ func ConnectTo(params et.Json) (*DB, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	maxOpen := envar.GetInt(3, "DB_POOL_MAX_OPEN")
-	maxIdle := envar.GetInt(1, "DB_POOL_MAX_IDLE")
-	connLifetime := envar.GetInt(30, "DB_POOL_CONN_LIFETIME")
-	connIdleTime := envar.GetInt(2, "DB_POOL_CONN_IDLE_TIME")
-
-	db.SetMaxOpenConns(maxOpen)
-	db.SetMaxIdleConns(maxIdle)
-	db.SetConnMaxLifetime(time.Duration(connLifetime) * time.Minute)
-	db.SetConnMaxIdleTime(time.Duration(connIdleTime) * time.Minute)
 
 	err = db.Ping()
 	if err != nil {
