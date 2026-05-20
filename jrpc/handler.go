@@ -112,6 +112,17 @@ func Call(method string, args et.Json) (any, error) {
 		return nil, err
 	}
 
+	if len(solver.Inputs) == 0 {
+		// pipeHost path: sin metadata de tipos, decodificar como et.Item por defecto
+		var result et.Item
+		metric, err := call(solver.Host, solver.Port, solver.Method, args, &result)
+		if err != nil {
+			return nil, err
+		}
+		metric.DoneRpc(result.ToString())
+		return result, nil
+	}
+
 	if len(solver.Inputs) != 3 {
 		return nil, fmt.Errorf("invalid number of inputs")
 	}
