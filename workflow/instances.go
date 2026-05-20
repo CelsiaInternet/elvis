@@ -369,19 +369,6 @@ func (s *Instance) setDone(result et.Json, err error) (et.Json, error) {
 }
 
 /**
-* setFailed
-* @param result et.Json, err error
-**/
-func (s *Instance) setFailed(result et.Json, err error) error {
-	errStatus := s.setStatus(FlowStatusFailed)
-	if errStatus != nil {
-		return errStatus
-	}
-
-	return nil
-}
-
-/**
 * setStop
 * @param result et.Json, err error
 * @return et.Json, error
@@ -504,7 +491,7 @@ func (s *Instance) run(ctx et.Json) (et.Json, error) {
 		if step.Expression != "" {
 			ok, err := step.evaluate(ctx, s)
 			if err != nil {
-				return s.rollback(ctx, err)
+				return et.Json{}, err
 			}
 
 			if ok {
@@ -518,6 +505,7 @@ func (s *Instance) run(ctx et.Json) (et.Json, error) {
 					return et.Json{}, err
 				}
 			}
+			continue
 		}
 
 		if s.Current == len(s.Steps)-1 {
@@ -539,7 +527,6 @@ func (s *Instance) run(ctx et.Json) (et.Json, error) {
 * @return et.Json, error
 **/
 func (s *Instance) rollback(result et.Json, err error) (et.Json, error) {
-	s.setFailed(result, err)
 	if s.startResilence() {
 		return result, err
 	}
