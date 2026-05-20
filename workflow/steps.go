@@ -45,8 +45,14 @@ func (s *Step) run(flow *Instance, ctx et.Json) (et.Json, error) {
 		return ctx, fmt.Errorf("step function is nil for step: %s at index %d", s.Name, flow.Current)
 	}
 
+	var err error
+	var result et.Json
+	defer func() {
+		flow.setResult(result, err)
+	}()
+
 	flow.setStatus(FlowStatusRunning)
-	result, err := s.fn(flow, ctx)
+	result, err = s.fn(flow, ctx)
 	if err != nil {
 		return et.Json{}, err
 	}
