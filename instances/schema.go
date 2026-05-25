@@ -5,10 +5,12 @@ import (
 	"github.com/celsiainternet/elvis/linq"
 )
 
-func (s *Instance) defineSchema(db *jdb.DB, name string) error {
-	if s.schema == nil {
-		s.schema = linq.NewSchema(db, name)
-	}
-
-	return nil
+/**
+* defineSchema
+* @param db *jdb.DB, name string
+* @return (*linq.Schema, error)
+**/
+func defineSchema(db *jdb.DB, name string) (*linq.Schema, error) {
+	schema := linq.NewSchema(db, name)
+	return schema, nil
 }

@@ -464,10 +464,11 @@ func (s *Instance) run(ctx et.Json) (et.Json, error) {
 		return et.Json{}, err
 	}
 
+	var result et.Json
 	for s.Current < len(s.Steps) {
 		step := s.Steps[s.Current]
 		ctx = s.setCtx(ctx)
-		result, err := step.run(s, ctx)
+		result, err = step.run(s, ctx)
 		if err != nil {
 			return s.rollback(ctx, err)
 		}
@@ -518,7 +519,7 @@ func (s *Instance) run(ctx et.Json) (et.Json, error) {
 		}
 	}
 
-	return ctx, err
+	return result, err
 }
 
 /**
