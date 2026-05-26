@@ -63,7 +63,9 @@ func Define(db *jdb.DB, schema, name string) (*Inbox, error) {
 	model.DefineColum("_id", "", "VARCHAR(80)", "-1")
 	model.DefineColum("user_id", "", "VARCHAR(80)", "-1")
 	model.DefineColum("app_id", "", "VARCHAR(80)", "-1")
-	model.DefineColum("inbox", "", "VARCHAR(250)", "-1")
+	model.DefineColum("kind", "", "VARCHAR(80)", "-1")
+	model.DefineColum("code", "", "VARCHAR(80)", "-1")
+	model.DefineColum("title", "", "VARCHAR(250)", "-1")
 	model.DefineColum("_data", "", "JSONB", "{}")
 	model.DefinePrimaryKey([]string{"_id"})
 	model.DefineIndex([]string{
@@ -73,6 +75,9 @@ func Define(db *jdb.DB, schema, name string) (*Inbox, error) {
 		"_state",
 		"user_id",
 		"app_id",
+		"kind",
+		"code",
+		"title",
 	})
 
 	if err := model.Init(); err != nil {
@@ -107,6 +112,27 @@ func (s *Inbox) GetInboxesById(id string) (et.Item, error) {
 }
 
 /**
+* GetInboxesByCode
+* @param code string
+* @return et.Items, error
+**/
+func (s *Inbox) GetInboxesByCode(code string) (et.Items, error) {
+	if s.model == nil {
+		return et.Items{}, fmt.Errorf("model not found")
+	}
+
+	result, err := s.model.
+		Data().
+		Where(s.model.Column("code").Eq(code)).
+		All()
+	if err != nil {
+		return et.Items{}, err
+	}
+
+	return result, nil
+}
+
+/**
 * GetInboxesByMy
 * @param userId, appId, inbox, status string, page, rows int
 * @return et.Items, error
@@ -134,12 +160,12 @@ func (s *Inbox) GetInboxesByMy(userId, appId, inbox, status string, page, rows i
 }
 
 /**
-* GetInboxesCode
-* @param projectId, inbox string
+* GenInboxesCode
+* @param projectId string
 * @return string, error
 **/
-func (s *Inbox) GetInboxesCode(projectId, inbox string) (string, error) {
-	code, err := jdb.GetSeries(inbox, projectId)
+func (s *Inbox) GenInboxesCode(projectId string) (string, error) {
+	code, err := jdb.GetSeries("services", projectId)
 	if err != nil {
 		return "", err
 	}
