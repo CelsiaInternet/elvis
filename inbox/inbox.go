@@ -1,4 +1,4 @@
-package instances
+package inbox
 
 import (
 	"fmt"
@@ -19,12 +19,33 @@ type Inbox struct {
 	model  *linq.Model
 }
 
+var inb *Inbox
+
+/**
+* Load
+* @param db *jdb.DB, schema, name string
+* @return (*Inbox, error)
+**/
+func Load(db *jdb.DB, schema, name string) (*Inbox, error) {
+	if inb != nil {
+		return inb, nil
+	}
+
+	var err error
+	inb, err = Define(db, schema, name)
+	if err != nil {
+		return nil, err
+	}
+
+	return inb, nil
+}
+
 /**
 * Define
 * @param db *jdb.DB, schema, name string
 * @return (*Instance, error)
 **/
-func DefineInbox(db *jdb.DB, schema, name string) (*Inbox, error) {
+func Define(db *jdb.DB, schema, name string) (*Inbox, error) {
 	schemaObj, err := defineSchema(db, schema)
 	if err != nil {
 		return nil, console.Panic(err)
@@ -69,7 +90,7 @@ func DefineInbox(db *jdb.DB, schema, name string) (*Inbox, error) {
 * @param id string
 * @return et.Item, error
 **/
-func (s *Instance) GetInboxesById(id string) (et.Item, error) {
+func (s *Inbox) GetInboxesById(id string) (et.Item, error) {
 	if s.model == nil {
 		return et.Item{}, fmt.Errorf("model not found")
 	}
@@ -87,7 +108,7 @@ func (s *Instance) GetInboxesById(id string) (et.Item, error) {
 
 /**
 * GetInboxesByMy
-* @param userId, appId, inbox, status string, page, limit int
+* @param userId, appId, inbox, status string, page, rows int
 * @return et.Items, error
 **/
 func (s *Inbox) GetInboxesByMy(userId, appId, inbox, status string, page, rows int) (et.Items, error) {
