@@ -366,6 +366,16 @@ func SetToken(app, device, id, token string, duration time.Duration) error {
 }
 
 /**
+* Token
+* @param r *http.Request
+* @return string
+**/
+func Token(r *http.Request) string {
+	ctx := r.Context()
+	return TokenKey.String(ctx, "")
+}
+
+/**
 * ServiceId
 * @param r *http.Request
 * @return string
