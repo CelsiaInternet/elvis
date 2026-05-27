@@ -77,6 +77,7 @@ type Metrics struct {
 	ResponseTime time.Duration `json:"response_time"`
 	Latency      time.Duration `json:"latency"`
 	AppName      string        `json:"app_name"`
+	OverLimit    bool          `json:"over_limit"`
 	key          string
 	mark         time.Time
 	metrics      Telemetry
@@ -218,6 +219,7 @@ func NewMetric(r *http.Request) *Metrics {
 		mark:        timezone.NowTime(),
 		key:         strs.Format(`%s:%s`, r.Method, r.URL.Path),
 	}
+	result.metrics = result.CallMetrics()
 
 	return result
 }
@@ -239,6 +241,7 @@ func NewRpcMetric(method string) *Metrics {
 		mark:        timezone.NowTime(),
 		key:         strs.Format(`%s:%s`, strs.Uppcase(scheme), method),
 	}
+	result.metrics = result.CallMetrics()
 
 	return result
 }
@@ -303,7 +306,7 @@ func (m *Metrics) CallMetrics() Telemetry {
 	minute := timeNow.Format("2006-01-02-15:04")
 	second := timeNow.Format("2006-01-02-15:04:05")
 
-	return Telemetry{
+	result := Telemetry{
 		TimeStamp:         date,
 		ServiceName:       serviceName,
 		Method:            m.Method,
@@ -314,6 +317,9 @@ func (m *Metrics) CallMetrics() Telemetry {
 		RequestsPerDay:    cache.Incr(cache.GenKey(m.key, date), 24*time.Hour+1*time.Second),
 		RequestsLimit:     envar.GetInt64(400, "LIMIT_REQUESTS"),
 	}
+	m.OverLimit = result.RequestsPerSecond > result.RequestsLimit
+
+	return result
 }
 
 /**
@@ -345,7 +351,6 @@ func (m *Metrics) println() et.Json {
 		lg.CW(w, lg.NRed, " Latency:%s", m.Latency)
 	}
 	lg.CW(w, lg.NWhite, " Response:%s", m.ResponseTime)
-	m.metrics = m.CallMetrics()
 	if m.metrics.RequestsPerSecond > m.metrics.RequestsLimit {
 		lg.CW(w, lg.NRed, " - Request:S:%vM:%vH:%vD:%vL:%v", m.metrics.RequestsPerSecond, m.metrics.RequestsPerMinute, m.metrics.RequestsPerHour, m.metrics.RequestsPerDay, m.metrics.RequestsLimit)
 	} else if m.metrics.RequestsPerSecond > int64(float64(m.metrics.RequestsLimit)*0.6) {
