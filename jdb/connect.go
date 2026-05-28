@@ -11,7 +11,7 @@ import (
 	"github.com/celsiainternet/elvis/strs"
 	"github.com/celsiainternet/elvis/utility"
 	_ "github.com/go-sql-driver/mysql"
-	_ "github.com/jackc/pgx/v5"
+	_ "github.com/lib/pq"
 	goOra "github.com/sijms/go-ora/v2"
 )
 
