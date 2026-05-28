@@ -130,7 +130,7 @@ func (s *Instance) Save() error {
 		s.saveTimer.Stop()
 	}
 
-	s.saveTimer = time.AfterFunc(300*time.Microsecond, func() {
+	s.saveTimer = time.AfterFunc(100*time.Millisecond, func() {
 		data := s.ToJson()
 		event.Publish(EVENT_WORKFLOW_STATUS, data)
 

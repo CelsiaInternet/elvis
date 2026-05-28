@@ -127,6 +127,8 @@ func (s *WorkFlows) newInstance(tag, id string, tags et.Json, step int, createdB
 		WorkerHost: workerHost,
 		Params:     et.Json{},
 		isNew:      true,
+		saveMu:     sync.Mutex{},
+		saveTimer:  nil,
 	}
 	result.setStatus(FlowStatusPending)
 
