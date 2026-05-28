@@ -141,6 +141,7 @@ func (s *Instance) Set(id, tag string, obj any) error {
 			"tag":         tag,
 			"definition":  bt,
 		}).
+		Debug().
 		CommandOne()
 
 	return err

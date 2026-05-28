@@ -65,6 +65,8 @@ type Instance struct {
 	resilence  *resilience.Instance `json:"-"`
 	isNew      bool                 `json:"-"`
 	isDebug    bool                 `json:"-"`
+	saveMu     sync.Mutex           `json:"-"`
+	saveTimer  *time.Timer          `json:"-"`
 }
 
 /**
@@ -121,16 +123,27 @@ func (s *Instance) ToString() string {
 * @return error
 **/
 func (s *Instance) Save() error {
-	data := s.ToJson()
-	event.Publish(EVENT_WORKFLOW_STATUS, data)
+	s.saveMu.Lock()
+	defer s.saveMu.Unlock()
 
-	if s.isDebug {
-		logs.Log("WorkFlows", "save:", data.ToString())
+	if s.saveTimer != nil {
+		s.saveTimer.Stop()
 	}
 
-	if setInstance != nil {
-		return setInstance(s.Id, s.Tag, s)
-	}
+	s.saveTimer = time.AfterFunc(300*time.Microsecond, func() {
+		data := s.ToJson()
+		event.Publish(EVENT_WORKFLOW_STATUS, data)
+
+		if s.isDebug {
+			logs.Log("WorkFlows", "save:", data.ToString())
+		}
+
+		if setInstance != nil {
+			if err := setInstance(s.Id, s.Tag, s); err != nil {
+				logs.Errorf(packageName, "Error saving instance: %v", err)
+			}
+		}
+	})
 
 	return nil
 }

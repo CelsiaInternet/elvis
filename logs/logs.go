@@ -8,8 +8,6 @@ import (
 	"github.com/celsiainternet/elvis/utility"
 )
 
-var debugEnabled = os.Getenv("LOG_DEBUG") == "true"
-
 func printLn(kind string, color string, args ...any) {
 	stdrout.Printl(kind, color, args...)
 }
@@ -119,16 +117,10 @@ func Pong(args ...any) {
 }
 
 func Debug(v ...any) {
-	if !debugEnabled {
-		return
-	}
 	printLn("Debug", "Cyan", v...)
 }
 
 func Debugf(format string, args ...any) {
-	if !debugEnabled {
-		return
-	}
 	message := fmt.Sprintf(format, args...)
 	printLn("Debug", "Cyan", message)
 }

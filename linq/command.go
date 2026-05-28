@@ -231,8 +231,7 @@ func (c *Linq) commandUpsert() (et.Items, error) {
 *
 **/
 func (c *Linq) Current() (et.Items, error) {
-	c.SqlCurrent()
-	return c.db.Query(c.sql)
+	return c.SqlCurrent()
 }
 
 /**

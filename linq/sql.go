@@ -189,7 +189,7 @@ func (c *Linq) SqlReturn() string {
 /**
 * SqlCurrent
 **/
-func (c *Linq) SqlCurrent() string {
+func (c *Linq) SqlCurrent() (et.Items, error) {
 	var result string
 	var cols []*Column
 	model := c.from[0].model
@@ -215,9 +215,7 @@ func (c *Linq) SqlCurrent() string {
 
 	c.SqlFrom()
 
-	c.SqlKeys()
-
-	return c.sql
+	return c.SqlKeys()
 }
 
 /**
@@ -451,32 +449,16 @@ func (c *Linq) SqlIndex() string {
 /**
 * SqlKeys
 **/
-func (c *Linq) SqlKeys() string {
-	result := c.SqlWhere()
-
-	if len(result) > 0 {
-		return result
-	}
-
-	var wh string
-	for _, obj := range c.keys {
-		if len(result) == 0 {
-			wh = strs.Format(`%s=%v`, strs.Uppcase(obj.Col.name), et.Unquote(obj.Value))
-		} else {
-			wh = strs.Format(`AND %s=%v`, strs.Uppcase(obj.Col.name), et.Unquote(obj.Value))
+func (c *Linq) SqlKeys() (et.Items, error) {
+	if len(c.where) == 0 {
+		for _, obj := range c.keys {
+			c.Where(obj.Col.Eq(obj.Value))
 		}
-		result = strs.Append(result, wh, "\n")
-	}
-
-	if len(result) == 0 {
-		result = `LIMIT 0`
 	} else {
-		result = strs.Format(`WHERE %s`, result)
+		c.SqlWhere()
 	}
 
-	c.sql = strs.Append(c.sql, result, "\n")
-
-	return result
+	return c.Limit(1)
 }
 
 /**

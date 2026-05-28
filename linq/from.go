@@ -23,6 +23,9 @@ func (c *Linq) From(model *Model, as ...string) *Linq {
 
 func (c *Linq) Where(where *Where) *Linq {
 	where.linq = c
+	if len(c.where) > 0 {
+		where.connector = "AND"
+	}
 	c.where = append(c.where, where)
 
 	return c
