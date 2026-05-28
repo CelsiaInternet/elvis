@@ -141,7 +141,7 @@ func (s *Instance) Set(id, tag string, obj any) error {
 			"tag":         tag,
 			"definition":  bt,
 		}).
-		Debug().
+		Where(s.model.Column("_id").Eq(id)).
 		CommandOne()
 
 	return err
