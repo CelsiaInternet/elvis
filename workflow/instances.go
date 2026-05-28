@@ -477,10 +477,6 @@ func (s *Instance) run(ctx et.Json) (et.Json, error) {
 			return s.setDone(result, err)
 		}
 
-		if step.Stop {
-			return s.setStop(result, err)
-		}
-
 		if s.goTo != -1 {
 			err = s.setGoto(s.goTo, MSG_INSTANCE_GOTO_USER_DECISION, result)
 			if err != nil {
@@ -507,6 +503,10 @@ func (s *Instance) run(ctx et.Json) (et.Json, error) {
 				}
 			}
 			continue
+		}
+
+		if step.Stop {
+			return s.setStop(result, err)
 		}
 
 		if s.Current == len(s.Steps)-1 {
