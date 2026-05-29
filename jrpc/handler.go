@@ -2,7 +2,9 @@ package jrpc
 
 import (
 	"encoding/gob"
+	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"net/rpc"
 	"slices"
@@ -88,16 +90,47 @@ func call(host string, port int, method string, args et.Json, result any) (*midd
 		return metric, nil
 	}
 
-	client, err := rpc.Dial("tcp", address)
+	timeOut := time.Duration(envar.GetInt(10, "RPC_TIMEOUT")) * time.Second
+	conn, err := net.DialTimeout(
+		"tcp",
+		address,
+		timeOut,
+	)
+
 	if err != nil {
 		metric.DoneRpc(err.Error())
 		return metric, err
 	}
+
+	defer conn.Close()
+
+	timeOutRead := timeOut + 20*time.Second
+	_ = conn.SetDeadline(
+		time.Now().Add(timeOutRead),
+	)
+
+	client := rpc.NewClient(conn)
 	defer client.Close()
 
-	err = client.Call(method, args, result)
-	if err != nil {
+	call := client.Go(
+		method,
+		args,
+		result,
+		make(chan *rpc.Call, 1),
+	)
+
+	select {
+	case done := <-call.Done:
+
+		if done.Error != nil {
+			metric.DoneRpc(done.Error.Error())
+			return metric, done.Error
+		}
+
+	case <-time.After(timeOutRead):
+		err := errors.New("rpc timeout")
 		metric.DoneRpc(err.Error())
+
 		return metric, err
 	}
 
