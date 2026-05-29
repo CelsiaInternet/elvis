@@ -3,10 +3,8 @@ package jdb
 import (
 	"database/sql"
 	"fmt"
-	"time"
 
 	"github.com/celsiainternet/elvis/console"
-	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/msg"
@@ -261,14 +259,14 @@ func ConnectTo(params et.Json) (*DB, error) {
 		return nil, err
 	}
 
-	maxOpenConns := envar.GetInt(3, "DB_MAX_OPEN_CONNS")
-	maxIdleConns := envar.GetInt(2, "DB_MAX_IDLE_CONNS")
-	connMaxLifetime := time.Duration(envar.GetInt(30, "DB_CONN_MAX_LIFETIME")) * time.Minute
-	connMaxIdleTime := time.Duration(envar.GetInt(5, "DB_CONN_MAX_IDLE_TIME")) * time.Minute
-	db.SetMaxOpenConns(maxOpenConns)
-	db.SetMaxIdleConns(maxIdleConns)
-	db.SetConnMaxLifetime(connMaxLifetime)
-	db.SetConnMaxIdleTime(connMaxIdleTime)
+	// maxOpenConns := envar.GetInt(3, "DB_MAX_OPEN_CONNS")
+	// maxIdleConns := envar.GetInt(2, "DB_MAX_IDLE_CONNS")
+	// connMaxLifetime := time.Duration(envar.GetInt(30, "DB_CONN_MAX_LIFETIME")) * time.Minute
+	// connMaxIdleTime := time.Duration(envar.GetInt(5, "DB_CONN_MAX_IDLE_TIME")) * time.Minute
+	// db.SetMaxOpenConns(maxOpenConns)
+	// db.SetMaxIdleConns(maxIdleConns)
+	// db.SetConnMaxLifetime(connMaxLifetime)
+	// db.SetConnMaxIdleTime(connMaxIdleTime)
 
 	err = db.Ping()
 	if err != nil {
