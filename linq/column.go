@@ -1,7 +1,7 @@
 package linq
 
 import (
-	"fmt"
+	"errors"
 
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/strs"
@@ -222,11 +222,11 @@ func (c *Column) Valid(val any) error {
 		switch strs.Uppcase(c.Type) {
 		case "BOOLEAN":
 			if !utility.ValidIn(val.(string), 0, []string{"TRUE", "FALSE", "true", "false", "1", "0"}) {
-				return fmt.Errorf(c.RequiredMsg)
+				return errors.New(c.RequiredMsg)
 			}
 		default:
 			if !utility.ValidStr(val.(string), 0, []string{""}) {
-				return fmt.Errorf(c.RequiredMsg)
+				return errors.New(c.RequiredMsg)
 			}
 		}
 	}

@@ -10,7 +10,7 @@ import (
 	"github.com/celsiainternet/elvis/instances"
 	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/response"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 )
 
 var crontab *Jobs
