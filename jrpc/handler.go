@@ -90,7 +90,7 @@ func call(host string, port int, method string, args et.Json, result any) (*midd
 		return metric, nil
 	}
 
-	timeOut := time.Duration(envar.GetInt(10, "RPC_TIMEOUT")) * time.Second
+	timeOut := 10 * time.Second
 	conn, err := net.DialTimeout(
 		"tcp",
 		address,
@@ -104,7 +104,7 @@ func call(host string, port int, method string, args et.Json, result any) (*midd
 
 	defer conn.Close()
 
-	timeOutRead := timeOut + 20*time.Second
+	timeOutRead := time.Duration(envar.GetInt(20, "RPC_TIMEOUT")) * time.Second
 	_ = conn.SetDeadline(
 		time.Now().Add(timeOutRead),
 	)
