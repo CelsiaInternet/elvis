@@ -541,54 +541,55 @@ func (s *Instance) run(ctx et.Json) (et.Json, error) {
 * @return et.Json, error
 **/
 func (s *Instance) rollback(result et.Json, err error) (et.Json, error) {
-	if s.startResilence() {
-		return result, err
-	}
-
-	if s.Status == FlowStatusDone {
-		return result, fmt.Errorf(MSG_INSTANCE_ALREADY_DONE, s.Id)
-	} else if s.Status == FlowStatusRunning {
-		return result, fmt.Errorf(MSG_INSTANCE_ALREADY_RUNNING, s.Id)
-	} else if s.Status == FlowStatusPending {
-		return result, fmt.Errorf(MSG_INSTANCE_PENDING, s.Id)
-	}
-
-	for i := s.Current - 1; i >= 0; i-- {
-		logs.Logf(packageName, MSG_INSTANCE_ROLLBACK_STEP, i)
-		step := s.Steps[i]
-		if step == nil {
-			continue
+	/*
+		if s.startResilence() {
+			return result, err
 		}
 
-		if step.rollbacks == nil {
-			continue
+		if s.Status == FlowStatusDone {
+			return result, fmt.Errorf(MSG_INSTANCE_ALREADY_DONE, s.Id)
+		} else if s.Status == FlowStatusRunning {
+			return result, fmt.Errorf(MSG_INSTANCE_ALREADY_RUNNING, s.Id)
+		} else if s.Status == FlowStatusPending {
+			return result, fmt.Errorf(MSG_INSTANCE_PENDING, s.Id)
 		}
 
-		if s.Ctxs[i] == nil {
-			continue
-		}
-
-		ctx := s.Ctxs[i].Clone()
-		result, err = step.rollbacks(s, ctx)
-		if err != nil {
-			attempt := 0
-			if s.resilence != nil {
-				attempt = s.resilence.Attempt
-			}
-			s.Rollbacks[i] = &Result{
-				Step:    i,
-				Ctx:     ctx,
-				Attempt: attempt,
-				Result:  result,
-				Error:   err.Error(),
+		for i := s.Current - 1; i >= 0; i-- {
+			logs.Logf(packageName, MSG_INSTANCE_ROLLBACK_STEP, i)
+			step := s.Steps[i]
+			if step == nil {
+				continue
 			}
 
-			if s.TpConsistency == TpConsistencyStrong {
-				return result, err
+			if step.rollbacks == nil {
+				continue
+			}
+
+			if s.Ctxs[i] == nil {
+				continue
+			}
+
+			ctx := s.Ctxs[i].Clone()
+			result, err = step.rollbacks(s, ctx)
+			if err != nil {
+				attempt := 0
+				if s.resilence != nil {
+					attempt = s.resilence.Attempt
+				}
+				s.Rollbacks[i] = &Result{
+					Step:    i,
+					Ctx:     ctx,
+					Attempt: attempt,
+					Result:  result,
+					Error:   err.Error(),
+				}
+
+				if s.TpConsistency == TpConsistencyStrong {
+					return result, err
+				}
 			}
 		}
-	}
-
+	*/
 	return result, err
 }
 
