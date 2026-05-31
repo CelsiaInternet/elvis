@@ -65,8 +65,6 @@ type Instance struct {
 	resilence  *resilience.Instance `json:"-"`
 	isNew      bool                 `json:"-"`
 	isDebug    bool                 `json:"-"`
-	saveMu     sync.Mutex           `json:"-"`
-	saveTimer  *time.Timer          `json:"-"`
 }
 
 /**
@@ -123,27 +121,16 @@ func (s *Instance) ToString() string {
 * @return error
 **/
 func (s *Instance) Save() error {
-	s.saveMu.Lock()
-	defer s.saveMu.Unlock()
+	data := s.ToJson()
+	event.Publish(EVENT_WORKFLOW_STATUS, data)
 
-	if s.saveTimer != nil {
-		s.saveTimer.Stop()
+	if s.isDebug {
+		logs.Log("WorkFlows", "save:", data.ToString())
 	}
 
-	s.saveTimer = time.AfterFunc(100*time.Millisecond, func() {
-		data := s.ToJson()
-		event.Publish(EVENT_WORKFLOW_STATUS, data)
-
-		if s.isDebug {
-			logs.Log("WorkFlows", "save:", data.ToString())
-		}
-
-		if setInstance != nil {
-			if err := setInstance(s.Id, s.Tag, s); err != nil {
-				logs.Errorf(packageName, "Error saving instance: %v", err)
-			}
-		}
-	})
+	if setInstance != nil {
+		return setInstance(s.Id, s.Tag, s)
+	}
 
 	return nil
 }
@@ -220,23 +207,19 @@ func (s *Instance) setResult(result et.Json, err error) (et.Json, error) {
 /**
 * SetTag
 * @param key string, value interface{}
-* @return error
 **/
-func (s *Instance) SetTag(key string, value interface{}) error {
+func (s *Instance) SetTag(key string, value interface{}) {
 	s.Tags[key] = value
-	return s.Save()
 }
 
 /**
 * PutTag
 * @param tags et.Json
-* @return error
 **/
-func (s *Instance) PutTag(tags et.Json) error {
+func (s *Instance) PutTag(tags et.Json) {
 	for k, v := range tags {
 		s.Tags[k] = v
 	}
-	return s.Save()
 }
 
 /**
@@ -252,31 +235,21 @@ func (s *Instance) GetTag(key string) interface{} {
 * SetParam
 * @param key string, value interface{}
 **/
-func (s *Instance) SetParam(key string, value interface{}) (et.Json, error) {
+func (s *Instance) SetParam(key string, value interface{}) et.Json {
 	s.Params[key] = value
-	err := s.Save()
-	if err != nil {
-		return s.Params, err
-	}
-
-	return s.Params, nil
+	return s.Params
 }
 
 /**
 * PutParam
 * @param value et.Json
-* @return et.Json, error
+* @return et.Json
 **/
-func (s *Instance) PutParam(value et.Json) (et.Json, error) {
+func (s *Instance) PutParam(value et.Json) et.Json {
 	for k, v := range value {
 		s.Params[k] = v
 	}
-	err := s.Save()
-	if err != nil {
-		return s.Params, err
-	}
-
-	return s.Params, nil
+	return s.Params
 }
 
 /**
@@ -347,7 +320,7 @@ func (s *Instance) SetCheckList(tag string, ok bool, data et.Json) error {
 	if idx != -1 {
 		s.CheckList[idx].Ok = ok
 		s.CheckList[idx].Data = data
-		return s.Save()
+		return nil
 	}
 
 	return fmt.Errorf("check list not found")
@@ -595,11 +568,9 @@ func (s *Instance) rollback(result et.Json, err error) (et.Json, error) {
 /**
 * SetCtx
 * @param ctx et.Json
-* @return error
 **/
-func (s *Instance) SetCtx(ctx et.Json) error {
+func (s *Instance) SetCtx(ctx et.Json) {
 	s.setCtx(ctx)
-	return s.Save()
 }
 
 /**
