@@ -8,6 +8,7 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
+	"io"
 	"math/big"
 	"net"
 	"os"
@@ -107,8 +108,17 @@ func CreateCertificate(fileCrt, fileKey string, hosts []string, expire time.Dura
 	keyOut.Close()
 
 	if cache.IsLoad() {
-		cache.Set("pipe:cert", string(cerBytes), expire)
-		cache.Set("pipe:key", string(keyBytes), expire)
+		certPEMBlock, err := io.ReadAll(certOut)
+		if err != nil {
+			return err
+		}
+		keyPEMBlock, err := io.ReadAll(keyOut)
+		if err != nil {
+			return err
+		}
+
+		cache.Set("pipe:cert", string(certPEMBlock), expire)
+		cache.Set("pipe:key", string(keyPEMBlock), expire)
 	}
 
 	return nil
@@ -237,12 +247,12 @@ func Deal(path, host string, port int, expire time.Duration) (*tls.Conn, error) 
 * @param path string, hosts []string, owner net.Listener, expire time.Duration
 * @return net.Listener
 **/
-func Wrapper(path string, hosts []string, owner net.Listener, expire time.Duration) net.Listener {
+func Wrapper(path string, hosts []string, owner net.Listener, expire time.Duration) (net.Listener, error) {
 	cache.Load()
 
 	cert, err := LoadServer(path, hosts, expire)
 	if err != nil {
-		logs.Panic(err)
+		return nil, err
 	}
 
 	tlsConfig := &tls.Config{
@@ -250,5 +260,5 @@ func Wrapper(path string, hosts []string, owner net.Listener, expire time.Durati
 		InsecureSkipVerify: envar.GetBool(false, "PIPE_INSECURE_SKIP_VERIFY"),
 	}
 
-	return tls.NewListener(owner, tlsConfig)
+	return tls.NewListener(owner, tlsConfig), nil
 }
