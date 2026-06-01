@@ -92,6 +92,11 @@ func CreateCertificate(fileCrt, fileKey string, hosts []string, expire time.Dura
 		Bytes: cerBytes,
 	})
 
+	certPEMBlock, err := io.ReadAll(certOut)
+	if err != nil {
+		return err
+	}
+
 	certOut.Close()
 
 	keyBytes := x509.MarshalPKCS1PrivateKey(priv)
@@ -105,18 +110,14 @@ func CreateCertificate(fileCrt, fileKey string, hosts []string, expire time.Dura
 		Bytes: keyBytes,
 	})
 
+	keyPEMBlock, err := io.ReadAll(keyOut)
+	if err != nil {
+		return err
+	}
+
 	keyOut.Close()
 
 	if cache.IsLoad() {
-		certPEMBlock, err := io.ReadAll(certOut)
-		if err != nil {
-			return err
-		}
-		keyPEMBlock, err := io.ReadAll(keyOut)
-		if err != nil {
-			return err
-		}
-
 		cache.Set("pipe:cert", string(certPEMBlock), expire)
 		cache.Set("pipe:key", string(keyPEMBlock), expire)
 	}
