@@ -8,7 +8,6 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
-	"io"
 	"math/big"
 	"net"
 	"os"
@@ -92,11 +91,6 @@ func CreateCertificate(fileCrt, fileKey string, hosts []string, expire time.Dura
 		Bytes: cerBytes,
 	})
 
-	certPEMBlock, err := io.ReadAll(certOut)
-	if err != nil {
-		return err
-	}
-
 	certOut.Close()
 
 	keyBytes := x509.MarshalPKCS1PrivateKey(priv)
@@ -110,14 +104,18 @@ func CreateCertificate(fileCrt, fileKey string, hosts []string, expire time.Dura
 		Bytes: keyBytes,
 	})
 
-	keyPEMBlock, err := io.ReadAll(keyOut)
-	if err != nil {
-		return err
-	}
-
 	keyOut.Close()
 
 	if cache.IsLoad() {
+		certPEMBlock, err := os.ReadFile(fileCrt)
+		if err != nil {
+			return err
+		}
+		keyPEMBlock, err := os.ReadFile(fileKey)
+		if err != nil {
+			return err
+		}
+
 		cache.Set("pipe:cert", string(certPEMBlock), expire)
 		cache.Set("pipe:key", string(keyPEMBlock), expire)
 	}
@@ -167,17 +165,11 @@ func LoadServer(path string, hosts []string, expire time.Duration) (tls.Certific
 
 	fileCrt := filepath.Join(path, "server.crt")
 	fileKey := filepath.Join(path, "server.key")
-	if file.ExistPath(fileCrt) && file.ExistPath(fileKey) {
-		cert, err := tls.LoadX509KeyPair(fileCrt, fileKey)
-		if err != nil {
-			return tls.Certificate{}, err
-		}
-		return cert, nil
+	if !file.ExistPath(fileCrt) {
+		return tls.Certificate{}, fmt.Errorf("certificate not found")
 	}
-
-	err := CreateCertificate(fileCrt, fileKey, hosts, expire)
-	if err != nil {
-		return tls.Certificate{}, err
+	if !file.ExistPath(fileKey) {
+		return tls.Certificate{}, fmt.Errorf("private key not found")
 	}
 
 	cert, err := tls.LoadX509KeyPair(fileCrt, fileKey)
