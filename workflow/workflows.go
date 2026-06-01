@@ -189,10 +189,14 @@ func (s *WorkFlows) loadInstance(id, tag string) (*Instance, bool) {
 **/
 func (s *WorkFlows) getOrCreateInstance(id, tag string, step int, tags et.Json, createdBy string) (*Instance, error) {
 	id = reg.GetUUID(id)
+	logs.Debugf("getOrCreateInstance:10 - %s", id)
 	result, exists := s.loadInstance(id, tag)
 	if !exists {
+		logs.Debugf("getOrCreateInstance:11 - %s", id)
 		return s.newInstance(tag, id, tags, step, createdBy)
 	}
+
+	logs.Debugf("getOrCreateInstance:12 - %s", id)
 
 	return result, nil
 }
@@ -213,18 +217,15 @@ func (s *WorkFlows) runInstance(instanceId, tag string, step int, tags, ctx et.J
 	logs.Debug("runInstance:2")
 	instance.isDebug = s.isDebug
 	instance.UpdatedBy = createdBy
-	logs.Debug("runInstance:3")
 	instance.PutTag(tags)
 	if step != instance.Current {
 		instance.Current = step
 	}
-	logs.Debug("runInstance:4")
 	result, err := instance.run(ctx)
 	if err != nil {
 		return et.Json{}, err
 	}
 
-	logs.Debug("runInstance:5")
 	s.Remove(instance)
 	logs.Logf(packageName, "runInstance: %s", tag)
 	if s.isDebug {
