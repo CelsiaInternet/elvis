@@ -20,14 +20,11 @@ import (
 )
 
 /**
-* Create
-* @param fileCrt string
-* @param fileKey string
-* @param hosts []string
-* @param expire time.Duration
+* CreateCertificate
+* @param fileCrt string, fileKey string, hosts []string, expire time.Duration
 * @return error
 **/
-func Create(fileCrt, fileKey string, hosts []string, expire time.Duration) error {
+func CreateCertificate(fileCrt, fileKey string, hosts []string, expire time.Duration) error {
 	logs.Logf("pipe", "generate certificates TLS...")
 
 	file.RemoveFiles(fileCrt, fileKey)
@@ -111,13 +108,11 @@ func Create(fileCrt, fileKey string, hosts []string, expire time.Duration) error
 }
 
 /**
-* Load
-* @param path string
-* @param hosts []string
-* @param expire time.Duration
+* LoadServer
+* @param path string, hosts []string, expire time.Duration
 * @return (tls.Certificate, error)
 **/
-func Load(path string, hosts []string, expire time.Duration) (tls.Certificate, error) {
+func LoadServer(path string, hosts []string, expire time.Duration) (tls.Certificate, error) {
 	if !file.ExistPath(path) {
 		_, err := file.MakeFolder(path)
 		if err != nil {
@@ -127,17 +122,12 @@ func Load(path string, hosts []string, expire time.Duration) (tls.Certificate, e
 
 	fileCrt := filepath.Join(path, "server.crt")
 	fileKey := filepath.Join(path, "server.key")
-	if file.ExistPath(fileCrt) && file.ExistPath(fileKey) {
-		cert, err := tls.LoadX509KeyPair(fileCrt, fileKey)
-		if err != nil {
-			return tls.Certificate{}, err
-		}
-		return cert, nil
+	if !file.ExistPath(fileCrt) {
+		return tls.Certificate{}, fmt.Errorf("certificate not found")
 	}
 
-	err := Create(fileCrt, fileKey, hosts, expire)
-	if err != nil {
-		return tls.Certificate{}, err
+	if !file.ExistPath(fileKey) {
+		return tls.Certificate{}, fmt.Errorf("private key not found")
 	}
 
 	cert, err := tls.LoadX509KeyPair(fileCrt, fileKey)
@@ -150,9 +140,7 @@ func Load(path string, hosts []string, expire time.Duration) (tls.Certificate, e
 
 /**
 * Pool
-* @param path string
-* @param hosts []string
-* @param expire time.Duration
+* @param path string, hosts []string, expire time.Duration
 * @return (*x509.CertPool, error)
 **/
 func Pool(path string, hosts []string, expire time.Duration) (*x509.CertPool, error) {
@@ -164,23 +152,8 @@ func Pool(path string, hosts []string, expire time.Duration) (*x509.CertPool, er
 	}
 
 	fileCrt := filepath.Join(path, "server.crt")
-	fileKey := filepath.Join(path, "server.key")
-	if file.ExistPath(fileCrt) && file.ExistPath(fileKey) {
-		certPool := x509.NewCertPool()
-		certData, err := os.ReadFile(fileCrt)
-		if err != nil {
-			return nil, err
-		}
-		ok := certPool.AppendCertsFromPEM(certData)
-		if !ok {
-			return nil, fmt.Errorf("failed to append certificate")
-		}
-		return certPool, nil
-	}
-
-	err := Create(fileCrt, fileKey, hosts, expire)
-	if err != nil {
-		return nil, err
+	if !file.ExistPath(fileCrt) {
+		return nil, fmt.Errorf("certificate not found")
 	}
 
 	certPool := x509.NewCertPool()
@@ -197,10 +170,7 @@ func Pool(path string, hosts []string, expire time.Duration) (*x509.CertPool, er
 
 /**
 * Deal
-* @param path string
-* @param host string
-* @param port int
-* @param expire time.Duration
+* @param path string, host string, port int, expire time.Duration
 * @return (*tls.Conn, error)
 **/
 func Deal(path, host string, port int, expire time.Duration) (*tls.Conn, error) {
@@ -224,15 +194,12 @@ func Deal(path, host string, port int, expire time.Duration) (*tls.Conn, error) 
 }
 
 /**
-* Wrapper
-* @param path string
-* @param hosts []string
-* @param owner net.Listener
-* @param expire time.Duration
+* WrapperServer
+* @param path string, hosts []string, owner net.Listener, expire time.Duration
 * @return net.Listener
 **/
 func Wrapper(path string, hosts []string, owner net.Listener, expire time.Duration) net.Listener {
-	cert, err := Load(path, hosts, expire)
+	cert, err := LoadServer(path, hosts, expire)
 	if err != nil {
 		logs.Panic(err)
 	}
