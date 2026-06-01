@@ -204,22 +204,27 @@ func (s *WorkFlows) getOrCreateInstance(id, tag string, step int, tags et.Json, 
 * @return et.Json, error
 **/
 func (s *WorkFlows) runInstance(instanceId, tag string, step int, tags, ctx et.Json, createdBy string) (et.Json, error) {
+	logs.Debug("runInstance:1")
 	instance, err := s.getOrCreateInstance(instanceId, tag, step, tags, createdBy)
 	if err != nil {
 		return et.Json{}, err
 	}
 
+	logs.Debug("runInstance:2")
 	instance.isDebug = s.isDebug
 	instance.UpdatedBy = createdBy
+	logs.Debug("runInstance:3")
 	instance.PutTag(tags)
 	if step != instance.Current {
 		instance.Current = step
 	}
+	logs.Debug("runInstance:4")
 	result, err := instance.run(ctx)
 	if err != nil {
 		return et.Json{}, err
 	}
 
+	logs.Debug("runInstance:5")
 	s.Remove(instance)
 	logs.Logf(packageName, "runInstance: %s", tag)
 	if s.isDebug {
