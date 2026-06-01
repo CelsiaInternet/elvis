@@ -143,23 +143,25 @@ func (s *WorkFlows) loadInstance(id, tag string) (*Instance, bool) {
 		return nil, false
 	}
 
+	logs.Debugf("loadInstance:1 - %s", id)
 	result, ok := s.Instances[id]
 	if ok {
 		return result, true
 	}
 
+	logs.Debugf("loadInstance:2 - %s", id)
 	if getInstance != nil {
 		exists, err := getInstance(id, &result)
 		if err != nil {
 			return nil, false
 		}
 
-		logs.Debugf("loadInstance:1 - %s", id)
+		logs.Debugf("loadInstance:3 - %s", id)
 		if !exists {
 			return nil, false
 		}
 
-		logs.Debugf("loadInstance:2 - %s", id)
+		logs.Debugf("loadInstance:4 - %s", id)
 		if tag != "" && tag != result.Tag {
 			result.Tag = tag
 			result.Save()
@@ -170,7 +172,7 @@ func (s *WorkFlows) loadInstance(id, tag string) (*Instance, bool) {
 			return nil, false
 		}
 
-		logs.Debugf("loadInstance:3 - %s", id)
+		logs.Debugf("loadInstance:5 - %s", id)
 		result.Flow = flow
 		result.goTo = -1
 		s.Add(result)
@@ -183,6 +185,7 @@ func (s *WorkFlows) loadInstance(id, tag string) (*Instance, bool) {
 		return result, true
 	}
 
+	logs.Debugf("loadInstance:6 - %s", id)
 	return nil, false
 }
 
