@@ -104,7 +104,7 @@ func call(host string, port int, method string, args et.Json, result any) (*midd
 
 	defer conn.Close()
 
-	timeOutRead := time.Duration(envar.GetInt(20, "RPC_TIMEOUT")) * time.Second
+	timeOutRead := time.Duration(envar.GetInt(600, "RPC_TIMEOUT")) * time.Second
 	_ = conn.SetDeadline(
 		time.Now().Add(timeOutRead),
 	)
@@ -207,6 +207,23 @@ func Call(method string, args et.Json) (any, error) {
 	}
 
 	return nil, fmt.Errorf("invalid type: %s", tp)
+}
+
+/**
+* CallJsonToHost
+* @param method string, host string, port int, args et.Json
+* @return et.Json, error
+**/
+func CallJsonToHost(method, host string, port int, args et.Json) (et.Json, error) {
+	var result et.Json
+	metric, err := call(host, port, method, args, &result)
+	if err != nil {
+		return result, err
+	}
+
+	metric.DoneRpc(result.ToString())
+
+	return result, nil
 }
 
 /**
