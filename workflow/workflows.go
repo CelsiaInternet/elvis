@@ -156,7 +156,7 @@ func (s *WorkFlows) loadInstance(id, tag string) (*Instance, bool) {
 			return nil, false
 		}
 
-		logs.Debugf("loadInstance:3 - %s", id)
+		logs.Debugf("loadInstance:3 - %v", exists)
 		if !exists {
 			return nil, false
 		}
@@ -164,7 +164,6 @@ func (s *WorkFlows) loadInstance(id, tag string) (*Instance, bool) {
 		logs.Debugf("loadInstance:4 - %s", id)
 		if tag != "" && tag != result.Tag {
 			result.Tag = tag
-			result.Save()
 		}
 
 		flow := s.Flows[result.Tag]
@@ -233,6 +232,7 @@ func (s *WorkFlows) runInstance(instanceId, tag string, step int, tags, ctx et.J
 		return et.Json{}, err
 	}
 
+	logs.Debug("runInstance:3")
 	s.Remove(instance)
 	logs.Logf(packageName, "runInstance: %s", tag)
 	if s.isDebug {
