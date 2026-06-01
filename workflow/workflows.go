@@ -154,10 +154,12 @@ func (s *WorkFlows) loadInstance(id, tag string) (*Instance, bool) {
 			return nil, false
 		}
 
+		logs.Debugf("loadInstance:1 - %s", id)
 		if !exists {
 			return nil, false
 		}
 
+		logs.Debugf("loadInstance:2 - %s", id)
 		if tag != "" && tag != result.Tag {
 			result.Tag = tag
 			result.Save()
@@ -168,6 +170,7 @@ func (s *WorkFlows) loadInstance(id, tag string) (*Instance, bool) {
 			return nil, false
 		}
 
+		logs.Debugf("loadInstance:3 - %s", id)
 		result.Flow = flow
 		result.goTo = -1
 		s.Add(result)
@@ -176,6 +179,7 @@ func (s *WorkFlows) loadInstance(id, tag string) (*Instance, bool) {
 			logs.Log("WorkFlows", "loadInstance:", result.ToJson().ToString())
 		}
 
+		logs.Debugf("loadInstance:4 - %s", id)
 		return result, true
 	}
 
