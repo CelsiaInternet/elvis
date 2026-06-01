@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/celsiainternet/elvis/cache"
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/file"
 	"github.com/celsiainternet/elvis/logs"
@@ -69,7 +70,7 @@ func CreateCertificate(fileCrt, fileKey string, hosts []string, expire time.Dura
 		IPAddresses: ipAddresses,
 	}
 
-	derBytes, err := x509.CreateCertificate(
+	cerBytes, err := x509.CreateCertificate(
 		rand.Reader,
 		&template,
 		&template,
@@ -87,11 +88,12 @@ func CreateCertificate(fileCrt, fileKey string, hosts []string, expire time.Dura
 
 	pem.Encode(certOut, &pem.Block{
 		Type:  "CERTIFICATE",
-		Bytes: derBytes,
+		Bytes: cerBytes,
 	})
 
 	certOut.Close()
 
+	keyBytes := x509.MarshalPKCS1PrivateKey(priv)
 	keyOut, err := os.Create(fileKey)
 	if err != nil {
 		return err
@@ -99,10 +101,13 @@ func CreateCertificate(fileCrt, fileKey string, hosts []string, expire time.Dura
 
 	pem.Encode(keyOut, &pem.Block{
 		Type:  "RSA PRIVATE KEY",
-		Bytes: x509.MarshalPKCS1PrivateKey(priv),
+		Bytes: keyBytes,
 	})
 
 	keyOut.Close()
+
+	cache.Set("pipe:cert", string(cerBytes), expire)
+	cache.Set("pipe:key", string(keyBytes), expire)
 
 	return nil
 }
@@ -113,6 +118,11 @@ func CreateCertificate(fileCrt, fileKey string, hosts []string, expire time.Dura
 * @return (tls.Certificate, error)
 **/
 func LoadServer(path string, hosts []string, expire time.Duration) (tls.Certificate, error) {
+	_, err := cache.Load()
+	if err != nil {
+		return tls.Certificate{}, err
+	}
+
 	if !file.ExistPath(path) {
 		_, err := file.MakeFolder(path)
 		if err != nil {
@@ -120,17 +130,25 @@ func LoadServer(path string, hosts []string, expire time.Duration) (tls.Certific
 		}
 	}
 
-	fileCrt := filepath.Join(path, "server.crt")
-	fileKey := filepath.Join(path, "server.key")
-	if !file.ExistPath(fileCrt) {
+	fileCrt, err := cache.Get("pipe:cert", "")
+	if err != nil {
+		return tls.Certificate{}, err
+	}
+
+	if fileCrt == "" {
 		return tls.Certificate{}, fmt.Errorf("certificate not found")
 	}
 
-	if !file.ExistPath(fileKey) {
+	fileKey, err := cache.Get("pipe:key", "")
+	if err != nil {
+		return tls.Certificate{}, err
+	}
+
+	if fileKey == "" {
 		return tls.Certificate{}, fmt.Errorf("private key not found")
 	}
 
-	cert, err := tls.LoadX509KeyPair(fileCrt, fileKey)
+	cert, err := tls.X509KeyPair([]byte(fileCrt), []byte(fileKey))
 	if err != nil {
 		return tls.Certificate{}, err
 	}
@@ -139,11 +157,11 @@ func LoadServer(path string, hosts []string, expire time.Duration) (tls.Certific
 }
 
 /**
-* Pool
+* LoadClient
 * @param path string, hosts []string, expire time.Duration
 * @return (*x509.CertPool, error)
 **/
-func Pool(path string, hosts []string, expire time.Duration) (*x509.CertPool, error) {
+func LoadClient(path string, hosts []string, expire time.Duration) (*x509.CertPool, error) {
 	if !file.ExistPath(path) {
 		_, err := file.MakeFolder(path)
 		if err != nil {
@@ -174,7 +192,7 @@ func Pool(path string, hosts []string, expire time.Duration) (*x509.CertPool, er
 * @return (*tls.Conn, error)
 **/
 func Deal(path, host string, port int, expire time.Duration) (*tls.Conn, error) {
-	cert, err := Pool(path, []string{host}, expire)
+	cert, err := LoadClient(path, []string{host}, expire)
 	if err != nil {
 		return nil, err
 	}
