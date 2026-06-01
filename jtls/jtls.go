@@ -106,8 +106,10 @@ func CreateCertificate(fileCrt, fileKey string, hosts []string, expire time.Dura
 
 	keyOut.Close()
 
-	cache.Set("pipe:cert", string(cerBytes), expire)
-	cache.Set("pipe:key", string(keyBytes), expire)
+	if cache.IsLoad() {
+		cache.Set("pipe:cert", string(cerBytes), expire)
+		cache.Set("pipe:key", string(keyBytes), expire)
+	}
 
 	return nil
 }
@@ -118,9 +120,31 @@ func CreateCertificate(fileCrt, fileKey string, hosts []string, expire time.Dura
 * @return (tls.Certificate, error)
 **/
 func LoadServer(path string, hosts []string, expire time.Duration) (tls.Certificate, error) {
-	_, err := cache.Load()
-	if err != nil {
-		return tls.Certificate{}, err
+	if cache.IsLoad() {
+		fileCrt, err := cache.Get("pipe:cert", "")
+		if err != nil {
+			return tls.Certificate{}, err
+		}
+
+		if fileCrt == "" {
+			return tls.Certificate{}, fmt.Errorf("certificate not found")
+		}
+
+		fileKey, err := cache.Get("pipe:key", "")
+		if err != nil {
+			return tls.Certificate{}, err
+		}
+
+		if fileKey == "" {
+			return tls.Certificate{}, fmt.Errorf("private key not found")
+		}
+
+		cert, err := tls.X509KeyPair([]byte(fileCrt), []byte(fileKey))
+		if err != nil {
+			return tls.Certificate{}, err
+		}
+
+		return cert, nil
 	}
 
 	if !file.ExistPath(path) {
@@ -130,25 +154,22 @@ func LoadServer(path string, hosts []string, expire time.Duration) (tls.Certific
 		}
 	}
 
-	fileCrt, err := cache.Get("pipe:cert", "")
+	fileCrt := filepath.Join(path, "server.crt")
+	fileKey := filepath.Join(path, "server.key")
+	if file.ExistPath(fileCrt) && file.ExistPath(fileKey) {
+		cert, err := tls.LoadX509KeyPair(fileCrt, fileKey)
+		if err != nil {
+			return tls.Certificate{}, err
+		}
+		return cert, nil
+	}
+
+	err := CreateCertificate(fileCrt, fileKey, hosts, expire)
 	if err != nil {
 		return tls.Certificate{}, err
 	}
 
-	if fileCrt == "" {
-		return tls.Certificate{}, fmt.Errorf("certificate not found")
-	}
-
-	fileKey, err := cache.Get("pipe:key", "")
-	if err != nil {
-		return tls.Certificate{}, err
-	}
-
-	if fileKey == "" {
-		return tls.Certificate{}, fmt.Errorf("private key not found")
-	}
-
-	cert, err := tls.X509KeyPair([]byte(fileCrt), []byte(fileKey))
+	cert, err := tls.LoadX509KeyPair(fileCrt, fileKey)
 	if err != nil {
 		return tls.Certificate{}, err
 	}
@@ -217,6 +238,8 @@ func Deal(path, host string, port int, expire time.Duration) (*tls.Conn, error) 
 * @return net.Listener
 **/
 func Wrapper(path string, hosts []string, owner net.Listener, expire time.Duration) net.Listener {
+	cache.Load()
+
 	cert, err := LoadServer(path, hosts, expire)
 	if err != nil {
 		logs.Panic(err)
