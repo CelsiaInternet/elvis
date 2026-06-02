@@ -103,6 +103,10 @@ func (s *WorkFlows) newInstance(tag, id string, tags et.Json, step int, createdB
 		return nil, fmt.Errorf(MSG_FLOW_NOT_FOUND)
 	}
 
+	if s.isDebug {
+		logs.Debug("newInstance:1")
+	}
+
 	if step == -1 {
 		step = 0
 	}
@@ -128,9 +132,21 @@ func (s *WorkFlows) newInstance(tag, id string, tags et.Json, step int, createdB
 		Params:     et.Json{},
 		isNew:      true,
 	}
-	result.setStatus(FlowStatusPending)
 
-	return result, nil
+	if s.isDebug {
+		logs.Debugf("newInstance:2 tag:%s id:%s", tag, id)
+	}
+
+	return result, result.setStatus(FlowStatusPending)
+}
+
+/**
+* Debug
+* @return *WorkFlows
+**/
+func (s *WorkFlows) Debug() *WorkFlows {
+	s.isDebug = true
+	return s
 }
 
 /**
@@ -148,10 +164,22 @@ func (s *WorkFlows) loadInstance(id, tag string) (*Instance, bool) {
 		return result, true
 	}
 
+	if s.isDebug {
+		logs.Debug("loadInstance:1")
+	}
+
 	if getInstance != nil {
+		if s.isDebug {
+			logs.Debug("loadInstance:2")
+		}
+
 		exists, err := getInstance(id, &result)
 		if err != nil {
 			return nil, false
+		}
+
+		if s.isDebug {
+			logs.Debugf("loadInstance:3 exists:%v", exists)
 		}
 
 		if !exists {
@@ -172,7 +200,7 @@ func (s *WorkFlows) loadInstance(id, tag string) (*Instance, bool) {
 		s.Add(result)
 
 		if s.isDebug {
-			logs.Log("WorkFlows", "loadInstance:", result.ToJson().ToString())
+			logs.Debugf("loadInstance:4 instance:%s", result.ToString())
 		}
 
 		return result, true
@@ -203,13 +231,19 @@ func (s *WorkFlows) getOrCreateInstance(id, tag string, step int, tags et.Json, 
 * @return et.Json, error
 **/
 func (s *WorkFlows) runInstance(instanceId, tag string, step int, tags, ctx et.Json, createdBy string) (et.Json, error) {
-	logs.Debug("runInstance:1")
+	if s.isDebug {
+		logs.Debug("runInstance:1")
+	}
+
 	instance, err := s.getOrCreateInstance(instanceId, tag, step, tags, createdBy)
 	if err != nil {
 		return et.Json{}, err
 	}
 
-	logs.Debug("runInstance:2")
+	if s.isDebug {
+		logs.Debug("runInstance:2")
+	}
+
 	instance.isDebug = s.isDebug
 	instance.UpdatedBy = createdBy
 	instance.PutTag(tags)
@@ -221,11 +255,10 @@ func (s *WorkFlows) runInstance(instanceId, tag string, step int, tags, ctx et.J
 		return et.Json{}, err
 	}
 
-	logs.Debug("runInstance:3")
 	s.Remove(instance)
 	logs.Logf(packageName, "runInstance:%s tag:%s", instanceId, tag)
 	if s.isDebug {
-		logs.Debugf("instance: %s", instance.ToString())
+		logs.Debugf("runInstance:3 instance:%s", instance.ToString())
 	}
 
 	return result, err
