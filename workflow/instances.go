@@ -456,7 +456,7 @@ func (s *Instance) run(ctx et.Json) (et.Json, error) {
 		ctx = s.setCtx(ctx)
 		result, err = step.run(s, ctx)
 		if err != nil {
-			return s.rollback(ctx, err)
+			return s.rollback(result, err)
 		}
 
 		if s.done {
