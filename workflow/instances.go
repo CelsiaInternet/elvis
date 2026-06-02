@@ -407,24 +407,6 @@ func (s *Instance) setGoto(step int, message string, result et.Json) error {
 }
 
 /**
-* startResilence
-* @return bool
-**/
-func (s *Instance) startResilence() bool {
-	if s.TotalAttempts == 0 {
-		return false
-	}
-
-	if s.resilence != nil {
-		return !s.resilence.IsFailed()
-	}
-
-	description := fmt.Sprintf("flow: %s,  %s", s.Name, s.Description)
-	s.resilence = resilience.AddCustom(s.Id, s.Tag, description, s.TotalAttempts, s.TimeAttempts, s.Tags, s.Team, s.Level, s.run, s.Ctx)
-	return true
-}
-
-/**
 * run
 * @param ctx et.Json
 * @return et.Json, error
@@ -563,6 +545,24 @@ func (s *Instance) rollback(result et.Json, err error) (et.Json, error) {
 	}
 
 	return result, err
+}
+
+/**
+* startResilence
+* @return bool
+**/
+func (s *Instance) startResilence() bool {
+	if s.TotalAttempts == 0 {
+		return false
+	}
+
+	if s.resilence != nil {
+		return !s.resilence.IsFailed()
+	}
+
+	description := fmt.Sprintf("flow: %s,  %s", s.Name, s.Description)
+	s.resilence = resilience.AddCustom(s.Id, s.Tag, description, s.TotalAttempts, s.TimeAttempts, s.Tags, s.Team, s.Level, s.run, s.Ctx)
+	return true
 }
 
 /**

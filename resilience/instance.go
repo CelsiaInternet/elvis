@@ -44,12 +44,12 @@ type Instance struct {
 	Tags          et.Json         `json:"tags"`
 	Team          string          `json:"team"`
 	Level         string          `json:"level"`
-	stop        bool            `json:"-"`
-	err         error           `json:"-"`
-	fn          interface{}     `json:"-"`
-	fnArgs      []interface{}   `json:"-"`
-	fnArgsRefl  []reflect.Value `json:"-"` // pre-computed to avoid reflect.ValueOf per retry
-	fnResult    []reflect.Value `json:"-"`
+	stop          bool            `json:"-"`
+	err           error           `json:"-"`
+	fn            interface{}     `json:"-"`
+	fnArgs        []interface{}   `json:"-"`
+	fnArgsRefl    []reflect.Value `json:"-"` // pre-computed to avoid reflect.ValueOf per retry
+	fnResult      []reflect.Value `json:"-"`
 }
 
 /**
