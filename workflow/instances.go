@@ -527,7 +527,6 @@ func (s *Instance) rollback(result et.Json, err error) (et.Json, error) {
 	}
 
 	for i := s.Current - 1; i >= 0; i-- {
-		logs.Logf(packageName, MSG_INSTANCE_ROLLBACK_STEP, i)
 		step := s.Steps[i]
 		if step == nil {
 			continue
@@ -541,6 +540,7 @@ func (s *Instance) rollback(result et.Json, err error) (et.Json, error) {
 			continue
 		}
 
+		logs.Logf(packageName, MSG_INSTANCE_ROLLBACK_STEP, i)
 		ctx := s.Ctxs[i].Clone()
 		result, err = step.rollbacks(s, ctx)
 		if err != nil {
