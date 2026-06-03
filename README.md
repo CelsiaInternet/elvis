@@ -76,8 +76,8 @@ Incluye:
 
 ```bash
 # En el módulo de tu proyecto
+go get github.com/celsiainternet/elvis@v1.1.275
 go get github.com/celsiainternet/elvis@latest
-go get github.com/celsiainternet/elvis@v1.1.274
 go run github.com/celsiainternet/elvis/cmd/install
 ```
 
@@ -758,33 +758,33 @@ result, err := workflow.Run(
 
 ## ⚙️ Variables de Entorno
 
-| Variable                    | Paquete       | Default     | Descripción                                          |
-| --------------------------- | ------------- | ----------- | ---------------------------------------------------- |
-| `DB_DRIVER`                 | jdb           | —           | `postgres`, `mysql` u `oracle`                       |
-| `DB_HOST`                   | jdb           | —           | Host de la base de datos                             |
-| `DB_PORT`                   | jdb           | `5432`      | Puerto de la base de datos                           |
-| `DB_NAME`                   | jdb           | —           | Nombre de la base de datos                           |
-| `DB_USER`                   | jdb           | —           | Usuario de la base de datos                          |
-| `DB_PASSWORD`               | jdb           | —           | Contraseña de la base de datos                       |
-| `DB_APPLICATION_NAME`       | jdb           | `elvis`     | Nombre de la aplicación en PostgreSQL                |
-| `USE_CORE`                  | jdb           | `true`      | Inicializar tablas core (series, records, recycling) |
-| `REDIS_HOST`                | cache         | —           | Host de Redis (ej. `localhost:6379`)                 |
-| `REDIS_PASSWORD`            | cache         | —           | Contraseña de Redis                                  |
-| `REDIS_DB`                  | cache         | `0`         | Número de base de datos Redis                        |
-| `NATS_HOST`                 | event         | —           | URL de conexión NATS                                 |
-| `NATS_USER`                 | event         | —           | Usuario NATS                                         |
-| `NATS_PASSWORD`             | event         | —           | Contraseña NATS                                      |
-| `SECRET`                    | claim         | `1977`      | Clave de firma JWT                                   |
-| `HOST`                      | jrpc / router | `localhost` | Host del servicio actual                             |
-| `PORT`                      | servicio      | `3400`      | Puerto HTTP                                          |
-| `RPC_HOST`                  | jrpc          | `HOST`      | Host para RPC entre servicios                        |
-| `RPC_PORT`                  | jrpc          | `4200`      | Puerto RPC                                           |
-| `AUTHORIZATION_METHOD`      | router        | —           | Método RPC para verificar permisos                   |
-| `RESILIENCE_TOTAL_ATTEMPTS` | resilience    | `3`         | Intentos totales por operación                       |
-| `RESILIENCE_TIME_ATTEMPTS`  | resilience    | `30`        | Segundos entre reintentos                            |
+| Variable                    | Paquete       | Default     | Descripción                                                      |
+| --------------------------- | ------------- | ----------- | ---------------------------------------------------------------- |
+| `DB_DRIVER`                 | jdb           | —           | `postgres`, `mysql` u `oracle`                                   |
+| `DB_HOST`                   | jdb           | —           | Host de la base de datos                                         |
+| `DB_PORT`                   | jdb           | `5432`      | Puerto de la base de datos                                       |
+| `DB_NAME`                   | jdb           | —           | Nombre de la base de datos                                       |
+| `DB_USER`                   | jdb           | —           | Usuario de la base de datos                                      |
+| `DB_PASSWORD`               | jdb           | —           | Contraseña de la base de datos                                   |
+| `DB_APPLICATION_NAME`       | jdb           | `elvis`     | Nombre de la aplicación en PostgreSQL                            |
+| `USE_CORE`                  | jdb           | `true`      | Inicializar tablas core (series, records, recycling)             |
+| `REDIS_HOST`                | cache         | —           | Host de Redis (ej. `localhost:6379`)                             |
+| `REDIS_PASSWORD`            | cache         | —           | Contraseña de Redis                                              |
+| `REDIS_DB`                  | cache         | `0`         | Número de base de datos Redis                                    |
+| `NATS_HOST`                 | event         | —           | URL de conexión NATS                                             |
+| `NATS_USER`                 | event         | —           | Usuario NATS                                                     |
+| `NATS_PASSWORD`             | event         | —           | Contraseña NATS                                                  |
+| `SECRET`                    | claim         | `1977`      | Clave de firma JWT                                               |
+| `HOST`                      | jrpc / router | `localhost` | Host del servicio actual                                         |
+| `PORT`                      | servicio      | `3400`      | Puerto HTTP                                                      |
+| `RPC_HOST`                  | jrpc          | `HOST`      | Host para RPC entre servicios                                    |
+| `RPC_PORT`                  | jrpc          | `4200`      | Puerto RPC                                                       |
+| `AUTHORIZATION_METHOD`      | router        | —           | Método RPC para verificar permisos                               |
+| `RESILIENCE_TOTAL_ATTEMPTS` | resilience    | `3`         | Intentos totales por operación                                   |
+| `RESILIENCE_TIME_ATTEMPTS`  | resilience    | `30`        | Segundos entre reintentos                                        |
 | `PIPE_HOST`                 | jrpc          | —           | `host:port` que enruta todas las llamadas RPC por un proxy único |
-| `STAGE`                     | event         | `local`     | Prefijo de entorno para canal pipe (`pipe:<stage>:<canal>`) |
-| `PRODUCTION`                | dt            | `true`      | Habilita persistencia en Redis del cache de objetos `dt.Object` |
+| `STAGE`                     | event         | `local`     | Prefijo de entorno para canal pipe (`pipe:<stage>:<canal>`)      |
+| `PRODUCTION`                | dt            | `true`      | Habilita persistencia en Redis del cache de objetos `dt.Object`  |
 
 ---
 
