@@ -124,10 +124,6 @@ func (s *Authorization) RemoveAuthor(projectId, profileId, method, path string) 
 		return err
 	}
 
-	if err != nil {
-		return err
-	}
-
 	event.Publish(EVENT_DEL_AUTHORIZATION, et.Json{key: key})
 	return nil
 }
