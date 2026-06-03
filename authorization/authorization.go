@@ -10,6 +10,7 @@ import (
 	"github.com/celsiainternet/elvis/event"
 	"github.com/celsiainternet/elvis/jdb"
 	"github.com/celsiainternet/elvis/linq"
+	"github.com/celsiainternet/elvis/middleware"
 	"github.com/celsiainternet/elvis/msg"
 	"github.com/celsiainternet/elvis/timezone"
 	"github.com/celsiainternet/elvis/utility"
@@ -21,7 +22,7 @@ type Authorization struct {
 }
 
 var (
-	inb            *Authorization
+	auth           *Authorization
 	ErrorSetAuthor = fmt.Errorf(msg.RECORD_NOT_FOUND)
 )
 
@@ -30,18 +31,19 @@ var (
 * @param db *jdb.DB, schema, name string
 * @return (*Authorization, error)
 **/
-func Load(db *jdb.DB, schema, name string) (*Authorization, error) {
-	if inb != nil {
-		return inb, nil
+func Load(db *jdb.DB, schema string) error {
+	if auth != nil {
+		return nil
 	}
 
 	var err error
-	inb, err = Define(db, schema, name)
+	auth, err = Define(db, schema)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return inb, nil
+	middleware.SetAuthorizationStore(auth)
+	return nil
 }
 
 /**
@@ -49,16 +51,13 @@ func Load(db *jdb.DB, schema, name string) (*Authorization, error) {
 * @param db *jdb.DB, schema, name string
 * @return (*Instance, error)
 **/
-func Define(db *jdb.DB, schema, name string) (*Authorization, error) {
+func Define(db *jdb.DB, schema string) (*Authorization, error) {
 	schemaObj, err := defineSchema(db, schema)
 	if err != nil {
 		return nil, console.Panic(err)
 	}
 
-	if name == "" {
-		name = "instances"
-	}
-
+	name := "authorizations"
 	model := linq.NewModel(schemaObj, name, "Tabla", 1)
 	model.DefineColum("created_at", "", "TIMESTAMP", "NOW()")
 	model.DefineColum("project_id", "", "VARCHAR(80)", "")

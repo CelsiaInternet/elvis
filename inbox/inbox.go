@@ -23,16 +23,16 @@ var inb *Inbox
 
 /**
 * Load
-* @param db *jdb.DB, schema, name string
+* @param db *jdb.DB, schema string
 * @return (*Inbox, error)
 **/
-func Load(db *jdb.DB, schema, name string) (*Inbox, error) {
+func Load(db *jdb.DB, schema string) (*Inbox, error) {
 	if inb != nil {
 		return inb, nil
 	}
 
 	var err error
-	inb, err = Define(db, schema, name)
+	inb, err = Define(db, schema)
 	if err != nil {
 		return nil, err
 	}
@@ -45,19 +45,16 @@ func Load(db *jdb.DB, schema, name string) (*Inbox, error) {
 * @param db *jdb.DB, schema, name string
 * @return (*Instance, error)
 **/
-func Define(db *jdb.DB, schema, name string) (*Inbox, error) {
+func Define(db *jdb.DB, schema string) (*Inbox, error) {
 	schemaObj, err := defineSchema(db, schema)
 	if err != nil {
 		return nil, console.Panic(err)
 	}
 
-	if name == "" {
-		name = "instances"
-	}
-
+	name := "inboxes"
 	model := linq.NewModel(schemaObj, name, "Tabla", 1)
-	model.DefineColum("date_make", "", "TIMESTAMP", "NOW()")
-	model.DefineColum("date_update", "", "TIMESTAMP", "NOW()")
+	model.DefineColum("created_at", "", "TIMESTAMP", "NOW()")
+	model.DefineColum("updated_at", "", "TIMESTAMP", "NOW()")
 	model.DefineColum("project_id", "", "VARCHAR(80)", "")
 	model.DefineColum("_state", "", "VARCHAR(80)", utility.ACTIVE)
 	model.DefineColum("_id", "", "VARCHAR(80)", "-1")
@@ -69,8 +66,8 @@ func Define(db *jdb.DB, schema, name string) (*Inbox, error) {
 	model.DefineColum("_data", "", "JSONB", "{}")
 	model.DefinePrimaryKey([]string{"_id"})
 	model.DefineIndex([]string{
-		"date_make",
-		"date_update",
+		"created_at",
+		"updated_at",
 		"project_id",
 		"_state",
 		"user_id",

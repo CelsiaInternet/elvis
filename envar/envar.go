@@ -176,8 +176,7 @@ func GetInt(_default int, _var string) int {
 
 /**
 * GetInt64
-* @param int64 _default
-* @param string _var
+* @param int64 _default, string _var
 * @return int64
 **/
 func GetInt64(_default int64, _var string) int64 {
@@ -189,6 +188,21 @@ func GetInt64(_default int64, _var string) int64 {
 	}
 
 	return val
+}
+
+/**
+* GetFloat64
+* @param int64 _default, string _var
+* @return int64
+**/
+func GetFloat64(_default float64, _var string) float64 {
+	v := GetStr("0,0", _var)
+	result, err := strconv.ParseFloat(v, 64)
+	if err != nil {
+		return _default
+	}
+
+	return result
 }
 
 /**

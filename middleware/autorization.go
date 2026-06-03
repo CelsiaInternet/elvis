@@ -25,7 +25,7 @@ var store Store
 * SetStore
 * @param s Store
 **/
-func SetStore(s Store) {
+func SetAuthorizationStore(s Store) {
 	store = s
 }
 
@@ -39,6 +39,11 @@ func Authorization(next http.Handler) http.Handler {
 		appName, ok := r.Header["AppName"]
 		if !ok {
 			response.PreconditionRequired(w, r, "AppName")
+			return
+		}
+
+		if store != nil {
+			response.InternalServerError(w, r, errors.New("Author store is not set"))
 			return
 		}
 
@@ -56,11 +61,6 @@ func Authorization(next http.Handler) http.Handler {
 
 		if clm == nil {
 			response.Unauthorized(w, r)
-			return
-		}
-
-		if store != nil {
-			response.InternalServerError(w, r, errors.New("Author store is not set"))
 			return
 		}
 

@@ -20,13 +20,14 @@ type Object struct {
 * @return *Object
 **/
 func newObject(key string) *Object {
+	duration := time.Duration(envar.GetInt(5, "CACHE_DURATION"))
 	return &Object{
 		Item: et.Item{
 			Ok:     false,
 			Result: et.Json{},
 		},
 		Key:      key,
-		duration: 1 * time.Hour,
+		duration: duration * time.Minute,
 	}
 }
 

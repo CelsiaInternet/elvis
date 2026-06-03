@@ -749,8 +749,8 @@ func Define$2(db *jdb.DB) error {
 	}
 
 	$2 = linq.NewModel($3, "$4", "Tabla", 1)
-	$2.DefineColum("date_make", "", "TIMESTAMP", "NOW()")
-	$2.DefineColum("date_update", "", "TIMESTAMP", "NOW()")
+	$2.DefineColum("created_at", "", "TIMESTAMP", "NOW()")
+	$2.DefineColum("updated_at", "", "TIMESTAMP", "NOW()")
 	$2.DefineColum("_state", "", "VARCHAR(80)", utility.ACTIVE)
 	$2.DefineColum(jdb.KEY, "", "VARCHAR(80)", "-1")
 	$2.DefineColum("project_id", "", "VARCHAR(80)", "-1")
@@ -760,8 +760,8 @@ func Define$2(db *jdb.DB) error {
 	$2.DefineColum("index", "", "INTEGER", 0)
 	$2.DefinePrimaryKey([]string{jdb.KEY})
 	$2.DefineIndex([]string{
-		"date_make",
-		"date_update",
+		"created_at",
+		"updated_at",
 		"_state",
 		"project_id",
 		"name",
@@ -849,8 +849,8 @@ func Insert$2(project_id, id, name, description string, data et.Json) (et.Item, 
 
 	id = utility.GenKey(id)
 	now := utility.Now()
-	data["date_make"] = now
-	data["date_update"] = now
+	data["created_at"] = now
+	data["updated_at"] = now
 	data["project_id"] = project_id
 	data[jdb.KEY] = id
 	data["name"] = name
@@ -888,7 +888,7 @@ func UpSert$2(project_id, id, name, description string, data et.Json) (et.Item, 
 
 	id = current.Str(jdb.KEY)
 	now := utility.Now()
-	data["date_update"] = now
+	data["updated_at"] = now
 	data["project_id"] = project_id
 	data[jdb.KEY] = id
 	data["name"] = name

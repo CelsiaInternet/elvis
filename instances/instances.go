@@ -53,16 +53,16 @@ func Define(db *jdb.DB, schema, name string) (*Instance, error) {
 	}
 
 	model := linq.NewModel(schemaObj, name, "Tabla", 1)
-	model.DefineColum("date_make", "", "TIMESTAMP", "NOW()")
-	model.DefineColum("date_update", "", "TIMESTAMP", "NOW()")
+	model.DefineColum("created_at", "", "TIMESTAMP", "NOW()")
+	model.DefineColum("updated_at", "", "TIMESTAMP", "NOW()")
 	model.DefineColum("_state", "", "VARCHAR(80)", utility.ACTIVE)
 	model.DefineColum("_id", "", "VARCHAR(80)", "-1")
 	model.DefineColum("tag", "", "VARCHAR(80)", "-1")
 	model.DefineColum("definition", "", "BYTEA", "")
 	model.DefinePrimaryKey([]string{"_id"})
 	model.DefineIndex([]string{
-		"date_make",
-		"date_update",
+		"created_at",
+		"updated_at",
 		"_state",
 		"index",
 	})
@@ -134,12 +134,12 @@ func (s *Instance) Set(id, tag string, obj any) error {
 	now := utility.Now()
 	_, err := s.model.
 		Upsert(et.Json{
-			"date_make":   now,
-			"date_update": now,
-			"_state":      utility.ACTIVE,
-			"_id":         id,
-			"tag":         tag,
-			"definition":  bt,
+			"created_at": now,
+			"updated_at": now,
+			"_state":     utility.ACTIVE,
+			"_id":        id,
+			"tag":        tag,
+			"definition": bt,
 		}).
 		Where(s.model.Column("_id").Eq(id)).
 		CommandOne()
