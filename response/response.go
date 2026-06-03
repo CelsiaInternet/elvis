@@ -299,15 +299,19 @@ func HTTPAlert(w http.ResponseWriter, r *http.Request, message string) error {
 }
 
 func Unauthorized(w http.ResponseWriter, r *http.Request) {
-	HTTPError(w, r, http.StatusUnauthorized, "401 Unauthorized")
-}
-
-func InternalServerError(w http.ResponseWriter, r *http.Request, err error) {
-	HTTPError(w, r, http.StatusInternalServerError, "500 Autentication Server Error - "+err.Error())
+	HTTPError(w, r, http.StatusUnauthorized, http.StatusText(http.StatusUnauthorized))
 }
 
 func Forbidden(w http.ResponseWriter, r *http.Request) {
-	HTTPError(w, r, http.StatusForbidden, "403 Forbidden")
+	HTTPError(w, r, http.StatusForbidden, http.StatusText(http.StatusForbidden))
+}
+
+func InternalServerError(w http.ResponseWriter, r *http.Request, err error) {
+	HTTPError(w, r, http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError)+" - "+err.Error())
+}
+
+func PreconditionRequired(w http.ResponseWriter, r *http.Request, param string) {
+	HTTPError(w, r, http.StatusPreconditionRequired, http.StatusText(http.StatusPreconditionRequired)+" - "+param)
 }
 
 type DataFunction func(page, rows int) (et.Items, error)

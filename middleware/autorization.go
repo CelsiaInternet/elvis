@@ -1,88 +1,32 @@
 package middleware
 
 import (
-	"encoding/json"
-	"fmt"
+	"context"
+	"errors"
 	"net/http"
 
 	"github.com/celsiainternet/elvis/claim"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/response"
+	"github.com/celsiainternet/elvis/timezone"
+	"github.com/celsiainternet/elvis/utility"
 )
 
-const (
-	PERMISION_READ    = "PERMISION.READ"
-	PERMISION_WRITE   = "PERMISION.WRITE"
-	PERMISION_DELETE  = "PERMISION.DELETE"
-	PERMISION_UPDATE  = "PERMISION.UPDATE"
-	PERMISION_EXECUTE = "PERMISION.EXECUTE"
-)
-
-var PERMISION_ALL = map[string]bool{
-	PERMISION_READ:    true,
-	PERMISION_WRITE:   true,
-	PERMISION_DELETE:  true,
-	PERMISION_UPDATE:  true,
-	PERMISION_EXECUTE: true,
+type Store interface {
+	Author(projectId, profileId, method, path string) (bool, error)
+	RemoveAuthor(projectId, profileId, method, path string) error
+	SetAuthor(projectId, profileId, method, path string) error
+	SetPath(method, path string) error
 }
 
-func MethodAutorized(p map[string]bool, r *http.Request) bool {
-	method := r.Method
-	switch method {
-	case "GET":
-		return p[PERMISION_READ]
-	case "POST":
-		return p[PERMISION_WRITE]
-	case "PUT":
-		return p[PERMISION_UPDATE]
-	case "DELETE":
-		return p[PERMISION_DELETE]
-	case "PATCH":
-		return p[PERMISION_EXECUTE]
-	default:
-		return false
-	}
-}
+var store Store
 
 /**
-* NewPermisions
-* @param data string
-* @return map[string]bool, error
+* SetStore
+* @param s Store
 **/
-func NewPermisions(data string) (map[string]bool, error) {
-	var result = make(map[string]bool)
-	if data == "" {
-		return result, nil
-	}
-
-	err := json.Unmarshal([]byte(data), &result)
-	if err != nil {
-		return result, err
-	}
-
-	return result, nil
-}
-
-/**
-* PermisionsToStr
-* @param p map[string]bool
-* @return string
-**/
-func PermisionsToStr(p map[string]bool) string {
-	data, _ := json.Marshal(p)
-	return string(data)
-}
-
-type AuthorizationFunc func(profile et.Json) (map[string]bool, error)
-
-var authorizationFunc AuthorizationFunc
-
-/**
-* SetAuthorizationFunc
-* @param f AuthorizationFunc
-**/
-func SetAuthorizationFunc(f AuthorizationFunc) {
-	authorizationFunc = f
+func SetStore(s Store) {
+	store = s
 }
 
 /**
@@ -92,33 +36,90 @@ func SetAuthorizationFunc(f AuthorizationFunc) {
 **/
 func Authorization(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		if authorizationFunc == nil {
-			response.InternalServerError(w, r, fmt.Errorf("AuthorizationFunc not set"))
+		appName, ok := r.Header["AppName"]
+		if !ok {
+			response.PreconditionRequired(w, r, "AppName")
 			return
 		}
 
-		profileStr := r.Header.Get("Profile")
-		profile, err := et.Object(profileStr)
+		token, err := GetAuthorization(w, r)
+		if err != nil {
+			response.Unauthorized(w, r)
+			return
+		}
+
+		clm, err := claim.ValidToken(token)
+		if err != nil {
+			response.Unauthorized(w, r)
+			return
+		}
+
+		if clm == nil {
+			response.Unauthorized(w, r)
+			return
+		}
+
+		if store != nil {
+			response.InternalServerError(w, r, errors.New("Author store is not set"))
+			return
+		}
+
+		ok, err = store.Author(clm.ProjectId, clm.ProfileId, r.Method, r.URL.Path)
 		if err != nil {
 			response.InternalServerError(w, r, err)
 			return
 		}
 
-		ClientId := claim.ClientId(r)
-		profile["client_id"] = ClientId
-		permisions, err := authorizationFunc(profile)
-		if err != nil {
-			response.InternalServerError(w, r, err)
-			return
-		}
-
-		ok := MethodAutorized(permisions, r)
 		if !ok {
 			response.Forbidden(w, r)
 			return
 		}
 
+		serviceId := utility.UUID()
+		_, ok = r.Header["ServiceId"]
+		if ok {
+			serviceId = r.Header.Get("ServiceId")
+		}
+
+		ownerId := ""
+		_, ok = r.Header["OwnerId"]
+		if ok {
+			ownerId = r.Header.Get("OwnerId")
+		}
+
+		ctx := r.Context()
+		ctx = context.WithValue(ctx, claim.ServiceIdKey, serviceId)
+		ctx = context.WithValue(ctx, claim.OwnerIdKey, ownerId)
+		ctx = context.WithValue(ctx, claim.ClientIdKey, clm.ID)
+		ctx = context.WithValue(ctx, claim.AppKey, clm.App)
+		ctx = context.WithValue(ctx, claim.DeviceKey, clm.Device)
+		ctx = context.WithValue(ctx, claim.NameKey, clm.Name)
+		ctx = context.WithValue(ctx, claim.SubjectKey, clm.Subject)
+		ctx = context.WithValue(ctx, claim.UsernameKey, clm.Username)
+		ctx = context.WithValue(ctx, claim.ProjectIdKey, clm.ProjectId)
+		ctx = context.WithValue(ctx, claim.ProfileIdKey, clm.ProfileId)
+		ctx = context.WithValue(ctx, claim.AppNAmeKey, appName)
+		ctx = context.WithValue(ctx, claim.TokenKey, token)
+
+		now := timezone.Now()
+		data := et.Json{
+			"last_use":   now,
+			"host_name":  hostName,
+			"service_id": serviceId,
+			"owner_id":   ownerId,
+			"client_id":  clm.ID,
+			"app":        clm.App,
+			"device":     clm.Device,
+			"name":       clm.Name,
+			"subject":    clm.Subject,
+			"username":   clm.Username,
+			"project_id": clm.ProjectId,
+			"profile_id": clm.ProfileId,
+			"app_name":   appName,
+			"token":      token,
+		}
+
+		PushTokenLastUse(data)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

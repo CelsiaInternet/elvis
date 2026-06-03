@@ -6,10 +6,8 @@ import (
 	"strings"
 
 	"github.com/celsiainternet/elvis/cache"
-	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/event"
-	"github.com/celsiainternet/elvis/jrpc"
 	"github.com/celsiainternet/elvis/middleware"
 	"github.com/celsiainternet/elvis/strs"
 	"github.com/go-chi/chi/v5"
@@ -342,27 +340,4 @@ func With(r *chi.Mux, method, path string, middlewares []func(http.Handler) http
 	pushApiGateway(method, path, packagePath, host, packageName, true)
 
 	return r
-}
-
-/**
-* authorization
-* @param profile et.Json
-* @return map[string]bool, error
-**/
-func authorization(profile et.Json) (map[string]bool, error) {
-	method := envar.GetStr("Module.Services.GetPermissions", "AUTHORIZATION_METHOD")
-	if method == "" {
-		return map[string]bool{}, fmt.Errorf("authorization method not found")
-	}
-
-	result, err := jrpc.CallPermitios(method, profile)
-	if err != nil {
-		return map[string]bool{}, err
-	}
-
-	return result, nil
-}
-
-func init() {
-	middleware.SetAuthorizationFunc(authorization)
 }

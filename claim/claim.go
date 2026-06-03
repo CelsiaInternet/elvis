@@ -30,6 +30,7 @@ func (c ContextKey) String(ctx context.Context, def string) string {
 
 const (
 	ServiceIdKey ContextKey = "serviceId"
+	OwnerIdKey   ContextKey = "ownerId"
 	ClientIdKey  ContextKey = "clientId"
 	AppKey       ContextKey = "app"
 	DeviceKey    ContextKey = "device"
@@ -38,8 +39,9 @@ const (
 	UsernameKey  ContextKey = "username"
 	TokenKey     ContextKey = "token"
 	ProjectIdKey ContextKey = "projectId"
-	ProfileTpKey ContextKey = "profileTp"
+	ProfileIdKey ContextKey = "profileId"
 	ModelKey     ContextKey = "model"
+	AppNAmeKey   ContextKey = "appName"
 	TagKey       ContextKey = "tag"
 )
 
@@ -52,7 +54,7 @@ type Claim struct {
 	Device    string        `json:"device"`
 	Duration  time.Duration `json:"duration"`
 	ProjectId string        `json:"projectId"`
-	ProfileTp string        `json:"profileTp"`
+	ProfileId string        `json:"profileId"`
 	Tag       string        `json:"tag"`
 	jwt.StandardClaims
 }
@@ -71,7 +73,7 @@ func (c *Claim) ToJson() et.Json {
 		"subject":    c.Subject,
 		"duration":   c.Duration,
 		"project_id": c.ProjectId,
-		"profile_tp": c.ProfileTp,
+		"profile_id": c.ProfileId,
 		"tag":        c.Tag,
 		"expiresAt":  time.Unix(c.ExpiresAt, 0).Format("2006-01-02 03:04:05 PM"),
 	}
@@ -88,10 +90,10 @@ func GetTokenKey(app, device, id string) string {
 
 /**
 * NewClaim
-* @param id, app, name, username, device, tag string, duration time.Duration, projectId, profileTp string
+* @param id, app, name, username, device, tag string, duration time.Duration, projectId, profileId string
 * @return Claim
 **/
-func NewClaim(id, app, name, username, device, projectId, profileTp, tag string, duration time.Duration) Claim {
+func NewClaim(id, app, name, username, device, projectId, profileId, tag string, duration time.Duration) Claim {
 	c := Claim{}
 	c.Salt = utility.GetOTP(6)
 	c.ID = id
@@ -101,7 +103,7 @@ func NewClaim(id, app, name, username, device, projectId, profileTp, tag string,
 	c.Device = device
 	c.Duration = duration
 	c.ProjectId = projectId
-	c.ProfileTp = profileTp
+	c.ProfileId = profileId
 	c.Tag = tag
 	if c.Duration != 0 {
 		c.ExpiresAt = timezone.Add(c.Duration).Unix()
@@ -158,11 +160,11 @@ func NewToken(id, app, name, username, device string, duration time.Duration) (s
 
 /**
 * NewAuthorization
-* @param id, app, name, username, device string, projectId, profileTp string, duration time.Duration
+* @param id, app, name, username, device string, projectId, profileId string, duration time.Duration
 * @return string, error
 **/
-func NewAuthorization(id, app, name, username, device, projectId, profileTp string, duration time.Duration) (string, error) {
-	c := NewClaim(id, app, name, username, device, projectId, profileTp, "", duration)
+func NewAuthorization(id, app, name, username, device, projectId, profileId string, duration time.Duration) (string, error) {
+	c := NewClaim(id, app, name, username, device, projectId, profileId, "", duration)
 	return newTokenKey(c)
 }
 
@@ -280,9 +282,9 @@ func ParceToken(token string) (*Claim, error) {
 		projectId = ""
 	}
 
-	profileTp, ok := claim["profileTp"].(string)
+	profileId, ok := claim["profileId"].(string)
 	if !ok {
-		profileTp = ""
+		profileId = ""
 	}
 
 	tag, ok := claim["tag"].(string)
@@ -300,7 +302,7 @@ func ParceToken(token string) (*Claim, error) {
 		Device:    device,
 		Duration:  duration,
 		ProjectId: projectId,
-		ProfileTp: profileTp,
+		ProfileId: profileId,
 		Tag:       tag,
 	}
 	if result.Duration != 0 {
@@ -416,13 +418,13 @@ func Username(r *http.Request) string {
 }
 
 /**
-* ProfileTp
+* ProfileId
 * @param r *http.Request
 * @return string
 **/
-func ProfileTp(r *http.Request) string {
+func ProfileId(r *http.Request) string {
 	ctx := r.Context()
-	return ProfileTpKey.String(ctx, "")
+	return ProfileIdKey.String(ctx, "")
 }
 
 /**
@@ -469,8 +471,9 @@ func GetClient(r *http.Request) et.Json {
 	username := UsernameKey.String(ctx, "Anonimo")
 	device := DeviceKey.String(ctx, "")
 	fullName := NameKey.String(ctx, "Anonimo")
-	profileTp := ProfileTpKey.String(ctx, "")
+	profileId := ProfileIdKey.String(ctx, "")
 	projectId := ProjectIdKey.String(ctx, "")
+	appName := AppNAmeKey.String(ctx, "")
 	tag := TagKey.String(ctx, "")
 
 	return et.Json{
@@ -481,8 +484,9 @@ func GetClient(r *http.Request) et.Json {
 		"username":   username,
 		"device":     device,
 		"full_name":  fullName,
-		"profile_tp": profileTp,
 		"project_id": projectId,
+		"profile_id": profileId,
+		"app_name":   appName,
 		"tag":        tag,
 	}
 }
