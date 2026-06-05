@@ -104,7 +104,7 @@ func (s *Instance) Get(id string, dest any) (bool, error) {
 		return false, err
 	}
 
-	err = json.Unmarshal(scr, dest)
+	err = json.Unmarshal(scr, &dest)
 	if err != nil {
 		return false, err
 	}

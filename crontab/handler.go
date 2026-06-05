@@ -169,7 +169,7 @@ func HttpGet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id := chi.URLParam(r, "id")
-	var instance Job
+	var instance *Job
 	exists, err := getInstance(id, &instance)
 	if err != nil {
 		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
@@ -201,7 +201,7 @@ func HttpStart(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id := chi.URLParam(r, "id")
-	var instance Job
+	var instance *Job
 	exists, err := getInstance(id, &instance)
 	if err != nil {
 		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
@@ -239,7 +239,7 @@ func HttpStop(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id := chi.URLParam(r, "id")
-	var instance Job
+	var instance *Job
 	exists, err := getInstance(id, &instance)
 	if err != nil {
 		response.HTTPError(w, r, http.StatusBadRequest, err.Error())

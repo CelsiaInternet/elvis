@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/celsiainternet/elvis/cache"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/event"
 	"github.com/celsiainternet/elvis/instances"
@@ -30,6 +31,11 @@ func init() {
 * @return error
  */
 func Load(store instances.Store) error {
+	_, err := cache.Load()
+	if err != nil {
+		return err
+	}
+
 	if store != nil {
 		SetGetInstance(store.Get)
 		SetSetInstance(store.Set)
@@ -78,6 +84,15 @@ func Run(instanceId, tag string, step int, tags et.Json, ctx et.Json, createdBy 
 }
 
 /**
+* RunOne
+* @param tag string, step int, ctx et.Json, createdBy string
+* @return et.Json, error
+**/
+func RunOne(tag string, step int, ctx et.Json, createdBy string) (et.Json, error) {
+	return Run("", tag, step, et.Json{}, ctx, createdBy)
+}
+
+/**
 * Reset
 * @param instanceId, updatedBy string
 * @return error
@@ -121,7 +136,7 @@ func Stop(instanceId, updatedBy string) error {
 * @param instanceId, status, updatedBy string
 * @return FlowStatus, error
 **/
-func Status(instanceId, status, updatedBy string) (FlowStatus, error) {
+func Status(instanceId, status, updatedBy string) (string, error) {
 	if workFlows == nil {
 		return "", errors.New(MSG_WORKFLOWS_NOT_LOAD)
 	}
@@ -130,13 +145,13 @@ func Status(instanceId, status, updatedBy string) (FlowStatus, error) {
 		return "", fmt.Errorf("status %s no es valido", status)
 	}
 
-	instance, exists := workFlows.loadInstance(instanceId, "")
-	if !exists {
-		return "", fmt.Errorf("instance not found")
+	inst, err := workFlows.loadInstance(instanceId, "")
+	if err != nil {
+		return "", err
 	}
 
-	instance.setStatus(FlowStatus(status))
-	return instance.Status, nil
+	inst.setStatus(FlowStatus(status))
+	return status, nil
 }
 
 /**
@@ -162,12 +177,12 @@ func GetInstance(instanceId string) (*Instance, error) {
 		return nil, errors.New(MSG_WORKFLOWS_NOT_LOAD)
 	}
 
-	instance, exists := workFlows.loadInstance(instanceId, "")
-	if !exists {
-		return nil, fmt.Errorf("instance not found")
+	inst, err := workFlows.loadInstance(instanceId, "")
+	if err != nil {
+		return nil, err
 	}
 
-	return instance, nil
+	return inst, nil
 }
 
 /**
@@ -176,7 +191,7 @@ func GetInstance(instanceId string) (*Instance, error) {
 **/
 func HttpGet(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	var instance Instance
+	var instance *Instance
 	exists, err := getInstance(id, &instance)
 	if err != nil {
 		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
@@ -203,7 +218,7 @@ func HttpGet(w http.ResponseWriter, r *http.Request) {
 **/
 func HttpState(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	var instance Instance
+	var instance *Instance
 	exists, err := getInstance(id, &instance)
 	if err != nil {
 		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
@@ -243,7 +258,7 @@ func HttpState(w http.ResponseWriter, r *http.Request) {
 **/
 func HttpSetParams(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	var instance Instance
+	var instance *Instance
 	exists, err := getInstance(id, &instance)
 	if err != nil {
 		response.HTTPError(w, r, http.StatusBadRequest, err.Error())

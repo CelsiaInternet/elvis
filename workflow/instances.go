@@ -267,11 +267,15 @@ func (s *Instance) GetParam(key string) interface{} {
 * @return error
 **/
 func (s *Instance) setTrace(step int, ctx, result et.Json, err error) error {
+	errMsg := ""
+	if err != nil {
+		errMsg = err.Error()
+	}
 	s.Traces = append(s.Traces, et.Json{
 		"step":   step,
 		"ctx":    ctx,
 		"result": result,
-		"error":  err,
+		"error":  errMsg,
 	})
 	er := s.Save()
 	if er != nil {

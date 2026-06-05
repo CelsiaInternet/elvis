@@ -3,7 +3,9 @@ package workflow
 import (
 	"fmt"
 	"sync"
+	"time"
 
+	"github.com/celsiainternet/elvis/cache"
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/event"
@@ -64,6 +66,9 @@ func (s *WorkFlows) Add(instance *Instance) {
 	defer s.mu.Unlock()
 
 	s.Instances[instance.Id] = instance
+	timeNow := timezone.NowTime()
+	second := timeNow.Format("2006-01-02-15:04:05")
+	cache.Incr(cache.GenKey("workflow:instance", second), 2*time.Second)
 }
 
 /**
@@ -126,10 +131,11 @@ func (s *WorkFlows) newInstance(tag, id string, tags et.Json, step int, createdB
 		Ctxs:       make(map[int]et.Json),
 		Results:    make(map[int]*Result),
 		Rollbacks:  make(map[int]*Result),
-		Tags:       tags,
-		goTo:       -1,
-		WorkerHost: workerHost,
 		Params:     et.Json{},
+		Traces:     []et.Json{},
+		Tags:       tags,
+		WorkerHost: workerHost,
+		goTo:       -1,
 		isNew:      true,
 	}
 
@@ -152,61 +158,54 @@ func (s *WorkFlows) Debug() *WorkFlows {
 /**
 * loadInstance
 * @param id, tag string
-* @return *Instance, bool
+* @return bool, *Instance, error
 **/
-func (s *WorkFlows) loadInstance(id, tag string) (*Instance, bool) {
+func (s *WorkFlows) loadInstance(id, tag string) (*Instance, error) {
 	if id == "" {
-		return nil, false
+		return nil, fmt.Errorf("id is required")
 	}
 
-	result, ok := s.Instances[id]
-	if ok {
-		return result, true
-	}
-
-	if s.isDebug {
-		logs.Debug("loadInstance:1")
+	dest := s.Instances[id]
+	if dest != nil {
+		return dest, nil
 	}
 
 	if getInstance != nil {
-		if s.isDebug {
-			logs.Debug("loadInstance:2")
-		}
-
-		exists, err := getInstance(id, &result)
+		var dest *Instance
+		exists, err := getInstance(id, &dest)
 		if err != nil {
-			return nil, false
-		}
-
-		if s.isDebug {
-			logs.Debugf("loadInstance:3 exists:%v", exists)
+			return nil, err
 		}
 
 		if !exists {
-			return nil, false
+			return nil, nil
 		}
 
-		if tag != "" && tag != result.Tag {
-			result.Tag = tag
+		if dest == nil {
+			return nil, fmt.Errorf("instance not loaded")
 		}
 
-		flow := s.Flows[result.Tag]
+		if tag != "" && tag != dest.Tag {
+			dest.Tag = tag
+		}
+
+		flow := s.Flows[dest.Tag]
 		if flow == nil {
-			return nil, false
+			return nil, fmt.Errorf("flow not found")
 		}
 
-		result.Flow = flow
-		result.goTo = -1
-		s.Add(result)
+		dest.Flow = flow
+		dest.goTo = -1
+		s.Add(dest)
 
 		if s.isDebug {
-			logs.Debugf("loadInstance:4 instance:%s", result.ToString())
+			logs.Debugf("loadInstance:4 instance:%s", dest.ToString())
 		}
 
-		return result, true
+		return dest, nil
 	}
 
-	return nil, false
+	return nil, nil
 }
 
 /**
@@ -216,8 +215,10 @@ func (s *WorkFlows) loadInstance(id, tag string) (*Instance, bool) {
 **/
 func (s *WorkFlows) getOrCreateInstance(id, tag string, step int, tags et.Json, createdBy string) (*Instance, error) {
 	id = reg.GetUUID(id)
-	result, exists := s.loadInstance(id, tag)
-	if !exists {
+	result, err := s.loadInstance(id, tag)
+	if err != nil {
+		return nil, err
+	} else if result == nil {
 		return s.newInstance(tag, id, tags, step, createdBy)
 	}
 
@@ -270,14 +271,13 @@ func (s *WorkFlows) runInstance(instanceId, tag string, step int, tags, ctx et.J
 * @return error
 **/
 func (s *WorkFlows) resetInstance(instanceId, updatedBy string) error {
-	instance, exists := s.loadInstance(instanceId, "")
-	if !exists {
-		return fmt.Errorf("instance not found")
+	inst, err := s.loadInstance(instanceId, "")
+	if err != nil {
+		return err
 	}
 
-	instance.UpdatedBy = updatedBy
-	instance.setStatus(FlowStatusPending)
-
+	inst.UpdatedBy = updatedBy
+	inst.setStatus(FlowStatusPending)
 	return nil
 }
 
@@ -287,13 +287,13 @@ func (s *WorkFlows) resetInstance(instanceId, updatedBy string) error {
 * @return et.Json, error
 **/
 func (s *WorkFlows) rollback(instanceId, updatedBy string) (et.Json, error) {
-	instance, exists := s.loadInstance(instanceId, "")
-	if !exists {
-		return et.Json{}, fmt.Errorf("instance not found")
+	inst, err := s.loadInstance(instanceId, "")
+	if err != nil {
+		return et.Json{}, err
 	}
 
-	instance.UpdatedBy = updatedBy
-	result, err := instance.rollback(et.Json{}, nil)
+	inst.UpdatedBy = updatedBy
+	result, err := inst.rollback(et.Json{}, nil)
 	if err != nil {
 		return et.Json{}, err
 	}
@@ -307,13 +307,13 @@ func (s *WorkFlows) rollback(instanceId, updatedBy string) (et.Json, error) {
 * @return error
 **/
 func (s *WorkFlows) stop(instanceId, updatedBy string) error {
-	instance, exists := s.loadInstance(instanceId, "")
-	if !exists {
-		return fmt.Errorf("instance not found")
+	inst, err := s.loadInstance(instanceId, "")
+	if err != nil {
+		return err
 	}
 
-	instance.UpdatedBy = updatedBy
-	return instance.Stop()
+	inst.UpdatedBy = updatedBy
+	return inst.Stop()
 }
 
 /**
