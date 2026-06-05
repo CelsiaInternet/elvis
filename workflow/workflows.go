@@ -108,10 +108,6 @@ func (s *WorkFlows) newInstance(tag, id string, tags et.Json, step int, createdB
 		return nil, fmt.Errorf(MSG_FLOW_NOT_FOUND)
 	}
 
-	if s.isDebug {
-		logs.Debug("newInstance:1")
-	}
-
 	if step == -1 {
 		step = 0
 	}
@@ -134,16 +130,17 @@ func (s *WorkFlows) newInstance(tag, id string, tags et.Json, step int, createdB
 		Params:     et.Json{},
 		Traces:     []et.Json{},
 		Tags:       tags,
+		Status:     FlowStatusPending,
 		WorkerHost: workerHost,
 		goTo:       -1,
 		isNew:      true,
 	}
 
 	if s.isDebug {
-		logs.Debugf("newInstance:2 tag:%s id:%s", tag, id)
+		logs.Debugf("newInstance tag:%s id:%s", tag, id)
 	}
 
-	return result, result.setStatus(FlowStatusPending)
+	return result, nil
 }
 
 /**
@@ -232,17 +229,9 @@ func (s *WorkFlows) getOrCreateInstance(id, tag string, step int, tags et.Json, 
 * @return et.Json, error
 **/
 func (s *WorkFlows) runInstance(instanceId, tag string, step int, tags, ctx et.Json, createdBy string) (et.Json, error) {
-	if s.isDebug {
-		logs.Debug("runInstance:1")
-	}
-
 	instance, err := s.getOrCreateInstance(instanceId, tag, step, tags, createdBy)
 	if err != nil {
 		return et.Json{}, err
-	}
-
-	if s.isDebug {
-		logs.Debug("runInstance:2")
 	}
 
 	instance.isDebug = s.isDebug

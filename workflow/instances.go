@@ -141,6 +141,10 @@ func (s *Instance) Save() error {
 * @return error
 **/
 func (s *Instance) setStatus(status FlowStatus) error {
+	if s.Status == status {
+		return nil
+	}
+
 	s.Status = status
 	s.UpdatedAt = utility.NowTime()
 	switch s.Status {
