@@ -359,3 +359,12 @@ func MaskToken(token string, length int) string {
 	}
 	return token[:length] + "***" + token[len(token)-length:]
 }
+
+/**
+* EscapeSQL
+* @param value string
+* @return string
+**/
+func EscapeSQL(value string) string {
+	return strings.ReplaceAll(value, "'", "''")
+}
