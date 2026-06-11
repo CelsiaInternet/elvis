@@ -366,5 +366,6 @@ func MaskToken(token string, length int) string {
 * @return string
 **/
 func EscapeSQL(value string) string {
-	return strings.ReplaceAll(value, "'", "''")
+	result := strings.ReplaceAll(value, "'", "''")
+	return result
 }
