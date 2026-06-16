@@ -31,11 +31,11 @@ var (
 	defaultTransport = &http.Transport{
 		MaxIdleConns:        100,
 		MaxIdleConnsPerHost: 10,
-		IdleConnTimeout:     90 * time.Second,
+		IdleConnTimeout:     90 * time.Minute,
 	}
 
 	defaultClient = &http.Client{
-		Timeout:   30 * time.Second,
+		Timeout:   120 * time.Minute,
 		Transport: defaultTransport,
 	}
 
