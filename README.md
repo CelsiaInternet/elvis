@@ -76,7 +76,7 @@ Incluye:
 
 ```bash
 # En el módulo de tu proyecto
-go get github.com/celsiainternet/elvis@v1.1.277
+go get github.com/celsiainternet/elvis@v1.1.278
 go get github.com/celsiainternet/elvis@latest
 go run github.com/celsiainternet/elvis/cmd/install
 ```
