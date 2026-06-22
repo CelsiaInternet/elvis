@@ -155,7 +155,6 @@ func (s *Json) ScanRows(rows *sql.Rows) error {
 				continue
 			}
 			result[col] = src
-			logs.Debugf(`[]byte Col:%s Type:%v Value:%v`, col, reflect.TypeOf(v), v)
 		default:
 			result[col] = src
 		}
