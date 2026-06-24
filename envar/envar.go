@@ -8,12 +8,19 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 )
 
+type Store interface {
+	Get(name string, _default string) string
+}
+
+var store Store
+
+func Load(s Store) {
+	store = s
+}
+
 /**
 * MetaSet
-* @param string name
-* @param string _default
-* @param string description
-* @param string _var
+* @param name string, _default string, description string, _var string
 * @return string
 **/
 func MetaSet(name string, _default string, description, _var string) string {
@@ -30,10 +37,7 @@ func MetaSet(name string, _default string, description, _var string) string {
 
 /**
 * SetStr
-* @param string name
-* @param string _default
-* @param string usage
-* @param string _var
+* @param name string, _default string, usage string, _var string
 * @return string
 **/
 func SetStr(name string, _default string, usage, _var string) string {
@@ -42,32 +46,19 @@ func SetStr(name string, _default string, usage, _var string) string {
 
 /**
 * SetInt
-* @param string name
-* @param int _default
-* @param string usage
-* @param string _var
-* @return int
+* @param name string, _default int, usage string, _var string
+* @return string
 **/
-func SetInt(name string, _default int, usage, _var string) int {
-	result := MetaSet(name, strconv.Itoa(_default), usage, _var)
-
-	val, err := strconv.Atoi(result)
-	if err != nil {
-		return _default
-	}
-
-	return val
+func SetInt(name string, _default string, usage, _var string) string {
+	return MetaSet(name, _default, usage, _var)
 }
 
 /**
 * SetInt64
-* @param string name
-* @param int64 _default
-* @param string usage
-* @param string _var
+* @param name string, _default int64, usage string, _var string
 * @return int64
 **/
-func SetIn64(name string, _default int64, usage, _var string) int64 {
+func SetInt64(name string, _default int64, usage, _var string) int64 {
 	result := MetaSet(name, strconv.FormatInt(_default, 10), usage, _var)
 
 	val, err := strconv.ParseInt(result, 10, 64)
@@ -80,11 +71,7 @@ func SetIn64(name string, _default int64, usage, _var string) int64 {
 
 /**
 * SetBool
-* @param string name
-* @param bool _default
-* @param string usage
-* @param string _var
-* @return bool
+* @param name string, _default bool, usage string, _var string
 **/
 func SetBool(name string, _default bool, usage, _var string) bool {
 	result := MetaSet(name, strconv.FormatBool(_default), usage, _var)
@@ -99,8 +86,7 @@ func SetBool(name string, _default bool, usage, _var string) bool {
 
 /**
 * UpSetStr
-* @param string name
-* @param string value
+* @param name string, value string
 * @return string
 **/
 func UpSetStr(name string, value string) string {
@@ -110,8 +96,7 @@ func UpSetStr(name string, value string) string {
 
 /**
 * SetInt
-* @param string name
-* @param int value
+* @param name string, value int
 * @return int
 **/
 func UpSetInt(name string, value int) int {
@@ -121,9 +106,8 @@ func UpSetInt(name string, value int) int {
 
 /**
 * UpSetFloat
-* @param string name
-* @param int64 value
-* @return int64
+* @param name string, value float64
+* @return float64
 **/
 func UpSetFloat(name string, value float64) float64 {
 	os.Setenv(name, strconv.FormatFloat(float64(value), 'f', -1, 64))
@@ -132,8 +116,7 @@ func UpSetFloat(name string, value float64) float64 {
 
 /**
 * UpSetBool
-* @param string name
-* @param bool value
+* @param name string, value bool
 * @return bool
 **/
 func UpSetBool(name string, value bool) bool {
@@ -143,11 +126,14 @@ func UpSetBool(name string, value bool) bool {
 
 /**
 * GetStr
-* @param string _default
-* @param string _var
+* @param _default string, _var string
 * @return string
 **/
 func GetStr(_default string, _var string) string {
+	if store != nil {
+		return store.Get(_default, _var)
+	}
+
 	result := os.Getenv(_var)
 
 	if result == "" {
@@ -159,8 +145,7 @@ func GetStr(_default string, _var string) string {
 
 /**
 * GetInt
-* @param int _default
-* @param string _var
+* @param _default int, _var string
 * @return int
 **/
 func GetInt(_default int, _var string) int {
@@ -207,8 +192,7 @@ func GetFloat64(_default float64, _var string) float64 {
 
 /**
 * GetBool
-* @param bool _default
-* @param string _var
+* @param _default bool, _var string
 * @return bool
 **/
 func GetBool(_default bool, _var string) bool {

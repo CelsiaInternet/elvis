@@ -378,6 +378,31 @@ func (s Json) ValTime(_default time.Time, atribs ...string) time.Time {
 	}
 }
 
+/**
+* ValDuration
+* @param _default time.Duration, atribs ...string
+* @return string
+**/
+func (s Json) ValDuration(_default time.Duration, atribs ...string) time.Duration {
+	val := s.ValAny(_default, atribs...)
+
+	switch v := val.(type) {
+	case time.Duration:
+		if v == 0 {
+			return _default
+		}
+		return v
+	case string:
+		result, err := time.ParseDuration(v)
+		if err != nil {
+			return _default
+		}
+		return result
+	default:
+		return _default
+	}
+}
+
 func (s Json) ValJson(_default Json, atribs ...string) Json {
 	val := s.ValAny(_default, atribs...)
 
