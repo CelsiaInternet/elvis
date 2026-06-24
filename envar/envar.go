@@ -1,6 +1,7 @@
 package envar
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 
@@ -49,8 +50,13 @@ func SetStr(name string, _default string, usage, _var string) string {
 * @param name string, _default int, usage string, _var string
 * @return string
 **/
-func SetInt(name string, _default string, usage, _var string) string {
-	return MetaSet(name, _default, usage, _var)
+func SetInt(name string, _default int, usage, _var string) int {
+	result := MetaSet(name, fmt.Sprintf("%d", _default), usage, _var)
+	val, err := strconv.Atoi(result)
+	if err != nil {
+		return _default
+	}
+	return val
 }
 
 /**
@@ -60,12 +66,10 @@ func SetInt(name string, _default string, usage, _var string) string {
 **/
 func SetInt64(name string, _default int64, usage, _var string) int64 {
 	result := MetaSet(name, strconv.FormatInt(_default, 10), usage, _var)
-
 	val, err := strconv.ParseInt(result, 10, 64)
 	if err != nil {
 		return _default
 	}
-
 	return val
 }
 
