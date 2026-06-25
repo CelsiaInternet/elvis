@@ -215,7 +215,7 @@ func (b Body) ToTime() (time.Time, error) {
 func ReadBody(body io.ReadCloser) (*Body, error) {
 	bodyBytes, err := io.ReadAll(body)
 	if err != nil {
-		return nil, err
+		return &Body{Data: []byte("")}, err
 	}
 
 	return &Body{Data: bodyBytes}, nil
