@@ -50,7 +50,6 @@ const VALUE_NOT_BOOL = "Value is not bolean"
 const ROWS = 30
 const QUEUE_STACK = "stack"
 
-var ping = 0
 var locks sync.Map // map[string]*sync.RWMutex — replaced to eliminate unbounded map growth
 var count sync.Map // map[string]int64
 
