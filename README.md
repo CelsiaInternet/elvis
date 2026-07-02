@@ -76,7 +76,7 @@ Incluye:
 
 ```bash
 # En el módulo de tu proyecto
-go get github.com/celsiainternet/elvis@v1.1.283
+go get github.com/celsiainternet/elvis@v1.1.284
 go get github.com/celsiainternet/elvis@latest
 go run github.com/celsiainternet/elvis/cmd/install
 ```
@@ -909,3 +909,9 @@ Eventos internos que emite la librería y a los que se puede suscribir:
 ## 📄 Licencia
 
 Distribuido bajo la licencia MIT. Ver [LICENSE](LICENSE) para más detalles.
+
+## Test
+
+```
+go test ./queue/... -run Example_queue -v
+```
