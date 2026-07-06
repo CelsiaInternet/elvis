@@ -481,12 +481,13 @@ func (s *Instance) run(ctx et.Json) (et.Json, error) {
 			continue
 		}
 
-		if step.Stop {
-			return s.setStop(result, err)
+		limit := len(s.Steps) - 1
+		if s.Current == limit {
+			return s.setDone(result, err)
 		}
 
-		if s.Current == len(s.Steps)-1 {
-			return s.setDone(result, err)
+		if step.Stop {
+			return s.setStop(result, err)
 		}
 
 		err = s.setNext(result)
