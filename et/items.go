@@ -132,13 +132,18 @@ func (it *Items) Titlecase(idx int, _default string, atribs ...string) string {
 	}
 }
 
-func (it *Items) Get(idx int, key string) interface{} {
-	item := it.Result[idx]
-	if item == nil {
-		return nil
+func (it *Items) Get(idx int) (Json, bool) {
+	t := len(it.Result)
+	if idx < 0 || idx >= t {
+		return Json{}, false
 	}
 
-	return it.Result[idx].Get(key)
+	result := it.Result[idx]
+	if result == nil {
+		return Json{}, false
+	}
+
+	return result, true
 }
 
 func (it *Items) Set(idx int, key string, val interface{}) bool {
