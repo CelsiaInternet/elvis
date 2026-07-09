@@ -364,8 +364,7 @@ func (s Json) ValTime(_default time.Time, atribs ...string) time.Time {
 	case int:
 		return _default
 	case string:
-		layout := "2006-01-02T15:04:05.000Z"
-		result, err := time.Parse(layout, v)
+		result, err := time.Parse(time.RFC3339, v)
 		if err != nil {
 			return _default
 		}
