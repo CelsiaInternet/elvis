@@ -7,14 +7,25 @@ import (
 )
 
 func main() {
-	data := et.Json{
-		"a": et.Json{
-			"b": et.Json{
-				"c": "old_value",
-			},
+
+	v := et.Json{
+		"document": []string{
+			"https://objectstorage.sa-bogota-1.oraclecloud.com/n/axyxbjtesgqh/b/prueba/o//soportes-blacklist568d5278-b11c-4e81-96cf-788521baa317..pdf",
 		},
 	}
-	data.SetNested([]string{"a", "b", "c"}, "value")
-	data.SetNested([]string{"a", "b", "d"}, "value2")
-	fmt.Println(data.ToString())
+
+	fmt.Println(v.ToString())
+
+	/*
+		data := et.Json{
+			"a": et.Json{
+				"b": et.Json{
+					"c": "old_value",
+				},
+			},
+		}
+		data.SetNested([]string{"a", "b", "c"}, "value")
+		data.SetNested([]string{"a", "b", "d"}, "value2")
+		fmt.Println(data.ToString())
+	*/
 }
