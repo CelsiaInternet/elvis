@@ -157,8 +157,12 @@ TCP-based RPC for inter-service calls using Go's `net/rpc`; Redis is used only t
 | `timezone/`              | Timezone parsing and conversion helpers                                                                                                                                                       |
 | `stdrout/`               | Standard output / terminal rendering                                                                                                                                                          |
 | `crontab/`               | Cron job scheduling wrapper (`robfig/cron/v3`)                                                                                                                                                |
+| `authorization/`         | Permission model backed by a `linq` model; loaded via `authorization.Load(db, schema)`; emits `event:set:authorization` / `event:del:authorization` on changes                              |
+| `inbox/`                 | Per-user inbox/notification records backed by a `linq` model; `inbox.Load(db, schema)` then query via `GetInboxesById`, `GetInboxesByCode`, `GetInboxesByMy`                                 |
+| `msg/`                   | Centralized Spanish-language message/error string constants (`MSG_*`, `ERR_*`, `RECORD_*`) shared across packages                                                                             |
+| `queue/`                 | Generic in-process batching queue (`queue.Queue[T]`); groups `Push`ed items and dispatches to a handler on max batch size or timeout, whichever comes first                                  |
 | `create/v1`, `create/v2` | CLI scaffolding for new microservice projects                                                                                                                                                 |
-| `cmd/create`, `cmd/jdb`  | CLI entry points                                                                                                                                                                              |
+| `cmd/create`, `cmd/jdb`  | CLI entry points (`cmd/crontab`, `cmd/flow`, `cmd/install`, `cmd/jql` are example/demo mains for the corresponding packages)                                                                  |
 
 ### Key Environment Variables
 
