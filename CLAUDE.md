@@ -161,8 +161,16 @@ TCP-based RPC for inter-service calls using Go's `net/rpc`; Redis is used only t
 | `inbox/`                 | Per-user inbox/notification records backed by a `linq` model; `inbox.Load(db, schema)` then query via `GetInboxesById`, `GetInboxesByCode`, `GetInboxesByMy`                                 |
 | `msg/`                   | Centralized Spanish-language message/error string constants (`MSG_*`, `ERR_*`, `RECORD_*`) shared across packages                                                                             |
 | `queue/`                 | Generic in-process batching queue (`queue.Queue[T]`); groups `Push`ed items and dispatches to a handler on max batch size or timeout, whichever comes first                                  |
-| `create/v1`, `create/v2` | CLI scaffolding for new microservice projects                                                                                                                                                 |
-| `cmd/create`, `cmd/jdb`  | CLI entry points (`cmd/crontab`, `cmd/flow`, `cmd/install`, `cmd/jql` are example/demo mains for the corresponding packages)                                                                  |
+| `create/v1`, `create/v2` | CLI scaffolding for new microservice projects (see below)                                                                                                                                     |
+| `cmd/create`, `cmd/jdb`  | CLI entry points (`cmd/crontab`, `cmd/flow`, `cmd/jql` are example/demo mains for the corresponding packages)                                                                                 |
+| `cmd/install`            | Installs a hardcoded, version-pinned list of third-party deps (`go get <module>@<version>` per entry) into a newly scaffolded project; **keep this list in sync with `go.mod`** — it drifts easily since nothing enforces it (e.g. `lib/pq`/`spf13/cobra` pins can lag behind what `go.mod` actually requires, and Oracle/`govaluate` deps used by `jdb`/`workflow` are absent from the list) |
+
+### Project Scaffolding (`create/v1`, `cmd/create`)
+
+`cmd/create` is a thin `cobra` wrapper around `create/v1`, which interactively scaffolds a new microservice (folders `cmd/`, `deployments/`, `internal/`, `pkg/`, `scripts/`, `test/`, `www/`) from Go source templates stored as string constants in `create/v1/model.go`. Placeholders `$1`, `$2`, ... in each template are substituted positionally by `file.MakeFile`/`file.params()` — the Nth arg passed to `file.MakeFile` fills `$N` everywhere it appears in that template.
+
+- `file.MakeFile` never overwrites a file that already exists — it's create-only. `pkg/<service>/model.go` is the one place this matters: adding a second model via the "Modelo" prompt must *append* a `Define<Model>(db)` call to the existing `initModels()` function rather than relying on `MakeFile`, since the file was already created by the first model. This is handled by `upsertModelInit` in `create/v1/hPkg.go`, which reads, patches, and rewrites the file via `file.WriteFile` when it already exists.
+- Route wiring for models added after the initial scaffold is **not** automatic — `MakeModel` prints a reminder to manually copy the router snippet from the bottom of the generated `h<Model>.go` into `router.go`.
 
 ### Key Environment Variables
 
