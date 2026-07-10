@@ -93,14 +93,19 @@ func MakeModel(packageName, modelo, schema string) error {
 
 	if len(schema) > 0 {
 		schemaVar := strs.Append("schema", strs.Titlecase(schema), "")
-		_, _ = file.MakeFile(path, "schema.go", modelSchema, packageName, schemaVar, schema)
-
-		modelo := strs.Titlecase(modelo)
-		_, _ = file.MakeFile(path, "model.go", modelModel, packageName, modelo)
+		_, err := file.MakeFile(path, "schema.go", modelSchema, packageName, schemaVar, schema)
+		if err != nil {
+			return err
+		}
 
 		modelo = strs.Titlecase(modelo)
+		_, err = file.MakeFile(path, "model.go", modelModel, packageName, modelo)
+		if err != nil {
+			return err
+		}
+
 		fileName := strs.Format(`h%s.go`, modelo)
-		_, err := file.MakeFile(path, fileName, modelDbHandler, packageName, modelo, schemaVar, strs.Uppcase(modelo), strs.Lowcase(modelo))
+		_, err = file.MakeFile(path, fileName, modelDbHandler, packageName, modelo, schemaVar, strs.Uppcase(modelo), strs.Lowcase(modelo))
 		if err != nil {
 			return err
 		}

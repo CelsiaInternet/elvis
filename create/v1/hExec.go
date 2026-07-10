@@ -1,16 +1,26 @@
 package create
 
 import (
-	"log"
 	"os/exec"
+	"strings"
 )
 
+/**
+* Command: Runs each shell command in coms and collects its stdout.
+* @param coms []string
+* @return [][]byte, error
+**/
 func Command(coms []string) ([][]byte, error) {
 	var result [][]byte
 	for _, com := range coms {
-		out, err := exec.Command(com).Output()
+		args := strings.Fields(com)
+		if len(args) == 0 {
+			continue
+		}
+
+		out, err := exec.Command(args[0], args[1:]...).Output()
 		if err != nil {
-			log.Fatal(err)
+			return result, err
 		}
 		result = append(result, out)
 	}

@@ -9,9 +9,9 @@ import (
 )
 
 var CmdProject = &cobra.Command{
-	Use:   "micro [name author schema]",
-	Short: "Create project base type microservice.",
-	Long:  "Template project to microservice include folder cmd, deployments, pkg, rest, test and web, with files .go required for making a microservice.",
+	Use:   "project [name author schema]",
+	Short: "Create a new project with a base microservice.",
+	Long:  "Template project including README, .env, .gitignore and a base microservice with folders cmd, deployments, pkg, rest and test.",
 	Run: func(cmd *cobra.Command, args []string) {
 		packageName, err := utility.GoMod("module")
 		if err != nil {
@@ -47,8 +47,8 @@ var CmdProject = &cobra.Command{
 
 var CmdMicro = &cobra.Command{
 	Use:   "micro [name schema]",
-	Short: "Create project base type microservice.",
-	Long:  "Template project to microservice include folder cmd, deployments, pkg, rest, test and web, with files .go required for making a microservice.",
+	Short: "Create a microservice inside the current project.",
+	Long:  "Template microservice including folders cmd, deployments, internal, pkg, scripts, test and www, with the .go files required for making a microservice.",
 	Run: func(cmd *cobra.Command, args []string) {
 		packageName, err := utility.GoMod("module")
 		if err != nil {
@@ -105,7 +105,7 @@ var CmdModelo = &cobra.Command{
 			return
 		}
 
-		title := strs.Titlecase(packageName)
+		title := strs.Titlecase(modelo)
 		message := strs.Format(`Remember, including the router, that it is on the bottom of the h%s.go, in routers section of the router.go file`, title)
 		fmt.Println(message)
 	},

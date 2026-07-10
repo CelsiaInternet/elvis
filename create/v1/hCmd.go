@@ -31,29 +31,41 @@ func MakeCmd(packageName, name string) error {
 
 /**
 * DeleteCmd
-* @param packageName string
+* @param name string
 * @return error
 **/
-func DeleteCmd(packageName string) error {
-	path := strs.Format(`./cmd/%s`, packageName)
+func DeleteCmd(name string) error {
+	path := strs.Format(`./cmd/%s`, name)
 	_, err := file.RemoveFile(path)
 	if err != nil {
 		return err
 	}
 
-	path = strs.Format(`./internal/service/%s`, packageName)
+	path = strs.Format(`./deployments/%s`, strs.Lowcase(name))
 	_, err = file.RemoveFile(path)
 	if err != nil {
 		return err
 	}
 
-	path = strs.Format(`./internal/pkg/%s`, packageName)
+	path = strs.Format(`./internal/service/%s`, name)
 	_, err = file.RemoveFile(path)
 	if err != nil {
 		return err
 	}
 
-	path = strs.Format(`./internal/rest/%s.http`, packageName)
+	path = strs.Format(`./pkg/%s`, name)
+	_, err = file.RemoveFile(path)
+	if err != nil {
+		return err
+	}
+
+	path = strs.Format(`./scripts/%s.http`, name)
+	_, err = file.RemoveFile(path)
+	if err != nil {
+		return err
+	}
+
+	path = strs.Format(`./www/%s`, name)
 	_, err = file.RemoveFile(path)
 	if err != nil {
 		return err

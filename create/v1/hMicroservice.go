@@ -71,13 +71,17 @@ func MkMicroservice(packageName, name, schema string) error {
 		return err
 	}
 
-	ProgressNext(40)
+	ProgressNext(15)
 	err = MakeTest(name)
 	if err != nil {
 		return err
 	}
 
-	ProgressNext(10)
+	ProgressNext(15)
+	err = MakeWWW(name)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -118,19 +122,17 @@ func MkRpc(name, modelo string) error {
 
 /**
 * DeleteMicroservice
-* @param packageName string
+* @param name string
 * @return error
 **/
-func DeleteMicroservice(packageName string) error {
-	ProgressNext(10)
-	err := DeleteCmd(packageName)
+func DeleteMicroservice(name string) error {
+	ProgressNext(50)
+	err := DeleteCmd(name)
 	if err != nil {
 		return err
 	}
 
-	ProgressNext(80)
-
-	ProgressNext(10)
+	ProgressNext(50)
 
 	return nil
 }

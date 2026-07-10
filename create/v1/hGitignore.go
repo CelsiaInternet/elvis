@@ -3,7 +3,7 @@ package create
 import "github.com/celsiainternet/elvis/file"
 
 func MakeGitignore(packageName string) error {
-	_, _ = file.MakeFile(".", ".gitignore", modelGitignore)
+	_, err := file.MakeFile(".", ".gitignore", modelGitignore)
 
-	return nil
+	return err
 }
