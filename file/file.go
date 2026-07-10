@@ -171,6 +171,22 @@ func MakeFile(folder, name, model string, args ...any) (string, error) {
 }
 
 /**
+* WriteFile: Overwrites path with content, unlike MakeFile which never
+* touches a file that already exists.
+* @param path, content string
+* @return error
+**/
+func WriteFile(path, content string) error {
+	err := os.WriteFile(path, []byte(content), 0644)
+	if err != nil {
+		return err
+	}
+
+	logs.Log("file", "write file:", path)
+	return nil
+}
+
+/**
 * RemoveFile
 * @param path string
 * @return bool, error

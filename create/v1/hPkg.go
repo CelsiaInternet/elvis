@@ -1,9 +1,49 @@
 package create
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/celsiainternet/elvis/file"
 	"github.com/celsiainternet/elvis/strs"
 )
+
+/**
+* upsertModelInit: Writes pkg/<packageName>/model.go the first time a
+* model is added, and appends a Define<modelo>(db) call to initModels
+* on every subsequent call instead of leaving the file untouched, since
+* file.MakeFile never overwrites a file that already exists.
+* @param path, packageName, modelo string
+* @return error
+**/
+func upsertModelInit(path, packageName, modelo string) error {
+	modelPath := strs.Format(`%s/model.go`, path)
+	if !file.ExistPath(modelPath) {
+		_, err := file.MakeFile(path, "model.go", modelModel, packageName, modelo)
+		return err
+	}
+
+	content, err := file.ReadFile(modelPath)
+	if err != nil {
+		return err
+	}
+
+	call := strs.Format(`Define%s(db)`, modelo)
+	if strings.Contains(content, call) {
+		return nil
+	}
+
+	marker := "\n\treturn nil\n}"
+	idx := strings.LastIndex(content, marker)
+	if idx == -1 {
+		return fmt.Errorf("no se pudo actualizar initModels en %s", modelPath)
+	}
+
+	block := strs.Format("\n\tif err := %s; err != nil {\n\t\treturn console.Panic(err)\n\t}\n", call)
+	content = content[:idx] + block + content[idx:]
+
+	return file.WriteFile(modelPath, content)
+}
 
 func MakePkg(name, schema string) error {
 	path, err := file.MakeFolder("pkg", name)
@@ -39,7 +79,7 @@ func MakePkg(name, schema string) error {
 		}
 
 		modelo := strs.Titlecase(name)
-		_, err = file.MakeFile(path, "model.go", modelModel, name, modelo)
+		err = upsertModelInit(path, name, modelo)
 		if err != nil {
 			return err
 		}
@@ -99,7 +139,7 @@ func MakeModel(packageName, modelo, schema string) error {
 		}
 
 		modelo = strs.Titlecase(modelo)
-		_, err = file.MakeFile(path, "model.go", modelModel, packageName, modelo)
+		err = upsertModelInit(path, packageName, modelo)
 		if err != nil {
 			return err
 		}

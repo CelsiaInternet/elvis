@@ -85,7 +85,7 @@ func main() {
 }
 `
 
-const modelService = `package module
+const modelService = `package $2
 
 import (
 	"fmt"
@@ -241,13 +241,12 @@ import (
 	"github.com/celsiainternet/elvis/cache"
 	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/event"
-	"github.com/celsiainternet/elvis/jdb"
 	"github.com/celsiainternet/elvis/jrpc"
 	"github.com/celsiainternet/elvis/utility"
 	"github.com/dimiro1/banner"
 	"github.com/go-chi/chi/v5"
 	"github.com/mattn/go-colorable"
-	pkg "$1/pkg/$2"	
+	pkg "$1/pkg/$2"
 )
 
 func New() http.Handler {
@@ -268,15 +267,8 @@ func New() http.Handler {
 		console.Panic(err)
 	}
 
-	db, err := jdb.Load()
-	if err != nil {
-		console.Panic(err)
-	}
-
 	_pkg := &pkg.Router{
-		Repository: &pkg.Controller{
-			Db: db,
-		},
+		Repository: &pkg.Controller{},
 	}
 
 	r.Mount(pkg.PackagePath, _pkg.Routes())
@@ -303,24 +295,18 @@ const modelEvent = `package $1
 import (
 	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/event"
-	"github.com/celsiainternet/elvis/et"
 )
 
-func initEvents() {	
+func initEvents() {
+	// TODO: replace <channel> with the real channel name
 	err := event.Stack("<channel>", eventAction)
 	if err != nil {
 		console.Error(err)
 	}
-
 }
 
 func eventAction(m event.EvenMessage) {
-	data, err := et.ToJson(m.Data)
-	if err != nil {
-		console.Error(err)
-	}
-
-	console.Log("eventAction", data)
+	console.Log("eventAction", m.Data.ToString())
 }
 `
 
