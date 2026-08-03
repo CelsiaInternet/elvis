@@ -1,7 +1,8 @@
 package xls
 
 import (
-	"bytes"
+	"io"
+	"net/http"
 	"sort"
 
 	"github.com/celsiainternet/elvis/et"
@@ -68,13 +69,11 @@ func (s *Xls) Add(data []et.Json, nameSheet string) *Xls {
 }
 
 /**
-* ToFile: Exports the workbook to an xlsx file at the given path.
-* @param path string
-* @return error
+* build: Creates the excelize.File populated with all the workbook's sheets.
+* @return *excelize.File, error
 **/
-func (s *Xls) ToFile(path string) error {
+func (s *Xls) build() (*excelize.File, error) {
 	f := excelize.NewFile()
-	defer f.Close()
 
 	defaultSheet := f.GetSheetName(0)
 	usedDefault := false
@@ -88,16 +87,16 @@ func (s *Xls) ToFile(path string) error {
 		if sheetName == defaultSheet && !usedDefault {
 			usedDefault = true
 		} else if _, err := f.NewSheet(sheetName); err != nil {
-			return err
+			return nil, err
 		}
 
 		for col, header := range sheet.Headers {
 			cell, err := excelize.CoordinatesToCellName(col+1, 1)
 			if err != nil {
-				return err
+				return nil, err
 			}
 			if err := f.SetCellValue(sheetName, cell, header); err != nil {
-				return err
+				return nil, err
 			}
 		}
 
@@ -105,10 +104,10 @@ func (s *Xls) ToFile(path string) error {
 			for col, header := range sheet.Headers {
 				cell, err := excelize.CoordinatesToCellName(col+1, rowIdx+2)
 				if err != nil {
-					return err
+					return nil, err
 				}
 				if err := f.SetCellValue(sheetName, cell, row[header]); err != nil {
-					return err
+					return nil, err
 				}
 			}
 		}
@@ -116,93 +115,60 @@ func (s *Xls) ToFile(path string) error {
 
 	if !usedDefault && len(s.Sheets) > 0 {
 		if err := f.DeleteSheet(defaultSheet); err != nil {
-			return err
+			return nil, err
 		}
 	}
 
 	f.SetActiveSheet(0)
 
+	return f, nil
+}
+
+/**
+* ToFile: Exports the workbook to an xlsx file at the given path.
+* @param path string
+* @return error
+**/
+func (s *Xls) ToFile(path string) error {
+	f, err := s.build()
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
 	return f.SaveAs(path)
 }
 
 /**
-* XlsReader: Wraps an opened Excel workbook for reading sheet data.
-**/
-type XlsReader struct {
-	file *excelize.File
-}
-
-/**
-* ReadXls: Opens an Excel workbook from raw bytes for reading.
-* @param data []byte
-* @return *XlsReader, error
-**/
-func ReadXls(data []byte) (*XlsReader, error) {
-	f, err := excelize.OpenReader(bytes.NewReader(data))
-	if err != nil {
-		return nil, err
-	}
-
-	return &XlsReader{file: f}, nil
-}
-
-/**
-* Close: Releases the resources held by the opened workbook.
+* ToWriter: Writes the workbook as xlsx data into the given writer.
+* @param w io.Writer
 * @return error
 **/
-func (s *XlsReader) Close() error {
-	return s.file.Close()
-}
-
-/**
-* GetSheet: Returns the rows of a sheet as a list of Json objects. If columns is empty, all columns of the sheet are returned.
-* @param nameSheet string
-* @param columns []string
-* @return []et.Json, error
-**/
-func (s *XlsReader) GetSheet(nameSheet string, columns []string) ([]et.Json, error) {
-	rows, err := s.file.GetRows(nameSheet)
+func (s *Xls) ToWriter(w io.Writer) error {
+	f, err := s.build()
 	if err != nil {
-		return nil, err
+		return err
 	}
+	defer f.Close()
 
-	result := []et.Json{}
-	if len(rows) == 0 {
-		return result, nil
-	}
-
-	headers := rows[0]
-	selected := columns
-	if len(selected) == 0 {
-		selected = headers
-	}
-
-	for _, row := range rows[1:] {
-		item := et.Json{}
-		for _, col := range selected {
-			idx := indexOf(headers, col)
-			if idx == -1 || idx >= len(row) {
-				continue
-			}
-			item[col] = row[idx]
-		}
-		result = append(result, item)
-	}
-
-	return result, nil
+	return f.Write(w)
 }
 
 /**
-* indexOf: Returns the index of value inside list, or -1 if not found.
-* @param list []string
-* @param value string
-* @return int
+* ToHttp: Writes the workbook as a downloadable xlsx attachment to the http response.
+* @param w http.ResponseWriter
+* @param filename string
+* @return error
 **/
-func indexOf(list []string, value string) int {
-	for i, v := range list {
-		if v == value {
-			return i
-		}
+func (s *Xls) ToHttp(w http.ResponseWriter, filename string) error {
+	f, err := s.build()
+	if err != nil {
+		return err
 	}
-	return -1
+	defer f.Close()
+
+	w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+	w.Header().Set("Content-Disposition", "attachment; filename=\""+filename+"\"")
+
+	return f.Write(w)
 }
