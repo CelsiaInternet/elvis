@@ -13,15 +13,31 @@ import (
 * con la forma:
 *
 *	{
-*	  "from": "table",
-*	  "select": ["id", "name", "count(*)"],
+*	  "from": "table:A",
+*	  "join": {
+*	    "type": "left",
+*	    "to": "roles:B",
+*	    "on": {
+*	      "B.user_id": {"eq": {"col": "A.id"}},
+*	      "and": [
+*	        {"B.role": {"neg": "admin"}}
+*	      ]
+*	    }
+*	  },
+*	  "select": ["A.id", "A.name", "count(*)"],
 *	  "wheres": {...},
-*	  "group_by": ["name"],
+*	  "group_by": ["A.name"],
 *	  "having": {...},
 *	  "limit": {"page": 1, "rows": 100},
-*	  "order_by": ["name"],
-*	  "order_by_desc": ["age"]
+*	  "order_by": ["A.name"],
+*	  "order_by_desc": ["A.age"]
 *	}
+*
+* "from" y el "to" de cada join aceptan alias con la sintaxis
+* "tabla:alias" (ver renderTableRef). "join" acepta un unico objeto o
+* un arreglo de ellos (para varios joins); "type" es opcional
+* ("join"/"inner"/"left"/"right", por defecto "join"); "on" tiene la
+* misma forma recursiva and/or que "wheres" (ver Join/buildJoins).
 *
 * "select" y las claves de columna dentro de "having" aceptan tanto
 * columnas simples/calificadas como llamadas a funciones de
@@ -29,11 +45,17 @@ import (
 * renderExpr. "having" tiene la misma forma recursiva and/or que
 * "wheres" (ver buildWheres).
 *
+* Los valores de una condicion (en "wheres", "having" u "on") son
+* literales por defecto; para comparar contra otra columna en vez de
+* un literal, use {"col": "identificador"} (ver renderValue) — asi es
+* como una clausula ON expresa "B.user_id = A.id".
+*
 * a una sentencia SQL SELECT para el jquery/dialect.Dialect indicado.
 **/
 type JQueryBuilder struct {
 	Dialect     dialect.Dialect
 	From        string
+	Joins       []Join
 	Select      []string
 	Wheres      et.Json
 	GroupBy     []string
@@ -83,11 +105,17 @@ func NewJQueryBuilderWithDialect(query et.Json) (*JQueryBuilder, error) {
 		return nil, fmt.Errorf(ERR_FROM_REQUIRED)
 	}
 
+	joins, err := parseJoins(query.Get("join"))
+	if err != nil {
+		return nil, err
+	}
+
 	limit := query.Json("limit")
 
 	return &JQueryBuilder{
 		Dialect:     d,
 		From:        from,
+		Joins:       joins,
 		Select:      query.ArrayStr("select"),
 		Wheres:      query.Json("wheres"),
 		GroupBy:     query.ArrayStr("group_by"),
@@ -110,7 +138,13 @@ func (b *JQueryBuilder) Build() (string, error) {
 	sql.WriteString(b.buildSelect())
 
 	sql.WriteString(" FROM ")
-	sql.WriteString(b.Dialect.QuoteIdent(b.From))
+	sql.WriteString(renderTableRef(b.Dialect, b.From))
+
+	joinClause, err := buildJoins(b.Dialect, b.Joins)
+	if err != nil {
+		return "", err
+	}
+	sql.WriteString(joinClause)
 
 	whereClause, err := b.buildWhere()
 	if err != nil {

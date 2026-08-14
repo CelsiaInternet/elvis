@@ -521,3 +521,201 @@ func TestJQuery_FullQueryWithGroupByAndHaving(t *testing.T) {
 		t.Fatalf("got %q, want %q", sql, want)
 	}
 }
+
+func TestJQuery_FromWithAlias(t *testing.T) {
+	query := et.Json{
+		"from": "users:A",
+	}
+
+	sql, err := jquery.JQuery(query)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	want := `SELECT * FROM "users" AS "A"`
+	if sql != want {
+		t.Fatalf("got %q, want %q", sql, want)
+	}
+}
+
+func TestJQuery_FromWithSchemaQualifiedAlias(t *testing.T) {
+	query := et.Json{
+		"from": "public.users:A",
+	}
+
+	sql, err := jquery.JQuery(query)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	want := `SELECT * FROM "public"."users" AS "A"`
+	if sql != want {
+		t.Fatalf("got %q, want %q", sql, want)
+	}
+}
+
+func TestJQuery_ColumnReferenceValue(t *testing.T) {
+	query := et.Json{
+		"from": "users:A",
+		"join": et.Json{
+			"to": "roles:B",
+			"on": et.Json{
+				"B.user_id": et.Json{"eq": et.Json{"col": "A.id"}},
+			},
+		},
+	}
+
+	sql, err := jquery.JQuery(query)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	want := `SELECT * FROM "users" AS "A" JOIN "roles" AS "B" ON "B"."user_id" = "A"."id"`
+	if sql != want {
+		t.Fatalf("got %q, want %q", sql, want)
+	}
+}
+
+func TestJQuery_LeftJoinWithAndCondition(t *testing.T) {
+	query := et.Json{
+		"from": "users:A",
+		"join": et.Json{
+			"type": "left",
+			"to":   "roles:B",
+			"on": et.Json{
+				"B.user_id": et.Json{"eq": et.Json{"col": "A.id"}},
+				"and": []et.Json{
+					{"B.role": et.Json{"neg": "admin"}},
+				},
+			},
+		},
+		"select": []string{"A.id", "A.name"},
+	}
+
+	sql, err := jquery.JQuery(query)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	want := `SELECT "A"."id", "A"."name" FROM "users" AS "A" LEFT JOIN "roles" AS "B" ON "B"."user_id" = "A"."id" AND "B"."role" != 'admin'`
+	if sql != want {
+		t.Fatalf("got %q, want %q", sql, want)
+	}
+}
+
+func TestJQuery_MultipleJoins(t *testing.T) {
+	query := et.Json{
+		"from": "users:A",
+		"join": []et.Json{
+			{
+				"type": "inner",
+				"to":   "roles:B",
+				"on":   et.Json{"B.user_id": et.Json{"eq": et.Json{"col": "A.id"}}},
+			},
+			{
+				"type": "right",
+				"to":   "departments:C",
+				"on":   et.Json{"C.id": et.Json{"eq": et.Json{"col": "A.department_id"}}},
+			},
+		},
+	}
+
+	sql, err := jquery.JQuery(query)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	want := `SELECT * FROM "users" AS "A" INNER JOIN "roles" AS "B" ON "B"."user_id" = "A"."id" RIGHT JOIN "departments" AS "C" ON "C"."id" = "A"."department_id"`
+	if sql != want {
+		t.Fatalf("got %q, want %q", sql, want)
+	}
+}
+
+func TestJQuery_JoinMissingTo(t *testing.T) {
+	query := et.Json{
+		"from": "users:A",
+		"join": et.Json{
+			"on": et.Json{"B.user_id": et.Json{"eq": et.Json{"col": "A.id"}}},
+		},
+	}
+
+	if _, err := jquery.JQuery(query); err == nil {
+		t.Fatal("expected error for join missing 'to'")
+	}
+}
+
+func TestJQuery_JoinMissingOn(t *testing.T) {
+	query := et.Json{
+		"from": "users:A",
+		"join": et.Json{
+			"to": "roles:B",
+		},
+	}
+
+	if _, err := jquery.JQuery(query); err == nil {
+		t.Fatal("expected error for join missing 'on'")
+	}
+}
+
+func TestJQuery_JoinInvalidType(t *testing.T) {
+	query := et.Json{
+		"from": "users:A",
+		"join": et.Json{
+			"type": "outer",
+			"to":   "roles:B",
+			"on":   et.Json{"B.user_id": et.Json{"eq": et.Json{"col": "A.id"}}},
+		},
+	}
+
+	if _, err := jquery.JQuery(query); err == nil {
+		t.Fatal("expected error for invalid join type")
+	}
+}
+
+func TestJQuery_FullQueryWithJoinFromFeaturesExample(t *testing.T) {
+	query := et.Json{
+		"from": "users:A",
+		"join": et.Json{
+			"to": "roles:B",
+			"on": et.Json{
+				"B.user_id": et.Json{"eq": et.Json{"col": "A.id"}},
+				"and": []et.Json{
+					{"B.role": et.Json{"neg": "admin"}},
+				},
+			},
+		},
+		"select": []string{"A.id", "A.name", "A.age", "count(*)"},
+		"wheres": et.Json{
+			"A.name": et.Json{"eq": "cesar"},
+			"and": []et.Json{
+				{"A.age": et.Json{"eq": 30}},
+			},
+			"or": []et.Json{
+				{"A.age": et.Json{"more": 45}},
+			},
+		},
+		"limit": et.Json{
+			"page": 1,
+			"rows": 100,
+		},
+		"order_by":      []string{"A.name"},
+		"order_by_desc": []string{"A.age"},
+		"group_by":      []string{"A.name"},
+		"having": et.Json{
+			"A.name": et.Json{"eq": "cesar"},
+			"and": []et.Json{
+				{"count(*)": et.Json{"eq": 30}},
+			},
+		},
+	}
+
+	sql, err := jquery.JQuery(query)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	want := `SELECT "A"."id", "A"."name", "A"."age", COUNT(*) FROM "users" AS "A" JOIN "roles" AS "B" ON "B"."user_id" = "A"."id" AND "B"."role" != 'admin' WHERE "A"."name" = 'cesar' AND "A"."age" = 30 AND "A"."age" > 45 GROUP BY "A"."name" HAVING "A"."name" = 'cesar' AND COUNT(*) = 30 ORDER BY "A"."name" ASC, "A"."age" DESC LIMIT 100`
+	if sql != want {
+		t.Fatalf("got %q, want %q", sql, want)
+	}
+}

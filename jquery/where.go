@@ -194,6 +194,27 @@ func buildColumnConditions(d dialect.Dialect, column string, ops et.Json) ([]str
 }
 
 /**
+* renderValue renderiza el lado derecho de una condicion. Por defecto
+* val es un literal (numero, texto, bool, etc.), citado/escapado via
+* et.Unquote. Si val es un objeto de la forma {"col": "identificador"}
+* se renderiza como referencia a columna (via d.QuoteIdent) en lugar
+* de literal — necesario para condiciones columna-a-columna, como las
+* clausulas ON de un join (p.ej. {"eq": {"col": "A.id"}} produce
+* "= \"A\".\"id\"" en vez de "= 'A.id'").
+* @param d dialect.Dialect, val any
+* @return string
+**/
+func renderValue(d dialect.Dialect, val any) string {
+	if obj, ok := asJson(val); ok {
+		if col := strings.TrimSpace(obj.Str("col")); col != "" {
+			return d.QuoteIdent(col)
+		}
+	}
+
+	return fmt.Sprintf("%v", et.Unquote(val))
+}
+
+/**
 * buildCondition renderiza una unica condicion "columna <operador> valor".
 * @param d dialect.Dialect, ident string, op Operator, val any, column string
 * @return string, error
@@ -202,10 +223,10 @@ func buildCondition(d dialect.Dialect, ident string, op Operator, val any, colum
 	switch op {
 	case EQ, NEG, LESS, LESS_EQ, MORE, MORE_EQ, IS, IS_NOT:
 		symbol := operatorSymbols[op]
-		return fmt.Sprintf("%s %s %v", ident, symbol, et.Unquote(val)), nil
+		return fmt.Sprintf("%s %s %s", ident, symbol, renderValue(d, val)), nil
 
 	case LIKE:
-		return fmt.Sprintf("%s %s %v", ident, d.Like(), et.Unquote(val)), nil
+		return fmt.Sprintf("%s %s %s", ident, d.Like(), renderValue(d, val)), nil
 
 	case NULL:
 		return fmt.Sprintf("%s IS NULL", ident), nil
@@ -221,7 +242,7 @@ func buildCondition(d dialect.Dialect, ident string, op Operator, val any, colum
 
 		rendered := make([]string, len(values))
 		for i, v := range values {
-			rendered[i] = fmt.Sprintf("%v", et.Unquote(v))
+			rendered[i] = renderValue(d, v)
 		}
 
 		keyword := "IN"
@@ -242,7 +263,7 @@ func buildCondition(d dialect.Dialect, ident string, op Operator, val any, colum
 			keyword = "NOT BETWEEN"
 		}
 
-		return fmt.Sprintf("%s %s %v AND %v", ident, keyword, et.Unquote(values[0]), et.Unquote(values[1])), nil
+		return fmt.Sprintf("%s %s %s AND %s", ident, keyword, renderValue(d, values[0]), renderValue(d, values[1])), nil
 
 	default:
 		return "", fmt.Errorf(ERR_OPERATOR_INVALID, string(op))
