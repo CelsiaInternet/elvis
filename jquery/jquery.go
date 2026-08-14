@@ -3,14 +3,16 @@
 *
 * Soporta FROM, SELECT, WHERE (con conectores AND/OR anidables),
 * LIMIT/OFFSET (via limit.page + limit.rows) y ORDER BY (ASC/DESC).
-* El dialecto por defecto es PostgreSQL; ver el paquete
-* jquery/dialect (Dialect + registry Register/Get) para agregar
-* sqlite, mysql, oracle o sqlserver.
+* El dialecto por defecto es PostgreSQL; ver el paquete jquery/dialect
+* (Dialect + registry Register/Get con patron factory) para agregar
+* sqlite, mysql, oracle o sqlserver, o para seleccionar un dialecto
+* distinto via el atributo "dialect" del query.
 *
 * Formato esperado del query:
 *
 *	{
 *	  "from": "table",
+*	  "dialect": "postgres",
 *	  "select": ["id", "name", "age"],
 *	  "wheres": {
 *	    "name": {"eq": "cesar"},

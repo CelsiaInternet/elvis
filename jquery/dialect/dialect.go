@@ -1,8 +1,10 @@
 /**
-* Package dialect define el contrato Dialect que jquery usa para
-* traducir columnas/limit/like al SQL de un motor especifico, mas un
-* registry para "cargar" el dialecto correcto por nombre en tiempo de
-* ejecucion.
+* Package dialect define el contrato Dialect que traduce
+* columnas/limit/like al SQL de un motor especifico, mas un registry
+* con patron factory para "cargar" el dialecto correcto por nombre en
+* tiempo de ejecucion. Es un paquete independiente (no depende de
+* jquery) para poder reutilizarse desde cualquier paquete que genere
+* SQL, no solo el query builder.
 *
 * Cada motor soportado vive en su propio archivo dentro de este mismo
 * paquete (ver postgres.go) y se registra a si mismo desde su propio
@@ -12,14 +14,17 @@
 *  1. Crear dialect/<motor>.go con un tipo que implemente Dialect.
 *  2. Registrarlo en su func init(): Register("<motor>", func() Dialect { ... }).
 *
-* jquery nunca necesita un switch nuevo: basta con que ese archivo
-* exista en el paquete (jquery ya importa "jquery/dialect", lo que
-* alcanza para correr el init() de todos los archivos del paquete) y
-* con pedir el dialecto por nombre via Get.
+* Los paquetes consumidores (p.ej. jquery) nunca necesitan un switch
+* nuevo: basta con que ese archivo exista en este paquete y con pedir
+* el dialecto por nombre via Get.
 **/
-package jquery
+package dialect
 
 import "fmt"
+
+const (
+	ERR_DIALECT_NOT_SUPPORTED = "dialecto no soportado (%s)"
+)
 
 /**
 * Dialect: reglas de sintaxis especificas de un motor de base de
@@ -65,7 +70,7 @@ func Register(name string, factory Factory) {
 * @param name string
 * @return Dialect, error
 **/
-func getDialect(name string) (Dialect, error) {
+func Get(name string) (Dialect, error) {
 	factory, ok := registry[name]
 	if !ok {
 		return nil, fmt.Errorf(ERR_DIALECT_NOT_SUPPORTED, name)

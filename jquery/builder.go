@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/celsiainternet/elvis/et"
+	"github.com/celsiainternet/elvis/jquery/dialect"
 )
 
 /**
@@ -20,10 +21,10 @@ import (
 *	  "order_by_desc": ["age"]
 *	}
 *
-* a una sentencia SQL SELECT para el dialect.Dialect indicado.
+* a una sentencia SQL SELECT para el jquery/dialect.Dialect indicado.
 **/
 type JQueryBuilder struct {
-	Dialect     Dialect
+	Dialect     dialect.Dialect
 	From        string
 	Select      []string
 	Wheres      et.Json
@@ -45,18 +46,23 @@ func NewJQueryBuilder(query et.Json) (*JQueryBuilder, error) {
 
 /**
 * NewJQueryBuilderWithDialect crea un JQueryBuilder para el dialecto
-* registrado bajo dialectName (ver dialect.Register/dialect.Get). Un
-* dialectName vacio cae al dialecto por defecto de jquery (Postgres).
+* indicado en el atributo "dialect" del query (ver jquery/dialect:
+* Register/Get, patron factory por motor). Si el query no trae
+* "dialect", cae al dialecto por defecto de jquery (dialect.Postgres).
 * Hoy solo "postgres" esta implementado; agregar sqlite/mysql/oracle/
-* sqlserver es cuestion de sumar su archivo a jquery/dialect (ver el
-* comentario de paquete en dialect/dialect.go), sin tocar este archivo.
-* @param query et.Json, dialectName string
+* sqlserver es cuestion de sumar su propio archivo al paquete
+* jquery/dialect implementando dialect.Dialect (ver el comentario de
+* paquete en dialect/dialect.go), sin tocar este archivo.
+* @param query et.Json
 * @return *JQueryBuilder, error
 **/
 func NewJQueryBuilderWithDialect(query et.Json) (*JQueryBuilder, error) {
 	dialectName := strings.TrimSpace(query.Str("dialect"))
+	if dialectName == "" {
+		dialectName = dialect.Postgres
+	}
 
-	dialect, err := getDialect(dialectName)
+	d, err := dialect.Get(dialectName)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +75,7 @@ func NewJQueryBuilderWithDialect(query et.Json) (*JQueryBuilder, error) {
 	limit := query.Json("limit")
 
 	return &JQueryBuilder{
-		Dialect:     dialect,
+		Dialect:     d,
 		From:        from,
 		Select:      query.ArrayStr("select"),
 		Wheres:      query.Json("wheres"),

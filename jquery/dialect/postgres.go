@@ -8,7 +8,7 @@ import (
 
 /**
 * Postgres es el nombre bajo el cual PostgresDialect se registra en
-* el registry (ver Get/Register).
+* el registry (ver Register/Get).
 **/
 const Postgres = "postgres"
 
