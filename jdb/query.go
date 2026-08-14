@@ -159,6 +159,11 @@ func (d *DB) QueryContext(ctx context.Context, sql string, args ...any) (et.Item
 	return rowsItems(rows), nil
 }
 
+/**
+* Query
+* @param sql string, args ...any
+* @return et.Items, error
+**/
 func (d *DB) Query(sql string, args ...any) (et.Items, error) {
 	return d.QueryContext(context.Background(), sql, args...)
 }
@@ -177,6 +182,11 @@ func (d *DB) QueryOneContext(ctx context.Context, sql string, args ...any) (et.I
 	return result.First(), nil
 }
 
+/**
+* QueryOne
+* @param sql string, args ...any
+* @return et.Item, error
+**/
 func (d *DB) QueryOne(sql string, args ...any) (et.Item, error) {
 	return d.QueryOneContext(context.Background(), sql, args...)
 }
@@ -196,6 +206,11 @@ func (d *DB) SourceContext(ctx context.Context, sourceField string, sql string, 
 	return sourceItems(rows, sourceField), nil
 }
 
+/**
+* Source
+* @param sourceField string, sql string, args ...any
+* @return et.Items, error
+**/
 func (d *DB) Source(sourceField string, sql string, args ...any) (et.Items, error) {
 	return d.SourceContext(context.Background(), sourceField, sql, args...)
 }
@@ -215,6 +230,11 @@ func (d *DB) CommandContext(ctx context.Context, sql string, args ...any) (et.It
 	return rowsItems(rows), nil
 }
 
+/**
+* Command
+* @param sql string, args ...any
+* @return et.Items, error
+**/
 func (d *DB) Command(sql string, args ...any) (et.Items, error) {
 	return d.CommandContext(context.Background(), sql, args...)
 }
@@ -234,6 +254,11 @@ func (d *DB) CommandSourceContext(ctx context.Context, sourceField string, sql s
 	return sourceItems(rows, sourceField), nil
 }
 
+/**
+* CommandSource
+* @param sourceField string, sql string, args ...any
+* @return et.Items, error
+**/
 func (d *DB) CommandSource(sourceField string, sql string, args ...any) (et.Items, error) {
 	return d.CommandSourceContext(context.Background(), sourceField, sql, args...)
 }
@@ -248,6 +273,11 @@ func (d *DB) BulckContext(ctx context.Context, sql string, args ...any) error {
 	return err
 }
 
+/**
+* Bulck
+* @param sql string, args ...any
+* @return error
+**/
 func (d *DB) Bulck(sql string, args ...any) error {
 	return d.BulckContext(context.Background(), sql, args...)
 }
@@ -269,6 +299,11 @@ func (d *DB) QueryWithTotalContext(ctx context.Context, totalField, sql string, 
 	return items, total, nil
 }
 
+/**
+* QueryWithTotal
+* @param totalField string, sql string, args ...any
+* @return et.Items, int, error
+**/
 func (d *DB) QueryWithTotal(totalField, sql string, args ...any) (et.Items, int, error) {
 	return d.QueryWithTotalContext(context.Background(), totalField, sql, args...)
 }
@@ -290,6 +325,21 @@ func (d *DB) SourceWithTotalContext(ctx context.Context, totalField, sourceField
 	return items, total, nil
 }
 
+/**
+* SourceWithTotal
+* @param totalField string, sourceField string, sql string, args ...any
+* @return et.Items, int, error
+**/
 func (d *DB) SourceWithTotal(totalField, sourceField, sql string, args ...any) (et.Items, int, error) {
 	return d.SourceWithTotalContext(context.Background(), totalField, sourceField, sql, args...)
+}
+
+/**
+* JQuery
+* @param query et.Json
+* @return et.Items, error
+**/
+func (d *DB) JQuery(query et.Json) (et.Items, error) {
+	result := et.Items{}
+	return result, nil
 }

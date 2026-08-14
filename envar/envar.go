@@ -13,10 +13,25 @@ type Store interface {
 	Get(name string, _default string) string
 }
 
-var store Store
+var (
+	store  Store
+	config map[string]string
+)
+
+func init() {
+	config = make(map[string]string)
+}
 
 func Load(s Store) {
 	store = s
+}
+
+/**
+* GetConfig
+* @return map[string]string
+**/
+func GetConfig() map[string]string {
+	return config
 }
 
 /**
@@ -29,6 +44,7 @@ func MetaSet(name string, _default string, description, _var string) string {
 		if arg == strs.Format("-%s", name) {
 			val := os.Args[i+2]
 			os.Setenv(_var, val)
+			config[_var] = val
 			return val
 		}
 	}
@@ -135,15 +151,17 @@ func UpSetBool(name string, value bool) bool {
 **/
 func GetStr(_default string, _var string) string {
 	if store != nil {
-		return store.Get(_default, _var)
+		result := store.Get(_default, _var)
+		config[_var] = result
+		return result
 	}
 
 	result := os.Getenv(_var)
-
 	if result == "" {
-		return _default
+		result = _default
 	}
 
+	config[_var] = result
 	return result
 }
 
