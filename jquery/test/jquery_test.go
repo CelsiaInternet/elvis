@@ -6,6 +6,7 @@ import (
 
 	"github.com/celsiainternet/elvis/et"
 	"github.com/celsiainternet/elvis/jquery"
+	"github.com/celsiainternet/elvis/jquery/dialect"
 )
 
 func TestJQuery_SelectAll(t *testing.T) {
@@ -717,5 +718,130 @@ func TestJQuery_FullQueryWithJoinFromFeaturesExample(t *testing.T) {
 	want := `SELECT "A"."id", "A"."name", "A"."age", COUNT(*) FROM "users" AS "A" JOIN "roles" AS "B" ON "B"."user_id" = "A"."id" AND "B"."role" != 'admin' WHERE "A"."name" = 'cesar' AND "A"."age" = 30 AND "A"."age" > 45 GROUP BY "A"."name" HAVING "A"."name" = 'cesar' AND COUNT(*) = 30 ORDER BY "A"."name" ASC, "A"."age" DESC LIMIT 100`
 	if sql != want {
 		t.Fatalf("got %q, want %q", sql, want)
+	}
+}
+
+func TestJQuery_FullFeatureSetAcrossDialects(t *testing.T) {
+	// Exercises alias, join, aggregation, group by, having and
+	// where/limit together on every registered dialect, to confirm
+	// the JQueryBuilder additions (join, group_by, having, {"col":..})
+	// go through Dialect.QuoteIdent/Like/LimitOffset consistently and
+	// not just for the default (postgres) path.
+	newQuery := func(dialectName string) et.Json {
+		return et.Json{
+			"dialect": dialectName,
+			"from":    "users:A",
+			"join": et.Json{
+				"type": "left",
+				"to":   "roles:B",
+				"on": et.Json{
+					"B.user_id": et.Json{"eq": et.Json{"col": "A.id"}},
+				},
+			},
+			"select":   []string{"A.id", "A.name", "count(*)"},
+			"group_by": []string{"A.name"},
+			"having": et.Json{
+				"count(*)": et.Json{"more": 1},
+			},
+			"wheres": et.Json{
+				"A.name": et.Json{"like": "%cesar%"},
+			},
+			"limit": et.Json{"page": 2, "rows": 10},
+		}
+	}
+
+	cases := []struct {
+		dialect string
+		want    string
+	}{
+		{
+			"postgres",
+			`SELECT "A"."id", "A"."name", COUNT(*) FROM "users" AS "A" LEFT JOIN "roles" AS "B" ON "B"."user_id" = "A"."id" WHERE "A"."name" ILIKE '%cesar%' GROUP BY "A"."name" HAVING COUNT(*) > 1 LIMIT 10 OFFSET 10`,
+		},
+		{
+			"sqlite",
+			`SELECT "A"."id", "A"."name", COUNT(*) FROM "users" AS "A" LEFT JOIN "roles" AS "B" ON "B"."user_id" = "A"."id" WHERE "A"."name" LIKE '%cesar%' GROUP BY "A"."name" HAVING COUNT(*) > 1 LIMIT 10 OFFSET 10`,
+		},
+		{
+			"mysql",
+			"SELECT `A`.`id`, `A`.`name`, COUNT(*) FROM `users` AS `A` LEFT JOIN `roles` AS `B` ON `B`.`user_id` = `A`.`id` WHERE `A`.`name` LIKE '%cesar%' GROUP BY `A`.`name` HAVING COUNT(*) > 1 LIMIT 10 OFFSET 10",
+		},
+		{
+			"sqlserver",
+			`SELECT [A].[id], [A].[name], COUNT(*) FROM [users] AS [A] LEFT JOIN [roles] AS [B] ON [B].[user_id] = [A].[id] WHERE [A].[name] LIKE '%cesar%' GROUP BY [A].[name] HAVING COUNT(*) > 1 OFFSET 10 ROWS FETCH NEXT 10 ROWS ONLY`,
+		},
+		{
+			"oracle",
+			`SELECT "A"."id", "A"."name", COUNT(*) FROM "users" AS "A" LEFT JOIN "roles" AS "B" ON "B"."user_id" = "A"."id" WHERE "A"."name" LIKE '%cesar%' GROUP BY "A"."name" HAVING COUNT(*) > 1 OFFSET 10 ROWS FETCH NEXT 10 ROWS ONLY`,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.dialect, func(t *testing.T) {
+			sql, err := jquery.JQuery(newQuery(tc.dialect))
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			if sql != tc.want {
+				t.Fatalf("got %q, want %q", sql, tc.want)
+			}
+		})
+	}
+}
+
+func TestJQuery_AllJoinTypesAcrossAllDialects(t *testing.T) {
+	// Cross product of every JoinType ("join"/"inner"/"left"/"right")
+	// against every registered dialect, confirming both the join
+	// keyword and the identifier quoting are correct in all 20
+	// combinations. Expected identifiers are computed from each
+	// dialect's own QuoteIdent, so this stays correct even if a
+	// dialect's quoting rules change later.
+	joinTypes := []struct {
+		jsonType string
+		keyword  string
+	}{
+		{"join", "JOIN"},
+		{"inner", "INNER JOIN"},
+		{"left", "LEFT JOIN"},
+		{"right", "RIGHT JOIN"},
+	}
+
+	dialectNames := []string{"postgres", "sqlite", "mysql", "sqlserver", "oracle"}
+
+	for _, dialectName := range dialectNames {
+		d, err := dialect.Get(dialectName)
+		if err != nil {
+			t.Fatalf("unexpected error getting dialect %q: %v", dialectName, err)
+		}
+
+		for _, jt := range joinTypes {
+			t.Run(dialectName+"/"+jt.jsonType, func(t *testing.T) {
+				query := et.Json{
+					"dialect": dialectName,
+					"from":    "users:A",
+					"join": et.Json{
+						"type": jt.jsonType,
+						"to":   "roles:B",
+						"on": et.Json{
+							"B.user_id": et.Json{"eq": et.Json{"col": "A.id"}},
+						},
+					},
+				}
+
+				sql, err := jquery.JQuery(query)
+				if err != nil {
+					t.Fatalf("unexpected error: %v", err)
+				}
+
+				want := "SELECT * FROM " + d.QuoteIdent("users") + " AS " + d.QuoteIdent("A") +
+					" " + jt.keyword + " " + d.QuoteIdent("roles") + " AS " + d.QuoteIdent("B") +
+					" ON " + d.QuoteIdent("B.user_id") + " = " + d.QuoteIdent("A.id")
+
+				if sql != want {
+					t.Fatalf("got %q, want %q", sql, want)
+				}
+			})
+		}
 	}
 }
