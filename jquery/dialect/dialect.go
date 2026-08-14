@@ -7,9 +7,10 @@
 * SQL, no solo el query builder.
 *
 * Cada motor soportado vive en su propio archivo dentro de este mismo
-* paquete (ver postgres.go) y se registra a si mismo desde su propio
-* func init() llamando a Register. Asi, agregar sqlite/mysql/oracle/
-* sqlserver mas adelante consiste en:
+* paquete y se registra a si mismo desde su propio func init() llamando
+* a Register. Motores incluidos: postgres.go (Postgres), sqlite.go
+* (SQLite), mysql.go (MySQL), sqlserver.go (SQLServer) y oracle.go
+* (Oracle). Agregar uno nuevo consiste en:
 *
 *  1. Crear dialect/<motor>.go con un tipo que implemente Dialect.
 *  2. Registrarlo en su func init(): Register("<motor>", func() Dialect { ... }).

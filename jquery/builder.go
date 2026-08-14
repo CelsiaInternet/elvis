@@ -14,12 +14,20 @@ import (
 *
 *	{
 *	  "from": "table",
-*	  "select": ["id", "name"],
+*	  "select": ["id", "name", "count(*)"],
 *	  "wheres": {...},
+*	  "group_by": ["name"],
+*	  "having": {...},
 *	  "limit": {"page": 1, "rows": 100},
 *	  "order_by": ["name"],
 *	  "order_by_desc": ["age"]
 *	}
+*
+* "select" y las claves de columna dentro de "having" aceptan tanto
+* columnas simples/calificadas como llamadas a funciones de
+* agregacion COUNT/MAX/MIN/SUM (p.ej. "count(*)", "sum(price)"); ver
+* renderExpr. "having" tiene la misma forma recursiva and/or que
+* "wheres" (ver buildWheres).
 *
 * a una sentencia SQL SELECT para el jquery/dialect.Dialect indicado.
 **/
@@ -28,6 +36,8 @@ type JQueryBuilder struct {
 	From        string
 	Select      []string
 	Wheres      et.Json
+	GroupBy     []string
+	Having      et.Json
 	Page        int
 	Rows        int
 	OrderBy     []string
@@ -49,10 +59,11 @@ func NewJQueryBuilder(query et.Json) (*JQueryBuilder, error) {
 * indicado en el atributo "dialect" del query (ver jquery/dialect:
 * Register/Get, patron factory por motor). Si el query no trae
 * "dialect", cae al dialecto por defecto de jquery (dialect.Postgres).
-* Hoy solo "postgres" esta implementado; agregar sqlite/mysql/oracle/
-* sqlserver es cuestion de sumar su propio archivo al paquete
-* jquery/dialect implementando dialect.Dialect (ver el comentario de
-* paquete en dialect/dialect.go), sin tocar este archivo.
+* Motores disponibles: dialect.Postgres, dialect.SQLite, dialect.MySQL,
+* dialect.SQLServer y dialect.Oracle. Agregar uno nuevo es cuestion de
+* sumar su propio archivo al paquete jquery/dialect implementando
+* dialect.Dialect (ver el comentario de paquete en dialect/dialect.go),
+* sin tocar este archivo.
 * @param query et.Json
 * @return *JQueryBuilder, error
 **/
@@ -79,6 +90,8 @@ func NewJQueryBuilderWithDialect(query et.Json) (*JQueryBuilder, error) {
 		From:        from,
 		Select:      query.ArrayStr("select"),
 		Wheres:      query.Json("wheres"),
+		GroupBy:     query.ArrayStr("group_by"),
+		Having:      query.Json("having"),
 		Page:        limit.Int("page"),
 		Rows:        limit.Int("rows"),
 		OrderBy:     query.ArrayStr("order_by"),
@@ -108,6 +121,20 @@ func (b *JQueryBuilder) Build() (string, error) {
 		sql.WriteString(whereClause)
 	}
 
+	if groupClause := b.buildGroupBy(); groupClause != "" {
+		sql.WriteString(" GROUP BY ")
+		sql.WriteString(groupClause)
+	}
+
+	havingClause, err := b.buildHaving()
+	if err != nil {
+		return "", err
+	}
+	if havingClause != "" {
+		sql.WriteString(" HAVING ")
+		sql.WriteString(havingClause)
+	}
+
 	if orderClause := b.buildOrderBy(); orderClause != "" {
 		sql.WriteString(" ORDER BY ")
 		sql.WriteString(orderClause)
@@ -122,7 +149,9 @@ func (b *JQueryBuilder) Build() (string, error) {
 }
 
 /**
-* buildSelect
+* buildSelect. Cada elemento de Select puede ser una columna simple/
+* calificada o una llamada de agregacion COUNT/MAX/MIN/SUM (ver
+* renderExpr).
 * @return string
 **/
 func (b *JQueryBuilder) buildSelect() string {
@@ -132,7 +161,7 @@ func (b *JQueryBuilder) buildSelect() string {
 
 	cols := make([]string, len(b.Select))
 	for i, c := range b.Select {
-		cols[i] = b.Dialect.QuoteIdent(c)
+		cols[i] = renderExpr(b.Dialect, c)
 	}
 
 	return "SELECT " + strings.Join(cols, ", ")
@@ -148,6 +177,37 @@ func (b *JQueryBuilder) buildWhere() (string, error) {
 	}
 
 	return buildWheres(b.Dialect, b.Wheres)
+}
+
+/**
+* buildGroupBy
+* @return string
+**/
+func (b *JQueryBuilder) buildGroupBy() string {
+	if len(b.GroupBy) == 0 {
+		return ""
+	}
+
+	cols := make([]string, len(b.GroupBy))
+	for i, c := range b.GroupBy {
+		cols[i] = b.Dialect.QuoteIdent(c)
+	}
+
+	return strings.Join(cols, ", ")
+}
+
+/**
+* buildHaving tiene la misma forma recursiva and/or que buildWhere;
+* las claves de columna dentro de "having" tambien aceptan llamadas de
+* agregacion (p.ej. "count(*)"), ver renderExpr/buildColumnConditions.
+* @return string, error
+**/
+func (b *JQueryBuilder) buildHaving() (string, error) {
+	if len(b.Having) == 0 {
+		return "", nil
+	}
+
+	return buildWheres(b.Dialect, b.Having)
 }
 
 /**

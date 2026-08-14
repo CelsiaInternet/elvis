@@ -1,4 +1,4 @@
-package jquery_test
+package test
 
 import (
 	"strings"
@@ -398,6 +398,125 @@ func TestJQuery_AcceptsRawJSONUnmarshaledMaps(t *testing.T) {
 	}
 
 	want := `SELECT * FROM "users" WHERE "age" = 30`
+	if sql != want {
+		t.Fatalf("got %q, want %q", sql, want)
+	}
+}
+
+func TestJQuery_GroupBy(t *testing.T) {
+	query := et.Json{
+		"from":     "users",
+		"select":   []string{"name", "count(*)"},
+		"group_by": []string{"name"},
+	}
+
+	sql, err := jquery.JQuery(query)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	want := `SELECT "name", COUNT(*) FROM "users" GROUP BY "name"`
+	if sql != want {
+		t.Fatalf("got %q, want %q", sql, want)
+	}
+}
+
+func TestJQuery_Having(t *testing.T) {
+	query := et.Json{
+		"from":     "users",
+		"select":   []string{"name", "count(*)"},
+		"group_by": []string{"name"},
+		"having": et.Json{
+			"count(*)": et.Json{"more": 1},
+		},
+	}
+
+	sql, err := jquery.JQuery(query)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	want := `SELECT "name", COUNT(*) FROM "users" GROUP BY "name" HAVING COUNT(*) > 1`
+	if sql != want {
+		t.Fatalf("got %q, want %q", sql, want)
+	}
+}
+
+func TestJQuery_HavingWithAndOr(t *testing.T) {
+	query := et.Json{
+		"from":     "users",
+		"select":   []string{"name", "count(*)"},
+		"group_by": []string{"name"},
+		"having": et.Json{
+			"name": et.Json{"eq": "cesar"},
+			"and": []et.Json{
+				{"count(*)": et.Json{"eq": 30}},
+			},
+		},
+	}
+
+	sql, err := jquery.JQuery(query)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	want := `SELECT "name", COUNT(*) FROM "users" GROUP BY "name" HAVING COUNT(*) = 30 AND "name" = 'cesar'`
+	if sql != want {
+		t.Fatalf("got %q, want %q", sql, want)
+	}
+}
+
+func TestJQuery_SelectAggregations(t *testing.T) {
+	query := et.Json{
+		"from":   "orders",
+		"select": []string{"count(*)", "count()", "max(price)", "min(price)", "sum(price)", "COUNT(id)"},
+	}
+
+	sql, err := jquery.JQuery(query)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	want := `SELECT COUNT(*), COUNT(*), MAX("price"), MIN("price"), SUM("price"), COUNT("id") FROM "orders"`
+	if sql != want {
+		t.Fatalf("got %q, want %q", sql, want)
+	}
+}
+
+func TestJQuery_FullQueryWithGroupByAndHaving(t *testing.T) {
+	query := et.Json{
+		"from":   "table",
+		"select": []string{"id", "name", "age", "count(*)"},
+		"wheres": et.Json{
+			"name": et.Json{"eq": "cesar"},
+			"and": []et.Json{
+				{"age": et.Json{"eq": 30}},
+			},
+			"or": []et.Json{
+				{"age": et.Json{"more": 45}},
+			},
+		},
+		"group_by": []string{"name"},
+		"having": et.Json{
+			"name": et.Json{"eq": "cesar"},
+			"and": []et.Json{
+				{"count(*)": et.Json{"eq": 30}},
+			},
+		},
+		"limit": et.Json{
+			"page": 1,
+			"rows": 100,
+		},
+		"order_by":      []string{"name"},
+		"order_by_desc": []string{"age"},
+	}
+
+	sql, err := jquery.JQuery(query)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	want := `SELECT "id", "name", "age", COUNT(*) FROM "table" WHERE "age" = 30 AND "name" = 'cesar' AND "age" > 45 GROUP BY "name" HAVING COUNT(*) = 30 AND "name" = 'cesar' ORDER BY "name" ASC, "age" DESC LIMIT 100`
 	if sql != want {
 		t.Fatalf("got %q, want %q", sql, want)
 	}

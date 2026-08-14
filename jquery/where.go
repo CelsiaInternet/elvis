@@ -165,12 +165,15 @@ func buildWheres(d dialect.Dialect, group et.Json) (string, error) {
 /**
 * buildColumnConditions arma una condicion SQL por cada operador
 * definido para una columna (p.ej. {"more": 10, "less": 20} produce
-* dos condiciones, combinadas luego con AND por buildWheres).
+* dos condiciones, combinadas luego con AND por buildWheres). column
+* acepta tanto una columna simple/calificada como una llamada de
+* agregacion COUNT/MAX/MIN/SUM (p.ej. "count(*)"), util cuando este
+* grupo se usa para HAVING (ver renderExpr).
 * @param d dialect.Dialect, column string, ops et.Json
 * @return []string, error
 **/
 func buildColumnConditions(d dialect.Dialect, column string, ops et.Json) ([]string, error) {
-	ident := d.QuoteIdent(column)
+	ident := renderExpr(d, column)
 
 	var parts []string
 	for _, key := range sortedKeys(ops) {
