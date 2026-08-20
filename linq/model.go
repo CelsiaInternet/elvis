@@ -542,3 +542,7 @@ func (c *Model) Query(sql string, args ...any) (et.Items, error) {
 func (c *Model) QueryOne(sql string, args ...any) (et.Item, error) {
 	return c.db.QueryOne(sql, args...)
 }
+
+func (s *Model) JQuery(query et.Json) (et.Items, error) {
+	return et.Items{}, nil
+}

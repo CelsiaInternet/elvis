@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"sync"
 
 	"github.com/celsiainternet/elvis/strs"
 	_ "github.com/joho/godotenv/autoload"
@@ -16,6 +17,7 @@ type Store interface {
 var (
 	store  Store
 	config map[string]string
+	mu     sync.RWMutex
 )
 
 func init() {
@@ -31,7 +33,19 @@ func Load(s Store) {
 * @return map[string]string
 **/
 func GetConfig() map[string]string {
+	mu.RLock()
+	defer mu.RUnlock()
 	return config
+}
+
+/**
+* setConfig
+* @param name string, value string
+**/
+func setConfig(name, value string) {
+	mu.Lock()
+	defer mu.Unlock()
+	config[name] = value
 }
 
 /**
@@ -44,7 +58,7 @@ func MetaSet(name string, _default string, description, _var string) string {
 		if arg == strs.Format("-%s", name) {
 			val := os.Args[i+2]
 			os.Setenv(_var, val)
-			config[_var] = val
+			setConfig(_var, val)
 			return val
 		}
 	}
@@ -152,7 +166,7 @@ func UpSetBool(name string, value bool) bool {
 func GetStr(_default string, _var string) string {
 	if store != nil {
 		result := store.Get(_default, _var)
-		config[_var] = result
+		setConfig(_var, result)
 		return result
 	}
 
@@ -161,7 +175,7 @@ func GetStr(_default string, _var string) string {
 		result = _default
 	}
 
-	config[_var] = result
+	setConfig(_var, result)
 	return result
 }
 

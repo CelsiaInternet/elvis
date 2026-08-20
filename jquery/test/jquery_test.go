@@ -73,7 +73,9 @@ func TestJQuery_MultipleColumnsAreAnded(t *testing.T) {
 		"from": "users",
 		"wheres": et.Json{
 			"name": et.Json{"eq": "cesar"},
-			"age":  et.Json{"eq": 30},
+			"and": et.Json{
+				"age": et.Json{"eq": 30},
+			},
 		},
 	}
 
