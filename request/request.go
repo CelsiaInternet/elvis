@@ -227,7 +227,7 @@ func ReadBody(body io.ReadCloser) (*Body, error) {
 * @return bool
 **/
 func statusOk(status int) bool {
-	return status < http.StatusBadRequest
+	return status >= http.StatusOK && status < http.StatusMultipleChoices
 }
 
 /**

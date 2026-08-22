@@ -191,6 +191,10 @@ func (it *Item) ArrayStr(atrib string) []string {
 	return it.Result.ArrayStr(atrib)
 }
 
+func (it *Item) ArrayInt(atrib string) []int {
+	return it.Result.ArrayInt(atrib)
+}
+
 func (it *Item) ToString() string {
 	return it.Result.ToString()
 }
