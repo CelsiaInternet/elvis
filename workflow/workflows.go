@@ -230,6 +230,10 @@ func (s *WorkFlows) getOrCreateInstance(id, tag string, step int, tags et.Json, 
 **/
 func (s *WorkFlows) runInstance(instanceId, tag string, step int, tags, ctx et.Json, createdBy string) (et.Json, error) {
 	instance, err := s.getOrCreateInstance(instanceId, tag, step, tags, createdBy)
+	defer func() {
+		s.Remove(instance)
+	}()
+
 	if err != nil {
 		return et.Json{}, err
 	}
@@ -242,10 +246,10 @@ func (s *WorkFlows) runInstance(instanceId, tag string, step int, tags, ctx et.J
 	}
 	result, err := instance.run(ctx)
 	if err != nil {
+		logs.Logf(packageName, "runInstance error:%s", err.Error())
 		return et.Json{}, err
 	}
 
-	s.Remove(instance)
 	logs.Logf(packageName, "runInstance:%s tag:%s", instanceId, tag)
 	if s.isDebug {
 		logs.Debugf("runInstance:3 instance:%s", instance.ToString())
