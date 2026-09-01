@@ -12,6 +12,7 @@ import (
 
 type Store interface {
 	Get(name string, _default string) string
+	SetConfig(name string, value string)
 }
 
 var (
@@ -46,6 +47,9 @@ func setConfig(name, value string) {
 	mu.Lock()
 	defer mu.Unlock()
 	config[name] = value
+	if store != nil {
+		store.SetConfig(name, value)
+	}
 }
 
 /**
