@@ -21,6 +21,8 @@ import (
 
 const NOT_FOUND = "Not found"
 const FOUND = "Found"
+const DEATH_DATA = "-4"
+const HISTORY_DATA = "-3"
 const FOR_DELETE = "-2"
 const OF_SYSTEM = "-1"
 const ACTIVE = "0"
