@@ -108,7 +108,7 @@ Dual-mode event system:
 
 ### Authentication & Authorization (`claim/`, `middleware/`)
 
-- `claim.Claim` — JWT payload struct with user identity fields (ID, App, Name, Username, Device, ProjectId, ProfileTp, Tag)
+- `claim.Claim` — JWT payload struct with user identity fields (ID, App, Name, Username, Device, ProjectId, ProfileId, Tag)
 - `claim.NewToken()` / `claim.ValidToken()` — JWT generation and validation; tokens stored in Redis for invalidation
 - `SECRET` env var is the JWT signing key (defaults to `"1977"`)
 - Middleware stack in `middleware/`: `Autentication` (JWT validation), `Authorization` (permission check via jRPC), `Ephemeral` (short-lived tokens), `Cors`, `Logger`, `RequestId`, `Recoverer`, `Telemetry`
@@ -132,6 +132,37 @@ TCP-based RPC for inter-service calls using Go's `net/rpc`; Redis is used only t
 - `jrpc.Call()`, `CallJson()`, `CallItem()`, `CallItems()`, `CallList()`, `CallPermitios()` — typed call helpers that dispatch to the right TCP host via Redis-stored solver registry
 - `PIPE_HOST` env var (`host:port`) overrides solver lookup and routes all RPC calls through a single proxy host
 - Used by the authorization middleware to call `AUTHORIZATION_METHOD` env var
+
+### Dependency Installer (`cmd/install/`)
+
+`go run github.com/celsiainternet/elvis/cmd/install` is meant to be run **from a consuming project** (right after `go get github.com/celsiainternet/elvis`, per `README.md`) — it shells out to `go get <module>@<version>` for a hardcoded list of third-party packages (`cmd/install/main.go`'s `dependencies` slice), which adds them to *that project's* `go.mod`, not elvis's own. It exists because the microservice code scaffolded by `create/v1` (`cmd/main.go`, `pkg/*/config.go`, etc.) imports several packages elvis itself doesn't depend on — e.g. `github.com/dimiro1/banner`, `github.com/mattn/go-colorable`, `github.com/mattn/go-isatty` (used only by the generated `modelDbApi`/`modelApi`/`modelhRpc` templates for the startup banner/RPC bootstrap) — plus everything elvis's own `go.mod` requires (chi, redis, nats, jwt, cron, cors, cobra, promptui, etc.).
+
+The pinned versions are **manually kept in sync with `go.mod` and can drift**: e.g. as of this writing `cmd/install` pins `lib/pq@v1.10.9`, `golang.org/x/crypto@v0.37.0`, `spf13/cobra@v1.9.1`, while elvis's own `go.mod` has moved on to `v1.12.3`, `v0.38.0`, `v1.10.2` respectively. When touching a dependency version in `go.mod`, check whether the same module appears in `cmd/install/main.go`'s list and update it too.
+
+`cmd/install` also calls `agentsguide.Install()` (see below) as its last step, dropping/appending the agents framework guide into the consuming project's `CLAUDE.md`.
+
+### Agents Framework Guide (`agentsguide/`)
+
+`agentsguide/ELVIS_AGENTS.md` is a Spanish-language operational guide for coding agents that **create or refactor** backend projects on top of elvis — it documents the actually-verified API surface (the `linq` command/query split, real `middleware`/`claim` symbol names, etc.), a refactor checklist, and the minimum env var table. `agentsguide/guide.go` embeds it via `//go:embed` and exposes `agentsguide.Install()`, which writes it into `./CLAUDE.md` in the current directory — creating the file if missing, or appending the guide (once, gated by the `<!-- elvis:agents-guide:start -->` marker) if a `CLAUDE.md` already exists — so Claude Code auto-loads it in that project without any extra step.
+
+`Install()` is wired into two places so it fires wherever a consuming project touches elvis: `cmd/install/main.go` (after the dependency loop — covers projects that already exist) and `create/v1` + `create/v2`'s `MkProject` (the "Project" scaffolding option — covers newly generated projects). It is **not** called from `MkMicroservice`, `MkMolue`, or `MkRpc` directly, only from `MkProject`, which calls `MkMicroservice` itself.
+
+When editing `agentsguide/ELVIS_AGENTS.md`, keep it in sync with reality the same way this file is kept in sync — re-verify any function signature or constant it claims against the actual source before writing it down; it is explicitly written to be the trustworthy fallback when other generated docs have drifted.
+
+### Project Scaffolding (`create/`, `cmd/create/`)
+
+`cmd/create` is a Cobra CLI (`go run github.com/celsiainternet/elvis/cmd/create go`) that interactively scaffolds a new microservice project that consumes `elvis`. `create/v1/promps.go`'s `PrompCreate()` drives a `promptui` menu with four options, each backed by a `create/v1/hMicroservice.go` entry point:
+
+- **Project** → `MkProject` — full new project: `MkMicroservice` + `README.md` + `.env` + `.gitignore`
+- **Microservice** → `MkMicroservice` — `cmd/<name>/` (Dockerfile + `main.go`), `deployments/<name>/local.yml`, `internal/service/<name>/` (+ `v1/api.go`), `pkg/<name>/` (controller/handler/router/event/msg/config), `scripts/<name>.http`, `test/`
+- **Modelo** → `MkMolue` → `MakeModel` — adds a `linq`-backed model + CRUD handler (`h<Model>.go`) into an existing `pkg/<name>`
+- **Rpc** → `MkRpc` → `MakeRpc` — adds an RPC `rpc.go` stub into an existing `pkg/<name>`
+
+Whether a `schema` argument is supplied determines the template family: non-empty `schema` generates a `linq.Model`-backed controller/handler with full CRUD + `linq` triggers wired to a DB schema (`modelDbController`/`modelDbHandler`/`modelDbRouter` in `create/v1/model.go`); an empty `schema` generates a bare stub controller/handler with no persistence (`modelController`/`modelHandler`/`modelRouter`).
+
+Templates are Go string constants in `create/v1/model.go`, rendered by `file.MakeFile(folder, name, template, args...)`, which does positional `$1`/`$2`/... substitution (see `params()` in `file/file.go`) — **not** `text/template`. `MakeFile` is idempotent: it silently no-ops if the target file already exists, so re-running a generator never overwrites hand-edited output.
+
+**Two generator versions exist, wired to two different CLI entry points**: `create/v1` (reworked folder layout in `internal/service/<name>/`) is used by `cmd/create/main.go`; `create/v2` (`internal/models/<name>/` + `internal/services/<name>/` instead of `internal/service/<name>/`, model code split out of the handler file, `router-<model>.go` naming) is used by **`cmd/jdb/main.go`** — despite its name, `cmd/jdb` is not a database CLI, it runs the exact same `promptui` scaffolding menu as `cmd/create` but against `create/v2`. Check which `cmd/`/`create/` pair an instruction actually intends before editing generator templates.
 
 ### Other Packages
 
@@ -161,8 +192,11 @@ TCP-based RPC for inter-service calls using Go's `net/rpc`; Redis is used only t
 | `inbox/`                 | Per-user inbox/notification records backed by a `linq` model; `inbox.Load(db, schema)` then query via `GetInboxesById`, `GetInboxesByCode`, `GetInboxesByMy`                                 |
 | `msg/`                   | Centralized Spanish-language message/error string constants (`MSG_*`, `ERR_*`, `RECORD_*`) shared across packages                                                                             |
 | `queue/`                 | Generic in-process batching queue (`queue.Queue[T]`); groups `Push`ed items and dispatches to a handler on max batch size or timeout, whichever comes first                                  |
-| `create/v1`, `create/v2` | CLI scaffolding for new microservice projects                                                                                                                                                 |
-| `cmd/create`, `cmd/jdb`  | CLI entry points (`cmd/crontab`, `cmd/flow`, `cmd/install`, `cmd/jql` are example/demo mains for the corresponding packages)                                                                  |
+| `jquery/`                | Translates an `et.Json` query description (from/join/select/wheres/group_by/having/limit/order_by) into a SQL `SELECT`; dialect is pluggable via `jquery/dialect` (Register/Get factory), defaults to PostgreSQL — see the package doc comment in `jquery/jquery.go` for the full JSON query format |
+| `xls/`                   | Excel read/write helpers on top of `xuri/excelize` (`xls.ReadXls`/`ReadXlsFile`/`ReadXlsMultipart`, `xls.NewXls(...).ToFile/.ToWriter/.ToHttp`)                                              |
+| `agentsguide/`           | Embeds `ELVIS_AGENTS.md` (agent-facing operational guide) and exposes `Install()`, which writes/appends it into a consuming project's `CLAUDE.md` — see "Agents Framework Guide" above       |
+| `create/v1`, `create/v2` | CLI scaffolding for new microservice projects — see "Project Scaffolding" above for which `cmd/` entry point drives which version                                                            |
+| `cmd/create`, `cmd/jdb`  | CLI entry points for `create/v1` and `create/v2` respectively (`cmd/jdb` is misleadingly named — it is not a database tool); `cmd/crontab`, `cmd/flow`, `cmd/install`, `cmd/jql` are example/demo mains for the corresponding packages |
 
 ### Key Environment Variables
 

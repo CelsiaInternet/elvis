@@ -87,6 +87,13 @@ Para generar un nuevo microservicio con la estructura base de Elvis:
 go run github.com/celsiainternet/elvis/cmd/create go
 ```
 
+> Tanto `cmd/install` como la opción **Project** de `cmd/create` (y de `cmd/jdb`)
+> agregan automáticamente un marco de trabajo para agentes (Claude Code y
+> compatibles) en el `CLAUDE.md` del proyecto — lo crean si no existe, o le
+> anexan la sección una sola vez si ya hay uno. Así, los agentes que trabajen
+> creando o refactorizando el proyecto reconocen las convenciones de Elvis sin
+> pasos adicionales. Ver [`agentsguide/`](agentsguide/ELVIS_AGENTS.md).
+
 ---
 
 ## ⚡ Quick Start
@@ -127,7 +134,7 @@ func main() {
 
     // Crear router chi
     r := chi.NewRouter()
-    r.Use(middleware.Cors)
+    r.Use(middleware.AllowAll(nil).Handler)
     r.Use(middleware.Logger)
 
     host        := envar.GetStr("localhost", "HOST")
@@ -341,23 +348,23 @@ item, err := modelo.Insert(et.Json{
     jdb.KEY:  utility.UUID(),
     "NOMBRE": "Juan Pérez",
     "EMAIL":  "juan@ejemplo.com",
-}).One()
+}).CommandOne()
 
 // UPDATE
 item, err := modelo.Update(et.Json{"NOMBRE": "Juan Pablo"}).
     Where(modelo.Col(jdb.KEY).Eq(id)).
-    One()
+    CommandOne()
 
 // UPSERT
 item, err := modelo.Upsert(et.Json{
     jdb.KEY:  id,
     "NOMBRE": "Juan",
-}).One()
+}).CommandOne()
 
 // DELETE
 item, err := modelo.Delete().
     Where(modelo.Col(jdb.KEY).Eq(id)).
-    One()
+    CommandOne()
 
 // SELECT múltiple
 items, err := modelo.Select().
@@ -365,17 +372,23 @@ items, err := modelo.Select().
     OrderBy(modelo.Col("NOMBRE"), true).
     All()
 
-// SELECT paginado
+// SELECT paginado (et.Items, sin conteo total)
 items, err := modelo.Select().
     Where(modelo.Col("_STATE").Eq("0")).
-    Page(1, 20).
-    List()
+    Page(1, 20)
+
+// SELECT paginado con metadatos de paginación (et.List: rows, all, count, page...)
+list, err := modelo.Select().
+    Where(modelo.Col("_STATE").Eq("0")).
+    List(1, 20)
 
 // SELECT uno
 item, err := modelo.Select().
     Where(modelo.Col(jdb.KEY).Eq(id)).
-    One()
+    First()
 ```
+
+> Los comandos de escritura (`Insert`, `Update`, `Upsert`, `Delete`) se ejecutan con `.Command()` (`et.Items`) o `.CommandOne()` (`et.Item`, primer resultado); las consultas (`Select`, `Data`) usan `.All()`, `.Page(page, rows)`, `.List(page, rows)` o `.First()`, no `.One()`.
 
 ### Condiciones disponibles
 
@@ -520,8 +533,8 @@ import (
 // Token básico (almacenado en Redis para soporte de logout)
 token, err := claim.NewToken(userId, "mi-app", "Juan", "juan@e.com", "web", 24*time.Hour)
 
-// Token con autorización (incluye projectId y profileTp)
-token, err := claim.NewAuthorization(userId, "mi-app", "Juan", "juan@e.com", "web", projectId, profileTp, 8*time.Hour)
+// Token con autorización (incluye projectId y profileId)
+token, err := claim.NewAuthorization(userId, "mi-app", "Juan", "juan@e.com", "web", projectId, profileId, 8*time.Hour)
 
 // Token efímero (vida corta, requiere tag descriptivo)
 token, err := claim.NewEphemeralToken(userId, "mi-app", "Juan", "juan@e.com", "web", "descarga-reporte", 15*time.Minute)
@@ -553,7 +566,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
     nombre    := claim.ClientName(r)
     username  := claim.Username(r)
     projectId := claim.ProjectId(r)
-    profileTp := claim.ProfileTp(r)
+    profileId := claim.ProfileId(r)
     device    := claim.Device(r)
     tag       := claim.Tag(r)
 
@@ -571,11 +584,10 @@ import (
 )
 
 r := chi.NewRouter()
-r.Use(middleware.Cors)
+r.Use(middleware.AllowAll(nil).Handler) // CORS (origins vacío = permitir todos)
 r.Use(middleware.Logger)
 r.Use(middleware.Recoverer)
-r.Use(middleware.RequestId)
-r.Use(middleware.Telemetry)
+r.Use(middleware.RequestID)
 
 // Ruta con autenticación
 r.With(middleware.Autentication).Get("/perfil", handler)
@@ -800,10 +812,11 @@ go test ./...
 # Ejecutar un test específico con verbose
 go test ./paquete/... -run NombreTest -v
 
-# Formatear código y ejecutar CLI de scaffolding
+# Formatear código y ejecutar CLI de scaffolding (create/v1)
 gofmt -w . && go run ./cmd/create go
 
-# CLI para operaciones de base de datos
+# CLI de scaffolding alternativo (create/v2, layout internal/models + internal/services);
+# pese al nombre del paquete, no es una herramienta de operaciones de base de datos
 gofmt -w . && go run ./cmd/jdb go
 
 # Actualizar dependencias
@@ -816,16 +829,18 @@ go mod tidy
 
 ```
 elvis/
+├── agentsguide/    # Marco de trabajo para agentes; Install() lo escribe en CLAUDE.md
+├── authorization/  # Modelo de permisos (linq) con eventos set/del
 ├── cache/          # Cliente Redis (Set, Get, Delete, Pub/Sub)
 ├── claim/          # JWT: generación, validación, invalidación
 ├── cmd/
-│   ├── create/     # CLI scaffolding de microservicios
-│   └── jdb/        # CLI de operaciones de base de datos
+│   ├── create/     # CLI scaffolding de microservicios (usa create/v1)
+│   └── jdb/        # CLI scaffolding alternativo (usa create/v2, pese al nombre del paquete)
 ├── config/         # Carga de configuración
 ├── console/        # Logging interno de bajo nivel
 ├── create/
-│   ├── v1/         # Generador de proyectos v1
-│   └── v2/         # Generador de proyectos v2
+│   ├── v1/         # Generador de proyectos v1 (usado por cmd/create)
+│   └── v2/         # Generador de proyectos v2, layout internal/models + internal/services (usado por cmd/jdb)
 ├── crontab/        # Tareas programadas (cron)
 ├── dt/             # Contador de pasos por resiliencia y cache de objetos respaldado en Redis
 ├── envar/          # Helpers de variables de entorno
@@ -833,8 +848,10 @@ elvis/
 ├── event/          # Eventos local (emitter) y distribuido (NATS)
 ├── file/           # Manejo de archivos
 ├── health/         # Health check helpers
+├── inbox/          # Bandeja de notificaciones por usuario (linq)
 ├── instances/      # Registro persistente de instancias de workflow/resiliencia en BD
 ├── jdb/            # Abstracción de base de datos (Postgres/MySQL/Oracle)
+├── jquery/         # Traduce un et.Json (from/join/where/...) a SQL SELECT, dialecto pluggable
 ├── jrpc/           # RPC entre servicios vía Redis
 ├── jtls/           # Generación de certificados TLS auto-firmados
 ├── linq/           # ORM / query builder
@@ -842,6 +859,7 @@ elvis/
 ├── mem/            # Cache in-memory con TTL
 ├── middleware/     # Middleware HTTP chi (auth, cors, logger, etc.)
 ├── msg/            # Mensajes de error compartidos
+├── queue/          # Cola de batching en proceso (queue.Queue[T])
 ├── race/           # Helpers de concurrencia
 ├── reg/            # Registro de IDs
 ├── resilience/     # Reintentos automáticos
@@ -852,7 +870,8 @@ elvis/
 ├── strs/           # Utilidades de strings
 ├── timezone/       # Manejo de zonas horarias
 ├── utility/        # Utilidades generales (UUID, OTP, crypto, etc.)
-└── workflow/       # Orquestación de flujos multi-paso
+├── workflow/       # Orquestación de flujos multi-paso
+└── xls/            # Lectura/escritura de Excel (excelize)
 ```
 
 ---

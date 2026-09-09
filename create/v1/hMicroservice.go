@@ -1,31 +1,39 @@
 package create
 
+import "github.com/celsiainternet/elvis/agentsguide"
+
 /**
 * MkProject
 * @param packageName, name, author, schema string
 * @return error
 **/
 func MkProject(packageName, name, author, schema string) error {
-	ProgressNext(20)
+	ProgressNext(16)
 	err := MkMicroservice(packageName, name, schema)
 	if err != nil {
 		return err
 	}
 
-	ProgressNext(20)
+	ProgressNext(16)
 	err = MakeReadme(name)
 	if err != nil {
 		return err
 	}
 
-	ProgressNext(20)
+	ProgressNext(16)
 	err = MakeEnv(name)
 	if err != nil {
 		return err
 	}
 
-	ProgressNext(20)
+	ProgressNext(16)
 	err = MakeGitignore(name)
+	if err != nil {
+		return err
+	}
+
+	ProgressNext(16)
+	err = agentsguide.Install()
 	if err != nil {
 		return err
 	}

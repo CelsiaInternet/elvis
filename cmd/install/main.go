@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"os/exec"
+
+	"github.com/celsiainternet/elvis/agentsguide"
 )
 
 var dependencies = []string{
@@ -44,7 +46,14 @@ func main() {
 		}
 	}
 
-	fmt.Printf("\r[%-50s] %d%% ¡Completado!", progressBar(total, total, 50), 100)
+	fmt.Printf("\r[%-50s] %d%% ¡Completado!\n", progressBar(total, total, 50), 100)
+
+	if err := agentsguide.Install(); err != nil {
+		fmt.Printf("Advertencia: no se pudo escribir CLAUDE.md - %v\n", err)
+		return
+	}
+
+	fmt.Println("Guía de agentes de Elvis agregada/actualizada en CLAUDE.md")
 }
 
 func installLibrary(library string) error {

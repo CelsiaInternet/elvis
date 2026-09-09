@@ -171,6 +171,31 @@ func MakeFile(folder, name, model string, args ...any) (string, error) {
 }
 
 /**
+* AppendFile: Appends content to a file, creating it (and any content
+* passed the first time) if it does not exist yet. Unlike MakeFile, it
+* never no-ops on an existing file - each call always adds content.
+* @param folder, name, content string
+* @return string, error
+**/
+func AppendFile(folder, name, content string) (string, error) {
+	path := strs.Format(`%s/%s`, folder, name)
+
+	file, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	_, err = file.WriteString(content)
+	if err != nil {
+		return "", err
+	}
+
+	logs.Log("file", "append file:", path)
+	return path, nil
+}
+
+/**
 * RemoveFile
 * @param path string
 * @return bool, error
