@@ -11,7 +11,7 @@ import (
 )
 
 type Store interface {
-	Get(name string, _default string) string
+	Get(_default string, name string) string
 	SetConfig(name string, value string)
 }
 
@@ -183,6 +183,15 @@ func GetStr(_default string, _var string) string {
 	return result
 }
 
+func GetStrOs(_default string, _var string) string {
+	result := os.Getenv(_var)
+	if result == "" {
+		result = _default
+	}
+
+	return result
+}
+
 /**
 * GetInt
 * @param _default int, _var string
@@ -199,6 +208,17 @@ func GetInt(_default int, _var string) int {
 	return val
 }
 
+func GetIntOs(_default int, _var string) int {
+	result := GetStrOs(strconv.Itoa(_default), _var)
+
+	val, err := strconv.Atoi(result)
+	if err != nil {
+		return _default
+	}
+
+	return val
+}
+
 /**
 * GetInt64
 * @param int64 _default, string _var
@@ -206,6 +226,17 @@ func GetInt(_default int, _var string) int {
 **/
 func GetInt64(_default int64, _var string) int64 {
 	result := GetStr(strconv.FormatInt(_default, 10), _var)
+
+	val, err := strconv.ParseInt(result, 10, 64)
+	if err != nil {
+		return _default
+	}
+
+	return val
+}
+
+func GetInt64Os(_default int64, _var string) int64 {
+	result := GetStrOs(strconv.FormatInt(_default, 10), _var)
 
 	val, err := strconv.ParseInt(result, 10, 64)
 	if err != nil {

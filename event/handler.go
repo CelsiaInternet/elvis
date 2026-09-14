@@ -47,7 +47,7 @@ func Publish(channel string, data et.Json) error {
 		return nil
 	}
 
-	stage := envar.GetStr("local", "STAGE")
+	stage := envar.GetStrOs("local", "STAGE")
 	publish(strs.Format(`pipe:%s:%s`, stage, channel), data)
 	return publish(channel, data)
 }
