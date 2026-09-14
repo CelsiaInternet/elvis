@@ -71,7 +71,6 @@ func (c *ConfigStore) initEvent() {
 			"project_id":   c.projectId,
 			"stage":        c.stage,
 			"package_name": c.packegName,
-			"description":  "",
 			"config":       config,
 		})
 	})
