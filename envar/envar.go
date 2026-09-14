@@ -11,7 +11,7 @@ import (
 )
 
 type Store interface {
-	Get(_default string, name string) string
+	Get(_default string, name string) (string, bool)
 	SetConfig(name string, value string)
 }
 
@@ -47,9 +47,6 @@ func setConfig(name, value string) {
 	mu.Lock()
 	defer mu.Unlock()
 	config[name] = value
-	if store != nil {
-		store.SetConfig(name, value)
-	}
 }
 
 /**
@@ -168,18 +165,26 @@ func UpSetBool(name string, value bool) bool {
 * @return string
 **/
 func GetStr(_default string, _var string) string {
-	if store != nil {
-		result := store.Get(_default, _var)
-		setConfig(_var, result)
+	result, exists := config[_var]
+	if exists {
 		return result
 	}
 
-	result := os.Getenv(_var)
+	result = os.Getenv(_var)
 	if result == "" {
 		result = _default
 	}
 
 	setConfig(_var, result)
+	if store != nil {
+		result, exists := store.Get(_default, _var)
+		if !exists {
+			store.SetConfig(_var, result)
+			return result
+		}
+		setConfig(_var, result)
+	}
+
 	return result
 }
 
