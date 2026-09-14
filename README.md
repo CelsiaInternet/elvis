@@ -662,7 +662,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
     // Streaming paginado (útil para exportaciones grandes)
     response.Stream(w, r, 100, func(page, rows int) (et.Items, error) {
-        return modelo.Select().Page(page, rows).List()
+        return modelo.Select().Page(page, rows)
     })
 }
 ```
@@ -794,7 +794,8 @@ result, err := workflow.Run(
 | `AUTHORIZATION_METHOD`      | router        | —           | Método RPC para verificar permisos                               |
 | `RESILIENCE_TOTAL_ATTEMPTS` | resilience    | `3`         | Intentos totales por operación                                   |
 | `RESILIENCE_TIME_ATTEMPTS`  | resilience    | `30`        | Segundos entre reintentos                                        |
-| `PIPE_HOST`                 | jrpc          | —           | `host:port` que enruta todas las llamadas RPC por un proxy único |
+| `PIPE_HOST`                 | jrpc          | —           | Host del proxy RPC único (se combina con `PIPE_PORT`)            |
+| `PIPE_PORT`                 | jrpc          | `4200`      | Puerto del proxy RPC único                                       |
 | `STAGE`                     | event         | `local`     | Prefijo de entorno para canal pipe (`pipe:<stage>:<canal>`)      |
 | `PRODUCTION`                | dt            | `true`      | Habilita persistencia en Redis del cache de objetos `dt.Object`  |
 
@@ -862,6 +863,7 @@ elvis/
 ├── queue/          # Cola de batching en proceso (queue.Queue[T])
 ├── race/           # Helpers de concurrencia
 ├── reg/            # Registro de IDs
+├── request/        # Cliente HTTP para llamadas salientes (GET/POST/PUT/DELETE, soporte TLS)
 ├── resilience/     # Reintentos automáticos
 ├── response/       # Helpers de respuesta HTTP
 ├── router/         # Registro de rutas chi con API Gateway

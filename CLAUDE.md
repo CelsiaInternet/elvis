@@ -210,7 +210,7 @@ Templates are Go string constants in `create/v1/model.go`, rendered by `file.Mak
 | `NATS_HOST`, `NATS_USER`, `NATS_PASSWORD`                 | event             | —                   |
 | `SECRET`                                                  | claim             | `"1977"`            |
 | `HOST`, `RPC_HOST`, `RPC_PORT`                            | jrpc              | `localhost`, `4200` |
-| `PIPE_HOST`                                               | jrpc              | —                   |
+| `PIPE_HOST`, `PIPE_PORT`                                  | jrpc              | —, `4200`           |
 | `AUTHORIZATION_METHOD`                                    | router/middleware | —                   |
 | `RESILIENCE_TOTAL_ATTEMPTS`                               | resilience        | `3`                 |
 | `RESILIENCE_TIME_ATTEMPTS`                                | resilience        | `30` (seconds)      |
