@@ -63,14 +63,14 @@ func GetRouters() (et.Items, error) {
 func call(host string, port int, method string, args et.Json, result any) (*middleware.Metrics, error) {
 	metric := middleware.NewRpcMetric(method)
 	address := strs.Format(`%s:%d`, host, port)
-	pipeHost := envar.GetStr("", "PIPE_HOST")
-	pipePort := envar.GetInt(4200, "PIPE_PORT")
+	pipeHost := envar.GetStrOs("", "PIPE_HOST")
+	pipePort := envar.GetIntOs(4200, "PIPE_PORT")
 	pipeAddress := strs.Format(`%s:%d`, pipeHost, pipePort)
 	if pipeAddress == address {
-		token := envar.GetStr("", "PIPE_TOKEN")
+		token := envar.GetStrOs("", "PIPE_TOKEN")
 		args.Set("Authorization", fmt.Sprintf(`Bearer %s`, token))
 
-		pipePath := envar.GetStr("./.keys", "PIPE_PATH")
+		pipePath := envar.GetStrOs("./.keys", "PIPE_PATH")
 		conn, err := jtls.Deal(pipePath, host, port, 365*24*time.Hour)
 		if err != nil {
 			metric.DoneRpc(err.Error())
@@ -90,7 +90,7 @@ func call(host string, port int, method string, args et.Json, result any) (*midd
 		return metric, nil
 	}
 
-	timeOut := time.Duration(envar.GetInt(600, "RPC_TIMEOUT")) * time.Second
+	timeOut := time.Duration(envar.GetIntOs(600, "RPC_TIMEOUT")) * time.Second
 	conn, err := net.DialTimeout(
 		"tcp",
 		address,
@@ -104,7 +104,7 @@ func call(host string, port int, method string, args et.Json, result any) (*midd
 
 	defer conn.Close()
 
-	timeOutRead := time.Duration(envar.GetInt(600, "RPC_TIMEOUT")) * time.Second
+	timeOutRead := time.Duration(envar.GetIntOs(600, "RPC_TIMEOUT")) * time.Second
 	_ = conn.SetDeadline(
 		time.Now().Add(timeOutRead),
 	)
