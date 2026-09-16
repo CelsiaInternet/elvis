@@ -136,6 +136,15 @@ func Delete(key string) (int64, error) {
 }
 
 /**
+* DeleteByPrefix
+* @params prefix string
+* @return error
+**/
+func DeleteByPrefix(prefix string) error {
+	return DeleteByPrefixCtx(conn.ctx, prefix)
+}
+
+/**
 * Expire
 * @params key string, second time.Duration
 * @return error
