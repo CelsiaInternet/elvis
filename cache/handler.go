@@ -55,25 +55,35 @@ func Set(key string, val interface{}, second time.Duration) error {
 
 	switch v := val.(type) {
 	case et.Json:
-		return SetCtx(conn.ctx, key, v.ToString(), second)
+		value := v.ToString()
+		return SetCtx(conn.ctx, key, value, second)
 	case et.Items:
-		return SetCtx(conn.ctx, key, v.ToString(), second)
+		value := v.ToString()
+		return SetCtx(conn.ctx, key, value, second)
 	case et.Item:
-		return SetCtx(conn.ctx, key, v.ToString(), second)
+		value := v.ToString()
+		return SetCtx(conn.ctx, key, value, second)
 	case int:
-		return SetCtx(conn.ctx, key, strs.Format(`%d`, v), second)
+		value := fmt.Sprintf(`%d`, v)
+		return SetCtx(conn.ctx, key, value, second)
 	case int64:
-		return SetCtx(conn.ctx, key, strs.Format(`%d`, v), second)
+		value := fmt.Sprintf(`%d`, v)
+		return SetCtx(conn.ctx, key, value, second)
 	case float64:
-		return SetCtx(conn.ctx, key, strs.Format(`%f`, v), second)
+		value := fmt.Sprintf(`%f`, v)
+		return SetCtx(conn.ctx, key, value, second)
 	case bool:
-		return SetCtx(conn.ctx, key, strs.Format(`%t`, v), second)
+		value := fmt.Sprintf(`%t`, v)
+		return SetCtx(conn.ctx, key, value, second)
 	case []byte:
-		return SetCtx(conn.ctx, key, string(v), second)
+		value := string(v)
+		return SetCtx(conn.ctx, key, value, second)
 	case time.Time:
-		return SetCtx(conn.ctx, key, v.Format(time.RFC3339), second)
+		value := v.Format(time.RFC3339)
+		return SetCtx(conn.ctx, key, value, second)
 	case time.Duration:
-		return SetCtx(conn.ctx, key, v.String(), second)
+		value := v.String()
+		return SetCtx(conn.ctx, key, value, second)
 	case string:
 		return SetCtx(conn.ctx, key, v, second)
 	default:
