@@ -846,3 +846,16 @@ func (j Json) SetNested(keys []string, value interface{}) {
 
 	m[keys[len(keys)-1]] = value
 }
+
+/**
+* GetItem
+* @param items []Json, index int
+* @return Json
+**/
+func GetItem(items []Json, index int) (Json, bool) {
+	if index < 0 || index >= len(items) {
+		return Json{}, false
+	}
+
+	return items[index], true
+}
