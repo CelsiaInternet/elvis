@@ -12,10 +12,10 @@ import (
 
 /**
 * SendSms
-* @param project_id string, service_id string, contactNumbers []string, content string, params []et.Json, tp TpMessage, clientId string
+* @param project_id string, service_id string, contactNumbers []string, content string, params []et.Json, tp TpMessage, user et.Json
 * @response et.Json
 **/
-func SendSms(project_id, service_id string, contactNumbers []string, content string, params []et.Json, tp TpMessage, clientId string) et.Json {
+func SendSms(project_id, service_id string, contactNumbers []string, content string, params []et.Json, tp TpMessage, user et.Json) et.Json {
 	service_id = reg.GetUUID(service_id)
 	result := event.Work("send/sms", et.Json{
 		"project_id":      project_id,
@@ -24,7 +24,7 @@ func SendSms(project_id, service_id string, contactNumbers []string, content str
 		"content":         content,
 		"params":          params,
 		"type":            tp.String(),
-		"client_id":       clientId,
+		"user":            user,
 	})
 
 	result["service_id"] = service_id
@@ -33,10 +33,10 @@ func SendSms(project_id, service_id string, contactNumbers []string, content str
 
 /**
 * SendWhatsapp
-* @param project_id string, service_id string, template_id int, contactNumbers []string, params []et.Json, tp TpMessage, clientId string
+* @param project_id string, service_id string, template_id int, contactNumbers []string, params []et.Json, tp TpMessage, user et.Json
 * @response et.Json
 **/
-func SendWhatsapp(project_id, service_id string, template_id int, contactNumbers []string, params []et.Json, tp TpMessage, clientId string) et.Json {
+func SendWhatsapp(project_id, service_id string, template_id int, contactNumbers []string, params []et.Json, tp TpMessage, user et.Json) et.Json {
 	service_id = reg.GetUUID(service_id)
 	result := event.Work("send/whatsapp", et.Json{
 		"project_id":      project_id,
@@ -45,7 +45,7 @@ func SendWhatsapp(project_id, service_id string, template_id int, contactNumbers
 		"contact_numbers": contactNumbers,
 		"params":          params,
 		"type":            tp.String(),
-		"client_id":       clientId,
+		"user":            user,
 	})
 
 	result["service_id"] = service_id
@@ -54,10 +54,10 @@ func SendWhatsapp(project_id, service_id string, template_id int, contactNumbers
 
 /**
 * SendEmail
-* @param project_id string, service_id string, to []et.Json, subject string, html_content string, params []et.Json, tp TpMessage, clientId string
+* @param project_id string, service_id string, to []et.Json, subject string, html_content string, params []et.Json, tp TpMessage, user et.Json
 * @response et.Json
 **/
-func SendEmail(project_id, service_id string, to []et.Json, subject string, html_content string, params []et.Json, tp TpMessage, clientId string) et.Json {
+func SendEmail(project_id, service_id string, to []et.Json, subject string, html_content string, params []et.Json, tp TpMessage, user et.Json) et.Json {
 	service_id = reg.GetUUID(service_id)
 	result := event.Work("send/email", et.Json{
 		"project_id":   project_id,
@@ -67,7 +67,7 @@ func SendEmail(project_id, service_id string, to []et.Json, subject string, html
 		"html_content": html_content,
 		"params":       params,
 		"type":         tp.String(),
-		"client_id":    clientId,
+		"user":         user,
 	})
 
 	result["service_id"] = service_id
@@ -76,10 +76,10 @@ func SendEmail(project_id, service_id string, to []et.Json, subject string, html
 
 /**
 * SendEmailByTemplate
-* @param project_id string, service_id string, groups []string, subject string, template_id int, params []et.Json, tp TpMessage, clientId string
+* @param project_id string, service_id string, groups []string, subject string, template_id int, params []et.Json, tp TpMessage, user et.Json
 * @response et.Json
 **/
-func SendEmailByTemplate(project_id, service_id string, groups []string, subject, template_id string, params []et.Json, tp TpMessage, clientId string) et.Json {
+func SendEmailByTemplate(project_id, service_id string, groups []string, subject, template_id string, params []et.Json, tp TpMessage, user et.Json) et.Json {
 	service_id = reg.GetUUID(service_id)
 	result := event.Work("send/emailbytemplate", et.Json{
 		"project_id":  project_id,
@@ -89,7 +89,7 @@ func SendEmailByTemplate(project_id, service_id string, groups []string, subject
 		"template_id": template_id,
 		"params":      params,
 		"type":        tp.String(),
-		"client_id":   clientId,
+		"user":        user,
 	})
 
 	result["service_id"] = service_id
@@ -98,10 +98,10 @@ func SendEmailByTemplate(project_id, service_id string, groups []string, subject
 
 /**
 * SendEmailToByTemplate
-* @param project_id, service_id, name, email string, subject, template_id string, params []et.Json, tp TpMessage, clientId string
+* @param project_id, service_id, name, email string, subject, template_id string, params []et.Json, tp TpMessage, user et.Json
 * @response et.Json
 **/
-func SendEmailToByTemplate(project_id, service_id, name, email string, subject, template_id string, params []et.Json, tp TpMessage, clientId string) et.Json {
+func SendEmailToByTemplate(project_id, service_id, name, email string, subject, template_id string, params []et.Json, tp TpMessage, user et.Json) et.Json {
 	service_id = reg.GetUUID(service_id)
 	result := event.Work("send/emailtobytemplate", et.Json{
 		"project_id":  project_id,
@@ -112,7 +112,7 @@ func SendEmailToByTemplate(project_id, service_id, name, email string, subject, 
 		"template_id": template_id,
 		"params":      params,
 		"type":        tp.String(),
-		"client_id":   clientId,
+		"user":        user,
 	})
 
 	result["service_id"] = service_id
@@ -121,11 +121,11 @@ func SendEmailToByTemplate(project_id, service_id, name, email string, subject, 
 
 /**
 * SendOtp
-* @param project_id string, channel, name, device string, length, duration int, clientId string
+* @param project_id string, channel, name, device string, length, duration int, user et.Json
 * @response et.Json
 **/
-func SendOtpSms(project_id string, phone_number, name, device string, length int, duration int, clientId string) et.Json {
-	service_id := GetId(clientId, "sms otp", "Send OTP by SMS")
+func SendOtpSms(project_id string, phone_number, name, device string, length int, duration int, user et.Json) et.Json {
+	service_id := reg.UUID()
 	result := event.Work("generate/otp/sms", et.Json{
 		"project_id": project_id,
 		"service_id": service_id,
@@ -135,7 +135,7 @@ func SendOtpSms(project_id string, phone_number, name, device string, length int
 		"name":       name,
 		"length":     length,
 		"duration":   duration,
-		"client_id":  clientId,
+		"user":       user,
 	})
 
 	result["service_id"] = service_id
@@ -144,11 +144,11 @@ func SendOtpSms(project_id string, phone_number, name, device string, length int
 
 /**
 * SendOtpWhatsapp
-* @param project_id string, phone_number, name, device string, length, duration int, clientId string
+* @param project_id string, phone_number, name, device string, length, duration int, user et.Json
 * @response et.Json
 **/
-func SendOtpWhatsapp(project_id string, phone_number, name, device string, length int, duration int, clientId string) et.Json {
-	service_id := GetId(clientId, "whatsapp otp", "Send OTP by Whatsapp")
+func SendOtpWhatsapp(project_id string, phone_number, name, device string, length int, duration int, user et.Json) et.Json {
+	service_id := reg.UUID()
 	result := event.Work("generate/otp/whatsapp", et.Json{
 		"project_id": project_id,
 		"service_id": service_id,
@@ -158,7 +158,7 @@ func SendOtpWhatsapp(project_id string, phone_number, name, device string, lengt
 		"name":       name,
 		"length":     length,
 		"duration":   duration,
-		"client_id":  clientId,
+		"user":       user,
 	})
 
 	result["service_id"] = service_id
@@ -167,11 +167,11 @@ func SendOtpWhatsapp(project_id string, phone_number, name, device string, lengt
 
 /**
 * SendOtpEmail
-* @param project_id string, email, name, device string, length, duration int, clientId string
+* @param project_id string, email, name, device string, length, duration int, user et.Json
 * @response et.Json
 **/
-func SendOtpEmail(project_id string, email, name, device string, length int, duration int, clientId string) et.Json {
-	service_id := GetId(clientId, "email otp", "Send OTP by Email")
+func SendOtpEmail(project_id string, email, name, device string, length int, duration int, user et.Json) et.Json {
+	service_id := reg.UUID()
 	result := event.Work("generate/otp/email", et.Json{
 		"project_id": project_id,
 		"service_id": service_id,
@@ -181,7 +181,7 @@ func SendOtpEmail(project_id string, email, name, device string, length int, dur
 		"name":       name,
 		"length":     length,
 		"duration":   duration,
-		"client_id":  clientId,
+		"user":       user,
 	})
 
 	result["service_id"] = service_id
