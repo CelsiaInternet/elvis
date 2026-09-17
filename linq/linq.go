@@ -1,6 +1,7 @@
 package linq
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/celsiainternet/elvis/et"
@@ -375,6 +376,20 @@ func (c *Linq) AddValidate(col *Column, val any) {
 	}
 
 	if !ok {
+		if col.Type == "JSON" || col.Type == "JSONB" {
+			switch v := val.(type) {
+			case string:
+				val = v
+			case *string:
+				val = *v
+			case et.Json:
+				val = v.ToString()
+			case *et.Json:
+				val = (*v).ToString()
+			default:
+				val = fmt.Sprintf("%v", val)
+			}
+		}
 		c.validates = append(c.validates, &Validate{
 			Col:   col,
 			Value: val,
