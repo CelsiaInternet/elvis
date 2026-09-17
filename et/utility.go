@@ -52,10 +52,11 @@ func Unquote(val interface{}) any {
 	case bool:
 		return v
 	case time.Time:
-		return strs.Format(`'%s'`, v.Format("2006-01-02 15:04:05"))
+		value := v.Format("2006-01-02 15:04:05")
+		return strs.Format(`'%s'`, value)
 	case Json:
-		j := Json(v)
-		return strs.Format(`%s`, j.ToUnquote())
+		value := v.ToUnquote()
+		return strs.Format(`%s`, value)
 	case []Json:
 		parts := make([]string, len(v))
 		for i, _v := range v {
@@ -70,7 +71,8 @@ func Unquote(val interface{}) any {
 		return `'[` + strings.Join(parts, ", ") + `]'`
 	case map[string]interface{}:
 		j := Json(v)
-		return strs.Format(`%s`, j.ToUnquote())
+		value := j.ToUnquote()
+		return strs.Format(`%s`, value)
 	case []map[string]interface{}:
 		parts := make([]string, len(v))
 		for i, _v := range v {

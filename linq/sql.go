@@ -475,8 +475,10 @@ func (c *Linq) SqlInsert() string {
 			values.WriteString(", ")
 		}
 		first = false
-		fields.WriteString(strs.Uppcase(key))
-		fmt.Fprintf(&values, `%v`, et.Unquote(val))
+		fieldStr := strs.Uppcase(key)
+		fields.WriteString(fieldStr)
+		value := et.Unquote(val)
+		fmt.Fprintf(&values, `%v`, value)
 	}
 
 	c.sql = fmt.Sprintf("INSERT INTO %s(%s)\nVALUES (%s)", model.Table, fields.String(), values.String())

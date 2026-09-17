@@ -179,13 +179,12 @@ func (s Json) ToByte() []byte {
 }
 
 func (s Json) ToString() string {
-	bt, err := json.Marshal(s)
+	jsonData, err := json.Marshal(s)
 	if err != nil {
 		return ""
 	}
 
-	result := string(bt)
-
+	result := string(jsonData)
 	return result
 }
 

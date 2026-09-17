@@ -256,14 +256,11 @@ func (it Items) ToByte() []byte {
 }
 
 func (it *Items) ToJson() Json {
-	bt := it.ToByte()
-
-	var result Json
-	err := json.Unmarshal(bt, &result)
-	if err != nil {
-		return Json{}
+	return Json{
+		"ok":     it.Ok,
+		"count":  it.Count,
+		"result": it.Result,
 	}
-	return result
 }
 
 func (it *Items) ToString() string {
