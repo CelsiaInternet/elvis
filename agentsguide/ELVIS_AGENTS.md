@@ -58,12 +58,22 @@ internal/service/<servicio>/v1/ api.go (monta pkg.Router en pkg.PackagePath)
 pkg/<servicio>/               controller.go, router.go, event.go, msg.go, config.go
                                (+ model.go, schema.go, h<Modelo>.go, rpc.go si hay schema)
 deployments/<servicio>/       local.yml (compose + labels de Traefik)
+                               oke-template.yml (Service + Deployment k8s)
+                               oke-statefulset-template.yml (Service + StatefulSet k8s)
 scripts/<servicio>.http       peticiones de ejemplo
 ```
 
 Un `pkg/<nombre>` generado **con** schema (BD) trae CRUD completo (`Insert`,
 `UpSert`, `State`, `Delete`, `All`) más rutas REST estándar; generado **sin** schema
 trae un stub de controller/handler/router vacío para lógica no persistida.
+
+Los manifiestos `oke-template.yml`/`oke-statefulset-template.yml` usan placeholders
+literales (`$ROLE`, `$NS`, `$PORT`, `$IMAGE`, `$REPLICAS`, etc.) que el generador **no**
+sustituye — a diferencia de `local.yml`, que usa `$1`/`$2`/`$3` reemplazados por
+`file.MakeFile` al momento de generarlo. Esos `$NOMBRE` quedan tal cual para que el
+pipeline de CI/CD (o un `envsubst`/`kubectl` con `--dry-run` y variables de entorno) los
+resuelva en tiempo de despliegue; no los confundas con los `$1`/`$2` posicionales ni
+intentes rellenarlos a mano en el generador.
 
 ### 3. API verificada — no asumas firmas de memoria
 

@@ -59,7 +59,10 @@ Incluye:
 - 🔁 **Sistema de resiliencia** con reintentos automáticos
 - 📋 **Workflows** con pasos, rollback y expresiones condicionales
 - 📅 **Tareas programadas** (Crontab)
-- 🛠️ **CLI de scaffolding** para generar nuevos proyectos microservicio
+- 🛠️ **CLI de scaffolding** para generar nuevos proyectos microservicio, incluyendo
+  `deployments/<servicio>/` con `local.yml` (docker-compose) y manifiestos de
+  Kubernetes (`oke-template.yml` para `Deployment`, `oke-statefulset-template.yml`
+  para `StatefulSet`)
 
 ---
 

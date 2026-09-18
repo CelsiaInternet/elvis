@@ -154,7 +154,7 @@ When editing `agentsguide/ELVIS_AGENTS.md`, keep it in sync with reality the sam
 `cmd/create` is a Cobra CLI (`go run github.com/celsiainternet/elvis/cmd/create go`) that interactively scaffolds a new microservice project that consumes `elvis`. `create/v1/promps.go`'s `PrompCreate()` drives a `promptui` menu with four options, each backed by a `create/v1/hMicroservice.go` entry point:
 
 - **Project** → `MkProject` — full new project: `MkMicroservice` + `README.md` + `.env` + `.gitignore`
-- **Microservice** → `MkMicroservice` — `cmd/<name>/` (Dockerfile + `main.go`), `deployments/<name>/local.yml`, `internal/service/<name>/` (+ `v1/api.go`), `pkg/<name>/` (controller/handler/router/event/msg/config), `scripts/<name>.http`, `test/`
+- **Microservice** → `MkMicroservice` — `cmd/<name>/` (Dockerfile + `main.go`), `deployments/<name>/` (`local.yml` for docker-compose, plus `oke-template.yml` and `oke-statefulset-template.yml` Kubernetes manifests — Service+Deployment and Service+StatefulSet respectively, with `$ROLE`/`$NS`/`$PORT`/etc. left as literal placeholders for the CI/CD pipeline to substitute, not by `file.MakeFile`'s own `$1`/`$2`/... positional substitution), `internal/service/<name>/` (+ `v1/api.go`), `pkg/<name>/` (controller/handler/router/event/msg/config), `scripts/<name>.http`, `test/`
 - **Modelo** → `MkMolue` → `MakeModel` — adds a `linq`-backed model + CRUD handler (`h<Model>.go`) into an existing `pkg/<name>`
 - **Rpc** → `MkRpc` → `MakeRpc` — adds an RPC `rpc.go` stub into an existing `pkg/<name>`
 

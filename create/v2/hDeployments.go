@@ -18,5 +18,15 @@ func MakeDeployments(name string) error {
 		return err
 	}
 
+	_, err = file.MakeFile(path, "oke-template.yml", modelOkeDeployment)
+	if err != nil {
+		return err
+	}
+
+	_, err = file.MakeFile(path, "oke-statefulset-template.yml", modelOkeStatefulSet)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
