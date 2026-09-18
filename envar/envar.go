@@ -177,12 +177,13 @@ func GetStr(_default string, _var string) string {
 
 	setConfig(_var, result)
 	if store != nil {
-		result, exists := store.Get(_default, _var)
+		resultStore, exists := store.Get(_default, _var)
 		if !exists {
 			store.SetConfig(_var, result)
 			return result
 		}
-		setConfig(_var, result)
+		setConfig(_var, resultStore)
+		result = resultStore
 	}
 
 	return result

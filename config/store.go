@@ -42,11 +42,11 @@ func (c *ConfigStore) Get(_default string, name string) (string, bool) {
 		return _default, false
 	}
 
-	value := item.Result.Str(name)
-	if value == "" {
+	if !item.Result.ExistKey(name) {
 		return _default, false
 	}
 
+	value := item.Result.Str(name)
 	return value, true
 }
 
@@ -56,7 +56,6 @@ func (c *ConfigStore) SetConfig(name string, value string) {
 		"project_id":   c.projectId,
 		"stage":        c.stage,
 		"package_name": c.packegName,
-		"description":  "",
 		"config":       et.Json{name: value},
 	}
 
