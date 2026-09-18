@@ -30,7 +30,7 @@ func NewConfigStore(projectId string, packegName string, stage string) *ConfigSt
 	return result
 }
 
-func (c *ConfigStore) Get(_default string, name string) string {
+func (c *ConfigStore) Get(_default string, name string) (string, bool) {
 	data := et.Json{
 		"project_id":   c.projectId,
 		"stage":        c.stage,
@@ -39,15 +39,15 @@ func (c *ConfigStore) Get(_default string, name string) string {
 	}
 	item, err := jrpc.CallItem("config.Services.GetConfigKey", data)
 	if err != nil {
-		return _default
+		return _default, false
 	}
 
 	value := item.Result.Str(name)
 	if value == "" {
-		return _default
+		return _default, false
 	}
 
-	return value
+	return value, true
 }
 
 func (c *ConfigStore) SetConfig(name string, value string) {
