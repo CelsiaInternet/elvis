@@ -118,9 +118,9 @@ func ToTpHeader(tp int) TpHeader {
 
 /**
 * PushApiGateway
-* @param id, method, path, resolve string, header et.Json, tpHeader TpHeader, excludeHeader []string, private bool, packageName string
+* @param id, method, path, resolve string, header et.Json, tpHeader TpHeader, excludeHeader []string, params et.Json, body et.Json, private bool, packageName string
 **/
-func PushApiGateway(id, method, path, resolve string, header et.Json, tpHeader TpHeader, excludeHeader []string, private bool, packageName string) {
+func PushApiGateway(id, method, path, resolve string, header et.Json, tpHeader TpHeader, excludeHeader []string, params et.Json, body et.Json, private bool, packageName string) {
 	initRouter(packageName)
 	router.routes[id] = et.Json{
 		"_id":            id,
@@ -131,6 +131,8 @@ func PushApiGateway(id, method, path, resolve string, header et.Json, tpHeader T
 		"header":         header,
 		"tp_header":      tpHeader,
 		"exclude_header": excludeHeader,
+		"params":         params,
+		"body":           body,
 		"private":        private,
 		"package_name":   packageName,
 	}
@@ -164,14 +166,14 @@ func GetRoutes() map[string]et.Json {
 * pushApiGateway
 * @param method, path, packagePath, host, packageName string, private bool
 **/
-func pushApiGateway(method, path, packagePath, host, packageName string, private bool) {
+func pushApiGateway(method, path, packagePath, host string, params et.Json, body et.Json, private bool, packageName string) {
 	id := cache.GenKey(method, path)
 	if path == "/" {
 		path = ""
 	}
 	path = strings.ReplaceAll(packagePath+path, "//", "/")
 	resolve := host + path
-	PushApiGateway(id, method, path, resolve, et.Json{}, TpReplaceHeader, []string{}, private, packageName)
+	PushApiGateway(id, method, path, resolve, et.Json{}, TpReplaceHeader, []string{}, params, body, private, packageName)
 }
 
 /**
@@ -217,7 +219,7 @@ func PublicRoute(r *chi.Mux, method, path string, h http.HandlerFunc, packageNam
 		r.HandleFunc(path, h)
 	}
 
-	pushApiGateway(method, path, packagePath, host, packageName, false)
+	pushApiGateway(method, path, packagePath, host, et.Json{}, et.Json{}, false, packageName)
 
 	return r
 }
@@ -247,7 +249,7 @@ func ProtectRoute(r *chi.Mux, method, path string, h http.HandlerFunc, packageNa
 		r.With(middleware.Autentication).HandleFunc(path, h)
 	}
 
-	pushApiGateway(method, path, packagePath, host, packageName, true)
+	pushApiGateway(method, path, packagePath, host, et.Json{}, et.Json{}, true, packageName)
 
 	return r
 }
@@ -277,7 +279,7 @@ func EphemeralRoute(r *chi.Mux, method, path string, h http.HandlerFunc, package
 		r.With(middleware.Ephemeral).HandleFunc(path, h)
 	}
 
-	pushApiGateway(method, path, packagePath, host, packageName, true)
+	pushApiGateway(method, path, packagePath, host, et.Json{}, et.Json{}, true, packageName)
 
 	return r
 }
@@ -307,7 +309,7 @@ func AuthorizationRoute(r *chi.Mux, method, path string, h http.HandlerFunc, pac
 		r.With(middleware.Autentication).With(middleware.Authorization).HandleFunc(path, h)
 	}
 
-	pushApiGateway(method, path, packagePath, host, packageName, true)
+	pushApiGateway(method, path, packagePath, host, et.Json{}, et.Json{}, true, packageName)
 
 	return r
 }
@@ -337,7 +339,7 @@ func With(r *chi.Mux, method, path string, middlewares []func(http.Handler) http
 		r.With(middlewares...).HandleFunc(path, h)
 	}
 
-	pushApiGateway(method, path, packagePath, host, packageName, true)
+	pushApiGateway(method, path, packagePath, host, et.Json{}, et.Json{}, true, packageName)
 
 	return r
 }

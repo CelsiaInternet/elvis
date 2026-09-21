@@ -37,6 +37,11 @@ dos árboles `internal/` inconsistentes. Regla: si el repo ya tiene `internal/mo
 sigue usando `cmd/jdb`; si no, usa siempre `cmd/create`. Ante la duda, un `find internal
 -maxdepth 2 -type d` te dice cuál layout ya está en uso antes de generar nada.
 
+Además, el código que genera `create/v2` (`cmd/jdb`) importa la librería independiente
+`github.com/celsiainternet/jdb/jdb` en lugar de `github.com/celsiainternet/elvis/jdb`
+(que es lo que usa `cmd/create`). Si el repo usa el layout v2, asegúrate de que su
+`go.mod` requiera `github.com/celsiainternet/jdb`: `cmd/install` no lo agrega.
+
 Después de generar (o al clonar un repo existente que use Elvis), corre:
 
 ```bash

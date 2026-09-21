@@ -75,6 +75,10 @@ type Body struct {
 	Data []byte
 }
 
+func newBody(data []byte) *Body {
+	return &Body{Data: data}
+}
+
 /**
 * ToJson returns a Json object
 * @return et.Json
@@ -217,10 +221,10 @@ func (b Body) ToTime() (time.Time, error) {
 func ReadBody(body io.ReadCloser) (*Body, error) {
 	bodyBytes, err := io.ReadAll(body)
 	if err != nil {
-		return &Body{Data: []byte("")}, err
+		return newBody([]byte("")), err
 	}
 
-	return &Body{Data: bodyBytes}, nil
+	return newBody(bodyBytes), nil
 }
 
 /**
@@ -252,139 +256,190 @@ func bodyParams(header, body et.Json) []byte {
 	}
 }
 
+type HttpResult struct {
+	Body   *Body
+	Status Status
+}
+
 /**
 * httpDo executes an HTTP request with context and buffer pool support.
+* @param ctx context.Context, method, path string, header, body et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue []byte
+* @return *Body, Status
 **/
-/**
-* httpDo executes an HTTP request with context and buffer pool support.
-**/
-func httpDo(ctx context.Context, method, path string, header, body et.Json, tlsConfig *tls.Config) (*Body, Status) {
-	if _, ok := methods[method]; !ok {
-		return nil, Status{
-			Ok:      false,
-			Code:    http.StatusBadRequest,
-			Message: "Invalid method",
+func httpDo(ctx context.Context, method, path string, header, body et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue []byte) (*Body, Status) {
+	result := make(chan HttpResult, 1)
+
+	go func() {
+		if _, ok := methods[method]; !ok {
+			result <- HttpResult{
+				Body: nil,
+				Status: Status{
+					Ok:      false,
+					Code:    http.StatusBadRequest,
+					Message: "Invalid method",
+				},
+			}
+			return
 		}
-	}
 
-	contentType := header.Str("Content-Type")
+		contentType := header.Str("Content-Type")
 
-	mediaType, _, err := mime.ParseMediaType(contentType)
-	if err != nil {
-		return nil, Status{
-			Ok:      false,
-			Code:    http.StatusBadRequest,
-			Message: err.Error(),
-		}
-	}
-
-	var ioBody io.Reader
-	var buf *bytes.Buffer
-
-	switch mediaType {
-	case "multipart/form-data":
-		writer := multipart.NewWriter(buf)
-		for k := range body {
-			v := body.Str(k)
-			if err := writer.WriteField(k, v); err != nil {
-				return nil, Status{
+		mediaType, _, err := mime.ParseMediaType(contentType)
+		if err != nil {
+			result <- HttpResult{
+				Body: nil,
+				Status: Status{
 					Ok:      false,
 					Code:    http.StatusBadRequest,
 					Message: err.Error(),
+				},
+			}
+			return
+		}
+
+		var ioBody io.Reader
+		var buf *bytes.Buffer
+
+		switch mediaType {
+		case "multipart/form-data":
+			writer := multipart.NewWriter(buf)
+			for k := range body {
+				v := body.Str(k)
+				if err := writer.WriteField(k, v); err != nil {
+					result <- HttpResult{
+						Body: nil,
+						Status: Status{
+							Ok:      false,
+							Code:    http.StatusBadRequest,
+							Message: err.Error(),
+						},
+					}
+					return
 				}
 			}
-		}
-		if err := writer.Close(); err != nil {
-			return nil, Status{
-				Ok:      false,
-				Code:    http.StatusBadRequest,
-				Message: err.Error(),
+			if err := writer.Close(); err != nil {
+				result <- HttpResult{
+					Body: nil,
+					Status: Status{
+						Ok:      false,
+						Code:    http.StatusBadRequest,
+						Message: err.Error(),
+					},
+				}
+				return
+			}
+			ioBody = buf
+		case "application/x-www-form-urlencoded":
+			data := url.Values{}
+			for k := range body {
+				v := body.Str(k)
+				data.Set(k, v)
+			}
+			ioBody = bytes.NewBufferString(data.Encode())
+		case "application/json":
+			if body != nil {
+				buf = bufPool.Get().(*bytes.Buffer)
+				buf.Reset()
+				buf.Write(bodyParams(header, body))
+				ioBody = buf
 			}
 		}
-		ioBody = buf
-	case "application/x-www-form-urlencoded":
-		data := url.Values{}
-		for k := range body {
-			v := body.Str(k)
-			data.Set(k, v)
-		}
-		ioBody = bytes.NewBufferString(data.Encode())
-	case "application/json":
-		if body != nil {
-			buf = bufPool.Get().(*bytes.Buffer)
-			buf.Reset()
-			buf.Write(bodyParams(header, body))
-			ioBody = buf
-		}
-	}
 
-	req, err := http.NewRequestWithContext(ctx, method, path, ioBody)
-	if err != nil {
+		req, err := http.NewRequestWithContext(ctx, method, path, ioBody)
+		if err != nil {
+			if buf != nil {
+				bufPool.Put(buf)
+			}
+
+			result <- HttpResult{
+				Body: nil,
+				Status: Status{
+					Ok:      false,
+					Code:    http.StatusBadRequest,
+					Message: err.Error(),
+				},
+			}
+			return
+		}
+
+		for k, v := range header {
+			req.Header.Set(k, v.(string))
+		}
+
+		client := defaultClient
+		if tlsConfig != nil {
+			client = &http.Client{
+				Timeout: defaultClient.Timeout,
+				Transport: &http.Transport{
+					TLSClientConfig:     tlsConfig,
+					MaxIdleConns:        defaultTransport.MaxIdleConns,
+					MaxIdleConnsPerHost: defaultTransport.MaxIdleConnsPerHost,
+					IdleConnTimeout:     defaultTransport.IdleConnTimeout,
+				},
+			}
+		}
+
+		res, err := client.Do(req)
 		if buf != nil {
 			bufPool.Put(buf)
 		}
 
-		return nil, Status{
-			Ok:      false,
-			Code:    http.StatusBadRequest,
-			Message: err.Error(),
+		if err != nil {
+			result <- HttpResult{
+				Body: nil,
+				Status: Status{
+					Ok:      false,
+					Code:    http.StatusBadRequest,
+					Message: err.Error(),
+				},
+			}
+			return
 		}
-	}
+		defer res.Body.Close()
 
-	for k, v := range header {
-		req.Header.Set(k, v.(string))
-	}
+		resultBody, err := ReadBody(res.Body)
+		if err != nil {
+			result <- HttpResult{
+				Body: nil,
+				Status: Status{
+					Ok:      false,
+					Code:    http.StatusBadRequest,
+					Message: err.Error(),
+				},
+			}
+			return
+		}
 
-	client := defaultClient
-	if tlsConfig != nil {
-		client = &http.Client{
-			Timeout: defaultClient.Timeout,
-			Transport: &http.Transport{
-				TLSClientConfig:     tlsConfig,
-				MaxIdleConns:        defaultTransport.MaxIdleConns,
-				MaxIdleConnsPerHost: defaultTransport.MaxIdleConnsPerHost,
-				IdleConnTimeout:     defaultTransport.IdleConnTimeout,
+		result <- HttpResult{
+			Body: resultBody,
+			Status: Status{
+				Ok:      statusOk(res.StatusCode),
+				Code:    res.StatusCode,
+				Message: res.Status,
 			},
 		}
-	}
+	}()
 
-	res, err := client.Do(req)
-	if buf != nil {
-		bufPool.Put(buf)
-	}
+	if timeout == 0 {
+		select {
+		case respuesta := <-result:
+			return respuesta.Body, respuesta.Status
+		}
+	} else {
+		select {
+		case respuesta := <-result:
+			// La función terminó antes de timeout
+			return respuesta.Body, respuesta.Status
 
-	if err != nil {
-		return nil, Status{
-			Ok:      false,
-			Code:    http.StatusBadRequest,
-			Message: err.Error(),
+		case <-time.After(timeout):
+			// Se agotaron los timeout
+			return newBody(defaultValue), Status{
+				Ok:      false,
+				Code:    http.StatusRequestTimeout,
+				Message: "timeout",
+			}
 		}
 	}
-	defer res.Body.Close()
-
-	result, err := ReadBody(res.Body)
-	if err != nil {
-		return nil, Status{
-			Ok:      false,
-			Code:    http.StatusBadRequest,
-			Message: err.Error(),
-		}
-	}
-
-	return result, Status{
-		Ok:      statusOk(res.StatusCode),
-		Code:    res.StatusCode,
-		Message: res.Status,
-	}
-}
-
-/**
-* Http
-* @param method, path string, header, body et.Json
-* @return *Body, Status
-**/
-func Http(method, path string, header, body et.Json, tlsConfig *tls.Config) (*Body, Status) {
-	return httpDo(context.Background(), method, path, header, body, tlsConfig)
 }
 
 /**
@@ -393,7 +448,16 @@ func Http(method, path string, header, body et.Json, tlsConfig *tls.Config) (*Bo
 * @return *Body, Status
 **/
 func HttpCtx(ctx context.Context, method, path string, header, body et.Json, tlsConfig *tls.Config) (*Body, Status) {
-	return httpDo(ctx, method, path, header, body, tlsConfig)
+	return httpDo(ctx, method, path, header, body, tlsConfig, 0, nil)
+}
+
+/**
+* Http
+* @param method, path string, header, body et.Json
+* @return *Body, Status
+**/
+func Http(method, path string, header, body et.Json, tlsConfig *tls.Config) (*Body, Status) {
+	return httpDo(context.Background(), method, path, header, body, tlsConfig, 0, nil)
 }
 
 /**
@@ -502,6 +566,132 @@ func PatchWithTls(path string, header, body et.Json, tlsConfig *tls.Config) (*Bo
 **/
 func OptionsWithTls(path string, header et.Json, tlsConfig *tls.Config) (*Body, Status) {
 	return Http("OPTIONS", path, header, et.Json{}, tlsConfig)
+}
+
+/**
+* HttpCtxWithTimeout executes an HTTP request honoring the provided context for cancellation and deadlines.
+* @param ctx context.Context, method, path string, header, body et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue []byte
+* @return *Body, Status
+**/
+func HttpCtxWithTimeout(ctx context.Context, method, path string, header, body et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue []byte) (*Body, Status) {
+	return httpDo(ctx, method, path, header, body, tlsConfig, timeout, defaultValue)
+}
+
+/**
+* HttpWithTimeout executes an HTTP request honoring the provided timeout.
+* @param method, path string, header, body et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue []byte
+* @return *Body, Status
+**/
+func HttpWithTimeout(method, path string, header, body et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue []byte) (*Body, Status) {
+	return httpDo(context.Background(), method, path, header, body, tlsConfig, timeout, defaultValue)
+}
+
+/**
+* PostWithTimeout executes a POST request honoring the provided timeout.
+* @param path string, header, body et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue []byte
+* @return *Body, Status
+**/
+func PostWithTlsTimeout(path string, header, body et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue []byte) (*Body, Status) {
+	return httpDo(context.Background(), "POST", path, header, body, tlsConfig, timeout, defaultValue)
+}
+
+/**
+* GetWithTimeout executes a GET request honoring the provided timeout.
+* @param path string, header et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue []byte
+* @return *Body, Status
+**/
+func GetWithTlsTimeout(path string, header et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue []byte) (*Body, Status) {
+	return httpDo(context.Background(), "GET", path, header, et.Json{}, tlsConfig, timeout, defaultValue)
+}
+
+/**
+* PutWithTimeout executes a PUT request honoring the provided timeout.
+* @param path string, header, body et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue []byte
+* @return *Body, Status
+**/
+func PutWithTlsTimeout(path string, header, body et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue []byte) (*Body, Status) {
+	return httpDo(context.Background(), "PUT", path, header, body, tlsConfig, timeout, defaultValue)
+}
+
+/**
+* DeleteWithTimeout executes a DELETE request honoring the provided timeout.
+* @param path string, header et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue []byte
+* @return *Body, Status
+**/
+func DeleteWithTlsTimeout(path string, header et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue []byte) (*Body, Status) {
+	return httpDo(context.Background(), "DELETE", path, header, et.Json{}, tlsConfig, timeout, defaultValue)
+}
+
+/**
+* PatchWithTimeout executes a PATCH request honoring the provided timeout.
+* @param path string, header, body et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue []byte
+* @return *Body, Status
+**/
+func PatchWithTlsTimeout(path string, header, body et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue []byte) (*Body, Status) {
+	return httpDo(context.Background(), "PATCH", path, header, body, tlsConfig, timeout, defaultValue)
+}
+
+/**
+* OptionsWithTimeout executes a OPTIONS request honoring the provided timeout.
+* @param path string, header et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue []byte
+* @return *Body, Status
+**/
+func OptionsWithTlsTimeout(path string, header et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue []byte) (*Body, Status) {
+	return httpDo(context.Background(), "OPTIONS", path, header, et.Json{}, tlsConfig, timeout, defaultValue)
+}
+
+/**
+* PostWithTimeout executes a POST request honoring the provided timeout.
+* @param path string, header, body et.Json, timeout time.Duration, defaultValue []byte
+* @return *Body, Status
+**/
+func PostWithTimeout(path string, header, body et.Json, timeout time.Duration, defaultValue []byte) (*Body, Status) {
+	return httpDo(context.Background(), "POST", path, header, body, nil, timeout, defaultValue)
+}
+
+/**
+* GetWithTimeout executes a GET request honoring the provided timeout.
+* @param path string, header et.Json, timeout time.Duration, defaultValue []byte
+* @return *Body, Status
+**/
+func GetWithTimeout(path string, header et.Json, timeout time.Duration, defaultValue []byte) (*Body, Status) {
+	return httpDo(context.Background(), "GET", path, header, et.Json{}, nil, timeout, defaultValue)
+}
+
+/**
+* PutWithTimeout executes a PUT request honoring the provided timeout.
+* @param path string, header, body et.Json, timeout time.Duration, defaultValue []byte
+* @return *Body, Status
+**/
+func PutWithTimeout(path string, header, body et.Json, timeout time.Duration, defaultValue []byte) (*Body, Status) {
+	return httpDo(context.Background(), "PUT", path, header, body, nil, timeout, defaultValue)
+}
+
+/**
+* DeleteWithTimeout executes a DELETE request honoring the provided timeout.
+* @param path string, header et.Json, timeout time.Duration, defaultValue []byte
+* @return *Body, Status
+**/
+func DeleteWithTimeout(path string, header et.Json, timeout time.Duration, defaultValue []byte) (*Body, Status) {
+	return httpDo(context.Background(), "DELETE", path, header, et.Json{}, nil, timeout, defaultValue)
+}
+
+/**
+* PatchWithTimeout executes a PATCH request honoring the provided timeout.
+* @param path string, header, body et.Json, timeout time.Duration, defaultValue []byte
+* @return *Body, Status
+**/
+func PatchWithTimeout(path string, header, body et.Json, timeout time.Duration, defaultValue []byte) (*Body, Status) {
+	return httpDo(context.Background(), "PATCH", path, header, body, nil, timeout, defaultValue)
+}
+
+/**
+* OptionsWithTimeout executes a OPTIONS request honoring the provided timeout.
+* @param path string, header et.Json, timeout time.Duration, defaultValue []byte
+* @return *Body, Status
+**/
+func OptionsWithTimeout(path string, header et.Json, timeout time.Duration, defaultValue []byte) (*Body, Status) {
+	return httpDo(context.Background(), "OPTIONS", path, header, et.Json{}, nil, timeout, defaultValue)
 }
 
 /**
