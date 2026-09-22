@@ -114,6 +114,14 @@ de métodos distintas, no intercambiables:
 **JWT (`claim/`):** el campo de perfil del claim es `claim.Claim.ProfileId` /
 `claim.ProfileId(r)`. **No existe** `ProfileTp`.
 
+**Cliente HTTP (`request/`):** las llamadas salientes devuelven `(*request.Body, request.Status)`.
+Variantes: `Get/Post/Put/Delete/Patch/Options`, `<Verbo>WithTls`, `<Verbo>WithTimeout(..., timeout,
+defaultValue)` y `<Verbo>WithTlsTimeout` (**no** existe `request.Do` ni `PostWithTimeout` con
+`tlsConfig`; para TLS + timeout usa `PostWithTlsTimeout`). El header debe llevar `Content-Type`.
+En error el `*Body` es `nil`: comprueba `status.Ok` antes de `body.ToJson()`. Un timeout devuelve
+`Status.Code == 408` con el `defaultValue` como body. **Evita `multipart/form-data`**: hoy
+provoca un panic.
+
 **Routing (`router/`):** usa siempre `router.PublicRoute`, `ProtectRoute`,
 `AuthorizationRoute`, `EphemeralRoute` o `With` en vez de registrar rutas
 directamente en `chi.Mux` — estas funciones publican la ruta al API Gateway vía NATS

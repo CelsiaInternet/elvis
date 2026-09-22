@@ -587,7 +587,7 @@ func HttpWithTimeout(method, path string, header, body et.Json, tlsConfig *tls.C
 }
 
 /**
-* PostWithTimeout executes a POST request honoring the provided timeout.
+* PostWithTlsTimeout executes a POST request honoring the provided timeout.
 * @param path string, header, body et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue []byte
 * @return *Body, Status
 **/
@@ -596,7 +596,7 @@ func PostWithTlsTimeout(path string, header, body et.Json, tlsConfig *tls.Config
 }
 
 /**
-* GetWithTimeout executes a GET request honoring the provided timeout.
+* GetWithTlsTimeout executes a GET request honoring the provided timeout.
 * @param path string, header et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue []byte
 * @return *Body, Status
 **/
@@ -605,7 +605,7 @@ func GetWithTlsTimeout(path string, header et.Json, tlsConfig *tls.Config, timeo
 }
 
 /**
-* PutWithTimeout executes a PUT request honoring the provided timeout.
+* PutWithTlsTimeout executes a PUT request honoring the provided timeout.
 * @param path string, header, body et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue []byte
 * @return *Body, Status
 **/
@@ -614,7 +614,7 @@ func PutWithTlsTimeout(path string, header, body et.Json, tlsConfig *tls.Config,
 }
 
 /**
-* DeleteWithTimeout executes a DELETE request honoring the provided timeout.
+* DeleteWithTlsTimeout executes a DELETE request honoring the provided timeout.
 * @param path string, header et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue []byte
 * @return *Body, Status
 **/
@@ -623,7 +623,7 @@ func DeleteWithTlsTimeout(path string, header et.Json, tlsConfig *tls.Config, ti
 }
 
 /**
-* PatchWithTimeout executes a PATCH request honoring the provided timeout.
+* PatchWithTlsTimeout executes a PATCH request honoring the provided timeout.
 * @param path string, header, body et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue []byte
 * @return *Body, Status
 **/
@@ -632,7 +632,7 @@ func PatchWithTlsTimeout(path string, header, body et.Json, tlsConfig *tls.Confi
 }
 
 /**
-* OptionsWithTimeout executes a OPTIONS request honoring the provided timeout.
+* OptionsWithTlsTimeout executes a OPTIONS request honoring the provided timeout.
 * @param path string, header et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue []byte
 * @return *Body, Status
 **/
