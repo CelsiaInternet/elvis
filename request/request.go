@@ -263,10 +263,10 @@ type HttpResult struct {
 
 /**
 * httpDo executes an HTTP request with context and buffer pool support.
-* @param ctx context.Context, method, path string, header, body et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue []byte
+* @param ctx context.Context, method, path string, header, body et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue interface{}
 * @return *Body, Status
 **/
-func httpDo(ctx context.Context, method, path string, header, body et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue []byte) (*Body, Status) {
+func httpDo(ctx context.Context, method, path string, header, body et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue interface{}) (*Body, Status) {
 	result := make(chan HttpResult, 1)
 
 	go func() {
@@ -433,7 +433,15 @@ func httpDo(ctx context.Context, method, path string, header, body et.Json, tlsC
 
 		case <-time.After(timeout):
 			// Se agotaron los timeout
-			return newBody(defaultValue), Status{
+			bt, ok := defaultValue.([]byte)
+			if !ok {
+				var err error
+				bt, err = json.Marshal(defaultValue)
+				if err != nil {
+					bt = []byte("")
+				}
+			}
+			return newBody(bt), Status{
 				Ok:      false,
 				Code:    http.StatusRequestTimeout,
 				Message: "timeout",
@@ -570,127 +578,127 @@ func OptionsWithTls(path string, header et.Json, tlsConfig *tls.Config) (*Body, 
 
 /**
 * HttpCtxWithTimeout executes an HTTP request honoring the provided context for cancellation and deadlines.
-* @param ctx context.Context, method, path string, header, body et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue []byte
+* @param ctx context.Context, method, path string, header, body et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue interface{}
 * @return *Body, Status
 **/
-func HttpCtxWithTimeout(ctx context.Context, method, path string, header, body et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue []byte) (*Body, Status) {
+func HttpCtxWithTimeout(ctx context.Context, method, path string, header, body et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue interface{}) (*Body, Status) {
 	return httpDo(ctx, method, path, header, body, tlsConfig, timeout, defaultValue)
 }
 
 /**
 * HttpWithTimeout executes an HTTP request honoring the provided timeout.
-* @param method, path string, header, body et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue []byte
+* @param method, path string, header, body et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue interface{}
 * @return *Body, Status
 **/
-func HttpWithTimeout(method, path string, header, body et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue []byte) (*Body, Status) {
+func HttpWithTimeout(method, path string, header, body et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue interface{}) (*Body, Status) {
 	return httpDo(context.Background(), method, path, header, body, tlsConfig, timeout, defaultValue)
 }
 
 /**
 * PostWithTlsTimeout executes a POST request honoring the provided timeout.
-* @param path string, header, body et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue []byte
+* @param path string, header, body et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue interface{}
 * @return *Body, Status
 **/
-func PostWithTlsTimeout(path string, header, body et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue []byte) (*Body, Status) {
+func PostWithTlsTimeout(path string, header, body et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue interface{}) (*Body, Status) {
 	return httpDo(context.Background(), "POST", path, header, body, tlsConfig, timeout, defaultValue)
 }
 
 /**
 * GetWithTlsTimeout executes a GET request honoring the provided timeout.
-* @param path string, header et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue []byte
+* @param path string, header et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue interface{}
 * @return *Body, Status
 **/
-func GetWithTlsTimeout(path string, header et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue []byte) (*Body, Status) {
+func GetWithTlsTimeout(path string, header et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue interface{}) (*Body, Status) {
 	return httpDo(context.Background(), "GET", path, header, et.Json{}, tlsConfig, timeout, defaultValue)
 }
 
 /**
 * PutWithTlsTimeout executes a PUT request honoring the provided timeout.
-* @param path string, header, body et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue []byte
+* @param path string, header, body et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue interface{}
 * @return *Body, Status
 **/
-func PutWithTlsTimeout(path string, header, body et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue []byte) (*Body, Status) {
+func PutWithTlsTimeout(path string, header, body et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue interface{}) (*Body, Status) {
 	return httpDo(context.Background(), "PUT", path, header, body, tlsConfig, timeout, defaultValue)
 }
 
 /**
 * DeleteWithTlsTimeout executes a DELETE request honoring the provided timeout.
-* @param path string, header et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue []byte
+* @param path string, header et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue interface{}
 * @return *Body, Status
 **/
-func DeleteWithTlsTimeout(path string, header et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue []byte) (*Body, Status) {
+func DeleteWithTlsTimeout(path string, header et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue interface{}) (*Body, Status) {
 	return httpDo(context.Background(), "DELETE", path, header, et.Json{}, tlsConfig, timeout, defaultValue)
 }
 
 /**
 * PatchWithTlsTimeout executes a PATCH request honoring the provided timeout.
-* @param path string, header, body et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue []byte
+* @param path string, header, body et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue interface{}
 * @return *Body, Status
 **/
-func PatchWithTlsTimeout(path string, header, body et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue []byte) (*Body, Status) {
+func PatchWithTlsTimeout(path string, header, body et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue interface{}) (*Body, Status) {
 	return httpDo(context.Background(), "PATCH", path, header, body, tlsConfig, timeout, defaultValue)
 }
 
 /**
 * OptionsWithTlsTimeout executes a OPTIONS request honoring the provided timeout.
-* @param path string, header et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue []byte
+* @param path string, header et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue interface{}
 * @return *Body, Status
 **/
-func OptionsWithTlsTimeout(path string, header et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue []byte) (*Body, Status) {
+func OptionsWithTlsTimeout(path string, header et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue interface{}) (*Body, Status) {
 	return httpDo(context.Background(), "OPTIONS", path, header, et.Json{}, tlsConfig, timeout, defaultValue)
 }
 
 /**
 * PostWithTimeout executes a POST request honoring the provided timeout.
-* @param path string, header, body et.Json, timeout time.Duration, defaultValue []byte
+* @param path string, header, body et.Json, timeout time.Duration, defaultValue interface{}
 * @return *Body, Status
 **/
-func PostWithTimeout(path string, header, body et.Json, timeout time.Duration, defaultValue []byte) (*Body, Status) {
+func PostWithTimeout(path string, header, body et.Json, timeout time.Duration, defaultValue interface{}) (*Body, Status) {
 	return httpDo(context.Background(), "POST", path, header, body, nil, timeout, defaultValue)
 }
 
 /**
 * GetWithTimeout executes a GET request honoring the provided timeout.
-* @param path string, header et.Json, timeout time.Duration, defaultValue []byte
+* @param path string, header et.Json, timeout time.Duration, defaultValue interface{}
 * @return *Body, Status
 **/
-func GetWithTimeout(path string, header et.Json, timeout time.Duration, defaultValue []byte) (*Body, Status) {
+func GetWithTimeout(path string, header et.Json, timeout time.Duration, defaultValue interface{}) (*Body, Status) {
 	return httpDo(context.Background(), "GET", path, header, et.Json{}, nil, timeout, defaultValue)
 }
 
 /**
 * PutWithTimeout executes a PUT request honoring the provided timeout.
-* @param path string, header, body et.Json, timeout time.Duration, defaultValue []byte
+* @param path string, header, body et.Json, timeout time.Duration, defaultValue interface{}
 * @return *Body, Status
 **/
-func PutWithTimeout(path string, header, body et.Json, timeout time.Duration, defaultValue []byte) (*Body, Status) {
+func PutWithTimeout(path string, header, body et.Json, timeout time.Duration, defaultValue interface{}) (*Body, Status) {
 	return httpDo(context.Background(), "PUT", path, header, body, nil, timeout, defaultValue)
 }
 
 /**
 * DeleteWithTimeout executes a DELETE request honoring the provided timeout.
-* @param path string, header et.Json, timeout time.Duration, defaultValue []byte
+* @param path string, header et.Json, timeout time.Duration, defaultValue interface{}
 * @return *Body, Status
 **/
-func DeleteWithTimeout(path string, header et.Json, timeout time.Duration, defaultValue []byte) (*Body, Status) {
+func DeleteWithTimeout(path string, header et.Json, timeout time.Duration, defaultValue interface{}) (*Body, Status) {
 	return httpDo(context.Background(), "DELETE", path, header, et.Json{}, nil, timeout, defaultValue)
 }
 
 /**
 * PatchWithTimeout executes a PATCH request honoring the provided timeout.
-* @param path string, header, body et.Json, timeout time.Duration, defaultValue []byte
+* @param path string, header, body et.Json, timeout time.Duration, defaultValue interface{}
 * @return *Body, Status
 **/
-func PatchWithTimeout(path string, header, body et.Json, timeout time.Duration, defaultValue []byte) (*Body, Status) {
+func PatchWithTimeout(path string, header, body et.Json, timeout time.Duration, defaultValue interface{}) (*Body, Status) {
 	return httpDo(context.Background(), "PATCH", path, header, body, nil, timeout, defaultValue)
 }
 
 /**
 * OptionsWithTimeout executes a OPTIONS request honoring the provided timeout.
-* @param path string, header et.Json, timeout time.Duration, defaultValue []byte
+* @param path string, header et.Json, timeout time.Duration, defaultValue interface{}
 * @return *Body, Status
 **/
-func OptionsWithTimeout(path string, header et.Json, timeout time.Duration, defaultValue []byte) (*Body, Status) {
+func OptionsWithTimeout(path string, header et.Json, timeout time.Duration, defaultValue interface{}) (*Body, Status) {
 	return httpDo(context.Background(), "OPTIONS", path, header, et.Json{}, nil, timeout, defaultValue)
 }
 

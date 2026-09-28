@@ -21,7 +21,11 @@ import (
 * @return string
 **/
 func UUID() string {
-	return uuid.NewString()
+	result, err := uuid.NewV7()
+	if err != nil {
+		return uuid.NewString()
+	}
+	return result.String()
 }
 
 /**

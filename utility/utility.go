@@ -33,6 +33,9 @@ const PENDING_APPROVAL = "4"
 const APPROVAL = "5"
 const REFUSED = "6"
 const FAILED = "7"
+
+var IS_EDITED = []string{ACTIVE, IN_PROCESS}
+
 const STOP = "Stop"
 const CACHE_TIME = 60 * 60 * 24 * 1
 const DAY_SECOND = 60 * 60 * 24 * 1

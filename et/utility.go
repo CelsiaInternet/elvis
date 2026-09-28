@@ -532,3 +532,17 @@ func PayloadDecoded(token string) (Json, error) {
 
 	return result, nil
 }
+
+func GetChanges(a, b Json) Json {
+	result := Json{}
+	for k, v := range b {
+		if a[k] != v {
+			result[k] = Json{
+				"old": a[k],
+				"new": v,
+			}
+		}
+	}
+
+	return result
+}
