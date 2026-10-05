@@ -34,6 +34,7 @@
 - [Eventos (event)](#-eventos-event)
 - [Autenticación y Autorización (claim / middleware)](#-autenticación-y-autorización-claim--middleware)
 - [HTTP Router y Respuestas (router / response)](#-http-router-y-respuestas-router--response)
+- [Cliente HTTP saliente (request)](#-cliente-http-saliente-request)
 - [Resiliencia](#-resiliencia)
 - [Workflows](#-workflows)
 - [Variables de Entorno](#-variables-de-entorno)
@@ -59,7 +60,10 @@ Incluye:
 - 🔁 **Sistema de resiliencia** con reintentos automáticos
 - 📋 **Workflows** con pasos, rollback y expresiones condicionales
 - 📅 **Tareas programadas** (Crontab)
-- 🛠️ **CLI de scaffolding** para generar nuevos proyectos microservicio
+- 🛠️ **CLI de scaffolding** para generar nuevos proyectos microservicio, incluyendo
+  `deployments/<servicio>/` con `local.yml` (docker-compose) y manifiestos de
+  Kubernetes (`oke-template.yml` para `Deployment`, `oke-statefulset-template.yml`
+  para `StatefulSet`)
 
 ---
 
@@ -76,7 +80,7 @@ Incluye:
 
 ```bash
 # En el módulo de tu proyecto
-go get github.com/celsiainternet/elvis@v1.1.298
+go get github.com/celsiainternet/elvis@v1.1.312
 go get github.com/celsiainternet/elvis@latest
 go run github.com/celsiainternet/elvis/cmd/install
 ```
@@ -662,9 +666,54 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
     // Streaming paginado (útil para exportaciones grandes)
     response.Stream(w, r, 100, func(page, rows int) (et.Items, error) {
-        return modelo.Select().Page(page, rows).List()
+        return modelo.Select().Page(page, rows)
     })
 }
+```
+
+---
+
+## 🌍 Cliente HTTP saliente (`request`)
+
+Cliente para llamar a otros servicios. Todas las funciones devuelven `(*request.Body, request.Status)`.
+
+```go
+import (
+    "time"
+
+    "github.com/celsiainternet/elvis/et"
+    "github.com/celsiainternet/elvis/request"
+)
+
+header := et.Json{"Content-Type": "application/json", "Authorization": "Bearer " + token}
+
+body, status := request.Post("https://api.example.com/users", header, et.Json{"name": "Ana"})
+if !status.Ok {
+    return fmt.Errorf("%d %s", status.Code, status.Message)
+}
+
+user, err := body.ToJson() // también: ToItem, ToItems, ToArrayJson, ToString, ToInt, ToInt64, ToFloat, ToBool, ToTime
+```
+
+| Familia | Firma (después del `path`/`method`) | Uso |
+| ------- | ----------------------------------- | --- |
+| `Get/Post/Put/Delete/Patch/Options` | `header[, body]` | Llamada simple |
+| `<Verbo>WithTls` | `header[, body], tlsConfig` | mTLS / CA propia (`request.NewTlsConfig(ca, cert, key)`) |
+| `<Verbo>WithTimeout` | `header[, body], timeout, defaultValue` | Con límite de tiempo |
+| `<Verbo>WithTlsTimeout` | `header[, body], tlsConfig, timeout, defaultValue` | TLS + límite de tiempo |
+| `Http` / `HttpWithTimeout` | `method, path, header, body, tlsConfig[, timeout, defaultValue]` | Método dinámico |
+| `HttpCtx` / `HttpCtxWithTimeout` | `ctx, method, path, header, body, tlsConfig[, timeout, defaultValue]` | Con `context.Context` |
+
+Comportamiento a tener en cuenta:
+
+- `Content-Type` en el header es obligatorio y decide cómo se serializa el body (`application/json`, `application/x-www-form-urlencoded`; `multipart/form-data` **no funciona** todavía, ver más abajo).
+- `timeout == 0` espera sin límite. Si vence el timeout se devuelve `Status{Ok: false, Code: 408, Message: "timeout"}` y un `Body` con `defaultValue`.
+- En cualquier otro error (red, método inválido, `Content-Type` inválido) el `*Body` es **`nil`**: revisa `status.Ok` antes de llamar a `body.ToJson()` y compañía.
+- Limitaciones conocidas: el timeout abandona el resultado pero no cancela la petición en curso (sigue viva hasta el timeout del cliente, 120 min), y `multipart/form-data` produce un panic (buffer nil dentro de una goroutine).
+
+```go
+// Con timeout: si tarda más de 3s devuelve 408 y el defaultValue
+body, status := request.GetWithTimeout(url, header, 3*time.Second, []byte(`{}`))
 ```
 
 ---
@@ -794,7 +843,8 @@ result, err := workflow.Run(
 | `AUTHORIZATION_METHOD`      | router        | —           | Método RPC para verificar permisos                               |
 | `RESILIENCE_TOTAL_ATTEMPTS` | resilience    | `3`         | Intentos totales por operación                                   |
 | `RESILIENCE_TIME_ATTEMPTS`  | resilience    | `30`        | Segundos entre reintentos                                        |
-| `PIPE_HOST`                 | jrpc          | —           | `host:port` que enruta todas las llamadas RPC por un proxy único |
+| `PIPE_HOST`                 | jrpc          | —           | Host del proxy RPC único (se combina con `PIPE_PORT`)            |
+| `PIPE_PORT`                 | jrpc          | `4200`      | Puerto del proxy RPC único                                       |
 | `STAGE`                     | event         | `local`     | Prefijo de entorno para canal pipe (`pipe:<stage>:<canal>`)      |
 | `PRODUCTION`                | dt            | `true`      | Habilita persistencia en Redis del cache de objetos `dt.Object`  |
 
@@ -862,6 +912,7 @@ elvis/
 ├── queue/          # Cola de batching en proceso (queue.Queue[T])
 ├── race/           # Helpers de concurrencia
 ├── reg/            # Registro de IDs
+├── request/        # Cliente HTTP saliente (GET/POST/PUT/DELETE/PATCH/OPTIONS, TLS y timeout)
 ├── resilience/     # Reintentos automáticos
 ├── response/       # Helpers de respuesta HTTP
 ├── router/         # Registro de rutas chi con API Gateway

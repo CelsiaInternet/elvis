@@ -195,10 +195,6 @@ func (it *Item) ArrayInt(atrib string) []int {
 	return it.Result.ArrayInt(atrib)
 }
 
-func (it *Item) ToString() string {
-	return it.Result.ToString()
-}
-
 func (it Item) ToByte() []byte {
 	result, err := json.Marshal(it)
 	if err != nil {
@@ -209,14 +205,14 @@ func (it Item) ToByte() []byte {
 }
 
 func (it *Item) ToJson() Json {
-	bt := it.ToByte()
-
-	var result Json
-	err := json.Unmarshal(bt, &result)
-	if err != nil {
-		return Json{}
+	return Json{
+		"ok":     it.Ok,
+		"result": it.Result,
 	}
-	return result
+}
+
+func (it *Item) ToString() string {
+	return it.ToJson().ToString()
 }
 
 func (it *Item) Consolidate(toField string, ruleOut ...string) Json {

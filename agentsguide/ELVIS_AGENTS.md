@@ -37,6 +37,11 @@ dos árboles `internal/` inconsistentes. Regla: si el repo ya tiene `internal/mo
 sigue usando `cmd/jdb`; si no, usa siempre `cmd/create`. Ante la duda, un `find internal
 -maxdepth 2 -type d` te dice cuál layout ya está en uso antes de generar nada.
 
+Además, el código que genera `create/v2` (`cmd/jdb`) importa la librería independiente
+`github.com/celsiainternet/jdb/jdb` en lugar de `github.com/celsiainternet/elvis/jdb`
+(que es lo que usa `cmd/create`). Si el repo usa el layout v2, asegúrate de que su
+`go.mod` requiera `github.com/celsiainternet/jdb`: `cmd/install` no lo agrega.
+
 Después de generar (o al clonar un repo existente que use Elvis), corre:
 
 ```bash
@@ -58,12 +63,22 @@ internal/service/<servicio>/v1/ api.go (monta pkg.Router en pkg.PackagePath)
 pkg/<servicio>/               controller.go, router.go, event.go, msg.go, config.go
                                (+ model.go, schema.go, h<Modelo>.go, rpc.go si hay schema)
 deployments/<servicio>/       local.yml (compose + labels de Traefik)
+                               oke-template.yml (Service + Deployment k8s)
+                               oke-statefulset-template.yml (Service + StatefulSet k8s)
 scripts/<servicio>.http       peticiones de ejemplo
 ```
 
 Un `pkg/<nombre>` generado **con** schema (BD) trae CRUD completo (`Insert`,
 `UpSert`, `State`, `Delete`, `All`) más rutas REST estándar; generado **sin** schema
 trae un stub de controller/handler/router vacío para lógica no persistida.
+
+Los manifiestos `oke-template.yml`/`oke-statefulset-template.yml` usan placeholders
+literales (`$ROLE`, `$NS`, `$PORT`, `$IMAGE`, `$REPLICAS`, etc.) que el generador **no**
+sustituye — a diferencia de `local.yml`, que usa `$1`/`$2`/`$3` reemplazados por
+`file.MakeFile` al momento de generarlo. Esos `$NOMBRE` quedan tal cual para que el
+pipeline de CI/CD (o un `envsubst`/`kubectl` con `--dry-run` y variables de entorno) los
+resuelva en tiempo de despliegue; no los confundas con los `$1`/`$2` posicionales ni
+intentes rellenarlos a mano en el generador.
 
 ### 3. API verificada — no asumas firmas de memoria
 
@@ -98,6 +113,14 @@ de métodos distintas, no intercambiables:
 
 **JWT (`claim/`):** el campo de perfil del claim es `claim.Claim.ProfileId` /
 `claim.ProfileId(r)`. **No existe** `ProfileTp`.
+
+**Cliente HTTP (`request/`):** las llamadas salientes devuelven `(*request.Body, request.Status)`.
+Variantes: `Get/Post/Put/Delete/Patch/Options`, `<Verbo>WithTls`, `<Verbo>WithTimeout(..., timeout,
+defaultValue)` y `<Verbo>WithTlsTimeout` (**no** existe `request.Do` ni `PostWithTimeout` con
+`tlsConfig`; para TLS + timeout usa `PostWithTlsTimeout`). El header debe llevar `Content-Type`.
+En error el `*Body` es `nil`: comprueba `status.Ok` antes de `body.ToJson()`. Un timeout devuelve
+`Status.Code == 408` con el `defaultValue` como body. **Evita `multipart/form-data`**: hoy
+provoca un panic.
 
 **Routing (`router/`):** usa siempre `router.PublicRoute`, `ProtectRoute`,
 `AuthorizationRoute`, `EphemeralRoute` o `With` en vez de registrar rutas

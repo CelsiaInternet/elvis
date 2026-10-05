@@ -429,37 +429,15 @@ const (
 const modelConfig = `package $1
 
 import (
-	"fmt"
-
 	"github.com/celsiainternet/elvis/config"
 	"github.com/celsiainternet/elvis/envar"
-	"github.com/celsiainternet/elvis/et"
-	"github.com/celsiainternet/elvis/jrpc"
 )
 
 func LoadConfig() error {
 	StartRpcServer()
 
 	stage := envar.GetStr("local", "STAGE")
-	return defaultConfig(stage)
-}
-
-func defaultConfig(stage string) error {
-	name := "default"
-	result, err := jrpc.CallItem("Module.Services.GetConfig", et.Json{
-		"stage": stage,
-		"name":  name,
-	})
-	if err != nil {
-		return err
-	}
-
-	if !result.Ok {
-		return fmt.Errorf(jrpc.MSG_NOT_LOAD_CONFIG, stage, name)
-	}
-
-	cfg := result.Json("config")
-	return config.Load(cfg)
+	return config.Load(stage, PackageName)
 }
 `
 
@@ -1239,6 +1217,542 @@ services:
       - "SECRET="
       # RPC
       - "PORT_RPC=4200"
+`
+
+const modelOkeStatefulSet = `# Definition del Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: $ROLE
+  namespace: $NS
+spec:
+  selector:
+    role: $ROLE
+  ports:
+    - name: http
+      protocol: TCP
+      port: $PORT # Puerto en el Service
+      targetPort: $PORT # Puerto en el Pod
+    - name: rpc
+      protocol: TCP
+      port: 4200 # Puerto en el Service (RPC)
+      targetPort: 4200 # Puerto en el Pod
+  type: ClusterIP
+
+---
+# Definition del Deployment
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: $ROLE
+  namespace: $NS
+spec:
+  replicas: $REPLICAS # Número de réplicas
+  revisionHistoryLimit: $HISTORY_LIMIT # Limitar de revisiones
+  selector:
+    matchLabels:
+      role: $ROLE # Selector que debe coincidir con los labels de los pods
+  template:
+    metadata:
+      labels:
+        role: $ROLE
+    spec:
+      imagePullSecrets:
+        - name: dockerhub-secret
+      containers:
+        - name: $ROLE
+          image: docker.io/$IMAGE
+          imagePullPolicy: Always # Siempre descarga la imagen más reciente
+          resources:
+            requests:
+              cpu: "$CPU_REQUEST" # Recursos mínimos requeridos
+              memory: "$MEMORY_REQUEST"
+            limits:
+              cpu: "$CPU_LIMIT" # Recursos máximos permitidos
+              memory: "$MEMORY_LIMIT"
+          ports:
+            - containerPort: $PORT # Puerto expuesto en el contenedor
+          env:
+            - name: APP
+              value: "Celsia Internet"
+            - name: PORT
+              value: "$PORT"
+            - name: VERSION
+              value: "$RELEASE"
+            - name: PRODUCTION
+              value: "$PRODUCTION"
+            - name: RPC_HOST
+              value: "$ROLE"
+            - name: RPC_PORT
+              value: "4200"
+            - name: PROJECT_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: config-$NS
+                  key: PROJECT_ID
+            - name: PROJECT_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: config-$NS
+                  key: PROJECT_NAME
+            - name: RT_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: config-$NS
+                  key: RT_URL
+            - name: WS_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: config-$NS
+                  key: WS_USERNAME
+            - name: WS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secret-$NS
+                  key: WS_PASSWORD
+            - name: USER_ADMIN
+              valueFrom:
+                configMapKeyRef:
+                  name: config-$NS
+                  key: USER_ADMIN
+            - name: USER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secret-$NS
+                  key: USER_PASSWORD
+            - name: AUTHORIZATION_METHOD
+              valueFrom:
+                configMapKeyRef:
+                  name: config-$NS
+                  key: AUTHORIZATION_METHOD
+            - name: COMPANY
+              valueFrom:
+                configMapKeyRef:
+                  name: config-$NS
+                  key: COMPANY
+            - name: STAGE
+              valueFrom:
+                configMapKeyRef:
+                  name: config-$NS
+                  key: STAGE
+            - name: WEB
+              valueFrom:
+                configMapKeyRef:
+                  name: config-$NS
+                  key: WEB
+            - name: PATH_URL
+              value: "$PATH_URL"
+            - name: HOST
+              value: "$HOST"
+            - name: REQUESTS_LIMIT
+              valueFrom:
+                configMapKeyRef:
+                  name: config-$NS
+                  key: REQUESTS_LIMIT
+            - name: DEBUG
+              valueFrom:
+                configMapKeyRef:
+                  name: config-$NS
+                  key: DEBUG
+            # DB
+            - name: DB_DRIVER
+              valueFrom:
+                configMapKeyRef:
+                  name: config-$NS
+                  key: DB_DRIVER
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: config-$NS
+                  key: DB_HOST
+            - name: DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: config-$NS
+                  key: DB_PORT
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: config-$NS
+                  key: DB_NAME
+            - name: DB_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: config-$NS
+                  key: DB_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secret-$NS
+                  key: DB_PASSWORD
+            - name: DB_APPLICATION_NAME
+              value: $ROLE
+            # REDIS
+            - name: REDIS_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: config-$NS
+                  key: REDIS_HOST
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secret-$NS
+                  key: REDIS_PASSWORD
+            - name: REDIS_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: config-$NS
+                  key: REDIS_DB
+            # NATS
+            - name: NATS_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: config-$NS
+                  key: NATS_HOST
+            - name: NATS_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: config-$NS
+                  key: NATS_USER
+            - name: NATS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secret-$NS
+                  key: NATS_PASSWORD
+            # SECRET
+            - name: SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: secret-$NS
+                  key: SECRET
+            # OSS DB
+            - name: ORA_DB_HOST
+              value: "$ORA_DB_HOST"
+            - name: ORA_DB_PORT
+              value: "$ORA_DB_PORT"
+            - name: ORA_DB_NAME
+              value: "$ORA_DB_NAME"
+            - name: ORA_DB_USER
+              value: "$ORA_DB_USER"
+            - name: ORA_DB_PASSWORD
+              value: "$ORA_DB_PASSWORD"
+            - name: ORA_DB_SERVICE_NAME_ORACLE
+              value: "$ORA_DB_SERVICE_NAME_ORACLE"
+            - name: ORA_DB_SSL_ORACLE
+              value: "$ORA_DB_SSL_ORACLE"
+            - name: ORA_DB_SSL_VERIFY_ORACLE
+              value: "$ORA_DB_SSL_VERIFY_ORACLE"
+              # OSS
+            - name: OSS_URL_ESECURITY_PROXY
+              value: "$OSS_URL_ESECURITY_PROXY"
+            - name: OSS_URL_LOGIN
+              value: "$OSS_URL_LOGIN"
+            - name: OSS_PASSWORD
+              value: "$OSS_PASSWORD"
+            - name: OSS_USER
+              value: "$OSS_USER"
+            # TokenCRM
+            - name: CRM_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: secret-$NS
+                  key: CRM_TOKEN
+            - name: CRM_URLCLIENT
+              valueFrom:
+                configMapKeyRef:
+                  name: config-$NS
+                  key: CRM_URLCLIENT
+            # Failure
+            - name: PROJECTID_FAILURE
+              value: "-1"
+            - name: URL_API_FAILURE
+              value: "https://api.celsiainternet.com"
+            - name: TOKEN_API
+              value: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImU3ZDA1M2U2LWY1ZjQtNGRkZS1iYmIyLTMxZDU5YjFmZDE4OCIsImFwcCI6IiIsIm5hbWUiOiJJbnRlcmF4YSIsImtpbmQiOiJ0b2tlbiIsInVzZXJuYW1lIjoiIiwiZGV2aWNlIjoicmVxdWVzdHMiLCJkdXJhdGlvbiI6MH0.GmTc2VOpT2wgAu5NEqQwt78vUOuZi3WHYffUX9B19g8"
+            # CAPTCHA
+            - name: RECAPTCHA_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: secret-$NS
+                  key: RECAPTCHA_KEY
+            - name: RECAPTCHA_URL
+              value: "https://challenges.cloudflare.com/turnstile/v0/siteverify"
+            - name: FOLDER_REPORT_REVIEW
+              value: "prueba/updatedata/reporte"
+`
+
+const modelOkeDeployment = `# Definition del Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: $ROLE
+  namespace: $NS
+spec:
+  selector:
+    role: $ROLE
+  ports:
+    - name: http
+      protocol: TCP
+      port: $PORT # Puerto en el Service
+      targetPort: $PORT # Puerto en el Pod
+    - name: rpc
+      protocol: TCP
+      port: 4200 # Puerto en el Service (RPC)
+      targetPort: 4200 # Puerto en el Pod
+  type: ClusterIP
+
+---
+# Definition del Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: $ROLE
+  namespace: $NS
+spec:
+  replicas: $REPLICAS # Número de réplicas
+  revisionHistoryLimit: $HISTORY_LIMIT # Limitar de revisiones
+  selector:
+    matchLabels:
+      role: $ROLE # Selector que debe coincidir con los labels de los pods
+  template:
+    metadata:
+      labels:
+        role: $ROLE
+    spec:
+      imagePullSecrets:
+        - name: dockerhub-secret
+      containers:
+        - name: $ROLE
+          image: docker.io/$IMAGE
+          imagePullPolicy: Always # Siempre descarga la imagen más reciente
+          resources:
+            requests:
+              cpu: "$CPU_REQUEST" # Recursos mínimos requeridos
+              memory: "$MEMORY_REQUEST"
+            limits:
+              cpu: "$CPU_LIMIT" # Recursos máximos permitidos
+              memory: "$MEMORY_LIMIT"
+          ports:
+            - containerPort: $PORT # Puerto expuesto en el contenedor
+          env:
+            - name: APP
+              value: "Celsia Internet"
+            - name: PORT
+              value: "$PORT"
+            - name: VERSION
+              value: "$RELEASE"
+            - name: PRODUCTION
+              value: "$PRODUCTION"
+            - name: RPC_HOST
+              value: "$ROLE"
+            - name: RPC_PORT
+              value: "4200"
+            - name: PROJECT_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: config-$NS
+                  key: PROJECT_ID
+            - name: PROJECT_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: config-$NS
+                  key: PROJECT_NAME
+            - name: RT_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: config-$NS
+                  key: RT_URL
+            - name: WS_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: config-$NS
+                  key: WS_USERNAME
+            - name: WS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secret-$NS
+                  key: WS_PASSWORD
+            - name: USER_ADMIN
+              valueFrom:
+                configMapKeyRef:
+                  name: config-$NS
+                  key: USER_ADMIN
+            - name: USER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secret-$NS
+                  key: USER_PASSWORD
+            - name: AUTHORIZATION_METHOD
+              valueFrom:
+                configMapKeyRef:
+                  name: config-$NS
+                  key: AUTHORIZATION_METHOD
+            - name: COMPANY
+              valueFrom:
+                configMapKeyRef:
+                  name: config-$NS
+                  key: COMPANY
+            - name: STAGE
+              valueFrom:
+                configMapKeyRef:
+                  name: config-$NS
+                  key: STAGE
+            - name: WEB
+              valueFrom:
+                configMapKeyRef:
+                  name: config-$NS
+                  key: WEB
+            - name: PATH_URL
+              value: "$PATH_URL"
+            - name: HOST
+              value: "$HOST"
+            - name: REQUESTS_LIMIT
+              valueFrom:
+                configMapKeyRef:
+                  name: config-$NS
+                  key: REQUESTS_LIMIT
+            - name: DEBUG
+              valueFrom:
+                configMapKeyRef:
+                  name: config-$NS
+                  key: DEBUG
+            # DB
+            - name: DB_DRIVER
+              valueFrom:
+                configMapKeyRef:
+                  name: config-$NS
+                  key: DB_DRIVER
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: config-$NS
+                  key: DB_HOST
+            - name: DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: config-$NS
+                  key: DB_PORT
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: config-$NS
+                  key: DB_NAME
+            - name: DB_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: config-$NS
+                  key: DB_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secret-$NS
+                  key: DB_PASSWORD
+            - name: DB_APPLICATION_NAME
+              value: $ROLE
+            # REDIS
+            - name: REDIS_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: config-$NS
+                  key: REDIS_HOST
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secret-$NS
+                  key: REDIS_PASSWORD
+            - name: REDIS_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: config-$NS
+                  key: REDIS_DB
+            # NATS
+            - name: NATS_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: config-$NS
+                  key: NATS_HOST
+            - name: NATS_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: config-$NS
+                  key: NATS_USER
+            - name: NATS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secret-$NS
+                  key: NATS_PASSWORD
+            # CAPTCHA
+            - name: RECAPTCHA_KEY
+              value: "0x4AAAAAABtV1cqhc94ExTeOCdTd4EcS4UU"
+            - name: RECAPTCHA_URL
+              value: "https://challenges.cloudflare.com/turnstile/v0/siteverify"
+            # SECRET
+            - name: SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: secret-$NS
+                  key: SECRET
+            # OSS DB
+            - name: ORA_DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: config-$NS
+                  key: ORA_DB_HOST
+            - name: ORA_DB_PORT
+              value: "1521"
+            - name: ORA_DB_NAME
+              value: ""
+            - name: ORA_DB_USER
+              value: "emalaeaprd"
+            - name: ORA_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secret-$NS
+                  key: ORA_DB_PASSWORD
+            - name: ORA_DB_SERVICE_NAME_ORACLE
+              valueFrom:
+                configMapKeyRef:
+                  name: config-$NS
+                  key: ORA_DB_SERVICES
+            - name: ORA_DB_SSL_ORACLE
+              value: "true"
+            - name: ORA_DB_SSL_VERIFY_ORACLE
+              value: "false"
+            # OSS
+            - name: OSS_URL_ESECURITY_PROXY
+              value: "$OSS_URL_ESECURITY_PROXY"
+            - name: OSS_URL_LOGIN
+              value: "$OSS_URL_LOGIN"
+            - name: OSS_PASSWORD
+              value: "$OSS_PASSWORD"
+            - name: OSS_USER
+              value: "$OSS_USER"
+            # TokenCRM
+            - name: CRM_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: secret-$NS
+                  key: CRM_TOKEN
+            - name: CRM_URLCLIENT
+              valueFrom:
+                configMapKeyRef:
+                  name: config-$NS
+                  key: CRM_URLCLIENT
+            # Failure
+            - name: PROJECTID_FAILURE
+              value: "-1"
+            - name: URL_API_FAILURE
+              value: "https://api.celsiainternet.com"
+            - name: TOKEN_API
+              value: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImU3ZDA1M2U2LWY1ZjQtNGRkZS1iYmIyLTMxZDU5YjFmZDE4OCIsImFwcCI6IiIsIm5hbWUiOiJJbnRlcmF4YSIsImtpbmQiOiJ0b2tlbiIsInVzZXJuYW1lIjoiIiwiZGV2aWNlIjoicmVxdWVzdHMiLCJkdXJhdGlvbiI6MH0.GmTc2VOpT2wgAu5NEqQwt78vUOuZi3WHYffUX9B19g8"
+            - name: FOLDER_REPORT_REVIEW
+              value: "updatedata/reporte"
+
+  strategy:
+    type: RollingUpdate # Actualización gradual (opcional)
+    rollingUpdate:
+      maxUnavailable: $MAX_PODS_AVAILABLE # Número máximo de pods no disponibles durante la actualización
+      maxSurge: $MAX_PODS_SURGE # Número máximo de pods adicionales creados durante la actualización
 `
 
 const modelGitignore = `# Created by https://www.toptal.com/developers/gitignore/api/go

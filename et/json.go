@@ -179,13 +179,12 @@ func (s Json) ToByte() []byte {
 }
 
 func (s Json) ToString() string {
-	bt, err := json.Marshal(s)
+	jsonData, err := json.Marshal(s)
 	if err != nil {
 		return ""
 	}
 
-	result := string(bt)
-
+	result := string(jsonData)
 	return result
 }
 
@@ -845,4 +844,17 @@ func (j Json) SetNested(keys []string, value interface{}) {
 	}
 
 	m[keys[len(keys)-1]] = value
+}
+
+/**
+* GetItem
+* @param items []Json, index int
+* @return Json
+**/
+func GetItem(items []Json, index int) (Json, bool) {
+	if index < 0 || index >= len(items) {
+		return Json{}, false
+	}
+
+	return items[index], true
 }

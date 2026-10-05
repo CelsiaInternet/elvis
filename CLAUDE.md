@@ -154,7 +154,7 @@ When editing `agentsguide/ELVIS_AGENTS.md`, keep it in sync with reality the sam
 `cmd/create` is a Cobra CLI (`go run github.com/celsiainternet/elvis/cmd/create go`) that interactively scaffolds a new microservice project that consumes `elvis`. `create/v1/promps.go`'s `PrompCreate()` drives a `promptui` menu with four options, each backed by a `create/v1/hMicroservice.go` entry point:
 
 - **Project** → `MkProject` — full new project: `MkMicroservice` + `README.md` + `.env` + `.gitignore`
-- **Microservice** → `MkMicroservice` — `cmd/<name>/` (Dockerfile + `main.go`), `deployments/<name>/local.yml`, `internal/service/<name>/` (+ `v1/api.go`), `pkg/<name>/` (controller/handler/router/event/msg/config), `scripts/<name>.http`, `test/`
+- **Microservice** → `MkMicroservice` — `cmd/<name>/` (Dockerfile + `main.go`), `deployments/<name>/` (`local.yml` for docker-compose, plus `oke-template.yml` and `oke-statefulset-template.yml` Kubernetes manifests — Service+Deployment and Service+StatefulSet respectively, with `$ROLE`/`$NS`/`$PORT`/etc. left as literal placeholders for the CI/CD pipeline to substitute, not by `file.MakeFile`'s own `$1`/`$2`/... positional substitution), `internal/service/<name>/` (+ `v1/api.go`), `pkg/<name>/` (controller/handler/router/event/msg/config), `scripts/<name>.http`, `test/`
 - **Modelo** → `MkMolue` → `MakeModel` — adds a `linq`-backed model + CRUD handler (`h<Model>.go`) into an existing `pkg/<name>`
 - **Rpc** → `MkRpc` → `MakeRpc` — adds an RPC `rpc.go` stub into an existing `pkg/<name>`
 
@@ -163,6 +163,10 @@ Whether a `schema` argument is supplied determines the template family: non-empt
 Templates are Go string constants in `create/v1/model.go`, rendered by `file.MakeFile(folder, name, template, args...)`, which does positional `$1`/`$2`/... substitution (see `params()` in `file/file.go`) — **not** `text/template`. `MakeFile` is idempotent: it silently no-ops if the target file already exists, so re-running a generator never overwrites hand-edited output.
 
 **Two generator versions exist, wired to two different CLI entry points**: `create/v1` (reworked folder layout in `internal/service/<name>/`) is used by `cmd/create/main.go`; `create/v2` (`internal/models/<name>/` + `internal/services/<name>/` instead of `internal/service/<name>/`, model code split out of the handler file, `router-<model>.go` naming) is used by **`cmd/jdb/main.go`** — despite its name, `cmd/jdb` is not a database CLI, it runs the exact same `promptui` scaffolding menu as `cmd/create` but against `create/v2`. Check which `cmd/`/`create/` pair an instruction actually intends before editing generator templates.
+
+**`create/v2` generates code against the standalone `jdb` library**: 6 of its templates (`modelDbApi`, `modelData`, `modelModel`, `modelSchema`, `modelDbController`, `modelDbModelRouter`) import `github.com/celsiainternet/jdb/jdb` (the separate `jdb/` repo, see the workspace `CLAUDE.md`) instead of elvis's own `github.com/celsiainternet/elvis/jdb` package, which only 2 v2 templates still use. `create/v1` templates use `elvis/jdb`. A project scaffolded with `cmd/jdb` therefore needs `github.com/celsiainternet/jdb` in its `go.mod`, which `cmd/install` does not add.
+
+**Organization-specific strings are baked into the templates** (`create/v1/model.go`, `create/v2/model.go`, `create/*/template/cmd/main.tmpl`): the `local.yml`/`oke-*.yml` manifests hardcode `APP`/`COMPANY` = `Celsia Internet` and `URL_API_FAILURE` = `https://api.celsiainternet.com`, and the generated `.http` scripts and OKE manifests embed literal JWTs (`@token=`, `TOKEN_API`). Generated projects inherit all of these verbatim, so treat them as placeholders to replace, not as configuration.
 
 ### Other Packages
 
@@ -177,7 +181,7 @@ Templates are Go string constants in `create/v1/model.go`, rendered by `file.Mak
 | `resilience/`            | Retry/resilience pattern; `resilience.Add(id, tag, description, tags, team, level, fn, fnArgs...)` wraps any function with automatic retries; env vars `RESILIENCE_TOTAL_ATTEMPTS` (default 3) and `RESILIENCE_TIME_ATTEMPTS` (seconds, default 30) |
 | `workflow/`              | Multi-step workflow orchestration (`Flow`, `Step`, `FnContext`) with rollback support, conditional expressions, and configurable consistency (`strong`/`eventual`)                            |
 | `instances/`             | Persistent service/workflow instance registry backed by a `linq` model in the database                                                                                                        |
-| `request/`               | HTTP client utilities for outbound calls (GET, POST, PUT, DELETE with TLS support)                                                                                                            |
+| `request/`               | HTTP client for outbound calls. Verbs `Get/Post/Put/Delete/Patch/Options` return `(*Body, Status)`; variants: `<Verb>WithTls(..., tlsConfig)`, `<Verb>WithTimeout(..., timeout, defaultValue)`, `<Verb>WithTlsTimeout(..., tlsConfig, timeout, defaultValue)`, plus generic `Http`/`HttpCtx`/`HttpWithTimeout`/`HttpCtxWithTimeout` (take `method`) and `NewTlsConfig(ca, cert, key)`. Everything funnels into `httpDo` (runs in a goroutine; `timeout=0` = wait forever). On timeout it returns `newBody(defaultValue)` + `Status{Code: 408, Message: "timeout"}`. On any other transport/parse error `*Body` is **nil** — check `Status.Ok` before calling `Body.ToJson()`/etc. (value receivers, nil panics). **Known bugs:** timeout only abandons the result (no `context.WithTimeout`, so the request lives until the 120-min client timeout), and the `multipart/form-data` branch writes to a nil `*bytes.Buffer` and panics inside the goroutine (uncatchable by callers/`Recoverer`) |
 | `jtls/`                  | Self-signed TLS certificate generation (`jtls.Create(certFile, keyFile, expire)`) used by services that need mTLS                                                                             |
 | `file/`                  | File system helpers: `MakeFolder`, `MakeFile`, `ReadFile`, `RemoveFile`, `ExistPath`, `ExtencionFile`                                                                                        |
 | `race/`                  | Concurrency race helpers                                                                                                                                                                      |
@@ -210,7 +214,7 @@ Templates are Go string constants in `create/v1/model.go`, rendered by `file.Mak
 | `NATS_HOST`, `NATS_USER`, `NATS_PASSWORD`                 | event             | —                   |
 | `SECRET`                                                  | claim             | `"1977"`            |
 | `HOST`, `RPC_HOST`, `RPC_PORT`                            | jrpc              | `localhost`, `4200` |
-| `PIPE_HOST`                                               | jrpc              | —                   |
+| `PIPE_HOST`, `PIPE_PORT`                                  | jrpc              | —, `4200`           |
 | `AUTHORIZATION_METHOD`                                    | router/middleware | —                   |
 | `RESILIENCE_TOTAL_ATTEMPTS`                               | resilience        | `3`                 |
 | `RESILIENCE_TIME_ATTEMPTS`                                | resilience        | `30` (seconds)      |
