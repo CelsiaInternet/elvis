@@ -80,7 +80,7 @@ Incluye:
 
 ```bash
 # En el módulo de tu proyecto
-go get github.com/celsiainternet/elvis@v1.1.312
+go get github.com/celsiainternet/elvis@v1.1.315
 go get github.com/celsiainternet/elvis@latest
 go run github.com/celsiainternet/elvis/cmd/install
 ```
@@ -695,14 +695,14 @@ if !status.Ok {
 user, err := body.ToJson() // también: ToItem, ToItems, ToArrayJson, ToString, ToInt, ToInt64, ToFloat, ToBool, ToTime
 ```
 
-| Familia | Firma (después del `path`/`method`) | Uso |
-| ------- | ----------------------------------- | --- |
-| `Get/Post/Put/Delete/Patch/Options` | `header[, body]` | Llamada simple |
-| `<Verbo>WithTls` | `header[, body], tlsConfig` | mTLS / CA propia (`request.NewTlsConfig(ca, cert, key)`) |
-| `<Verbo>WithTimeout` | `header[, body], timeout, defaultValue` | Con límite de tiempo |
-| `<Verbo>WithTlsTimeout` | `header[, body], tlsConfig, timeout, defaultValue` | TLS + límite de tiempo |
-| `Http` / `HttpWithTimeout` | `method, path, header, body, tlsConfig[, timeout, defaultValue]` | Método dinámico |
-| `HttpCtx` / `HttpCtxWithTimeout` | `ctx, method, path, header, body, tlsConfig[, timeout, defaultValue]` | Con `context.Context` |
+| Familia                             | Firma (después del `path`/`method`)                                   | Uso                                                      |
+| ----------------------------------- | --------------------------------------------------------------------- | -------------------------------------------------------- |
+| `Get/Post/Put/Delete/Patch/Options` | `header[, body]`                                                      | Llamada simple                                           |
+| `<Verbo>WithTls`                    | `header[, body], tlsConfig`                                           | mTLS / CA propia (`request.NewTlsConfig(ca, cert, key)`) |
+| `<Verbo>WithTimeout`                | `header[, body], timeout, defaultValue`                               | Con límite de tiempo                                     |
+| `<Verbo>WithTlsTimeout`             | `header[, body], tlsConfig, timeout, defaultValue`                    | TLS + límite de tiempo                                   |
+| `Http` / `HttpWithTimeout`          | `method, path, header, body, tlsConfig[, timeout, defaultValue]`      | Método dinámico                                          |
+| `HttpCtx` / `HttpCtxWithTimeout`    | `ctx, method, path, header, body, tlsConfig[, timeout, defaultValue]` | Con `context.Context`                                    |
 
 Comportamiento a tener en cuenta:
 
@@ -819,34 +819,34 @@ result, err := workflow.Run(
 
 ## ⚙️ Variables de Entorno
 
-| Variable                    | Paquete       | Default     | Descripción                                                      |
-| --------------------------- | ------------- | ----------- | ---------------------------------------------------------------- |
-| `DB_DRIVER`                 | jdb           | —           | `postgres`, `mysql` u `oracle`                                   |
-| `DB_HOST`                   | jdb           | —           | Host de la base de datos                                         |
-| `DB_PORT`                   | jdb           | `5432`      | Puerto de la base de datos                                       |
-| `DB_NAME`                   | jdb           | —           | Nombre de la base de datos                                       |
-| `DB_USER`                   | jdb           | —           | Usuario de la base de datos                                      |
-| `DB_PASSWORD`               | jdb           | —           | Contraseña de la base de datos                                   |
-| `DB_APPLICATION_NAME`       | jdb           | `elvis`     | Nombre de la aplicación en PostgreSQL                            |
-| `USE_CORE`                  | jdb           | `true`      | Inicializar tablas core (series, records, recycling)             |
-| `REDIS_HOST`                | cache         | —           | Host de Redis (ej. `localhost:6379`)                             |
-| `REDIS_PASSWORD`            | cache         | —           | Contraseña de Redis                                              |
-| `REDIS_DB`                  | cache         | `0`         | Número de base de datos Redis                                    |
-| `NATS_HOST`                 | event         | —           | URL de conexión NATS                                             |
-| `NATS_USER`                 | event         | —           | Usuario NATS                                                     |
-| `NATS_PASSWORD`             | event         | —           | Contraseña NATS                                                  |
-| `SECRET`                    | claim         | `1977`      | Clave de firma JWT                                               |
-| `HOST`                      | jrpc / router | `localhost` | Host del servicio actual                                         |
-| `PORT`                      | servicio      | `3400`      | Puerto HTTP                                                      |
-| `RPC_HOST`                  | jrpc          | `HOST`      | Host para RPC entre servicios                                    |
-| `RPC_PORT`                  | jrpc          | `4200`      | Puerto RPC                                                       |
-| `AUTHORIZATION_METHOD`      | router        | —           | Método RPC para verificar permisos                               |
-| `RESILIENCE_TOTAL_ATTEMPTS` | resilience    | `3`         | Intentos totales por operación                                   |
-| `RESILIENCE_TIME_ATTEMPTS`  | resilience    | `30`        | Segundos entre reintentos                                        |
-| `PIPE_HOST`                 | jrpc          | —           | Host del proxy RPC único (se combina con `PIPE_PORT`)            |
-| `PIPE_PORT`                 | jrpc          | `4200`      | Puerto del proxy RPC único                                       |
-| `STAGE`                     | event         | `local`     | Prefijo de entorno para canal pipe (`pipe:<stage>:<canal>`)      |
-| `PRODUCTION`                | dt            | `true`      | Habilita persistencia en Redis del cache de objetos `dt.Object`  |
+| Variable                    | Paquete       | Default     | Descripción                                                     |
+| --------------------------- | ------------- | ----------- | --------------------------------------------------------------- |
+| `DB_DRIVER`                 | jdb           | —           | `postgres`, `mysql` u `oracle`                                  |
+| `DB_HOST`                   | jdb           | —           | Host de la base de datos                                        |
+| `DB_PORT`                   | jdb           | `5432`      | Puerto de la base de datos                                      |
+| `DB_NAME`                   | jdb           | —           | Nombre de la base de datos                                      |
+| `DB_USER`                   | jdb           | —           | Usuario de la base de datos                                     |
+| `DB_PASSWORD`               | jdb           | —           | Contraseña de la base de datos                                  |
+| `DB_APPLICATION_NAME`       | jdb           | `elvis`     | Nombre de la aplicación en PostgreSQL                           |
+| `USE_CORE`                  | jdb           | `true`      | Inicializar tablas core (series, records, recycling)            |
+| `REDIS_HOST`                | cache         | —           | Host de Redis (ej. `localhost:6379`)                            |
+| `REDIS_PASSWORD`            | cache         | —           | Contraseña de Redis                                             |
+| `REDIS_DB`                  | cache         | `0`         | Número de base de datos Redis                                   |
+| `NATS_HOST`                 | event         | —           | URL de conexión NATS                                            |
+| `NATS_USER`                 | event         | —           | Usuario NATS                                                    |
+| `NATS_PASSWORD`             | event         | —           | Contraseña NATS                                                 |
+| `SECRET`                    | claim         | `1977`      | Clave de firma JWT                                              |
+| `HOST`                      | jrpc / router | `localhost` | Host del servicio actual                                        |
+| `PORT`                      | servicio      | `3400`      | Puerto HTTP                                                     |
+| `RPC_HOST`                  | jrpc          | `HOST`      | Host para RPC entre servicios                                   |
+| `RPC_PORT`                  | jrpc          | `4200`      | Puerto RPC                                                      |
+| `AUTHORIZATION_METHOD`      | router        | —           | Método RPC para verificar permisos                              |
+| `RESILIENCE_TOTAL_ATTEMPTS` | resilience    | `3`         | Intentos totales por operación                                  |
+| `RESILIENCE_TIME_ATTEMPTS`  | resilience    | `30`        | Segundos entre reintentos                                       |
+| `PIPE_HOST`                 | jrpc          | —           | Host del proxy RPC único (se combina con `PIPE_PORT`)           |
+| `PIPE_PORT`                 | jrpc          | `4200`      | Puerto del proxy RPC único                                      |
+| `STAGE`                     | event         | `local`     | Prefijo de entorno para canal pipe (`pipe:<stage>:<canal>`)     |
+| `PRODUCTION`                | dt            | `true`      | Habilita persistencia en Redis del cache de objetos `dt.Object` |
 
 ---
 

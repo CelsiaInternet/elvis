@@ -5,8 +5,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-# Build
+# Build / static checks (both currently pass cleanly)
 go build ./...
+go vet ./...
 
 # Run tests
 go test ./...
@@ -29,6 +30,10 @@ go build -o bin/jdb ./cmd/jdb
 ./version.sh --minor     # minor: v1.X.0
 ./version.sh --major     # major: vX.0.0
 ```
+
+Test coverage is very thin: the only test files are `queue/example_test.go` and `jquery/test/*_test.go` (a separate package under `jquery/test/`, so run it with `go test ./jquery/...`, not `./jquery`). For most packages, `go test ./...` only proves they compile; `go build`/`go vet` are the real check.
+
+`version.sh` is outward-facing: it creates an annotated tag and immediately runs `git push origin --tags`. Only run it when the user asks for a release. Before tagging, it `sed`-replaces the current tag string with the new one in `README.md` (e.g. the `go get github.com/celsiainternet/elvis@vX.Y.Z` line), but it **does not commit** that edit. The tag therefore points at a commit whose README still shows the old version, and the working tree is left with a modified `README.md` that has to be committed separately.
 
 ## Code style
 
