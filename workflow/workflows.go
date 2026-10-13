@@ -136,10 +136,6 @@ func (s *WorkFlows) newInstance(tag, id string, tags et.Json, step int, createdB
 		isNew:      true,
 	}
 
-	if s.isDebug {
-		logs.Debugf("newInstance tag:%s id:%s", tag, id)
-	}
-
 	return result, nil
 }
 
@@ -195,10 +191,6 @@ func (s *WorkFlows) loadInstance(id, tag string) (*Instance, error) {
 		dest.goTo = -1
 		s.Add(dest)
 
-		if s.isDebug {
-			logs.Debugf("loadInstance:4 instance:%s", dest.ToString())
-		}
-
 		return dest, nil
 	}
 
@@ -251,10 +243,6 @@ func (s *WorkFlows) runInstance(instanceId, tag string, step int, tags, ctx et.J
 	}
 
 	logs.Logf(packageName, "runInstance:%s tag:%s", instanceId, tag)
-	if s.isDebug {
-		logs.Debugf("runInstance:3 instance:%s", instance.ToString())
-	}
-
 	return result, err
 }
 
