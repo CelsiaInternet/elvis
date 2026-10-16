@@ -243,8 +243,12 @@ func (s Json) ValStr(_default string, atribs ...string) string {
 	switch v := val.(type) {
 	case string:
 		return v
+	case int, int64, int8:
+		return fmt.Sprintf(`%d`, v)
+	case float64, float32:
+		return fmt.Sprintf(`%f`, v)
 	default:
-		return strs.Format(`%v`, v)
+		return fmt.Sprintf(`%v`, v)
 	}
 }
 
@@ -609,7 +613,13 @@ func (s Json) Json(atrib string) Json {
 		result := Json{
 			atrib: v,
 		}
-
+		return result
+	case string:
+		var result Json
+		err := json.Unmarshal([]byte(v), &result)
+		if err != nil {
+			return Json{}
+		}
 		return result
 	default:
 		logs.Errorf("json.Json", "Atrib:%s Type:%v Value:%v", atrib, reflect.TypeOf(v), v)
