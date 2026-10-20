@@ -246,7 +246,7 @@ func (s Json) ValStr(_default string, atribs ...string) string {
 	case int, int64, int8:
 		return fmt.Sprintf(`%d`, v)
 	case float64, float32:
-		return fmt.Sprintf(`%f`, v)
+		return fmt.Sprintf(`%g`, v)
 	default:
 		return fmt.Sprintf(`%v`, v)
 	}

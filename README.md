@@ -80,7 +80,7 @@ Incluye:
 
 ```bash
 # En el módulo de tu proyecto
-go get github.com/celsiainternet/elvis@v1.1.316
+go get github.com/celsiainternet/elvis@v1.1.317
 go get github.com/celsiainternet/elvis@latest
 go run github.com/celsiainternet/elvis/cmd/install
 ```
