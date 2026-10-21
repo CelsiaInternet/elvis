@@ -616,10 +616,14 @@ func (s Json) Json(atrib string) Json {
 		return result
 	case string:
 		var result Json
-		err := json.Unmarshal([]byte(v), &result)
-		if err != nil {
+
+		decoder := json.NewDecoder(strings.NewReader(v))
+		decoder.UseNumber()
+
+		if err := decoder.Decode(&result); err != nil {
 			return Json{}
 		}
+
 		return result
 	default:
 		logs.Errorf("json.Json", "Atrib:%s Type:%v Value:%v", atrib, reflect.TypeOf(v), v)
