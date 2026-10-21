@@ -279,6 +279,25 @@ func ITEMS(w http.ResponseWriter, r *http.Request, statusCode int, dt et.Items) 
 }
 
 /**
+* LIST: Responde una página et.List con ok (rows, all, count, page, start, end y result)
+* @param w http.ResponseWriter
+* @param r *http.Request
+* @param statusCode int
+* @param dt et.List
+* @return error
+**/
+func LIST(w http.ResponseWriter, r *http.Request, statusCode int, dt et.List) error {
+	body := dt.ToJson()
+	body["ok"] = true
+	e, err := json.Marshal(body)
+	if err != nil {
+		return err
+	}
+
+	return WriteResponse(w, statusCode, e)
+}
+
+/**
 * HTTPError
 * @param w http.ResponseWriter
 * @param r *http.Request

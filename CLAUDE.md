@@ -136,7 +136,7 @@ TCP-based RPC for inter-service calls using Go's `net/rpc`; Redis is used only t
 - `jrpc.Mount(services)` — registers a struct's exported methods as RPC endpoints; method keys are `<package>.<Struct>.<Method>` (exactly 3 dot-separated parts)
 - `jrpc.Call()`, `CallJson()`, `CallItem()`, `CallItems()`, `CallList()`, `CallPermitios()` — typed call helpers that dispatch to the right TCP host via Redis-stored solver registry
 - `PIPE_HOST` env var (`host:port`) overrides solver lookup and routes all RPC calls through a single proxy host
-- Used by the authorization middleware to call `AUTHORIZATION_METHOD` env var
+- `jrpc.LoadAuthorization(method)` registers `AuthorStore` as the `middleware.Authorization` store: `Author` calls the RPC `method` (default `AUTHORIZATION_METHOD` env var, else `catalog.Services.Author`) with `project_id`, `profile_id`, `method`, `path` and reads `result.authorized`; answers are cached in `mem` for 10 s per replica. It lives in `jrpc` because `jrpc` already imports `middleware`
 
 ### Dependency Installer (`cmd/install/`)
 

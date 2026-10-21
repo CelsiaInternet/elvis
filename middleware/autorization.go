@@ -14,9 +14,6 @@ import (
 
 type Store interface {
 	Author(projectId, profileId, method, path string) (bool, error)
-	RemoveAuthor(projectId, profileId, method, path string) error
-	SetAuthor(projectId, profileId, method, path string) error
-	SetPath(method, path string) error
 }
 
 var store Store
@@ -36,14 +33,14 @@ func SetAuthorizationStore(s Store) {
 **/
 func Authorization(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		appName, ok := r.Header["AppName"]
-		if !ok {
-			response.PreconditionRequired(w, r, "AppName")
+		if store == nil {
+			response.InternalServerError(w, r, errors.New("Author store is not set"))
 			return
 		}
 
-		if store != nil {
-			response.InternalServerError(w, r, errors.New("Author store is not set"))
+		appName := r.Header.Get("AppName")
+		if appName == "" {
+			response.PreconditionRequired(w, r, "AppName")
 			return
 		}
 
@@ -64,7 +61,7 @@ func Authorization(next http.Handler) http.Handler {
 			return
 		}
 
-		ok, err = store.Author(clm.ProjectId, clm.ProfileId, r.Method, r.URL.Path)
+		ok, err := store.Author(clm.ProjectId, clm.ProfileId, r.Method, r.URL.Path)
 		if err != nil {
 			response.InternalServerError(w, r, err)
 			return
