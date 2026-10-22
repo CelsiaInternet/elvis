@@ -123,8 +123,8 @@ En error el `*Body` es `nil`: comprueba `status.Ok` antes de `body.ToJson()`. Un
 provoca un panic.
 
 **Routing (`router/`):** usa siempre `router.PublicRoute`, `ProtectRoute`,
-`AuthorizationRoute`, `EphemeralRoute` o `With` en vez de registrar rutas
-directamente en `chi.Mux` — estas funciones publican la ruta al API Gateway vía NATS
+`AuthorizationRoute` o `With` en vez de registrar rutas directamente en
+`chi.Mux` — estas funciones publican la ruta al API Gateway vía NATS
 (`apigateway/set/resolve`) automáticamente; registrar con `r.Get`/`r.Post` a mano
 salta ese registro y la ruta queda invisible para el gateway.
 
@@ -138,7 +138,7 @@ salta ese registro y la ruta queda invisible para el gateway.
 - [ ] Sustituir respuestas HTTP ad-hoc por `response.JSON/ITEM/ITEMS/HTTPError/
       HTTPAlert/Unauthorized/Forbidden/Stream`.
 - [ ] Sustituir routing manual de chi por `router.PublicRoute/ProtectRoute/
-      AuthorizationRoute/EphemeralRoute` (ver punto 3).
+      AuthorizationRoute` (ver punto 3).
 - [ ] Sustituir JWT casero por `claim.NewToken`/`claim.ValidToken` +
       `middleware.Autentication` (+ `middleware.Authorization` si hay permisos).
 - [ ] Si el proyecto emite/consume eventos, migrar a `event.Publish` +

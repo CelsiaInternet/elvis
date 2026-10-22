@@ -634,9 +634,6 @@ router.ProtectRoute(r, "DELETE", "/{id}", eliminar,   packageName, packagePath, 
 // Con autenticación + verificación de permisos
 router.AuthorizationRoute(r, "GET", "/admin", adminHandler, packageName, packagePath, host)
 
-// Con token efímero
-router.EphemeralRoute(r, "GET", "/descarga/{id}", descargar, packageName, packagePath, host)
-
 // Con middlewares personalizados
 router.With(r, "POST", "/upload", []func(http.Handler)http.Handler{miMiddleware}, upload, packageName, packagePath, host)
 ```

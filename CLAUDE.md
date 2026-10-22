@@ -116,14 +116,14 @@ Dual-mode event system:
 - `claim.Claim` — JWT payload struct with user identity fields (ID, App, Name, Username, Device, ProjectId, ProfileId, Tag)
 - `claim.NewToken()` / `claim.ValidToken()` — JWT generation and validation; tokens stored in Redis for invalidation
 - `SECRET` env var is the JWT signing key (defaults to `"1977"`)
-- Middleware stack in `middleware/`: `Autentication` (JWT validation), `Authorization` (permission check via jRPC), `Ephemeral` (short-lived tokens), `Cors`, `Logger`, `RequestId`, `Recoverer`, `Telemetry`
+- Middleware stack in `middleware/`: `Autentication` (JWT validation; puts the claim, including `ProjectId`/`ProfileId`, in the context), `Authorization` (requires the `AppName` header, 428 without it, stored as a string; asks the `middleware.Store` set with `SetAuthorizationStore`, e.g. `jrpc.LoadAuthorization`), `Ephemeral` (short-lived tokens), `Cors`, `Logger`, `RequestId`, `Recoverer`, `Telemetry`
 - `claim.ClientId(r)`, `claim.GetClient(r)` — extract identity from authenticated requests
 
 ### HTTP Router (`router/`, `response/`)
 
 Built on **go-chi/chi v5**:
 
-- Route registration helpers: `router.PublicRoute()`, `router.ProtectRoute()` (requires auth), `router.EphemeralRoute()`, `router.AuthorizationRoute()` (auth + permissions), `router.With()` (custom middleware)
+- Route registration helpers: `router.PublicRoute()`, `router.ProtectRoute()` (requires auth), `router.AuthorizationRoute()` (auth + permissions), `router.With()` (custom middleware)
 - All routes automatically publish themselves to the API Gateway via NATS (`apigateway/set/resolve`)
 - `response` package provides HTTP helpers: `ITEM`, `ITEMS`, `JSON`, `HTTPError`, `HTTPAlert`, `Unauthorized`, `Forbidden`, `Stream` (streaming paginated JSON)
 - `response.GetBody(r)` — parses request body as `et.Json`; `response.GetQuery(r)` — query params; `response.GetParam(r, key)` — chi URL params
