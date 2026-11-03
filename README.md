@@ -91,7 +91,7 @@ Para generar un nuevo microservicio con la estructura base de Elvis:
 go run github.com/celsiainternet/elvis/cmd/create go
 ```
 
-> Tanto `cmd/install` como la opción **Project** de `cmd/create` (y de `cmd/jdb`)
+> Tanto `cmd/install` como la opción **Project** de `cmd/create`
 > instalan automáticamente un marco de trabajo para agentes (Claude Code, Codex
 > y compatibles): copian las guías en `.claude/guides/elvis/` y agregan un
 > bloque en `CLAUDE.md` y `AGENTS.md` que las referencia. Volver a ejecutarlo
@@ -863,9 +863,9 @@ go test ./paquete/... -run NombreTest -v
 # Formatear código y ejecutar CLI de scaffolding (create/v1)
 gofmt -w . && go run ./cmd/create go
 
-# CLI de scaffolding alternativo (create/v2, layout internal/models + internal/services);
-# pese al nombre del paquete, no es una herramienta de operaciones de base de datos
-gofmt -w . && go run ./cmd/jdb go
+# Para proyectos que usan el ORM jdb (layout internal/models + internal/services),
+# el generador vive en el repo jdb
+go run github.com/celsiainternet/jdb/cmd/create go
 
 # Actualizar dependencias
 go mod tidy
@@ -882,13 +882,11 @@ elvis/
 ├── cache/          # Cliente Redis (Set, Get, Delete, Pub/Sub)
 ├── claim/          # JWT: generación, validación, invalidación
 ├── cmd/
-│   ├── create/     # CLI scaffolding de microservicios (usa create/v1)
-│   └── jdb/        # CLI scaffolding alternativo (usa create/v2, pese al nombre del paquete)
+│   └── create/     # CLI scaffolding de microservicios (usa create/v1)
 ├── config/         # Carga de configuración
 ├── console/        # Logging interno de bajo nivel
 ├── create/
-│   ├── v1/         # Generador de proyectos v1 (usado por cmd/create)
-│   └── v2/         # Generador de proyectos v2, layout internal/models + internal/services (usado por cmd/jdb)
+│   └── v1/         # Generador de proyectos (usado por cmd/create)
 ├── crontab/        # Tareas programadas (cron)
 ├── dt/             # Contador de pasos por resiliencia y cache de objetos respaldado en Redis
 ├── envar/          # Helpers de variables de entorno

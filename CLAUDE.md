@@ -149,14 +149,9 @@ The pinned versions are **manually kept in sync with `go.mod` and can drift**: e
 
 `agentsguide/` holds the Spanish-language framework that tells coding agents how to write code on top of elvis (and jdb) so it stays readable, maintainable and scalable: `MARCO.md` (priority order, decision rules such as jdb vs `linq`, `console` vs `logs`, error convention, version upgrades), `ELVIS.md` ("for X use Y, not Z" catalog with verified signatures, env vars, scaffolding) and `REVISION.md` (review checklist). They are embedded with `//go:embed` in `guide.go`.
 
-<<<<<<< HEAD
-`Install()` is wired into two places so it fires wherever a consuming project touches elvis: `cmd/install/main.go` (after the dependency loop — covers projects that already exist) and `create/v1`'s `MkProject` (the "Project" scaffolding option — covers newly generated projects). It is **not** called from `MkMicroservice`, `MkMolue`, or `MkRpc` directly, only from `MkProject`, which calls `MkMicroservice` itself.
-=======
 `agentsguide.Install()` writes them to `.claude/guides/elvis/` in the current directory and upserts a block delimited by `<!-- elvis:agents-guide:start <version> -->` / `<!-- elvis:agents-guide:end -->` in `CLAUDE.md` (as `@` imports, which Claude Code loads) and `AGENTS.md` (as a reading list, for Codex and other agents). Re-running it overwrites the guides and replaces the block, so it also migrates the old single-block installs; content outside the markers is never touched. The version comes from `runtime/debug.ReadBuildInfo` (`devel` in workspace mode). The generic `InstallGuide(name, modulePath, fs, names)` is exported so `jdb/agentsguide` installs `JDB.md` the same way under `.claude/guides/jdb/` with `jdb:` markers.
 
-> > > > > > > main
-
-`Install()` is called from `cmd/install/main.go` (after the dependency loop; it also prints a hint to run `jdb/cmd/install` when the project's `go.mod` requires jdb) and from `create/v1` + `create/v2`'s `MkProject`.
+`Install()` is called from `cmd/install/main.go` (after the dependency loop; it also prints a hint to run `jdb/cmd/install` when the project's `go.mod` requires jdb) and from `create/v1`'s `MkProject`.
 
 When editing these guides, re-verify every signature or constant against the source before writing it down: they are meant to be the trustworthy reference when other docs drift. Changing `InstallGuide`'s signature breaks `jdb/agentsguide`.
 
@@ -174,7 +169,7 @@ Whether a `schema` argument is supplied determines the template family: non-empt
 
 Templates are Go string constants in `create/v1/model.go`, rendered by `file.MakeFile(folder, name, template, args...)`, which does positional `$1`/`$2`/... substitution (see `params()` in `file/file.go`) — **not** `text/template`. `MakeFile` is idempotent: it silently no-ops if the target file already exists, so re-running a generator never overwrites hand-edited output.
 
-**Only `create/v1` exists on this branch** (`create/v2` and `cmd/jdb` were removed on `ia`). Project and Microservice must run where `go.mod` already exists: the module path comes from it (`utility.GoMod`), and the CLI stops with a hint to run `go mod init` otherwise.
+**Only `create/v1` exists here** (`create/v2` and `cmd/jdb` were removed). Projects that use the standalone `jdb` ORM are scaffolded with `go run github.com/celsiainternet/jdb/cmd/create go`, which lives in the `jdb` repo and generates the `internal/models` + `internal/services` layout. Project and Microservice must run where `go.mod` already exists: the module path comes from it (`utility.GoMod`), and the CLI stops with a hint to run `go mod init` otherwise.
 
 **What the v1 templates guarantee** (verified by generating both variants and running them against Postgres/Redis/NATS):
 
@@ -217,17 +212,9 @@ Templates are Go string constants in `create/v1/model.go`, rendered by `file.Mak
 | `queue/`         | Generic in-process batching queue (`queue.Queue[T]`); groups `Push`ed items and dispatches to a handler on max batch size or timeout, whichever comes first                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | `jquery/`        | Translates an `et.Json` query description (from/join/select/wheres/group_by/having/limit/order_by) into a SQL `SELECT`; dialect is pluggable via `jquery/dialect` (Register/Get factory), defaults to PostgreSQL — see the package doc comment in `jquery/jquery.go` for the full JSON query format                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `xls/`           | Excel read/write helpers on top of `xuri/excelize` (`xls.ReadXls`/`ReadXlsFile`/`ReadXlsMultipart`, `xls.NewXls(...).ToFile/.ToWriter/.ToHttp`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-
-<<<<<<< HEAD
-| `agentsguide/` | Embeds `ELVIS_AGENTS.md` (agent-facing operational guide) and exposes `Install()`, which writes/appends it into a consuming project's `CLAUDE.md` — see "Agents Framework Guide" above |
+| `agentsguide/` | Agents framework (`MARCO.md`, `ELVIS.md`, `REVISION.md`) and `Install()`/`InstallGuide()`, which install it into a consuming project — see "Agents Framework Guide" above |
 | `create/v1` | CLI scaffolding for new microservice projects — see "Project Scaffolding" above |
 | `cmd/create` | CLI entry point for `create/v1`; `cmd/crontab`, `cmd/flow`, `cmd/install`, `cmd/jql` are example/demo mains for the corresponding packages |
-=======
-| `agentsguide/` | Agents framework (`MARCO.md`, `ELVIS.md`, `REVISION.md`) and `Install()`/`InstallGuide()`, which install it into a consuming project — see "Agents Framework Guide" above |
-| `create/v1`, `create/v2` | CLI scaffolding for new microservice projects — see "Project Scaffolding" above for which `cmd/` entry point drives which version |
-| `cmd/create`, `cmd/jdb` | CLI entry points for `create/v1` and `create/v2` respectively (`cmd/jdb` is misleadingly named — it is not a database tool); `cmd/crontab`, `cmd/flow`, `cmd/install`, `cmd/jql` are example/demo mains for the corresponding packages |
-
-> > > > > > > main
 
 ### Key Environment Variables
 

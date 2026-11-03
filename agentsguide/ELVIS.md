@@ -80,11 +80,11 @@ En error el `*Body` es `nil`: comprueba `status.Ok` antes de `body.ToJson()`. Un
 
 ### 5. Proyecto nuevo
 
-1. Generador según el ORM (ver `MARCO.md` §2): `cmd/create` (linq) o `cmd/jdb` (jdb). Con `cmd/jdb`, agrega `github.com/celsiainternet/jdb` al `go.mod`: `cmd/install` no lo hace. Menú del generador: **Project** (proyecto completo), **Microservice** (servicio dentro de un repo existente), **Modelo** (modelo + handler CRUD en un paquete existente), **Rpc** (stub RPC en un paquete existente).
+1. Generador según el ORM (ver `MARCO.md` §2): `go run github.com/celsiainternet/elvis/cmd/create go` (linq) o `go run github.com/celsiainternet/jdb/cmd/create go` (jdb). Con el de jdb, agrega `github.com/celsiainternet/jdb` al `go.mod`: `cmd/install` de elvis no lo hace. Ejecútalo donde ya exista el `go.mod`: el generador toma de ahí el módulo. Menú del generador: **Project** (proyecto completo), **Microservice** (servicio dentro de un repo existente), **Modelo** (modelo + handler CRUD en un paquete existente), **Rpc** (stub RPC en un paquete existente).
 2. `go run github.com/celsiainternet/elvis/cmd/install` para fijar dependencias e instalar esta guía. La lista de versiones de `cmd/install` se mantiene a mano y puede quedar atrás: si `go build ./...` falla por una versión incompatible, resuelve ese módulo con `go get <módulo>@latest`.
-3. Las plantillas traen valores de Celsia (`APP`, `COMPANY`, `URL_API_FAILURE`) y JWT de ejemplo en `scripts/*.http` y `deployments/*`: son placeholders, reemplázalos.
+3. Las plantillas traen valores de Celsia (`APP`, `COMPANY`, `URL_API_FAILURE`): son placeholders, reemplázalos. `scripts/*.http` trae `@token=` vacío: usa un JWT local y no lo subas al repositorio.
 4. Los `$ROLE`, `$NS`, `$PORT`, `$IMAGE`… de `oke-*.yml` los resuelve el pipeline; no los rellenes a mano.
-5. Después de generar un modelo, registra sus rutas en el router del servicio y llama a `Define<Modelo>(db)` en el arranque: el generador no lo hace.
+5. Con `cmd/create`, la opción **Modelo** agrega `Define<Modelo>(db)` a `initModels`, pero las rutas no: cópialas del final de `h<Modelo>.go` a `Routes()` en `router.go`. Si el paquete se creó sin schema, llama a `initModels(c.Db)` desde `Controller.Init`. Después corre `go mod tidy`.
 
 Layout que genera `cmd/create` (linq):
 
@@ -92,13 +92,13 @@ Layout que genera `cmd/create` (linq):
 cmd/<servicio>/                  main.go + Dockerfile
 internal/service/<servicio>/     service.go (arma el router, cache/db/event.Load)
 internal/service/<servicio>/v1/  api.go (monta pkg.Router en pkg.PackagePath)
-pkg/<servicio>/                  controller.go, router.go, event.go, msg.go, config.go
-                                 (+ model.go, schema.go, h<Modelo>.go, rpc.go si hay schema)
+pkg/<servicio>/                  controller.go, router.go, event.go, msg.go, config.go, rpc.go
+                                 (+ model.go, schema.go, h<Modelo>.go si hay schema)
 deployments/<servicio>/          local.yml, oke-template.yml, oke-statefulset-template.yml
 scripts/<servicio>.http          peticiones de ejemplo
 ```
 
-`cmd/jdb` genera en cambio `internal/models/<dominio>/` (modelos jdb), `internal/services/<servicio>/` y `pkg/<servicio>/router-<modelo>.go`.
+El generador de jdb genera en cambio `internal/models/<dominio>/` (modelos jdb), `internal/services/<servicio>/` y `pkg/<servicio>/router-<modelo>.go`.
 
 ### 6. Variables de entorno
 
