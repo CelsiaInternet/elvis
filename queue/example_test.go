@@ -6,7 +6,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/celsiainternet/elvis/logs"
 	"github.com/celsiainternet/elvis/queue"
 )
 
@@ -26,7 +25,6 @@ func Example_queue() {
 
 	handler := func(ctx context.Context, batch []int) error {
 		mu.Lock()
-		logs.Debugf("batch: %v", batch)
 		batches = append(batches, batch)
 		mu.Unlock()
 		wg.Done()

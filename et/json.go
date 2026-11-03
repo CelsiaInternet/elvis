@@ -179,13 +179,12 @@ func (s Json) ToByte() []byte {
 }
 
 func (s Json) ToString() string {
-	bt, err := json.Marshal(s)
+	jsonData, err := json.Marshal(s)
 	if err != nil {
 		return ""
 	}
 
-	result := string(bt)
-
+	result := string(jsonData)
 	return result
 }
 
@@ -244,8 +243,12 @@ func (s Json) ValStr(_default string, atribs ...string) string {
 	switch v := val.(type) {
 	case string:
 		return v
+	case int, int64, int8:
+		return fmt.Sprintf(`%d`, v)
+	case float64, float32:
+		return fmt.Sprintf(`%g`, v)
 	default:
-		return strs.Format(`%v`, v)
+		return fmt.Sprintf(`%v`, v)
 	}
 }
 
@@ -610,6 +613,16 @@ func (s Json) Json(atrib string) Json {
 		result := Json{
 			atrib: v,
 		}
+		return result
+	case string:
+		var result Json
+
+		decoder := json.NewDecoder(strings.NewReader(v))
+		decoder.UseNumber()
+
+		if err := decoder.Decode(&result); err != nil {
+			return Json{}
+		}
 
 		return result
 	default:
@@ -845,4 +858,17 @@ func (j Json) SetNested(keys []string, value interface{}) {
 	}
 
 	m[keys[len(keys)-1]] = value
+}
+
+/**
+* GetItem
+* @param items []Json, index int
+* @return Json
+**/
+func GetItem(items []Json, index int) (Json, bool) {
+	if index < 0 || index >= len(items) {
+		return Json{}, false
+	}
+
+	return items[index], true
 }

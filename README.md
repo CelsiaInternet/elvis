@@ -34,6 +34,7 @@
 - [Eventos (event)](#-eventos-event)
 - [Autenticación y Autorización (claim / middleware)](#-autenticación-y-autorización-claim--middleware)
 - [HTTP Router y Respuestas (router / response)](#-http-router-y-respuestas-router--response)
+- [Cliente HTTP saliente (request)](#-cliente-http-saliente-request)
 - [Resiliencia](#-resiliencia)
 - [Workflows](#-workflows)
 - [Variables de Entorno](#-variables-de-entorno)
@@ -59,7 +60,10 @@ Incluye:
 - 🔁 **Sistema de resiliencia** con reintentos automáticos
 - 📋 **Workflows** con pasos, rollback y expresiones condicionales
 - 📅 **Tareas programadas** (Crontab)
-- 🛠️ **CLI de scaffolding** para generar nuevos proyectos microservicio
+- 🛠️ **CLI de scaffolding** para generar nuevos proyectos microservicio, incluyendo
+  `deployments/<servicio>/` con `local.yml` (docker-compose) y manifiestos de
+  Kubernetes (`oke-template.yml` para `Deployment`, `oke-statefulset-template.yml`
+  para `StatefulSet`)
 
 ---
 
@@ -76,7 +80,7 @@ Incluye:
 
 ```bash
 # En el módulo de tu proyecto
-go get github.com/celsiainternet/elvis@v1.1.288
+go get github.com/celsiainternet/elvis@v1.1.321
 go get github.com/celsiainternet/elvis@latest
 go run github.com/celsiainternet/elvis/cmd/install
 ```
@@ -86,6 +90,13 @@ Para generar un nuevo microservicio con la estructura base de Elvis:
 ```bash
 go run github.com/celsiainternet/elvis/cmd/create go
 ```
+
+> Tanto `cmd/install` como la opción **Project** de `cmd/create` (y de `cmd/jdb`)
+> agregan automáticamente un marco de trabajo para agentes (Claude Code y
+> compatibles) en el `CLAUDE.md` del proyecto — lo crean si no existe, o le
+> anexan la sección una sola vez si ya hay uno. Así, los agentes que trabajen
+> creando o refactorizando el proyecto reconocen las convenciones de Elvis sin
+> pasos adicionales. Ver [`agentsguide/`](agentsguide/ELVIS_AGENTS.md).
 
 ---
 
@@ -127,7 +138,7 @@ func main() {
 
     // Crear router chi
     r := chi.NewRouter()
-    r.Use(middleware.Cors)
+    r.Use(middleware.AllowAll(nil).Handler)
     r.Use(middleware.Logger)
 
     host        := envar.GetStr("localhost", "HOST")
@@ -341,23 +352,23 @@ item, err := modelo.Insert(et.Json{
     jdb.KEY:  utility.UUID(),
     "NOMBRE": "Juan Pérez",
     "EMAIL":  "juan@ejemplo.com",
-}).One()
+}).CommandOne()
 
 // UPDATE
 item, err := modelo.Update(et.Json{"NOMBRE": "Juan Pablo"}).
     Where(modelo.Col(jdb.KEY).Eq(id)).
-    One()
+    CommandOne()
 
 // UPSERT
 item, err := modelo.Upsert(et.Json{
     jdb.KEY:  id,
     "NOMBRE": "Juan",
-}).One()
+}).CommandOne()
 
 // DELETE
 item, err := modelo.Delete().
     Where(modelo.Col(jdb.KEY).Eq(id)).
-    One()
+    CommandOne()
 
 // SELECT múltiple
 items, err := modelo.Select().
@@ -365,17 +376,23 @@ items, err := modelo.Select().
     OrderBy(modelo.Col("NOMBRE"), true).
     All()
 
-// SELECT paginado
+// SELECT paginado (et.Items, sin conteo total)
 items, err := modelo.Select().
     Where(modelo.Col("_STATE").Eq("0")).
-    Page(1, 20).
-    List()
+    Page(1, 20)
+
+// SELECT paginado con metadatos de paginación (et.List: rows, all, count, page...)
+list, err := modelo.Select().
+    Where(modelo.Col("_STATE").Eq("0")).
+    List(1, 20)
 
 // SELECT uno
 item, err := modelo.Select().
     Where(modelo.Col(jdb.KEY).Eq(id)).
-    One()
+    First()
 ```
+
+> Los comandos de escritura (`Insert`, `Update`, `Upsert`, `Delete`) se ejecutan con `.Command()` (`et.Items`) o `.CommandOne()` (`et.Item`, primer resultado); las consultas (`Select`, `Data`) usan `.All()`, `.Page(page, rows)`, `.List(page, rows)` o `.First()`, no `.One()`.
 
 ### Condiciones disponibles
 
@@ -520,8 +537,8 @@ import (
 // Token básico (almacenado en Redis para soporte de logout)
 token, err := claim.NewToken(userId, "mi-app", "Juan", "juan@e.com", "web", 24*time.Hour)
 
-// Token con autorización (incluye projectId y profileTp)
-token, err := claim.NewAuthorization(userId, "mi-app", "Juan", "juan@e.com", "web", projectId, profileTp, 8*time.Hour)
+// Token con autorización (incluye projectId y profileId)
+token, err := claim.NewAuthorization(userId, "mi-app", "Juan", "juan@e.com", "web", projectId, profileId, 8*time.Hour)
 
 // Token efímero (vida corta, requiere tag descriptivo)
 token, err := claim.NewEphemeralToken(userId, "mi-app", "Juan", "juan@e.com", "web", "descarga-reporte", 15*time.Minute)
@@ -553,7 +570,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
     nombre    := claim.ClientName(r)
     username  := claim.Username(r)
     projectId := claim.ProjectId(r)
-    profileTp := claim.ProfileTp(r)
+    profileId := claim.ProfileId(r)
     device    := claim.Device(r)
     tag       := claim.Tag(r)
 
@@ -571,11 +588,10 @@ import (
 )
 
 r := chi.NewRouter()
-r.Use(middleware.Cors)
+r.Use(middleware.AllowAll(nil).Handler) // CORS (origins vacío = permitir todos)
 r.Use(middleware.Logger)
 r.Use(middleware.Recoverer)
-r.Use(middleware.RequestId)
-r.Use(middleware.Telemetry)
+r.Use(middleware.RequestID)
 
 // Ruta con autenticación
 r.With(middleware.Autentication).Get("/perfil", handler)
@@ -618,9 +634,6 @@ router.ProtectRoute(r, "DELETE", "/{id}", eliminar,   packageName, packagePath, 
 // Con autenticación + verificación de permisos
 router.AuthorizationRoute(r, "GET", "/admin", adminHandler, packageName, packagePath, host)
 
-// Con token efímero
-router.EphemeralRoute(r, "GET", "/descarga/{id}", descargar, packageName, packagePath, host)
-
 // Con middlewares personalizados
 router.With(r, "POST", "/upload", []func(http.Handler)http.Handler{miMiddleware}, upload, packageName, packagePath, host)
 ```
@@ -650,9 +663,54 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
     // Streaming paginado (útil para exportaciones grandes)
     response.Stream(w, r, 100, func(page, rows int) (et.Items, error) {
-        return modelo.Select().Page(page, rows).List()
+        return modelo.Select().Page(page, rows)
     })
 }
+```
+
+---
+
+## 🌍 Cliente HTTP saliente (`request`)
+
+Cliente para llamar a otros servicios. Todas las funciones devuelven `(*request.Body, request.Status)`.
+
+```go
+import (
+    "time"
+
+    "github.com/celsiainternet/elvis/et"
+    "github.com/celsiainternet/elvis/request"
+)
+
+header := et.Json{"Content-Type": "application/json", "Authorization": "Bearer " + token}
+
+body, status := request.Post("https://api.example.com/users", header, et.Json{"name": "Ana"})
+if !status.Ok {
+    return fmt.Errorf("%d %s", status.Code, status.Message)
+}
+
+user, err := body.ToJson() // también: ToItem, ToItems, ToArrayJson, ToString, ToInt, ToInt64, ToFloat, ToBool, ToTime
+```
+
+| Familia                             | Firma (después del `path`/`method`)                                   | Uso                                                      |
+| ----------------------------------- | --------------------------------------------------------------------- | -------------------------------------------------------- |
+| `Get/Post/Put/Delete/Patch/Options` | `header[, body]`                                                      | Llamada simple                                           |
+| `<Verbo>WithTls`                    | `header[, body], tlsConfig`                                           | mTLS / CA propia (`request.NewTlsConfig(ca, cert, key)`) |
+| `<Verbo>WithTimeout`                | `header[, body], timeout, defaultValue`                               | Con límite de tiempo                                     |
+| `<Verbo>WithTlsTimeout`             | `header[, body], tlsConfig, timeout, defaultValue`                    | TLS + límite de tiempo                                   |
+| `Http` / `HttpWithTimeout`          | `method, path, header, body, tlsConfig[, timeout, defaultValue]`      | Método dinámico                                          |
+| `HttpCtx` / `HttpCtxWithTimeout`    | `ctx, method, path, header, body, tlsConfig[, timeout, defaultValue]` | Con `context.Context`                                    |
+
+Comportamiento a tener en cuenta:
+
+- `Content-Type` en el header es obligatorio y decide cómo se serializa el body (`application/json`, `application/x-www-form-urlencoded`; `multipart/form-data` **no funciona** todavía, ver más abajo).
+- `timeout == 0` espera sin límite. Si vence el timeout se devuelve `Status{Ok: false, Code: 408, Message: "timeout"}` y un `Body` con `defaultValue`.
+- En cualquier otro error (red, método inválido, `Content-Type` inválido) el `*Body` es **`nil`**: revisa `status.Ok` antes de llamar a `body.ToJson()` y compañía.
+- Limitaciones conocidas: el timeout abandona el resultado pero no cancela la petición en curso (sigue viva hasta el timeout del cliente, 120 min), y `multipart/form-data` produce un panic (buffer nil dentro de una goroutine).
+
+```go
+// Con timeout: si tarda más de 3s devuelve 408 y el defaultValue
+body, status := request.GetWithTimeout(url, header, 3*time.Second, []byte(`{}`))
 ```
 
 ---
@@ -758,33 +816,34 @@ result, err := workflow.Run(
 
 ## ⚙️ Variables de Entorno
 
-| Variable                    | Paquete       | Default     | Descripción                                                      |
-| --------------------------- | ------------- | ----------- | ---------------------------------------------------------------- |
-| `DB_DRIVER`                 | jdb           | —           | `postgres`, `mysql` u `oracle`                                   |
-| `DB_HOST`                   | jdb           | —           | Host de la base de datos                                         |
-| `DB_PORT`                   | jdb           | `5432`      | Puerto de la base de datos                                       |
-| `DB_NAME`                   | jdb           | —           | Nombre de la base de datos                                       |
-| `DB_USER`                   | jdb           | —           | Usuario de la base de datos                                      |
-| `DB_PASSWORD`               | jdb           | —           | Contraseña de la base de datos                                   |
-| `DB_APPLICATION_NAME`       | jdb           | `elvis`     | Nombre de la aplicación en PostgreSQL                            |
-| `USE_CORE`                  | jdb           | `true`      | Inicializar tablas core (series, records, recycling)             |
-| `REDIS_HOST`                | cache         | —           | Host de Redis (ej. `localhost:6379`)                             |
-| `REDIS_PASSWORD`            | cache         | —           | Contraseña de Redis                                              |
-| `REDIS_DB`                  | cache         | `0`         | Número de base de datos Redis                                    |
-| `NATS_HOST`                 | event         | —           | URL de conexión NATS                                             |
-| `NATS_USER`                 | event         | —           | Usuario NATS                                                     |
-| `NATS_PASSWORD`             | event         | —           | Contraseña NATS                                                  |
-| `SECRET`                    | claim         | `1977`      | Clave de firma JWT                                               |
-| `HOST`                      | jrpc / router | `localhost` | Host del servicio actual                                         |
-| `PORT`                      | servicio      | `3400`      | Puerto HTTP                                                      |
-| `RPC_HOST`                  | jrpc          | `HOST`      | Host para RPC entre servicios                                    |
-| `RPC_PORT`                  | jrpc          | `4200`      | Puerto RPC                                                       |
-| `AUTHORIZATION_METHOD`      | router        | —           | Método RPC para verificar permisos                               |
-| `RESILIENCE_TOTAL_ATTEMPTS` | resilience    | `3`         | Intentos totales por operación                                   |
-| `RESILIENCE_TIME_ATTEMPTS`  | resilience    | `30`        | Segundos entre reintentos                                        |
-| `PIPE_HOST`                 | jrpc          | —           | `host:port` que enruta todas las llamadas RPC por un proxy único |
-| `STAGE`                     | event         | `local`     | Prefijo de entorno para canal pipe (`pipe:<stage>:<canal>`)      |
-| `PRODUCTION`                | dt            | `true`      | Habilita persistencia en Redis del cache de objetos `dt.Object`  |
+| Variable                    | Paquete       | Default     | Descripción                                                     |
+| --------------------------- | ------------- | ----------- | --------------------------------------------------------------- |
+| `DB_DRIVER`                 | jdb           | —           | `postgres`, `mysql` u `oracle`                                  |
+| `DB_HOST`                   | jdb           | —           | Host de la base de datos                                        |
+| `DB_PORT`                   | jdb           | `5432`      | Puerto de la base de datos                                      |
+| `DB_NAME`                   | jdb           | —           | Nombre de la base de datos                                      |
+| `DB_USER`                   | jdb           | —           | Usuario de la base de datos                                     |
+| `DB_PASSWORD`               | jdb           | —           | Contraseña de la base de datos                                  |
+| `DB_APPLICATION_NAME`       | jdb           | `elvis`     | Nombre de la aplicación en PostgreSQL                           |
+| `USE_CORE`                  | jdb           | `true`      | Inicializar tablas core (series, records, recycling)            |
+| `REDIS_HOST`                | cache         | —           | Host de Redis (ej. `localhost:6379`)                            |
+| `REDIS_PASSWORD`            | cache         | —           | Contraseña de Redis                                             |
+| `REDIS_DB`                  | cache         | `0`         | Número de base de datos Redis                                   |
+| `NATS_HOST`                 | event         | —           | URL de conexión NATS                                            |
+| `NATS_USER`                 | event         | —           | Usuario NATS                                                    |
+| `NATS_PASSWORD`             | event         | —           | Contraseña NATS                                                 |
+| `SECRET`                    | claim         | `1977`      | Clave de firma JWT                                              |
+| `HOST`                      | jrpc / router | `localhost` | Host del servicio actual                                        |
+| `PORT`                      | servicio      | `3400`      | Puerto HTTP                                                     |
+| `RPC_HOST`                  | jrpc          | `HOST`      | Host para RPC entre servicios                                   |
+| `RPC_PORT`                  | jrpc          | `4200`      | Puerto RPC                                                      |
+| `AUTHORIZATION_METHOD`      | router        | —           | Método RPC para verificar permisos                              |
+| `RESILIENCE_TOTAL_ATTEMPTS` | resilience    | `3`         | Intentos totales por operación                                  |
+| `RESILIENCE_TIME_ATTEMPTS`  | resilience    | `30`        | Segundos entre reintentos                                       |
+| `PIPE_HOST`                 | jrpc          | —           | Host del proxy RPC único (se combina con `PIPE_PORT`)           |
+| `PIPE_PORT`                 | jrpc          | `4200`      | Puerto del proxy RPC único                                      |
+| `STAGE`                     | event         | `local`     | Prefijo de entorno para canal pipe (`pipe:<stage>:<canal>`)     |
+| `PRODUCTION`                | dt            | `true`      | Habilita persistencia en Redis del cache de objetos `dt.Object` |
 
 ---
 
@@ -800,10 +859,11 @@ go test ./...
 # Ejecutar un test específico con verbose
 go test ./paquete/... -run NombreTest -v
 
-# Formatear código y ejecutar CLI de scaffolding
+# Formatear código y ejecutar CLI de scaffolding (create/v1)
 gofmt -w . && go run ./cmd/create go
 
-# CLI para operaciones de base de datos
+# CLI de scaffolding alternativo (create/v2, layout internal/models + internal/services);
+# pese al nombre del paquete, no es una herramienta de operaciones de base de datos
 gofmt -w . && go run ./cmd/jdb go
 
 # Actualizar dependencias
@@ -816,16 +876,18 @@ go mod tidy
 
 ```
 elvis/
+├── agentsguide/    # Marco de trabajo para agentes; Install() lo escribe en CLAUDE.md
+├── authorization/  # Modelo de permisos (linq) con eventos set/del
 ├── cache/          # Cliente Redis (Set, Get, Delete, Pub/Sub)
 ├── claim/          # JWT: generación, validación, invalidación
 ├── cmd/
-│   ├── create/     # CLI scaffolding de microservicios
-│   └── jdb/        # CLI de operaciones de base de datos
+│   ├── create/     # CLI scaffolding de microservicios (usa create/v1)
+│   └── jdb/        # CLI scaffolding alternativo (usa create/v2, pese al nombre del paquete)
 ├── config/         # Carga de configuración
 ├── console/        # Logging interno de bajo nivel
 ├── create/
-│   ├── v1/         # Generador de proyectos v1
-│   └── v2/         # Generador de proyectos v2
+│   ├── v1/         # Generador de proyectos v1 (usado por cmd/create)
+│   └── v2/         # Generador de proyectos v2, layout internal/models + internal/services (usado por cmd/jdb)
 ├── crontab/        # Tareas programadas (cron)
 ├── dt/             # Contador de pasos por resiliencia y cache de objetos respaldado en Redis
 ├── envar/          # Helpers de variables de entorno
@@ -833,8 +895,10 @@ elvis/
 ├── event/          # Eventos local (emitter) y distribuido (NATS)
 ├── file/           # Manejo de archivos
 ├── health/         # Health check helpers
+├── inbox/          # Bandeja de notificaciones por usuario (linq)
 ├── instances/      # Registro persistente de instancias de workflow/resiliencia en BD
 ├── jdb/            # Abstracción de base de datos (Postgres/MySQL/Oracle)
+├── jquery/         # Traduce un et.Json (from/join/where/...) a SQL SELECT, dialecto pluggable
 ├── jrpc/           # RPC entre servicios vía Redis
 ├── jtls/           # Generación de certificados TLS auto-firmados
 ├── linq/           # ORM / query builder
@@ -842,8 +906,10 @@ elvis/
 ├── mem/            # Cache in-memory con TTL
 ├── middleware/     # Middleware HTTP chi (auth, cors, logger, etc.)
 ├── msg/            # Mensajes de error compartidos
+├── queue/          # Cola de batching en proceso (queue.Queue[T])
 ├── race/           # Helpers de concurrencia
 ├── reg/            # Registro de IDs
+├── request/        # Cliente HTTP saliente (GET/POST/PUT/DELETE/PATCH/OPTIONS, TLS y timeout)
 ├── resilience/     # Reintentos automáticos
 ├── response/       # Helpers de respuesta HTTP
 ├── router/         # Registro de rutas chi con API Gateway
@@ -852,7 +918,8 @@ elvis/
 ├── strs/           # Utilidades de strings
 ├── timezone/       # Manejo de zonas horarias
 ├── utility/        # Utilidades generales (UUID, OTP, crypto, etc.)
-└── workflow/       # Orquestación de flujos multi-paso
+├── workflow/       # Orquestación de flujos multi-paso
+└── xls/            # Lectura/escritura de Excel (excelize)
 ```
 
 ---

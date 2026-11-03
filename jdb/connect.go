@@ -275,7 +275,7 @@ func ConnectTo(params et.Json) (*DB, error) {
 		return nil, err
 	}
 
-	logs.Logf(driver, "Connected host:%s:%d", host, port)
+	logs.Logf(driver, "Connected host:%s:%d:%s", host, port, dbname)
 
 	result = &DB{
 		Driver:     driver,

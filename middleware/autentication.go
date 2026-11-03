@@ -94,6 +94,8 @@ func Autentication(next http.Handler) http.Handler {
 		ctx = context.WithValue(ctx, claim.NameKey, clm.Name)
 		ctx = context.WithValue(ctx, claim.SubjectKey, clm.Subject)
 		ctx = context.WithValue(ctx, claim.UsernameKey, clm.Username)
+		ctx = context.WithValue(ctx, claim.ProjectIdKey, clm.ProjectId)
+		ctx = context.WithValue(ctx, claim.ProfileIdKey, clm.ProfileId)
 		ctx = context.WithValue(ctx, claim.TokenKey, token)
 
 		now := utility.Now()

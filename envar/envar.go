@@ -4,19 +4,49 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"sync"
 
 	"github.com/celsiainternet/elvis/strs"
 	_ "github.com/joho/godotenv/autoload"
 )
 
 type Store interface {
-	Get(name string, _default string) string
+	Get(_default string, name string) (string, bool)
+	SetConfig(name string, value string)
 }
 
-var store Store
+var (
+	store  Store
+	config map[string]string
+	mu     sync.RWMutex
+)
+
+func init() {
+	config = make(map[string]string)
+}
 
 func Load(s Store) {
 	store = s
+}
+
+/**
+* GetConfig
+* @return map[string]string
+**/
+func GetConfig() map[string]string {
+	mu.RLock()
+	defer mu.RUnlock()
+	return config
+}
+
+/**
+* setConfig
+* @param name string, value string
+**/
+func setConfig(name, value string) {
+	mu.Lock()
+	defer mu.Unlock()
+	config[name] = value
 }
 
 /**
@@ -29,6 +59,7 @@ func MetaSet(name string, _default string, description, _var string) string {
 		if arg == strs.Format("-%s", name) {
 			val := os.Args[i+2]
 			os.Setenv(_var, val)
+			setConfig(_var, val)
 			return val
 		}
 	}
@@ -134,14 +165,34 @@ func UpSetBool(name string, value bool) bool {
 * @return string
 **/
 func GetStr(_default string, _var string) string {
-	if store != nil {
-		return store.Get(_default, _var)
+	result, exists := config[_var]
+	if exists {
+		return result
 	}
 
-	result := os.Getenv(_var)
-
+	result = os.Getenv(_var)
 	if result == "" {
-		return _default
+		result = _default
+	}
+
+	setConfig(_var, result)
+	if store != nil {
+		resultStore, exists := store.Get(_default, _var)
+		if !exists {
+			store.SetConfig(_var, result)
+			return result
+		}
+		setConfig(_var, resultStore)
+		result = resultStore
+	}
+
+	return result
+}
+
+func GetStrOs(_default string, _var string) string {
+	result := os.Getenv(_var)
+	if result == "" {
+		result = _default
 	}
 
 	return result
@@ -163,6 +214,17 @@ func GetInt(_default int, _var string) int {
 	return val
 }
 
+func GetIntOs(_default int, _var string) int {
+	result := GetStrOs(strconv.Itoa(_default), _var)
+
+	val, err := strconv.Atoi(result)
+	if err != nil {
+		return _default
+	}
+
+	return val
+}
+
 /**
 * GetInt64
 * @param int64 _default, string _var
@@ -170,6 +232,17 @@ func GetInt(_default int, _var string) int {
 **/
 func GetInt64(_default int64, _var string) int64 {
 	result := GetStr(strconv.FormatInt(_default, 10), _var)
+
+	val, err := strconv.ParseInt(result, 10, 64)
+	if err != nil {
+		return _default
+	}
+
+	return val
+}
+
+func GetInt64Os(_default int64, _var string) int64 {
+	result := GetStrOs(strconv.FormatInt(_default, 10), _var)
 
 	val, err := strconv.ParseInt(result, 10, 64)
 	if err != nil {

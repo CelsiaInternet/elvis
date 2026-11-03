@@ -19,12 +19,17 @@ var (
 
 /**
 * LoadTo
-* @param dbname string
+* @param dbname string, hostName ...string
 * @return *DB, error
 **/
-func LoadTo(dbname string) (*DB, error) {
+func LoadTo(dbname string, hostName ...string) (*DB, error) {
 	if dbname == "" {
 		return nil, errors.New("dbname is required")
+	}
+
+	host := envar.GetStr("", "DB_HOST")
+	if len(hostName) > 0 {
+		host = hostName[0]
 	}
 
 	mu.Lock()
@@ -36,7 +41,7 @@ func LoadTo(dbname string) (*DB, error) {
 
 	conn, err := ConnectTo(et.Json{
 		"driver":           envar.GetStr("", "DB_DRIVER"),
-		"host":             envar.GetStr("", "DB_HOST"),
+		"host":             host,
 		"port":             envar.GetInt(5432, "DB_PORT"),
 		"dbname":           dbname,
 		"user":             envar.GetStr("", "DB_USER"),

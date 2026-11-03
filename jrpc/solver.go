@@ -68,8 +68,8 @@ func GetSolver(method string) (*Solver, error) {
 		return nil, fmt.Errorf(ERR_METHOD_NAME_INVALID, method)
 	}
 
-	pipeHost := envar.GetStr("", "PIPE_HOST")
-	pipePort := envar.GetInt(4200, "PIPE_PORT")
+	pipeHost := envar.GetStrOs("", "PIPE_HOST")
+	pipePort := envar.GetIntOs(4200, "PIPE_PORT")
 	if pipeHost != "" {
 		result := &Solver{
 			PackageName: methodList[0],

@@ -186,6 +186,20 @@ func GetInstance(instanceId string) (*Instance, error) {
 }
 
 /**
+* DeleteInstance
+* @param instanceId string
+* @return error
+**/
+func DeleteInstance(instanceId string) error {
+	if workFlows == nil {
+		return errors.New(MSG_WORKFLOWS_NOT_LOAD)
+	}
+
+	delete(workFlows.Instances, instanceId)
+	return nil
+}
+
+/**
 * HttpGet
 * @params w http.ResponseWriter, r *http.Request
 **/

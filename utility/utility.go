@@ -21,9 +21,12 @@ import (
 
 const NOT_FOUND = "Not found"
 const FOUND = "Found"
+const DEATH_DATA = "-4"
+const HISTORY_DATA = "-3"
 const FOR_DELETE = "-2"
 const OF_SYSTEM = "-1"
 const ACTIVE = "0"
+const INACTIVE = "1"
 const ARCHIVED = "1"
 const CANCELED = "2"
 const IN_PROCESS = "3"
@@ -31,6 +34,9 @@ const PENDING_APPROVAL = "4"
 const APPROVAL = "5"
 const REFUSED = "6"
 const FAILED = "7"
+
+var IS_EDITED = []string{ACTIVE, IN_PROCESS}
+
 const STOP = "Stop"
 const CACHE_TIME = 60 * 60 * 24 * 1
 const DAY_SECOND = 60 * 60 * 24 * 1

@@ -5,8 +5,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-# Build
+# Build / static checks (both currently pass cleanly)
 go build ./...
+go vet ./...
 
 # Run tests
 go test ./...
@@ -29,6 +30,10 @@ go build -o bin/jdb ./cmd/jdb
 ./version.sh --minor     # minor: v1.X.0
 ./version.sh --major     # major: vX.0.0
 ```
+
+Test coverage is very thin: the only test files are `queue/example_test.go` and `jquery/test/*_test.go` (a separate package under `jquery/test/`, so run it with `go test ./jquery/...`, not `./jquery`). For most packages, `go test ./...` only proves they compile; `go build`/`go vet` are the real check.
+
+`version.sh` is outward-facing: it creates an annotated tag and immediately runs `git push origin --tags`. Only run it when the user asks for a release. Before tagging, it `sed`-replaces the current tag string with the new one in `README.md` (e.g. the `go get github.com/celsiainternet/elvis@vX.Y.Z` line), but it **does not commit** that edit. The tag therefore points at a commit whose README still shows the old version, and the working tree is left with a modified `README.md` that has to be committed separately.
 
 ## Code style
 
@@ -108,17 +113,17 @@ Dual-mode event system:
 
 ### Authentication & Authorization (`claim/`, `middleware/`)
 
-- `claim.Claim` — JWT payload struct with user identity fields (ID, App, Name, Username, Device, ProjectId, ProfileTp, Tag)
+- `claim.Claim` — JWT payload struct with user identity fields (ID, App, Name, Username, Device, ProjectId, ProfileId, Tag)
 - `claim.NewToken()` / `claim.ValidToken()` — JWT generation and validation; tokens stored in Redis for invalidation
 - `SECRET` env var is the JWT signing key (defaults to `"1977"`)
-- Middleware stack in `middleware/`: `Autentication` (JWT validation), `Authorization` (permission check via jRPC), `Ephemeral` (short-lived tokens), `Cors`, `Logger`, `RequestId`, `Recoverer`, `Telemetry`
+- Middleware stack in `middleware/`: `Autentication` (JWT validation; puts the claim, including `ProjectId`/`ProfileId`, in the context), `Authorization` (requires the `AppName` header, 428 without it, stored as a string; asks the `middleware.Store` set with `SetAuthorizationStore`, e.g. `jrpc.LoadAuthorization`), `Ephemeral` (short-lived tokens), `Cors`, `Logger`, `RequestId`, `Recoverer`, `Telemetry`
 - `claim.ClientId(r)`, `claim.GetClient(r)` — extract identity from authenticated requests
 
 ### HTTP Router (`router/`, `response/`)
 
 Built on **go-chi/chi v5**:
 
-- Route registration helpers: `router.PublicRoute()`, `router.ProtectRoute()` (requires auth), `router.EphemeralRoute()`, `router.AuthorizationRoute()` (auth + permissions), `router.With()` (custom middleware)
+- Route registration helpers: `router.PublicRoute()`, `router.ProtectRoute()` (requires auth), `router.AuthorizationRoute()` (auth + permissions), `router.With()` (custom middleware)
 - All routes automatically publish themselves to the API Gateway via NATS (`apigateway/set/resolve`)
 - `response` package provides HTTP helpers: `ITEM`, `ITEMS`, `JSON`, `HTTPError`, `HTTPAlert`, `Unauthorized`, `Forbidden`, `Stream` (streaming paginated JSON)
 - `response.GetBody(r)` — parses request body as `et.Json`; `response.GetQuery(r)` — query params; `response.GetParam(r, key)` — chi URL params
@@ -131,7 +136,42 @@ TCP-based RPC for inter-service calls using Go's `net/rpc`; Redis is used only t
 - `jrpc.Mount(services)` — registers a struct's exported methods as RPC endpoints; method keys are `<package>.<Struct>.<Method>` (exactly 3 dot-separated parts)
 - `jrpc.Call()`, `CallJson()`, `CallItem()`, `CallItems()`, `CallList()`, `CallPermitios()` — typed call helpers that dispatch to the right TCP host via Redis-stored solver registry
 - `PIPE_HOST` env var (`host:port`) overrides solver lookup and routes all RPC calls through a single proxy host
-- Used by the authorization middleware to call `AUTHORIZATION_METHOD` env var
+- `jrpc.LoadAuthorization(method)` registers `AuthorStore` as the `middleware.Authorization` store: `Author` calls the RPC `method` (default `AUTHORIZATION_METHOD` env var, else `catalog.Services.Author`) with `project_id`, `profile_id`, `method`, `path` and reads `result.authorized`; answers are cached in `mem` for 10 s per replica. It lives in `jrpc` because `jrpc` already imports `middleware`
+
+### Dependency Installer (`cmd/install/`)
+
+`go run github.com/celsiainternet/elvis/cmd/install` is meant to be run **from a consuming project** (right after `go get github.com/celsiainternet/elvis`, per `README.md`) — it shells out to `go get <module>@<version>` for a hardcoded list of third-party packages (`cmd/install/main.go`'s `dependencies` slice), which adds them to *that project's* `go.mod`, not elvis's own. It exists because the microservice code scaffolded by `create/v1` (`cmd/main.go`, `pkg/*/config.go`, etc.) imports several packages elvis itself doesn't depend on — e.g. `github.com/dimiro1/banner`, `github.com/mattn/go-colorable`, `github.com/mattn/go-isatty` (used only by the generated `modelDbApi`/`modelApi`/`modelhRpc` templates for the startup banner/RPC bootstrap) — plus everything elvis's own `go.mod` requires (chi, redis, nats, jwt, cron, cors, cobra, promptui, etc.).
+
+The pinned versions are **manually kept in sync with `go.mod` and can drift**: e.g. as of this writing `cmd/install` pins `lib/pq@v1.10.9`, `golang.org/x/crypto@v0.37.0`, `spf13/cobra@v1.9.1`, while elvis's own `go.mod` has moved on to `v1.12.3`, `v0.38.0`, `v1.10.2` respectively. When touching a dependency version in `go.mod`, check whether the same module appears in `cmd/install/main.go`'s list and update it too.
+
+`cmd/install` also calls `agentsguide.Install()` (see below) as its last step, dropping/appending the agents framework guide into the consuming project's `CLAUDE.md`.
+
+### Agents Framework Guide (`agentsguide/`)
+
+`agentsguide/ELVIS_AGENTS.md` is a Spanish-language operational guide for coding agents that **create or refactor** backend projects on top of elvis — it documents the actually-verified API surface (the `linq` command/query split, real `middleware`/`claim` symbol names, etc.), a refactor checklist, and the minimum env var table. `agentsguide/guide.go` embeds it via `//go:embed` and exposes `agentsguide.Install()`, which writes it into `./CLAUDE.md` in the current directory — creating the file if missing, or appending the guide (once, gated by the `<!-- elvis:agents-guide:start -->` marker) if a `CLAUDE.md` already exists — so Claude Code auto-loads it in that project without any extra step.
+
+`Install()` is wired into two places so it fires wherever a consuming project touches elvis: `cmd/install/main.go` (after the dependency loop — covers projects that already exist) and `create/v1` + `create/v2`'s `MkProject` (the "Project" scaffolding option — covers newly generated projects). It is **not** called from `MkMicroservice`, `MkMolue`, or `MkRpc` directly, only from `MkProject`, which calls `MkMicroservice` itself.
+
+When editing `agentsguide/ELVIS_AGENTS.md`, keep it in sync with reality the same way this file is kept in sync — re-verify any function signature or constant it claims against the actual source before writing it down; it is explicitly written to be the trustworthy fallback when other generated docs have drifted.
+
+### Project Scaffolding (`create/`, `cmd/create/`)
+
+`cmd/create` is a Cobra CLI (`go run github.com/celsiainternet/elvis/cmd/create go`) that interactively scaffolds a new microservice project that consumes `elvis`. `create/v1/promps.go`'s `PrompCreate()` drives a `promptui` menu with four options, each backed by a `create/v1/hMicroservice.go` entry point:
+
+- **Project** → `MkProject` — full new project: `MkMicroservice` + `README.md` + `.env` + `.gitignore`
+- **Microservice** → `MkMicroservice` — `cmd/<name>/` (Dockerfile + `main.go`), `deployments/<name>/` (`local.yml` for docker-compose, plus `oke-template.yml` and `oke-statefulset-template.yml` Kubernetes manifests — Service+Deployment and Service+StatefulSet respectively, with `$ROLE`/`$NS`/`$PORT`/etc. left as literal placeholders for the CI/CD pipeline to substitute, not by `file.MakeFile`'s own `$1`/`$2`/... positional substitution), `internal/service/<name>/` (+ `v1/api.go`), `pkg/<name>/` (controller/handler/router/event/msg/config), `scripts/<name>.http`, `test/`
+- **Modelo** → `MkMolue` → `MakeModel` — adds a `linq`-backed model + CRUD handler (`h<Model>.go`) into an existing `pkg/<name>`
+- **Rpc** → `MkRpc` → `MakeRpc` — adds an RPC `rpc.go` stub into an existing `pkg/<name>`
+
+Whether a `schema` argument is supplied determines the template family: non-empty `schema` generates a `linq.Model`-backed controller/handler with full CRUD + `linq` triggers wired to a DB schema (`modelDbController`/`modelDbHandler`/`modelDbRouter` in `create/v1/model.go`); an empty `schema` generates a bare stub controller/handler with no persistence (`modelController`/`modelHandler`/`modelRouter`).
+
+Templates are Go string constants in `create/v1/model.go`, rendered by `file.MakeFile(folder, name, template, args...)`, which does positional `$1`/`$2`/... substitution (see `params()` in `file/file.go`) — **not** `text/template`. `MakeFile` is idempotent: it silently no-ops if the target file already exists, so re-running a generator never overwrites hand-edited output.
+
+**Two generator versions exist, wired to two different CLI entry points**: `create/v1` (reworked folder layout in `internal/service/<name>/`) is used by `cmd/create/main.go`; `create/v2` (`internal/models/<name>/` + `internal/services/<name>/` instead of `internal/service/<name>/`, model code split out of the handler file, `router-<model>.go` naming) is used by **`cmd/jdb/main.go`** — despite its name, `cmd/jdb` is not a database CLI, it runs the exact same `promptui` scaffolding menu as `cmd/create` but against `create/v2`. Check which `cmd/`/`create/` pair an instruction actually intends before editing generator templates.
+
+**`create/v2` generates code against the standalone `jdb` library**: 6 of its templates (`modelDbApi`, `modelData`, `modelModel`, `modelSchema`, `modelDbController`, `modelDbModelRouter`) import `github.com/celsiainternet/jdb/jdb` (the separate `jdb/` repo, see the workspace `CLAUDE.md`) instead of elvis's own `github.com/celsiainternet/elvis/jdb` package, which only 2 v2 templates still use. `create/v1` templates use `elvis/jdb`. A project scaffolded with `cmd/jdb` therefore needs `github.com/celsiainternet/jdb` in its `go.mod`, which `cmd/install` does not add.
+
+**Organization-specific strings are baked into the templates** (`create/v1/model.go`, `create/v2/model.go`, `create/*/template/cmd/main.tmpl`): the `local.yml`/`oke-*.yml` manifests hardcode `APP`/`COMPANY` = `Celsia Internet` and `URL_API_FAILURE` = `https://api.celsiainternet.com`, and the generated `.http` scripts and OKE manifests embed literal JWTs (`@token=`, `TOKEN_API`). Generated projects inherit all of these verbatim, so treat them as placeholders to replace, not as configuration.
 
 ### Other Packages
 
@@ -146,7 +186,7 @@ TCP-based RPC for inter-service calls using Go's `net/rpc`; Redis is used only t
 | `resilience/`            | Retry/resilience pattern; `resilience.Add(id, tag, description, tags, team, level, fn, fnArgs...)` wraps any function with automatic retries; env vars `RESILIENCE_TOTAL_ATTEMPTS` (default 3) and `RESILIENCE_TIME_ATTEMPTS` (seconds, default 30) |
 | `workflow/`              | Multi-step workflow orchestration (`Flow`, `Step`, `FnContext`) with rollback support, conditional expressions, and configurable consistency (`strong`/`eventual`)                            |
 | `instances/`             | Persistent service/workflow instance registry backed by a `linq` model in the database                                                                                                        |
-| `request/`               | HTTP client utilities for outbound calls (GET, POST, PUT, DELETE with TLS support)                                                                                                            |
+| `request/`               | HTTP client for outbound calls. Verbs `Get/Post/Put/Delete/Patch/Options` return `(*Body, Status)`; variants: `<Verb>WithTls(..., tlsConfig)`, `<Verb>WithTimeout(..., timeout, defaultValue)`, `<Verb>WithTlsTimeout(..., tlsConfig, timeout, defaultValue)`, plus generic `Http`/`HttpCtx`/`HttpWithTimeout`/`HttpCtxWithTimeout` (take `method`) and `NewTlsConfig(ca, cert, key)`. Everything funnels into `httpDo` (runs in a goroutine; `timeout=0` = wait forever). On timeout it returns `newBody(defaultValue)` + `Status{Code: 408, Message: "timeout"}`. On any other transport/parse error `*Body` is **nil** — check `Status.Ok` before calling `Body.ToJson()`/etc. (value receivers, nil panics). **Known bugs:** timeout only abandons the result (no `context.WithTimeout`, so the request lives until the 120-min client timeout), and the `multipart/form-data` branch writes to a nil `*bytes.Buffer` and panics inside the goroutine (uncatchable by callers/`Recoverer`) |
 | `jtls/`                  | Self-signed TLS certificate generation (`jtls.Create(certFile, keyFile, expire)`) used by services that need mTLS                                                                             |
 | `file/`                  | File system helpers: `MakeFolder`, `MakeFile`, `ReadFile`, `RemoveFile`, `ExistPath`, `ExtencionFile`                                                                                        |
 | `race/`                  | Concurrency race helpers                                                                                                                                                                      |
@@ -161,16 +201,11 @@ TCP-based RPC for inter-service calls using Go's `net/rpc`; Redis is used only t
 | `inbox/`                 | Per-user inbox/notification records backed by a `linq` model; `inbox.Load(db, schema)` then query via `GetInboxesById`, `GetInboxesByCode`, `GetInboxesByMy`                                 |
 | `msg/`                   | Centralized Spanish-language message/error string constants (`MSG_*`, `ERR_*`, `RECORD_*`) shared across packages                                                                             |
 | `queue/`                 | Generic in-process batching queue (`queue.Queue[T]`); groups `Push`ed items and dispatches to a handler on max batch size or timeout, whichever comes first                                  |
-| `create/v1`, `create/v2` | CLI scaffolding for new microservice projects (see below)                                                                                                                                     |
-| `cmd/create`, `cmd/jdb`  | CLI entry points (`cmd/crontab`, `cmd/flow`, `cmd/jql` are example/demo mains for the corresponding packages)                                                                                 |
-| `cmd/install`            | Installs a hardcoded, version-pinned list of third-party deps (`go get <module>@<version>` per entry) into a newly scaffolded project; **keep this list in sync with `go.mod`** — it drifts easily since nothing enforces it (e.g. `lib/pq`/`spf13/cobra` pins can lag behind what `go.mod` actually requires, and Oracle/`govaluate` deps used by `jdb`/`workflow` are absent from the list) |
-
-### Project Scaffolding (`create/v1`, `cmd/create`)
-
-`cmd/create` is a thin `cobra` wrapper around `create/v1`, which interactively scaffolds a new microservice (folders `cmd/`, `deployments/`, `internal/`, `pkg/`, `scripts/`, `test/`, `www/`) from Go source templates stored as string constants in `create/v1/model.go`. Placeholders `$1`, `$2`, ... in each template are substituted positionally by `file.MakeFile`/`file.params()` — the Nth arg passed to `file.MakeFile` fills `$N` everywhere it appears in that template.
-
-- `file.MakeFile` never overwrites a file that already exists — it's create-only. `pkg/<service>/model.go` is the one place this matters: adding a second model via the "Modelo" prompt must *append* a `Define<Model>(db)` call to the existing `initModels()` function rather than relying on `MakeFile`, since the file was already created by the first model. This is handled by `upsertModelInit` in `create/v1/hPkg.go`, which reads, patches, and rewrites the file via `file.WriteFile` when it already exists.
-- Route wiring for models added after the initial scaffold is **not** automatic — `MakeModel` prints a reminder to manually copy the router snippet from the bottom of the generated `h<Model>.go` into `router.go`.
+| `jquery/`                | Translates an `et.Json` query description (from/join/select/wheres/group_by/having/limit/order_by) into a SQL `SELECT`; dialect is pluggable via `jquery/dialect` (Register/Get factory), defaults to PostgreSQL — see the package doc comment in `jquery/jquery.go` for the full JSON query format |
+| `xls/`                   | Excel read/write helpers on top of `xuri/excelize` (`xls.ReadXls`/`ReadXlsFile`/`ReadXlsMultipart`, `xls.NewXls(...).ToFile/.ToWriter/.ToHttp`)                                              |
+| `agentsguide/`           | Embeds `ELVIS_AGENTS.md` (agent-facing operational guide) and exposes `Install()`, which writes/appends it into a consuming project's `CLAUDE.md` — see "Agents Framework Guide" above       |
+| `create/v1`, `create/v2` | CLI scaffolding for new microservice projects — see "Project Scaffolding" above for which `cmd/` entry point drives which version                                                            |
+| `cmd/create`, `cmd/jdb`  | CLI entry points for `create/v1` and `create/v2` respectively (`cmd/jdb` is misleadingly named — it is not a database tool); `cmd/crontab`, `cmd/flow`, `cmd/install`, `cmd/jql` are example/demo mains for the corresponding packages |
 
 ### Key Environment Variables
 
@@ -184,7 +219,7 @@ TCP-based RPC for inter-service calls using Go's `net/rpc`; Redis is used only t
 | `NATS_HOST`, `NATS_USER`, `NATS_PASSWORD`                 | event             | —                   |
 | `SECRET`                                                  | claim             | `"1977"`            |
 | `HOST`, `RPC_HOST`, `RPC_PORT`                            | jrpc              | `localhost`, `4200` |
-| `PIPE_HOST`                                               | jrpc              | —                   |
+| `PIPE_HOST`, `PIPE_PORT`                                  | jrpc              | —, `4200`           |
 | `AUTHORIZATION_METHOD`                                    | router/middleware | —                   |
 | `RESILIENCE_TOTAL_ATTEMPTS`                               | resilience        | `3`                 |
 | `RESILIENCE_TIME_ATTEMPTS`                                | resilience        | `30` (seconds)      |
