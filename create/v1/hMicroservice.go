@@ -91,24 +91,29 @@ func MkMicroservice(packageName, name, schema string) error {
 		return err
 	}
 
+	GoModTidy()
+
 	return nil
 }
 
 /**
-* MkMolue
+* MkMolue: Agrega el modelo, registra sus rutas y ejecuta go mod tidy.
 * @param packageName, modelo, schema string
-* @return error
+* @return bool (rutas registradas en router.go), error
 **/
-func MkMolue(packageName, modelo, schema string) error {
+func MkMolue(packageName, modelo, schema string) (bool, error) {
 	ProgressNext(10)
-	err := MakeModel(packageName, modelo, schema)
+	routed, err := MakeModel(packageName, modelo, schema)
 	if err != nil {
-		return err
+		return false, err
 	}
 
-	ProgressNext(90)
+	ProgressNext(80)
+	GoModTidy()
 
-	return nil
+	ProgressNext(10)
+
+	return routed, nil
 }
 
 /**

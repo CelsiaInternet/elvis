@@ -84,7 +84,7 @@ En error el `*Body` es `nil`: comprueba `status.Ok` antes de `body.ToJson()`. Un
 2. `go run github.com/celsiainternet/elvis/cmd/install` para fijar dependencias e instalar esta guía. La lista de versiones de `cmd/install` se mantiene a mano y puede quedar atrás: si `go build ./...` falla por una versión incompatible, resuelve ese módulo con `go get <módulo>@latest`.
 3. Las plantillas traen valores de Celsia (`APP`, `COMPANY`, `URL_API_FAILURE`): son placeholders, reemplázalos. `scripts/*.http` trae `@token=` vacío: usa un JWT local y no lo subas al repositorio.
 4. Los `$ROLE`, `$NS`, `$PORT`, `$IMAGE`… de `oke-*.yml` los resuelve el pipeline; no los rellenes a mano.
-5. Con `cmd/create`, la opción **Modelo** agrega `Define<Modelo>(db)` a `initModels`, pero las rutas no: cópialas del final de `h<Modelo>.go` a `Routes()` en `router.go`. Si el paquete se creó sin schema, llama a `initModels(c.Db)` desde `Controller.Init`. Después corre `go mod tidy`.
+5. Con `cmd/create`, la opción **Modelo** agrega `Define<Modelo>(db)` a `initModels`, registra las rutas en `Routes()` de `router.go` y ejecuta `go mod tidy`. Si `router.go` fue editado y no conserva la línea `ctx := context.Background()`, avisa y hay que copiar las rutas del final de `h<Modelo>.go`. Un modelo con schema en un paquete creado sin schema se rechaza con la lista de cambios a hacer antes (campo `Db`, `jdb.Load` en `api.go`, `initModels(c.Db)` en `Controller.Init`).
 
 Layout que genera `cmd/create` (linq):
 

@@ -811,6 +811,18 @@ Authorization: Bearer {{token}}
 }
 `
 
+const modelDbRoutes = `	// $1
+	er.ProtectRoute(r, er.Get, "/$2/{id}", rt.get$1ById, PackageName, PackagePath, host)
+	er.ProtectRoute(r, er.Post, "/$2", rt.upSert$1, PackageName, PackagePath, host)
+	er.ProtectRoute(r, er.Put, "/$2/state/{id}", rt.state$1, PackageName, PackagePath, host)
+	er.ProtectRoute(r, er.Delete, "/$2/{id}", rt.delete$1, PackageName, PackagePath, host)
+	er.ProtectRoute(r, er.Get, "/$2", rt.all$1, PackageName, PackagePath, host)
+`
+
+const modelRoutes = `	// $1
+	er.ProtectRoute(r, er.Post, "/$2", rt.$2, PackageName, PackagePath, host)
+`
+
 const modelDbHandler = `package $1
 
 import (
@@ -1172,7 +1184,7 @@ func (rt *Router) all$2(w http.ResponseWriter, r *http.Request) {
 	response.LIST(w, r, http.StatusOK, result)
 }
 
-/** Si este modelo no es el primero del paquete, copia estas rutas en Routes() de router.go:
+/** El generador agrega estas rutas a Routes() de router.go; si no pudo (router.go editado), copialas:
 	// $2
 	er.ProtectRoute(r, er.Get, "/$5/{id}", rt.get$2ById, PackageName, PackagePath, host)
 	er.ProtectRoute(r, er.Post, "/$5", rt.upSert$2, PackageName, PackagePath, host)
@@ -1225,7 +1237,7 @@ func (rt *Router) $3(w http.ResponseWriter, r *http.Request) {
 	response.ITEM(w, r, http.StatusOK, result)
 }
 
-/** Si este handler no es el primero del paquete, copia esta ruta en Routes() de router.go:
+/** El generador agrega esta ruta a Routes() de router.go; si no pudo (router.go editado), copiala:
 	// $2
 	er.ProtectRoute(r, er.Post, "/$3", rt.$3, PackageName, PackagePath, host)
 **/

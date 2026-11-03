@@ -136,8 +136,13 @@ func (s *DB) queryContext(ctx context.Context, sql string, args ...any) (*sql.Ro
 * @return error
 **/
 func (d *DB) DdlContext(ctx context.Context, sql string, args ...any) error {
-	_, err := d.queryContext(ctx, sql, args...)
-	return err
+	rows, err := d.queryContext(ctx, sql, args...)
+	if err != nil {
+		return err
+	}
+
+	// Sin Close la conexion nunca vuelve al pool (DB_MAX_OPEN_CONNS, 3 por defecto)
+	return rows.Close()
 }
 
 func (d *DB) Ddl(sql string, args ...any) error {
@@ -269,8 +274,13 @@ func (d *DB) CommandSource(sourceField string, sql string, args ...any) (et.Item
 * @return error
 **/
 func (d *DB) BulckContext(ctx context.Context, sql string, args ...any) error {
-	_, err := d.queryContext(ctx, sql, args...)
-	return err
+	rows, err := d.queryContext(ctx, sql, args...)
+	if err != nil {
+		return err
+	}
+
+	// Sin Close la conexion nunca vuelve al pool (DB_MAX_OPEN_CONNS, 3 por defecto)
+	return rows.Close()
 }
 
 /**

@@ -1,6 +1,7 @@
 package create
 
 import (
+	"fmt"
 	"os/exec"
 	"strings"
 )
@@ -26,4 +27,16 @@ func Command(coms []string) ([][]byte, error) {
 	}
 
 	return result, nil
+}
+
+/**
+* GoModTidy: Ejecuta go mod tidy en el directorio actual para que el go.mod
+* incluya los imports de lo recien generado. No es fatal: si falla (p. ej.
+* sin red), avisa y lo generado se conserva.
+**/
+func GoModTidy() {
+	out, err := exec.Command("go", "mod", "tidy").CombinedOutput()
+	if err != nil {
+		fmt.Printf("\nAviso: go mod tidy fallo (%v); ejecutalo a mano:\n%s\n", err, out)
+	}
 }

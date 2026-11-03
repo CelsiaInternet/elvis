@@ -99,18 +99,16 @@ var CmdModelo = &cobra.Command{
 			return
 		}
 
-		err = MkMolue(packageName, modelo, schema)
+		routed, err := MkMolue(packageName, modelo, schema)
 		if err != nil {
 			fmt.Printf("Command failed %v\n", err)
 			return
 		}
 
-		title := strs.Titlecase(modelo)
-		message := strs.Format(`Copia las rutas que estan al final de pkg/%s/h%s.go en Routes() de router.go.`, packageName, title)
-		if len(schema) > 0 {
-			message = strs.Format(`%s Si el paquete se creo sin schema, agrega la llamada a initModels(c.Db) en Controller.Init.`, message)
+		if !routed {
+			title := strs.Titlecase(modelo)
+			fmt.Println(strs.Format(`router.go fue editado y no se pudieron registrar las rutas: copia las que estan al final de pkg/%s/h%s.go en Routes().`, packageName, title))
 		}
-		fmt.Println(message)
 	},
 }
 
