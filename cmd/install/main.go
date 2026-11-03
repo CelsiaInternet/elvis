@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/celsiainternet/elvis/agentsguide"
 )
@@ -49,11 +51,16 @@ func main() {
 	fmt.Printf("\r[%-50s] %d%% ¡Completado!\n", progressBar(total, total, 50), 100)
 
 	if err := agentsguide.Install(); err != nil {
-		fmt.Printf("Advertencia: no se pudo escribir CLAUDE.md - %v\n", err)
+		fmt.Printf("Advertencia: no se pudo instalar la guía de agentes - %v\n", err)
 		return
 	}
 
-	fmt.Println("Guía de agentes de Elvis agregada/actualizada en CLAUDE.md")
+	fmt.Println("Guía de agentes de Elvis instalada en .claude/guides/elvis/ (referenciada desde CLAUDE.md y AGENTS.md)")
+
+	goMod, err := os.ReadFile("go.mod")
+	if err == nil && strings.Contains(string(goMod), "github.com/celsiainternet/jdb ") {
+		fmt.Println("Este proyecto usa jdb: instala también su guía con go run github.com/celsiainternet/jdb/cmd/install")
+	}
 }
 
 func installLibrary(library string) error {

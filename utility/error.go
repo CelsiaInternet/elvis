@@ -1,6 +1,7 @@
 package utility
 
 import (
+	"errors"
 	"fmt"
 	"runtime"
 	"strings"
@@ -10,12 +11,11 @@ import (
 )
 
 func NewError(message string) error {
-	return fmt.Errorf(message)
+	return errors.New(message)
 }
 
 func NewErrorf(format string, args ...any) error {
-	message := fmt.Sprintf(format, args...)
-	return NewError(message)
+	return fmt.Errorf(format, args...)
 }
 
 func PrintFunctionName() string {
