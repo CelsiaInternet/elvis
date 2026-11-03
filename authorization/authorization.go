@@ -64,7 +64,9 @@ func Define(db *jdb.DB, schema string) (*Authorization, error) {
 	model.DefineColum("profile_id", "", "VARCHAR(80)", "")
 	model.DefineColum("method", "", "VARCHAR(80)", "")
 	model.DefineColum("path", "", "VARCHAR(250)", "")
+	model.DefineColum("package_name", "", "VARCHAR(250)", "")
 	model.DefinePrimaryKey([]string{"project_id", "profile_id", "method", "path"})
+	model.DefineIndex([]string{"package_name"})
 
 	if err := model.Init(); err != nil {
 		return nil, err
@@ -128,11 +130,11 @@ func (s *Authorization) RemoveAuthor(projectId, profileId, method, path string) 
 }
 
 /**
-* StateAuthorizationes
-* @param id, stateId, createdBy string
-* @return et.Item, error
+* SetAuthor
+* @param projectId, profileId, method, path, packageName string
+* @return error
 **/
-func (s *Authorization) SetAuthor(projectId, profileId, method, path string) error {
+func (s *Authorization) SetAuthor(projectId, profileId, method, path, packageName string) error {
 	if !utility.ValidStr(method, 0, []string{""}) {
 		return fmt.Errorf(msg.MSG_ATRIB_REQUIRED, "method")
 	}
@@ -144,11 +146,12 @@ func (s *Authorization) SetAuthor(projectId, profileId, method, path string) err
 	now := timezone.Now()
 	_, err := s.model.
 		Insert(et.Json{
-			"created_at": now,
-			"project_id": projectId,
-			"profile_id": profileId,
-			"method":     method,
-			"path":       path,
+			"created_at":   now,
+			"project_id":   projectId,
+			"profile_id":   profileId,
+			"method":       method,
+			"path":         path,
+			"package_name": packageName,
 		}).
 		All()
 	if err != nil {
@@ -162,11 +165,11 @@ func (s *Authorization) SetAuthor(projectId, profileId, method, path string) err
 
 /**
 * SetPath
-* @params method, path string
+* @params method, path, packageName string
 * @return error
 **/
-func (s *Authorization) SetPath(method, path string) error {
-	err := s.SetAuthor("", "", method, path)
+func (s *Authorization) SetPath(method, path, packageName string) error {
+	err := s.SetAuthor("", "", method, path, packageName)
 	if err != nil && !errors.Is(err, ErrorSetAuthor) {
 		return err
 	}
