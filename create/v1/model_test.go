@@ -1,6 +1,7 @@
 package create
 
 import (
+	"encoding/json"
 	"fmt"
 	"go/format"
 	"strings"
@@ -96,5 +97,38 @@ func TestEnvTemplate(t *testing.T) {
 
 	if strings.Contains(env, "$") {
 		t.Errorf(".env tiene un placeholder sin reemplazar")
+	}
+}
+
+/**
+* TestAgentsTemplates: Las reglas para agentes estan en la plantilla y el
+* settings.json de Claude Code es JSON valido que bloquea commit y push.
+**/
+func TestAgentsTemplates(t *testing.T) {
+	rules := render(modelAgents, "demo")
+	for _, want := range []string{
+		"entendible, mantenible y escalable por un humano",
+		"Los commits los hace el usuario",
+		"go run ./cmd/demo",
+	} {
+		if !strings.Contains(rules, want) {
+			t.Errorf("agents.md no contiene %q", want)
+		}
+	}
+
+	var settings struct {
+		Permissions struct {
+			Deny []string `json:"deny"`
+		} `json:"permissions"`
+	}
+	if err := json.Unmarshal([]byte(modelClaudeSettings), &settings); err != nil {
+		t.Fatalf("settings.json no es JSON valido: %v", err)
+	}
+
+	deny := strings.Join(settings.Permissions.Deny, " ")
+	for _, want := range []string{"Bash(git commit:*)", "Bash(git push:*)"} {
+		if !strings.Contains(deny, want) {
+			t.Errorf("settings.json no bloquea %s", want)
+		}
 	}
 }

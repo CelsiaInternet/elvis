@@ -32,6 +32,11 @@ func MkProject(packageName, name, author, schema string) error {
 		return err
 	}
 
+	err = MakeAgents(name)
+	if err != nil {
+		return err
+	}
+
 	ProgressNext(16)
 	err = agentsguide.Install()
 	if err != nil {

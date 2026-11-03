@@ -1937,4 +1937,13 @@ deployments/oke.yml
 go.work
 
 # Credencial acces token to AWS server
-*.pem`
+*.pem
+bin/
+
+# Sistema e IDE
+.DS_Store
+.idea
+
+# Claude Code: permisos locales de cada persona (.claude/settings.json si se versiona)
+.claude/settings.local.json
+`
