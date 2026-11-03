@@ -789,19 +789,19 @@ func (rt *Router) routes(w http.ResponseWriter, r *http.Request) {
 }
 `
 
-const restHttp = `@host=localhost:3300
+const restHttp = `@host=localhost:3250
 # JWT firmado con el SECRET del servicio (claim.NewToken); no lo subas al repositorio
 @token=
 
 ### Version (publica)
-GET http://{{host}}/api/$1/version
+GET http://{{host}}/api/services/$1/version
 
 ### Rutas registradas
-GET http://{{host}}/api/$1/routes
+GET http://{{host}}/api/services/$1/routes
 Authorization: Bearer {{token}}
 
 ### Crear o actualizar
-POST http://{{host}}/api/$1
+POST http://{{host}}/api/services/$1
 Content-Type: application/json
 Authorization: Bearer {{token}}
 
@@ -1266,7 +1266,7 @@ go run github.com/celsiainternet/elvis/cmd/create go
 Requiere PostgreSQL, Redis y NATS; la configuracion esta en ` + "`" + `.env` + "`" + `.
 
 ` + "`" + `` + "`" + `` + "`" + `bash
-gofmt -w . && go run ./cmd/$1 -port 3300 -rpc 4200
+gofmt -w . && go run ./cmd/$1
 ` + "`" + `` + "`" + `` + "`" + `
 
 ## Verificar
@@ -1277,14 +1277,18 @@ go build ./... && go vet ./...
 `
 
 const modelEnvar = `APP=$1
-PORT=3300
-VERSION=0.0.1
+PORT=3250
+VERSION=0.0.0
 COMPANY=Company
-PATH_URL=/api/$1
-WEB=
+WEB=https://www.company.com
+# HOST=http://localhost
+HOST=http://host.docker.internal
+PATH_URL=/api/services/$1
 PRODUCTION=false
-HOST=localhost
-STAGE=local
+
+# RPC
+RPC_PORT=4250
+RPC_HOST=localhost
 
 # DB
 DB_DRIVER=postgres
@@ -1301,16 +1305,10 @@ REDIS_PASSWORD=test
 REDIS_DB=0
 
 # NATS
-NATS_HOST=nats://localhost:4222
-NATS_USER=
-NATS_PASSWORD=
+NATS_HOST=localhost:4222
 
-# CLAIM
+# CALM
 SECRET=test
-
-# RPC
-RPC_HOST=localhost
-RPC_PORT=4200
 `
 
 const modelDeploy = `version: "3"

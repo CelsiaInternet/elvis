@@ -139,11 +139,9 @@ TCP-based RPC for inter-service calls using Go's `net/rpc`; Redis is used only t
 
 ### Dependency Installer (`cmd/install/`)
 
-`go run github.com/celsiainternet/elvis/cmd/install` is meant to be run **from a consuming project** (right after `go get github.com/celsiainternet/elvis`, per `README.md`) — it shells out to `go get <module>@<version>` for a hardcoded list of third-party packages (`cmd/install/main.go`'s `dependencies` slice), which adds them to _that project's_ `go.mod`, not elvis's own. It exists because the microservice code scaffolded by `create/v1` (`cmd/main.go`, `pkg/*/config.go`, etc.) imports several packages elvis itself doesn't depend on — e.g. `github.com/dimiro1/banner`, `github.com/mattn/go-colorable`, `github.com/mattn/go-isatty` (used only by the generated `modelDbApi`/`modelApi`/`modelhRpc` templates for the startup banner/RPC bootstrap) — plus everything elvis's own `go.mod` requires (chi, redis, nats, jwt, cron, cors, cobra, promptui, etc.).
+`go run github.com/celsiainternet/elvis/cmd/install` is run **from a consuming project**, after `go mod init` and `go get github.com/celsiainternet/elvis`. It stops if there is no `go.mod`; runs `go mod tidy` only when the module already has Go packages (in an empty project tidy would drop the unused elvis requirement and `cmd/create` could no longer run); then calls `agentsguide.Install()` even if tidy failed, and prints the `jdb/cmd/install` hint when `go.mod` requires jdb. Exit code 1 if tidy or the guide install failed.
 
-The pinned versions are **manually kept in sync with `go.mod` and can drift**: e.g. as of this writing `cmd/install` pins `lib/pq@v1.10.9`, `golang.org/x/crypto@v0.37.0`, `spf13/cobra@v1.9.1`, while elvis's own `go.mod` has moved on to `v1.12.3`, `v0.38.0`, `v1.10.2` respectively. When touching a dependency version in `go.mod`, check whether the same module appears in `cmd/install/main.go`'s list and update it too.
-
-`cmd/install` also calls `agentsguide.Install()` (see below) as its last step, installing the agents framework into the consuming project.
+It deliberately **pins no versions**. It used to `go get` a hardcoded list of 24 `module@version`; three were older than elvis's own `go.mod` (`lib/pq`, `x/crypto`, `cobra`), and MVS resolved that by silently downgrading elvis itself (v1.1.321 → v1.1.250, marked `// indirect`), which broke generated projects (`response.LIST` missing, old `config.Load` signature). Do not reintroduce a pinned list: `tidy` takes the versions elvis requires and never downgrades. The only third-party imports of generated code that elvis does not require (`dimiro1/banner`, `mattn/go-colorable`) are resolved by the generator's own `go mod tidy`.
 
 ### Agents Framework Guide (`agentsguide/`)
 
@@ -151,7 +149,7 @@ The pinned versions are **manually kept in sync with `go.mod` and can drift**: e
 
 `agentsguide.Install()` writes them to `.claude/guides/elvis/` in the current directory and upserts a block delimited by `<!-- elvis:agents-guide:start <version> -->` / `<!-- elvis:agents-guide:end -->` in `CLAUDE.md` (as `@` imports, which Claude Code loads) and `AGENTS.md` (as a reading list, for Codex and other agents). Re-running it overwrites the guides and replaces the block, so it also migrates the old single-block installs; content outside the markers is never touched. The version comes from `runtime/debug.ReadBuildInfo` (`devel` in workspace mode). The generic `InstallGuide(name, modulePath, fs, names)` is exported so `jdb/agentsguide` installs `JDB.md` the same way under `.claude/guides/jdb/` with `jdb:` markers.
 
-`Install()` is called from `cmd/install/main.go` (after the dependency loop; it also prints a hint to run `jdb/cmd/install` when the project's `go.mod` requires jdb) and from `create/v1`'s `MkProject`.
+`Install()` is called from `cmd/install/main.go` (which also prints a hint to run `jdb/cmd/install` when the project's `go.mod` requires jdb) and from `create/v1`'s `MkProject`.
 
 When editing these guides, re-verify every signature or constant against the source before writing it down: they are meant to be the trustworthy reference when other docs drift. Changing `InstallGuide`'s signature breaks `jdb/agentsguide`.
 
@@ -215,7 +213,7 @@ Templates are Go string constants in `create/v1/model.go`, rendered by `file.Mak
 | `xls/`           | Excel read/write helpers on top of `xuri/excelize` (`xls.ReadXls`/`ReadXlsFile`/`ReadXlsMultipart`, `xls.NewXls(...).ToFile/.ToWriter/.ToHttp`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `agentsguide/` | Agents framework (`MARCO.md`, `ELVIS.md`, `REVISION.md`) and `Install()`/`InstallGuide()`, which install it into a consuming project — see "Agents Framework Guide" above |
 | `create/v1` | CLI scaffolding for new microservice projects — see "Project Scaffolding" above |
-| `cmd/create` | CLI entry point for `create/v1`; `cmd/crontab`, `cmd/flow`, `cmd/install`, `cmd/jql` are example/demo mains for the corresponding packages |
+| `cmd/create` | CLI entry point for `create/v1`; `cmd/install` prepares a consuming project (see above); `cmd/crontab`, `cmd/flow`, `cmd/jql` are example/demo mains for the corresponding packages |
 
 ### Key Environment Variables
 

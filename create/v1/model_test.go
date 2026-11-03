@@ -78,3 +78,23 @@ func TestTemplatesHaveNoTokens(t *testing.T) {
 		}
 	}
 }
+
+/**
+* TestEnvTemplate: El .env usa el nombre del servicio y trae las variables
+* que el servicio generado lee al arrancar.
+**/
+func TestEnvTemplate(t *testing.T) {
+	env := render(modelEnvar, "demo")
+	for _, want := range []string{
+		"APP=demo\n", "PORT=", "PATH_URL=/api/services/demo\n", "RPC_PORT=", "RPC_HOST=",
+		"DB_DRIVER=", "DB_APPLICATION_NAME=demo\n", "REDIS_HOST=", "NATS_HOST=", "SECRET=",
+	} {
+		if !strings.Contains(env, want) {
+			t.Errorf(".env no contiene %q", want)
+		}
+	}
+
+	if strings.Contains(env, "$") {
+		t.Errorf(".env tiene un placeholder sin reemplazar")
+	}
+}
