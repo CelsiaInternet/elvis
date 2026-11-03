@@ -31,7 +31,9 @@ go build -o bin/jdb ./cmd/jdb
 ./version.sh --major     # major: vX.0.0
 ```
 
-Test coverage is very thin: the only test files are `queue/example_test.go` and `jquery/test/*_test.go` (a separate package under `jquery/test/`, so run it with `go test ./jquery/...`, not `./jquery`). For most packages, `go test ./...` only proves they compile; `go build`/`go vet` are the real check.
+Test coverage is very thin: the only test files are `queue/example_test.go` and `jquery/test/*_test.go` (a separate package under `jquery/test/`, so run it with `go test ./jquery/...`, not `./jquery`). For most packages, `go test ./...` only proves they compile; `go build`/`go vet` are the real check. As of 2026-11-03, `TestJQuery_MultipleColumnsAreAnded` in `jquery/test` fails (`'and' debe ser un arreglo de objetos condicion`), so a red `go test ./...` is not necessarily caused by your change.
+
+**Toolchain gotcha:** the shell may export `GOROOT=~/.goenv/versions/1.23.0` (goenv, matching the workspace `.go-version`) while the `go` on `PATH` is 1.25.0. Every build then fails with `compile: version "go1.23.0" does not match go tool version "go1.25.0"`. That is an environment problem, not a code one; run the commands as `env -u GOROOT go build ./...` (same for `vet`/`test`).
 
 `version.sh` is outward-facing: it creates an annotated tag and immediately runs `git push origin --tags`. Only run it when the user asks for a release. Before tagging, it `sed`-replaces the current tag string with the new one in `README.md` (e.g. the `go get github.com/celsiainternet/elvis@vX.Y.Z` line), but it **does not commit** that edit. The tag therefore points at a commit whose README still shows the old version, and the working tree is left with a modified `README.md` that has to be committed separately.
 
@@ -116,7 +118,7 @@ Dual-mode event system:
 - `claim.Claim` — JWT payload struct with user identity fields (ID, App, Name, Username, Device, ProjectId, ProfileId, Tag)
 - `claim.NewToken()` / `claim.ValidToken()` — JWT generation and validation; tokens stored in Redis for invalidation
 - `SECRET` env var is the JWT signing key (defaults to `"1977"`)
-- Middleware stack in `middleware/`: `Autentication` (JWT validation; puts the claim, including `ProjectId`/`ProfileId`, in the context), `Authorization` (requires the `AppName` header, 428 without it, stored as a string; asks the `middleware.Store` set with `SetAuthorizationStore`, e.g. `jrpc.LoadAuthorization`), `Ephemeral` (short-lived tokens), `Cors`, `Logger`, `RequestId`, `Recoverer`, `Telemetry`
+- Middleware stack in `middleware/`: `Autentication` (JWT validation; puts the claim, including `ProjectId`/`ProfileId`, in the context), `Authorization` (requires the `AppName` header, 428 without it, stored as a string; asks the `middleware.Store` set with `SetAuthorizationStore`, e.g. `jrpc.LoadAuthorization`), `Ephemeral` (short-lived tokens), `AllowAll(origins).Handler` (CORS via `rs/cors`; there is no `Cors`), `Logger`, `RequestID` (not `RequestId`), `Recoverer`. Telemetry is exposed as helpers (`NewMetric`, `PushTelemetry`), not as a chi middleware
 - `claim.ClientId(r)`, `claim.GetClient(r)` — extract identity from authenticated requests
 
 ### HTTP Router (`router/`, `response/`)
@@ -144,15 +146,17 @@ TCP-based RPC for inter-service calls using Go's `net/rpc`; Redis is used only t
 
 The pinned versions are **manually kept in sync with `go.mod` and can drift**: e.g. as of this writing `cmd/install` pins `lib/pq@v1.10.9`, `golang.org/x/crypto@v0.37.0`, `spf13/cobra@v1.9.1`, while elvis's own `go.mod` has moved on to `v1.12.3`, `v0.38.0`, `v1.10.2` respectively. When touching a dependency version in `go.mod`, check whether the same module appears in `cmd/install/main.go`'s list and update it too.
 
-`cmd/install` also calls `agentsguide.Install()` (see below) as its last step, dropping/appending the agents framework guide into the consuming project's `CLAUDE.md`.
+`cmd/install` also calls `agentsguide.Install()` (see below) as its last step, installing the agents framework into the consuming project.
 
 ### Agents Framework Guide (`agentsguide/`)
 
-`agentsguide/ELVIS_AGENTS.md` is a Spanish-language operational guide for coding agents that **create or refactor** backend projects on top of elvis — it documents the actually-verified API surface (the `linq` command/query split, real `middleware`/`claim` symbol names, etc.), a refactor checklist, and the minimum env var table. `agentsguide/guide.go` embeds it via `//go:embed` and exposes `agentsguide.Install()`, which writes it into `./CLAUDE.md` in the current directory — creating the file if missing, or appending the guide (once, gated by the `<!-- elvis:agents-guide:start -->` marker) if a `CLAUDE.md` already exists — so Claude Code auto-loads it in that project without any extra step.
+`agentsguide/` holds the Spanish-language framework that tells coding agents how to write code on top of elvis (and jdb) so it stays readable, maintainable and scalable: `MARCO.md` (priority order, decision rules such as jdb vs `linq`, `console` vs `logs`, error convention, version upgrades), `ELVIS.md` ("for X use Y, not Z" catalog with verified signatures, env vars, scaffolding) and `REVISION.md` (review checklist). They are embedded with `//go:embed` in `guide.go`.
 
-`Install()` is wired into two places so it fires wherever a consuming project touches elvis: `cmd/install/main.go` (after the dependency loop — covers projects that already exist) and `create/v1` + `create/v2`'s `MkProject` (the "Project" scaffolding option — covers newly generated projects). It is **not** called from `MkMicroservice`, `MkMolue`, or `MkRpc` directly, only from `MkProject`, which calls `MkMicroservice` itself.
+`agentsguide.Install()` writes them to `.claude/guides/elvis/` in the current directory and upserts a block delimited by `<!-- elvis:agents-guide:start <version> -->` / `<!-- elvis:agents-guide:end -->` in `CLAUDE.md` (as `@` imports, which Claude Code loads) and `AGENTS.md` (as a reading list, for Codex and other agents). Re-running it overwrites the guides and replaces the block, so it also migrates the old single-block installs; content outside the markers is never touched. The version comes from `runtime/debug.ReadBuildInfo` (`devel` in workspace mode). The generic `InstallGuide(name, modulePath, fs, names)` is exported so `jdb/agentsguide` installs `JDB.md` the same way under `.claude/guides/jdb/` with `jdb:` markers.
 
-When editing `agentsguide/ELVIS_AGENTS.md`, keep it in sync with reality the same way this file is kept in sync — re-verify any function signature or constant it claims against the actual source before writing it down; it is explicitly written to be the trustworthy fallback when other generated docs have drifted.
+`Install()` is called from `cmd/install/main.go` (after the dependency loop; it also prints a hint to run `jdb/cmd/install` when the project's `go.mod` requires jdb) and from `create/v1` + `create/v2`'s `MkProject`.
+
+When editing these guides, re-verify every signature or constant against the source before writing it down: they are meant to be the trustworthy reference when other docs drift. Changing `InstallGuide`'s signature breaks `jdb/agentsguide`.
 
 ### Project Scaffolding (`create/`, `cmd/create/`)
 
@@ -178,7 +182,7 @@ Templates are Go string constants in `create/v1/model.go`, rendered by `file.Mak
 | Package                  | Purpose                                                                                                                                                                                       |
 | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `envar/`                 | Environment variable helpers (`GetStr`, `GetInt`, `GetBool`, `SetStr`, etc.); auto-loads `.env` via `godotenv`                                                                                |
-| `logs/`                  | Structured logging with levels (Log, Logf, Alert, Debug, Panic)                                                                                                                               |
+| `logs/`                  | Local-only logging with levels (Log, Logf, Alert, Debug, Panic). Used inside elvis packages that `console` cannot be imported from (`console` imports `event`); application code uses `console` |
 | `strs/`                  | String utilities (Uppcase, Lowcase, Format, Append, DaskSpace, etc.)                                                                                                                          |
 | `utility/`               | General utilities: UUID, OTP, validation, crypto, password hashing, ID generation                                                                                                             |
 | `config/`                | Application config loading                                                                                                                                                                    |
@@ -193,7 +197,7 @@ Templates are Go string constants in `create/v1/model.go`, rendered by `file.Mak
 | `dt/`                    | Step-based resilience counter (`dt.Resilience`) and Redis-backed object cache (`dt.Object`)                                                                                                   |
 | `reg/`                   | ID registry helpers                                                                                                                                                                           |
 | `service/`               | HTTP service client                                                                                                                                                                           |
-| `console/`               | Low-level internal logging (used by other elvis packages; prefer `logs/` in application code)                                                                                                 |
+| `console/`               | Application logging: prints and also publishes each entry as a NATS `logs` event (disable with `CONSOLE_LOG_EVENTS=false`). This is what services, the generators and `jdb` use |
 | `timezone/`              | Timezone parsing and conversion helpers                                                                                                                                                       |
 | `stdrout/`               | Standard output / terminal rendering                                                                                                                                                          |
 | `crontab/`               | Cron job scheduling wrapper (`robfig/cron/v3`)                                                                                                                                                |
@@ -203,7 +207,7 @@ Templates are Go string constants in `create/v1/model.go`, rendered by `file.Mak
 | `queue/`                 | Generic in-process batching queue (`queue.Queue[T]`); groups `Push`ed items and dispatches to a handler on max batch size or timeout, whichever comes first                                  |
 | `jquery/`                | Translates an `et.Json` query description (from/join/select/wheres/group_by/having/limit/order_by) into a SQL `SELECT`; dialect is pluggable via `jquery/dialect` (Register/Get factory), defaults to PostgreSQL — see the package doc comment in `jquery/jquery.go` for the full JSON query format |
 | `xls/`                   | Excel read/write helpers on top of `xuri/excelize` (`xls.ReadXls`/`ReadXlsFile`/`ReadXlsMultipart`, `xls.NewXls(...).ToFile/.ToWriter/.ToHttp`)                                              |
-| `agentsguide/`           | Embeds `ELVIS_AGENTS.md` (agent-facing operational guide) and exposes `Install()`, which writes/appends it into a consuming project's `CLAUDE.md` — see "Agents Framework Guide" above       |
+| `agentsguide/`           | Agents framework (`MARCO.md`, `ELVIS.md`, `REVISION.md`) and `Install()`/`InstallGuide()`, which install it into a consuming project — see "Agents Framework Guide" above |
 | `create/v1`, `create/v2` | CLI scaffolding for new microservice projects — see "Project Scaffolding" above for which `cmd/` entry point drives which version                                                            |
 | `cmd/create`, `cmd/jdb`  | CLI entry points for `create/v1` and `create/v2` respectively (`cmd/jdb` is misleadingly named — it is not a database tool); `cmd/crontab`, `cmd/flow`, `cmd/install`, `cmd/jql` are example/demo mains for the corresponding packages |
 

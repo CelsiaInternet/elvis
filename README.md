@@ -92,11 +92,12 @@ go run github.com/celsiainternet/elvis/cmd/create go
 ```
 
 > Tanto `cmd/install` como la opción **Project** de `cmd/create` (y de `cmd/jdb`)
-> agregan automáticamente un marco de trabajo para agentes (Claude Code y
-> compatibles) en el `CLAUDE.md` del proyecto — lo crean si no existe, o le
-> anexan la sección una sola vez si ya hay uno. Así, los agentes que trabajen
-> creando o refactorizando el proyecto reconocen las convenciones de Elvis sin
-> pasos adicionales. Ver [`agentsguide/`](agentsguide/ELVIS_AGENTS.md).
+> instalan automáticamente un marco de trabajo para agentes (Claude Code, Codex
+> y compatibles): copian las guías en `.claude/guides/elvis/` y agregan un
+> bloque en `CLAUDE.md` y `AGENTS.md` que las referencia. Volver a ejecutarlo
+> actualiza las guías a la versión instalada de Elvis sin tocar el resto de
+> esos archivos. Si el proyecto usa jdb, `go run github.com/celsiainternet/jdb/cmd/install`
+> agrega su guía. Ver [`agentsguide/MARCO.md`](agentsguide/MARCO.md).
 
 ---
 

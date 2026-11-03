@@ -1,6 +1,7 @@
 package logs
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -33,15 +34,14 @@ func Alert(err error) error {
 
 func Alertm(message string) error {
 	functionName := utility.PrintFunctionName()
-	err := fmt.Errorf(message)
+	err := errors.New(message)
 	printLn("Alert", "Yellow", err.Error(), " - ", functionName)
 	return err
 }
 
 func Alertf(format string, args ...any) error {
 	functionName := utility.PrintFunctionName()
-	message := fmt.Sprintf(format, args...)
-	err := fmt.Errorf(message)
+	err := fmt.Errorf(format, args...)
 	printLn("Alert", "Yellow", err.Error(), " - ", functionName)
 	return err
 }
@@ -59,13 +59,12 @@ func Error(kind string, err error) error {
 }
 
 func Errorm(kind string, message string) error {
-	err := fmt.Errorf(message)
+	err := errors.New(message)
 	return Error(kind, err)
 }
 
 func Errorf(kind string, format string, args ...any) error {
-	message := fmt.Sprintf(format, args...)
-	err := fmt.Errorf(message)
+	err := fmt.Errorf(format, args...)
 	return Error(kind, err)
 }
 
@@ -96,8 +95,7 @@ func Panice(v error) error {
 }
 
 func Panicf(format string, args ...any) error {
-	message := fmt.Sprintf(format, args...)
-	err := fmt.Errorf(message)
+	err := fmt.Errorf(format, args...)
 
 	return Panice(err)
 }
