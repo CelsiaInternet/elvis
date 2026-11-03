@@ -55,14 +55,16 @@ const modelMain = `package main
 import (
 	"os"
 	"os/signal"
+	"syscall"
 
 	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/envar"
-	serv "$1/internal/service/$2"	
+
+	serv "$1/internal/service/$2"
 )
 
 func main() {
-	envar.SetInt("port", 3000, "Port server", "PORT")
+	envar.SetInt("port", 3300, "Port server", "PORT")
 	envar.SetInt("rpc", 4200, "Port rpc server", "RPC_PORT")
 	envar.SetStr("dbhost", "localhost", "Database host", "DB_HOST")
 	envar.SetInt("dbport", 5432, "Database port", "DB_PORT")
@@ -78,7 +80,7 @@ func main() {
 	go srv.Start()
 
 	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	<-c
 
 	srv.Close()
@@ -88,8 +90,10 @@ func main() {
 const modelService = `package $2
 
 import (
-	"fmt"
+	"context"
+	"errors"
 	"net/http"
+	"time"
 
 	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/envar"
@@ -97,7 +101,7 @@ import (
 	"github.com/celsiainternet/elvis/response"
 	"github.com/celsiainternet/elvis/strs"
 	"github.com/go-chi/chi/v5"
-	"github.com/rs/cors"
+
 	v1 "$1/internal/service/$2/v1"
 )
 
@@ -105,16 +109,15 @@ type Server struct {
 	http *http.Server
 }
 
+/**
+* New: Arma el router HTTP del servicio con los middleware de elvis.
+* @return *Server, error
+**/
 func New() (*Server, error) {
-	server := Server{}
-
-	port := envar.EnvarInt(3300, "PORT")
-	if port == 0 {
-		return nil, fmt.Errorf("variable PORT es requerida")
-	}
+	port := envar.GetInt(3300, "PORT")
 
 	r := chi.NewRouter()
-
+	r.Use(middleware.RequestID)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
@@ -127,34 +130,54 @@ func New() (*Server, error) {
 	r.Mount("/", latest)
 	r.Mount("/v1", latest)
 
-	handler := cors.AllowAll().Handler(r)
+	handler := middleware.AllowAll([]string{}).Handler(r)
 	addr := strs.Format(":%d", port)
-	serv := &http.Server{
-		Addr:    addr,
-		Handler: handler,
+	result := &Server{
+		http: &http.Server{
+			Addr:    addr,
+			Handler: handler,
+		},
 	}
 
-	server.http = serv
-
-	return &server, nil
+	return result, nil
 }
 
+/**
+* Close: Detiene el servidor HTTP y libera las conexiones del servicio.
+**/
 func (serv *Server) Close() {
+	if serv.http != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		if err := serv.http.Shutdown(ctx); err != nil {
+			console.Error(err)
+		}
+	}
+
 	v1.Close()
 
 	console.LogK("Http", "Shutting down server...")
 }
 
+/**
+* StartHttpServer: Atiende peticiones HTTP hasta que se llama Close.
+**/
 func (serv *Server) StartHttpServer() {
 	if serv.http == nil {
 		return
 	}
 
-	svr := serv.http
-	console.LogKF("Http", "Running on http://localhost%s", svr.Addr)
-	console.Fatal(serv.http.ListenAndServe())
+	console.LogKF("Http", "Running on http://localhost%s", serv.http.Addr)
+	err := serv.http.ListenAndServe()
+	if err != nil && !errors.Is(err, http.ErrServerClosed) {
+		console.Fatal(err)
+	}
 }
 
+/**
+* Start: Arranca el servidor HTTP y muestra el banner.
+**/
 func (serv *Server) Start() {
 	go serv.StartHttpServer()
 
@@ -180,9 +203,16 @@ import (
 	"github.com/dimiro1/banner"
 	"github.com/go-chi/chi/v5"
 	"github.com/mattn/go-colorable"
-	pkg "$1/pkg/$2"	
+
+	pkg "$1/pkg/$2"
 )
 
+var db *jdb.DB
+
+/**
+* New: Conecta cache, eventos, RPC y base de datos, y monta el router del paquete.
+* @return http.Handler
+**/
 func New() http.Handler {
 	r := chi.NewRouter()
 
@@ -201,7 +231,12 @@ func New() http.Handler {
 		console.Panic(err)
 	}
 
-	db, err := jdb.Load()
+	err = pkg.StartRpcServer()
+	if err != nil {
+		console.Panic(err)
+	}
+
+	db, err = jdb.Load()
 	if err != nil {
 		console.Panic(err)
 	}
@@ -217,12 +252,21 @@ func New() http.Handler {
 	return r
 }
 
+/**
+* Close: Cierra RPC, cache, eventos y base de datos.
+**/
 func Close() {
 	jrpc.Close()
 	cache.Close()
 	event.Close()
+	if db != nil {
+		db.Close()
+	}
 }
 
+/**
+* Banner: Imprime el nombre del servicio al arrancar.
+**/
 func Banner() {
 	time.Sleep(3 * time.Second)
 	templ := utility.BannerTitle(pkg.PackageName, 4)
@@ -246,9 +290,14 @@ import (
 	"github.com/dimiro1/banner"
 	"github.com/go-chi/chi/v5"
 	"github.com/mattn/go-colorable"
+
 	pkg "$1/pkg/$2"
 )
 
+/**
+* New: Conecta cache, eventos y RPC, y monta el router del paquete.
+* @return http.Handler
+**/
 func New() http.Handler {
 	r := chi.NewRouter()
 
@@ -267,6 +316,11 @@ func New() http.Handler {
 		console.Panic(err)
 	}
 
+	err = pkg.StartRpcServer()
+	if err != nil {
+		console.Panic(err)
+	}
+
 	_pkg := &pkg.Router{
 		Repository: &pkg.Controller{},
 	}
@@ -276,12 +330,18 @@ func New() http.Handler {
 	return r
 }
 
+/**
+* Close: Cierra RPC, cache y eventos.
+**/
 func Close() {
 	jrpc.Close()
 	cache.Close()
 	event.Close()
 }
 
+/**
+* Banner: Imprime el nombre del servicio al arrancar.
+**/
 func Banner() {
 	time.Sleep(3 * time.Second)
 	templ := utility.BannerTitle(pkg.PackageName, 4)
@@ -297,29 +357,40 @@ import (
 	"github.com/celsiainternet/elvis/event"
 )
 
+/**
+* initEvents: Suscribe los manejadores de eventos del paquete.
+**/
 func initEvents() {
-	// TODO: replace <channel> with the real channel name
-	err := event.Stack("<channel>", eventAction)
+	// TODO: cambia el canal por el evento real que consume el servicio
+	err := event.Subscribe(PackageName+"/event", eventAction)
 	if err != nil {
 		console.Error(err)
 	}
 }
 
+/**
+* eventAction: Maneja un mensaje recibido por NATS.
+* @param m event.EvenMessage
+**/
 func eventAction(m event.EvenMessage) {
-	console.Log("eventAction", m.Data.ToString())
+	console.LogK("eventAction", m.Data.ToString())
 }
 `
 
 const modelModel = `package $1
 
 import (
-	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/jdb"
 )
 
+/**
+* initModels: Define e inicializa los modelos del paquete.
+* @param db *jdb.DB
+* @return error
+**/
 func initModels(db *jdb.DB) error {
 	if err := Define$2(db); err != nil {
-		return console.Panic(err)
+		return err
 	}
 
 	return nil
@@ -330,11 +401,16 @@ const modelSchema = `package $1
 
 import (
 	"github.com/celsiainternet/elvis/jdb"
-	"github.com/celsiainternet/elvis/linq"	
+	"github.com/celsiainternet/elvis/linq"
 )
 
 var $2 *linq.Schema
 
+/**
+* defineSchema: Crea el schema $3 en la base de datos si no existe.
+* @param db *jdb.DB
+* @return error
+**/
 func defineSchema(db *jdb.DB) error {
 	if $2 == nil {
 		$2 = linq.NewSchema(db, "$3")
@@ -355,61 +431,56 @@ import (
 
 type Services struct{}
 
-func StartRpcServer() {
+/**
+* StartRpcServer: Registra los metodos de Services como RPC ($1.Services.<Metodo>).
+* @return error
+**/
+func StartRpcServer() error {
 	pkg, err := jrpc.Load(PackageName)
 	if err != nil {
-		console.Panic(err)
+		return err
 	}
 
 	services := new(Services)
 	err = jrpc.Mount(services)
 	if err != nil {
-		console.Fatal(err)
-	}
-
-	go pkg.Start()
-}
-
-func (c *Services) Version(require et.Json, response *et.Item) error {
-	company := envar.EnvarStr("", "COMPANY")
-	web := envar.EnvarStr("", "WEB")
-	version := envar.EnvarStr("", "VERSION")
-	help := envar.EnvarStr("", "RPC_HELP")
-	response.Ok = true
-	response.Result = et.Json{
-		"methos":  "RPC",
-		"version": version,
-		"service": PackageName,
-		"host":    HostName,
-		"company": company,
-		"web":     web,
-		"help":    help,
-	}
-
-	return console.Rpc(response)
-}
-
-func (c *Services) Get$2ById(require et.Json, response *et.Item) error {
-	id := require.Str("id")
-
-	result, err := Get$2ById(id)
-	if err != nil {
 		return err
 	}
 
-	*response = result
+	go pkg.Start()
+
+	return nil
+}
+
+/**
+* Version: Describe el servicio por RPC.
+* @param require et.Json
+* @param response *et.Item
+* @return error
+**/
+func (c *Services) Version(require et.Json, response *et.Item) error {
+	response.Ok = true
+	response.Result = et.Json{
+		"method":  "RPC",
+		"version": PackageVersion,
+		"service": PackageName,
+		"host":    HostName,
+		"company": envar.GetStr("", "COMPANY"),
+		"web":     envar.GetStr("", "WEB"),
+		"help":    envar.GetStr("", "RPC_HELP"),
+	}
 
 	return console.Rpc(response)
-}	
+}
 `
 
 const modelMsg = `package $1
 
-const (
-	// MSG
-	MSG_ATRIB_REQUIRED      = "Atributo requerido (%s)"
-	MSG_VALUE_REQUIRED      = "Atributo requerido (%s) value:%s"
-)
+/**
+* Mensajes propios del paquete. Usa primero las constantes de
+* github.com/celsiainternet/elvis/msg y agrega aqui solo las que no existan.
+**/
+const ()
 `
 
 const modelConfig = `package $1
@@ -419,9 +490,11 @@ import (
 	"github.com/celsiainternet/elvis/envar"
 )
 
+/**
+* LoadConfig: Carga la configuracion del paquete para el STAGE actual.
+* @return error
+**/
 func LoadConfig() error {
-	StartRpcServer()
-
 	stage := envar.GetStr("local", "STAGE")
 	return config.Load(stage, PackageName)
 }
@@ -441,30 +514,42 @@ type Controller struct {
 	Db *jdb.DB
 }
 
+/**
+* Version: Describe el servicio.
+* @param ctx context.Context
+* @return et.Json, error
+**/
 func (c *Controller) Version(ctx context.Context) (et.Json, error) {
-	company := envar.GetStr("", "COMPANY")
-	web := envar.GetStr("", "WEB")
-	version := envar.EnvarStr("0.0.1", "VERSION")
-  service := et.Json{
-		"version": version,
+	service := et.Json{
+		"version": PackageVersion,
 		"service": PackageName,
 		"host":    HostName,
-		"company": company,
-		"web":     web,
+		"company": envar.GetStr("", "COMPANY"),
+		"web":     envar.GetStr("", "WEB"),
 		"help":    "",
 	}
 
 	return service, nil
 }
 
-func (c *Controller) Init(ctx context.Context) {
-	initModels(c.Db)
+/**
+* Init: Define los modelos y suscribe los eventos del paquete.
+* @param ctx context.Context
+* @return error
+**/
+func (c *Controller) Init(ctx context.Context) error {
+	if err := initModels(c.Db); err != nil {
+		return err
+	}
+
 	initEvents()
+
+	return nil
 }
 
 type Repository interface {
 	Version(ctx context.Context) (et.Json, error)
-	Init(ctx context.Context)
+	Init(ctx context.Context) error
 }
 `
 
@@ -475,36 +560,42 @@ import (
 
 	"github.com/celsiainternet/elvis/envar"
 	"github.com/celsiainternet/elvis/et"
-	"github.com/celsiainternet/elvis/jdb"
 )
 
-type Controller struct {
-	Db *jdb.DB
-}
+type Controller struct{}
 
+/**
+* Version: Describe el servicio.
+* @param ctx context.Context
+* @return et.Json, error
+**/
 func (c *Controller) Version(ctx context.Context) (et.Json, error) {
-	company := envar.GetStr("", "COMPANY")
-	web := envar.GetStr("", "WEB")
-	version := envar.EnvarStr("0.0.1", "VERSION")
-  service := et.Json{
-		"version": version,
+	service := et.Json{
+		"version": PackageVersion,
 		"service": PackageName,
 		"host":    HostName,
-		"company": company,
-		"web":     web,
+		"company": envar.GetStr("", "COMPANY"),
+		"web":     envar.GetStr("", "WEB"),
 		"help":    "",
 	}
 
 	return service, nil
 }
 
-func (c *Controller) Init(ctx context.Context) {
+/**
+* Init: Suscribe los eventos del paquete.
+* @param ctx context.Context
+* @return error
+**/
+func (c *Controller) Init(ctx context.Context) error {
 	initEvents()
+
+	return nil
 }
 
 type Repository interface {
 	Version(ctx context.Context) (et.Json, error)
-	Init(ctx context.Context)
+	Init(ctx context.Context) error
 }
 `
 
@@ -528,13 +619,17 @@ import (
 var PackageName = "$1"
 var PackageTitle = "$1"
 var PackagePath = envar.GetStr("/api/$1", "PATH_URL")
-var PackageVersion = envar.EnvarStr("0.0.1", "VERSION")
+var PackageVersion = envar.GetStr("0.0.1", "VERSION")
 var HostName, _ = os.Hostname()
 
 type Router struct {
 	Repository Repository
 }
 
+/**
+* Routes: Registra las rutas del paquete e inicializa el repositorio.
+* @return http.Handler
+**/
 func (rt *Router) Routes() http.Handler {
 	defaultHost := strs.Format("http://%s", HostName)
 	var host = strs.Format("%s:%d", envar.GetStr(defaultHost, "HOST"), envar.GetInt(3300, "PORT"))
@@ -551,13 +646,20 @@ func (rt *Router) Routes() http.Handler {
 	er.ProtectRoute(r, er.Get, "/", rt.all$2, PackageName, PackagePath, host)
 
 	ctx := context.Background()
-	rt.Repository.Init(ctx)
+	if err := rt.Repository.Init(ctx); err != nil {
+		console.Panic(err)
+	}
 	middleware.SetServiceName(PackageName)
 
 	console.LogKF(PackageName, "Router version:%s", PackageVersion)
 	return r
 }
 
+/**
+* version: Responde la version del servicio.
+* @param w http.ResponseWriter
+* @param r *http.Request
+**/
 func (rt *Router) version(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	result, err := rt.Repository.Version(ctx)
@@ -569,6 +671,11 @@ func (rt *Router) version(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, r, http.StatusOK, result)
 }
 
+/**
+* routes: Lista las rutas registradas.
+* @param w http.ResponseWriter
+* @param r *http.Request
+**/
 func (rt *Router) routes(w http.ResponseWriter, r *http.Request) {
 	_routes := er.GetRoutes()
 	routes := []et.Json{}
@@ -609,13 +716,17 @@ import (
 var PackageName = "$1"
 var PackageTitle = "$1"
 var PackagePath = envar.GetStr("/api/$1", "PATH_URL")
-var PackageVersion = envar.EnvarStr("0.0.1", "VERSION")
+var PackageVersion = envar.GetStr("0.0.1", "VERSION")
 var HostName, _ = os.Hostname()
 
 type Router struct {
 	Repository Repository
 }
 
+/**
+* Routes: Registra las rutas del paquete e inicializa el repositorio.
+* @return http.Handler
+**/
 func (rt *Router) Routes() http.Handler {
 	defaultHost := strs.Format("http://%s", HostName)
 	var host = strs.Format("%s:%d", envar.GetStr(defaultHost, "HOST"), envar.GetInt(3300, "PORT"))
@@ -626,15 +737,22 @@ func (rt *Router) Routes() http.Handler {
 	er.ProtectRoute(r, er.Get, "/routes", rt.routes, PackageName, PackagePath, host)
 	// $2
 	er.ProtectRoute(r, er.Post, "/", rt.$2, PackageName, PackagePath, host)
-	
+
 	ctx := context.Background()
-	rt.Repository.Init(ctx)
+	if err := rt.Repository.Init(ctx); err != nil {
+		console.Panic(err)
+	}
 	middleware.SetServiceName(PackageName)
 
 	console.LogKF(PackageName, "Router version:%s", PackageVersion)
 	return r
 }
 
+/**
+* version: Responde la version del servicio.
+* @param w http.ResponseWriter
+* @param r *http.Request
+**/
 func (rt *Router) version(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	result, err := rt.Repository.Version(ctx)
@@ -646,6 +764,11 @@ func (rt *Router) version(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, r, http.StatusOK, result)
 }
 
+/**
+* routes: Lista las rutas registradas.
+* @param w http.ResponseWriter
+* @param r *http.Request
+**/
 func (rt *Router) routes(w http.ResponseWriter, r *http.Request) {
 	_routes := er.GetRoutes()
 	routes := []et.Json{}
@@ -667,21 +790,24 @@ func (rt *Router) routes(w http.ResponseWriter, r *http.Request) {
 `
 
 const restHttp = `@host=localhost:3300
-@token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IlVTRVIuQURNSU4iLCJhcHAiOiJEZXZvcHMtSW50ZXJuZXQiLCJuYW1lIjoiQ2VzYXIgR2FsdmlzIExlw7NuIiwia2luZCI6ImF1dGgiLCJ1c2VybmFtZSI6Iis1NzMxNjA0Nzk3MjQiLCJkZXZpY2UiOiJkZXZlbG9wIiwiZHVyYXRpb24iOjI1OTIwMDB9.dexIOute7r9o_P8U3t6l9RihN8BOnLl4xpoh9QbQI4k
+# JWT firmado con el SECRET del servicio (claim.NewToken); no lo subas al repositorio
+@token=
 
-###
-GET /auth HTTP/1.1
-Host: {{host}}/version
+### Version (publica)
+GET http://{{host}}/api/$1/version
+
+### Rutas registradas
+GET http://{{host}}/api/$1/routes
 Authorization: Bearer {{token}}
 
-###
-POST /api/test/test HTTP/1.1
-Host: {{host}}
+### Crear o actualizar
+POST http://{{host}}/api/$1
 Content-Type: application/json
 Authorization: Bearer {{token}}
-Content-Length: 227
 
 {
+  "project_id": "-1",
+  "name": "Ejemplo"
 }
 `
 
@@ -703,18 +829,25 @@ import (
 
 var $2 *linq.Model
 
+/**
+* Define$2: Define la tabla $4. date_make, date_update, _state, project_id,
+* index y _data son campos que linq reconoce y mantiene solo; los atributos
+* que no son columnas se guardan en _data.
+* @param db *jdb.DB
+* @return error
+**/
 func Define$2(db *jdb.DB) error {
 	if err := defineSchema(db); err != nil {
-		return console.Panic(err)
+		return err
 	}
 
 	if $2 != nil {
 		return nil
 	}
 
-	$2 = linq.NewModel($3, "$4", "Tabla", 1)
-	$2.DefineColum("created_at", "", "TIMESTAMP", "NOW()")
-	$2.DefineColum("updated_at", "", "TIMESTAMP", "NOW()")
+	$2 = linq.NewModel($3, "$4", "Tabla $4", 1)
+	$2.DefineColum("date_make", "", "TIMESTAMP", "NOW()")
+	$2.DefineColum("date_update", "", "TIMESTAMP", "NOW()")
 	$2.DefineColum("_state", "", "VARCHAR(80)", utility.ACTIVE)
 	$2.DefineColum(jdb.KEY, "", "VARCHAR(80)", "-1")
 	$2.DefineColum("project_id", "", "VARCHAR(80)", "-1")
@@ -724,8 +857,8 @@ func Define$2(db *jdb.DB) error {
 	$2.DefineColum("index", "", "INTEGER", 0)
 	$2.DefinePrimaryKey([]string{jdb.KEY})
 	$2.DefineIndex([]string{
-		"created_at",
-		"updated_at",
+		"date_make",
+		"date_update",
 		"_state",
 		"project_id",
 		"name",
@@ -734,8 +867,6 @@ func Define$2(db *jdb.DB) error {
 	$2.DefineRequired([]string{
 		"name:Atributo requerido (name)",
 	})
-	$2.IntegrityAtrib(true)
-	$2.IndexSource(true)
 	$2.Trigger(linq.BeforeInsert, func(model *linq.Model, old, new *et.Json, data et.Json) error {
 		return nil
 	})
@@ -757,38 +888,30 @@ func Define$2(db *jdb.DB) error {
 	$2.OnListener = func(data et.Json) {
 		console.Debug(data.ToString())
 	}
-	
-	if err := $2.Init(); err != nil {
-		return console.Panic(err)
-	}
 
-	return nil
+	return $2.Init()
 }
 
 /**
-*	Get$2ById
+* Get$2ById: Busca un registro por id.
 * @param id string
 * @return et.Item, error
 **/
 func Get$2ById(id string) (et.Item, error) {
-	result, err := $2.Data().
+	return $2.Data().
 		Where($2.Column(jdb.KEY).Eq(id)).
 		First()
-	if err != nil {
-		return et.Item{}, err
-	}
-
-	return result, nil	
 }
 
 /**
-* Insert$2
-* @params project_id, id, name, description string
-* @params data et.Json
+* Insert$2: Crea el registro; si id viene vacio se genera uno. Si el id ya
+* existe devuelve Ok=false con el registro actual.
+* @param projectId, id, name, description string
+* @param data et.Json
 * @return et.Item, error
 **/
-func Insert$2(project_id, id, name, description string, data et.Json) (et.Item, error) {
-	if !utility.ValidId(project_id) {
+func Insert$2(projectId, id, name, description string, data et.Json) (et.Item, error) {
+	if !utility.ValidId(projectId) {
 		return et.Item{}, fmt.Errorf(msg.MSG_ATRIB_REQUIRED, "project_id")
 	}
 
@@ -796,13 +919,8 @@ func Insert$2(project_id, id, name, description string, data et.Json) (et.Item, 
 		return et.Item{}, fmt.Errorf(msg.MSG_ATRIB_REQUIRED, "name")
 	}
 
-	if !utility.ValidId(id) {
-		return et.Item{}, fmt.Errorf(msg.MSG_ATRIB_REQUIRED, jdb.KEY)
-	}
-
-	current, err := $2.Data().
-		Where($2.Column(jdb.KEY).Eq(id)).
-		First()
+	id = utility.GenKey(id)
+	current, err := Get$2ById(id)
 	if err != nil {
 		return et.Item{}, err
 	}
@@ -811,64 +929,48 @@ func Insert$2(project_id, id, name, description string, data et.Json) (et.Item, 
 		return et.Item{Ok: false, Result: current.Result}, nil
 	}
 
-	id = utility.GenKey(id)
-	now := utility.Now()
-	data["created_at"] = now
-	data["updated_at"] = now
-	data["project_id"] = project_id
+	data["project_id"] = projectId
 	data[jdb.KEY] = id
 	data["name"] = name
 	data["description"] = description
-	item, err := $2.Insert(data).
-		CommandOne()
-	if err != nil {
-		return et.Item{}, err
-	}
 
-	return item, nil
+	return $2.Insert(data).
+		CommandOne()
 }
 
 /**
-* UpSert$2
-* @param project_id string
-* @param id string
+* UpSert$2: Crea el registro o, si ya existe y esta activo, lo actualiza.
+* @param projectId, id, name, description string
 * @param data et.Json
 * @return et.Item, error
 **/
-func UpSert$2(project_id, id, name, description string, data et.Json) (et.Item, error) {
-	current, err := Insert$2(project_id, id, name, description, data)
+func UpSert$2(projectId, id, name, description string, data et.Json) (et.Item, error) {
+	current, err := Insert$2(projectId, id, name, description, data)
 	if err != nil {
 		return et.Item{}, err
 	}
-	
+
 	if current.Ok {
 		return current, nil
 	}
 
-	current_state := current.Key("_state")
-	if current_state != utility.ACTIVE {
-		return et.Item{}, console.AlertF(msg.RECORD_NOT_UPDATE)
+	if current.Key("_state") != utility.ACTIVE {
+		return et.Item{}, fmt.Errorf(msg.RECORD_NOT_UPDATE)
 	}
 
 	id = current.Str(jdb.KEY)
-	now := utility.Now()
-	data["updated_at"] = now
-	data["project_id"] = project_id
+	data["project_id"] = projectId
 	data[jdb.KEY] = id
 	data["name"] = name
 	data["description"] = description
-	result, err := $2.Update(data).
+
+	return $2.Update(data).
 		Where($2.Column(jdb.KEY).Eq(id)).
 		CommandOne()
-	if err != nil {
-		return et.Item{}, err
-	}
-
-	return result, nil
 }
 
 /**
-* State$2
+* State$2: Cambia el estado de un registro.
 * @param id, state string
 * @return et.Item, error
 **/
@@ -885,23 +987,22 @@ func State$2(id, state string) (et.Item, error) {
 	}
 
 	if !current.Ok {
-		return et.Item{}, console.AlertF(msg.RECORD_NOT_FOUND)
+		return et.Item{}, fmt.Errorf(msg.RECORD_NOT_FOUND)
 	}
 
-	old_state := current.Key("_state")
-	if old_state == state {
-		return et.Item{}, console.AlertF(msg.RECORD_NOT_CHANGE)		
+	if current.Key("_state") == state {
+		return et.Item{}, fmt.Errorf(msg.RECORD_NOT_CHANGE)
 	}
 
 	return $2.Update(et.Json{
-		"_state":   state,
+		"_state": state,
 	}).
 		Where($2.Column(jdb.KEY).Eq(id)).
-		CommandOne()	
+		CommandOne()
 }
 
 /**
-* Delete$2
+* Delete$2: Marca el registro para borrar (borrado logico).
 * @param id string
 * @return et.Item, error
 **/
@@ -910,61 +1011,80 @@ func Delete$2(id string) (et.Item, error) {
 }
 
 /**
-* All$2
-* @param project_id, state, search string
+* All$2: Lista paginada. state "" = activos, "*" = todos menos borrados,
+* "0" = activos e indefinidos; search busca en name, description y _data.
+* @param projectId, state, search string
 * @param page, rows int
 * @param _select string
 * @return et.List, error
 **/
-func All$2(project_id, state, search string, page, rows int, _select string) (et.List, error) {	
+func All$2(projectId, state, search string, page, rows int, _select string) (et.List, error) {
 	if state == "" {
 		state = utility.ACTIVE
 	}
 
-	auxState := state
-
 	if search != "" {
 		return $2.Data(_select).
-			Where($2.Column("project_id").In("-1", project_id)).
+			Where($2.Column("project_id").In("-1", projectId)).
 			And($2.Concat("NAME:", $2.Column("name"), "DESCRIPTION:", $2.Column("description"), "DATA:", $2.Column("_data"), ":").Like("%"+search+"%")).
 			OrderBy($2.Column("name"), true).
 			List(page, rows)
-	} else if auxState == "*" {
-		state = utility.FOR_DELETE
-
+	} else if state == "*" {
 		return $2.Data(_select).
-			Where($2.Column("_state").Neg(state)).
-			And($2.Column("project_id").In("-1", project_id)).
+			Where($2.Column("_state").Neg(utility.FOR_DELETE)).
+			And($2.Column("project_id").In("-1", projectId)).
 			OrderBy($2.Column("name"), true).
 			List(page, rows)
-	} else if auxState == "0" {
+	} else if state == "0" {
 		return $2.Data(_select).
 			Where($2.Column("_state").In("-1", state)).
-			And($2.Column("project_id").In("-1", project_id)).
-			OrderBy($2.Column("name"), true).
-			List(page, rows)
-	} else {
-		return $2.Data(_select).
-			Where($2.Column("_state").Eq(state)).
-			And($2.Column("project_id").In("-1", project_id)).
+			And($2.Column("project_id").In("-1", projectId)).
 			OrderBy($2.Column("name"), true).
 			List(page, rows)
 	}
+
+	return $2.Data(_select).
+		Where($2.Column("_state").Eq(state)).
+		And($2.Column("project_id").In("-1", projectId)).
+		OrderBy($2.Column("name"), true).
+		List(page, rows)
 }
 
 /**
-* upSert$2
+* Get$2ById: Expone Get$2ById por RPC ($1.Services.Get$2ById).
+* @param require et.Json
+* @param response *et.Item
+* @return error
+**/
+func (c *Services) Get$2ById(require et.Json, response *et.Item) error {
+	result, err := Get$2ById(require.Str("id"))
+	if err != nil {
+		return err
+	}
+
+	*response = result
+
+	return console.Rpc(response)
+}
+
+/**
+* upSert$2: POST, crea o actualiza.
 * @param w http.ResponseWriter
 * @param r *http.Request
 **/
 func (rt *Router) upSert$2(w http.ResponseWriter, r *http.Request) {
-	body, _ := response.GetBody(r)
-	project_id := body.Str("project_id")
+	body, err := response.GetBody(r)
+	if err != nil {
+		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	projectId := body.Str("project_id")
 	id := body.Str("id")
 	name := body.Str("name")
 	description := body.Str("description")
 
-	result, err := UpSert$2(project_id, id, name, description, body)
+	result, err := UpSert$2(projectId, id, name, description, body)
 	if err != nil {
 		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
@@ -974,7 +1094,7 @@ func (rt *Router) upSert$2(w http.ResponseWriter, r *http.Request) {
 }
 
 /**
-* get$2ById
+* get$2ById: GET /{id}.
 * @param w http.ResponseWriter
 * @param r *http.Request
 **/
@@ -991,16 +1111,19 @@ func (rt *Router) get$2ById(w http.ResponseWriter, r *http.Request) {
 }
 
 /**
-* state$2
+* state$2: PUT /state/{id}, body {"state": "..."}.
 * @param w http.ResponseWriter
 * @param r *http.Request
 **/
 func (rt *Router) state$2(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	body, _ := response.GetBody(r)
-	state := body.Str("state")
+	body, err := response.GetBody(r)
+	if err != nil {
+		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
 
-	result, err := State$2(id, state)
+	result, err := State$2(id, body.Str("state"))
 	if err != nil {
 		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
@@ -1010,7 +1133,7 @@ func (rt *Router) state$2(w http.ResponseWriter, r *http.Request) {
 }
 
 /**
-* delete$2
+* delete$2: DELETE /{id}.
 * @param w http.ResponseWriter
 * @param r *http.Request
 **/
@@ -1027,41 +1150,35 @@ func (rt *Router) delete$2(w http.ResponseWriter, r *http.Request) {
 }
 
 /**
-* all$2
+* all$2: GET /?project_id=&state=&search=&page=&rows=&select=.
 * @param w http.ResponseWriter
 * @param r *http.Request
 **/
 func (rt *Router) all$2(w http.ResponseWriter, r *http.Request) {
 	query := response.GetQuery(r)
-	project_id := query.Str("project_id")
+	projectId := query.Str("project_id")
 	state := query.Str("state")
 	search := query.Str("search")
 	page := query.ValInt(1, "page")
 	rows := query.ValInt(30, "rows")
 	_select := query.Str("select")
 
-	result, err := All$2(project_id, state, search, page, rows, _select)
+	result, err := All$2(projectId, state, search, page, rows, _select)
 	if err != nil {
 		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	response.JSON(w, r, http.StatusOK, result)
+	response.LIST(w, r, http.StatusOK, result)
 }
 
-/** Copy this code to router.go
+/** Si este modelo no es el primero del paquete, copia estas rutas en Routes() de router.go:
 	// $2
 	er.ProtectRoute(r, er.Get, "/$5/{id}", rt.get$2ById, PackageName, PackagePath, host)
 	er.ProtectRoute(r, er.Post, "/$5", rt.upSert$2, PackageName, PackagePath, host)
 	er.ProtectRoute(r, er.Put, "/$5/state/{id}", rt.state$2, PackageName, PackagePath, host)
 	er.ProtectRoute(r, er.Delete, "/$5/{id}", rt.delete$2, PackageName, PackagePath, host)
-	er.ProtectRoute(r, er.Get, "/$5/all", rt.all$2, PackageName, PackagePath, host)
-**/
-
-/** Copy this code to func initModel in model.go
-	if err := Define$2(db); err != nil {
-		return console.Panic(err)
-	}
+	er.ProtectRoute(r, er.Get, "/$5", rt.all$2, PackageName, PackagePath, host)
 **/
 `
 
@@ -1074,21 +1191,32 @@ import (
 	"github.com/celsiainternet/elvis/response"
 )
 
-func $2(project_id, id string, params et.Json) (et.Item, error) {
-
-	return et.Item{}, nil
+/**
+* $2: Logica del caso de uso.
+* @param projectId, id string
+* @param params et.Json
+* @return et.Item, error
+**/
+func $2(projectId, id string, params et.Json) (et.Item, error) {
+	return et.Item{Ok: true, Result: params}, nil
 }
 
-
 /**
-* Router
+* $3: Handler HTTP de $2.
+* @param w http.ResponseWriter
+* @param r *http.Request
 **/
 func (rt *Router) $3(w http.ResponseWriter, r *http.Request) {
-	body, _ := response.GetBody(r)
-	project_id := body.Str("project_id")
-	id := body.Str("id")	
+	body, err := response.GetBody(r)
+	if err != nil {
+		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
 
-	result, err := $2(project_id, id, body)
+	projectId := body.Str("project_id")
+	id := body.Str("id")
+
+	result, err := $2(projectId, id, body)
 	if err != nil {
 		response.HTTPError(w, r, http.StatusBadRequest, err.Error())
 		return
@@ -1097,40 +1225,54 @@ func (rt *Router) $3(w http.ResponseWriter, r *http.Request) {
 	response.ITEM(w, r, http.StatusOK, result)
 }
 
-/** Copy this code to router.go
+/** Si este handler no es el primero del paquete, copia esta ruta en Routes() de router.go:
 	// $2
-	er.ProtectRoute(r, er.Post, "/$3", rt.$2, PackageName, PackagePath, Host)	
+	er.ProtectRoute(r, er.Post, "/$3", rt.$3, PackageName, PackagePath, host)
 **/
 `
 
-const modelReadme = `
-## Project $1
+const modelReadme = `# $1
 
-## Create project
+Microservicio construido sobre [elvis](https://github.com/celsiainternet/elvis).
 
-go mod init github.com/$1/api
+## Dependencias
 
-### Dependencias
+` + "`" + `` + "`" + `` + "`" + `bash
+go get github.com/celsiainternet/elvis@latest
+go run github.com/celsiainternet/elvis/cmd/install
+go mod tidy
+` + "`" + `` + "`" + `` + "`" + `
 
-go get github.com/celsiainternet/elvis@v1.1.2
+## Generar microservicios, modelos y RPC
 
-### Crear projecto, microservicios, modelos
+` + "`" + `` + "`" + `` + "`" + `bash
+go run github.com/celsiainternet/elvis/cmd/create go
+` + "`" + `` + "`" + `` + "`" + `
 
-go run github.com/celsiainternet/elvis/cmd/create-go create
+## Ejecutar
 
-### Run project
+Requiere PostgreSQL, Redis y NATS; la configuracion esta en ` + "`" + `.env` + "`" + `.
 
-gofmt -w . && go run ./cmd/$1 -port 3400 -rpc 4400
+` + "`" + `` + "`" + `` + "`" + `bash
+gofmt -w . && go run ./cmd/$1 -port 3300 -rpc 4200
+` + "`" + `` + "`" + `` + "`" + `
+
+## Verificar
+
+` + "`" + `` + "`" + `` + "`" + `bash
+go build ./... && go vet ./...
+` + "`" + `` + "`" + `` + "`" + `
 `
 
-const modelEnvar = `APP=
+const modelEnvar = `APP=$1
 PORT=3300
-VERSION=0.0.0
+VERSION=0.0.1
 COMPANY=Company
-PATH_URL=
+PATH_URL=/api/$1
 WEB=
 PRODUCTION=false
 HOST=localhost
+STAGE=local
 
 # DB
 DB_DRIVER=postgres
@@ -1139,7 +1281,7 @@ DB_PORT=5432
 DB_NAME=test
 DB_USER=test
 DB_PASSWORD=test
-DB_APPLICATION_NAME=test
+DB_APPLICATION_NAME=$1
 
 # REDIS
 REDIS_HOST=localhost:6379
@@ -1147,11 +1289,16 @@ REDIS_PASSWORD=test
 REDIS_DB=0
 
 # NATS
-NATS_HOST=localhost:4222
+NATS_HOST=nats://localhost:4222
+NATS_USER=
+NATS_PASSWORD=
 
-# CALM
+# CLAIM
 SECRET=test
 
+# RPC
+RPC_HOST=localhost
+RPC_PORT=4200
 `
 
 const modelDeploy = `version: "3"
@@ -1202,7 +1349,7 @@ services:
       # CALM
       - "SECRET="
       # RPC
-      - "PORT_RPC=4200"
+      - "RPC_PORT=4200"
 `
 
 const modelOkeStatefulSet = `# Definition del Service
@@ -1454,7 +1601,10 @@ spec:
             - name: URL_API_FAILURE
               value: "https://api.celsiainternet.com"
             - name: TOKEN_API
-              value: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImU3ZDA1M2U2LWY1ZjQtNGRkZS1iYmIyLTMxZDU5YjFmZDE4OCIsImFwcCI6IiIsIm5hbWUiOiJJbnRlcmF4YSIsImtpbmQiOiJ0b2tlbiIsInVzZXJuYW1lIjoiIiwiZGV2aWNlIjoicmVxdWVzdHMiLCJkdXJhdGlvbiI6MH0.GmTc2VOpT2wgAu5NEqQwt78vUOuZi3WHYffUX9B19g8"
+              valueFrom:
+                secretKeyRef:
+                  name: secret-$NS
+                  key: TOKEN_API
             # CAPTCHA
             - name: RECAPTCHA_KEY
               valueFrom:
@@ -1730,7 +1880,10 @@ spec:
             - name: URL_API_FAILURE
               value: "https://api.celsiainternet.com"
             - name: TOKEN_API
-              value: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImU3ZDA1M2U2LWY1ZjQtNGRkZS1iYmIyLTMxZDU5YjFmZDE4OCIsImFwcCI6IiIsIm5hbWUiOiJJbnRlcmF4YSIsImtpbmQiOiJ0b2tlbiIsInVzZXJuYW1lIjoiIiwiZGV2aWNlIjoicmVxdWVzdHMiLCJkdXJhdGlvbiI6MH0.GmTc2VOpT2wgAu5NEqQwt78vUOuZi3WHYffUX9B19g8"
+              valueFrom:
+                secretKeyRef:
+                  name: secret-$NS
+                  key: TOKEN_API
             - name: FOLDER_REPORT_REVIEW
               value: "updatedata/reporte"
 

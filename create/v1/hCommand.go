@@ -13,9 +13,9 @@ var CmdProject = &cobra.Command{
 	Short: "Create a new project with a base microservice.",
 	Long:  "Template project including README, .env, .gitignore and a base microservice with folders cmd, deployments, pkg, rest and test.",
 	Run: func(cmd *cobra.Command, args []string) {
-		packageName, err := utility.GoMod("module")
+		packageName, err := moduleName()
 		if err != nil {
-			fmt.Printf("\tPrompt failed: %v\n", err)
+			fmt.Println(err)
 			return
 		}
 
@@ -50,9 +50,9 @@ var CmdMicro = &cobra.Command{
 	Short: "Create a microservice inside the current project.",
 	Long:  "Template microservice including folders cmd, deployments, internal, pkg, scripts, test and www, with the .go files required for making a microservice.",
 	Run: func(cmd *cobra.Command, args []string) {
-		packageName, err := utility.GoMod("module")
+		packageName, err := moduleName()
 		if err != nil {
-			fmt.Printf("Prompt failed %v\n", err)
+			fmt.Println(err)
 			return
 		}
 
@@ -106,13 +106,16 @@ var CmdModelo = &cobra.Command{
 		}
 
 		title := strs.Titlecase(modelo)
-		message := strs.Format(`Remember, including the router, that it is on the bottom of the h%s.go, in routers section of the router.go file`, title)
+		message := strs.Format(`Copia las rutas que estan al final de pkg/%s/h%s.go en Routes() de router.go.`, packageName, title)
+		if len(schema) > 0 {
+			message = strs.Format(`%s Si el paquete se creo sin schema, agrega la llamada a initModels(c.Db) en Controller.Init.`, message)
+		}
 		fmt.Println(message)
 	},
 }
 
 var CmdRpc = &cobra.Command{
-	Use:   "rpc [name]",
+	Use:   "rpc [package]",
 	Short: "Create rpc model to microservice.",
 	Long:  "Template rpc model to microservice include function handler model.",
 	Run: func(cmd *cobra.Command, args []string) {
@@ -122,16 +125,24 @@ var CmdRpc = &cobra.Command{
 			return
 		}
 
-		modelo, err := PrompStr("Model", true)
-		if err != nil {
-			fmt.Printf("Prompt failed %v\n", err)
-			return
-		}
-
-		err = MkRpc(name, modelo)
+		err = MkRpc(name)
 		if err != nil {
 			fmt.Printf("Command failed %v\n", err)
 			return
 		}
 	},
+}
+
+/**
+* moduleName: Lee el modulo del go.mod del directorio actual; el generador
+* lo usa para los imports internos del proyecto.
+* @return string, error
+**/
+func moduleName() (string, error) {
+	result, err := utility.GoMod("module")
+	if err != nil || result == "" {
+		return "", fmt.Errorf("no se encontro go.mod con module en el directorio actual; ejecuta primero: go mod init <modulo>")
+	}
+
+	return result, nil
 }

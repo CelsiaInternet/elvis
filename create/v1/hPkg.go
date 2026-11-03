@@ -39,12 +39,18 @@ func upsertModelInit(path, packageName, modelo string) error {
 		return fmt.Errorf("no se pudo actualizar initModels en %s", modelPath)
 	}
 
-	block := strs.Format("\n\tif err := %s; err != nil {\n\t\treturn console.Panic(err)\n\t}\n", call)
+	block := strs.Format("\n\tif err := %s; err != nil {\n\t\treturn err\n\t}\n", call)
 	content = content[:idx] + block + content[idx:]
 
 	return file.WriteFile(modelPath, content)
 }
 
+/**
+* MakePkg: Genera pkg/<name>: config, eventos, mensajes, RPC, controller,
+* router y, si hay schema, el primer modelo linq con su CRUD.
+* @param name, schema string
+* @return error
+**/
 func MakePkg(name, schema string) error {
 	path, err := file.MakeFolder("pkg", name)
 	if err != nil {
@@ -62,6 +68,11 @@ func MakePkg(name, schema string) error {
 	}
 
 	_, err = file.MakeFile(path, "config.go", modelConfig, name)
+	if err != nil {
+		return err
+	}
+
+	_, err = file.MakeFile(path, "rpc.go", modelhRpc, name)
 	if err != nil {
 		return err
 	}
@@ -84,19 +95,8 @@ func MakePkg(name, schema string) error {
 			return err
 		}
 
-		path, err := file.MakeFolder("pkg", name)
-		if err != nil {
-			return err
-		}
-
 		fileName := strs.Format(`h%s.go`, modelo)
 		_, err = file.MakeFile(path, fileName, modelDbHandler, name, modelo, schemaVar, strs.Uppcase(modelo), strs.Lowcase(modelo))
-		if err != nil {
-			return err
-		}
-
-		modelo = strs.Titlecase(modelo)
-		_, err = file.MakeFile(path, "rpc.go", modelhRpc, name, modelo)
 		if err != nil {
 			return err
 		}
@@ -128,12 +128,27 @@ func MakePkg(name, schema string) error {
 	return nil
 }
 
+/**
+* MakeModel: Agrega un modelo (con schema, linq + CRUD) o un handler (sin
+* schema) a un paquete existente en pkg/<packageName>.
+* @param packageName, modelo, schema string
+* @return error
+**/
 func MakeModel(packageName, modelo, schema string) error {
 	path := strs.Format(`./pkg/%s`, packageName)
+	if !file.ExistPath(path) {
+		return fmt.Errorf("no existe el paquete %s; crea primero el microservicio", path)
+	}
 
 	if len(schema) > 0 {
+		// El handler expone un metodo RPC en Services, definido en rpc.go
+		_, err := file.MakeFile(path, "rpc.go", modelhRpc, packageName)
+		if err != nil {
+			return err
+		}
+
 		schemaVar := strs.Append("schema", strs.Titlecase(schema), "")
-		_, err := file.MakeFile(path, "schema.go", modelSchema, packageName, schemaVar, schema)
+		_, err = file.MakeFile(path, "schema.go", modelSchema, packageName, schemaVar, schema)
 		if err != nil {
 			return err
 		}
@@ -161,14 +176,18 @@ func MakeModel(packageName, modelo, schema string) error {
 	return nil
 }
 
-func MakeRpc(name, modelo string) error {
-	path, err := file.MakeFolder("pkg", name)
-	if err != nil {
-		return err
+/**
+* MakeRpc: Genera pkg/<name>/rpc.go (Services + StartRpcServer) si no existe.
+* @param name string
+* @return error
+**/
+func MakeRpc(name string) error {
+	path := strs.Format(`./pkg/%s`, name)
+	if !file.ExistPath(path) {
+		return fmt.Errorf("no existe el paquete %s; crea primero el microservicio", path)
 	}
 
-	modelo = strs.Titlecase(modelo)
-	_, err = file.MakeFile(path, "rpc.go", modelhRpc, name, modelo)
+	_, err := file.MakeFile(path, "rpc.go", modelhRpc, name)
 	if err != nil {
 		return err
 	}

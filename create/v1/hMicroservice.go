@@ -113,12 +113,12 @@ func MkMolue(packageName, modelo, schema string) error {
 
 /**
 * MkRpc
-* @param name, modelo string
+* @param name string
 * @return error
 **/
-func MkRpc(name, modelo string) error {
+func MkRpc(name string) error {
 	ProgressNext(10)
-	err := MakeRpc(name, modelo)
+	err := MakeRpc(name)
 	if err != nil {
 		return err
 	}
