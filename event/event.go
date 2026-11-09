@@ -15,6 +15,7 @@ const (
 	EVENT_WORK_STATE = "event:worker:state"
 	EVENT_SUBSCRIBED = "event:subscribed"
 	EVENT_SOURCE     = "event:source"
+	EVENT_ERROR      = "event:error"
 )
 
 var conn *Conn

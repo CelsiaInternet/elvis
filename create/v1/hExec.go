@@ -35,8 +35,12 @@ func Command(coms []string) ([][]byte, error) {
 * sin red), avisa y lo generado se conserva.
 **/
 func GoModTidy() {
+	fmt.Println("\nEjecutando go mod tidy (la primera vez descarga dependencias y puede tardar unos minutos)...")
 	out, err := exec.Command("go", "mod", "tidy").CombinedOutput()
 	if err != nil {
 		fmt.Printf("\nAviso: go mod tidy fallo (%v); ejecutalo a mano:\n%s\n", err, out)
+		return
 	}
+
+	fmt.Println("go.mod actualizado")
 }

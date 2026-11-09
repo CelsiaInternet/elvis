@@ -1,3 +1,4 @@
+<!-- elvis:project-rules -->
 Proyecto `$1`: microservicio en Go construido sobre [elvis](https://github.com/celsiainternet/elvis). Este archivo guía a los agentes (Claude Code, Codex y compatibles) que ayudan a crear y hacer crecer el proyecto.
 
 ## Reglas

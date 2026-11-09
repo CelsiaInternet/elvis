@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"reflect"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -163,6 +164,17 @@ func (s *Json) ScanRows(rows *sql.Rows) error {
 	*s = result
 
 	return nil
+}
+
+func (s Json) Omit(keys ...string) Json {
+	result := make(Json, len(s))
+	for key, value := range s {
+		if !slices.Contains(keys, key) {
+			result[key] = value
+		}
+	}
+
+	return result
 }
 
 func (s Json) IsEmpty() bool {

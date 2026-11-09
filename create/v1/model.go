@@ -1247,12 +1247,12 @@ const modelReadme = `# $1
 
 Microservicio construido sobre [elvis](https://github.com/celsiainternet/elvis).
 
-## Dependencias
+## Actualizar elvis
 
 ` + "`" + `` + "`" + `` + "`" + `bash
 go get github.com/celsiainternet/elvis@latest
-go run github.com/celsiainternet/elvis/cmd/install
 go mod tidy
+go run github.com/celsiainternet/elvis/cmd/install
 ` + "`" + `` + "`" + `` + "`" + `
 
 ## Generar microservicios, modelos y RPC

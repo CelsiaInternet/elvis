@@ -79,9 +79,12 @@ Incluye:
 ## 🚀 Instalación
 
 ```bash
-# En el módulo de tu proyecto
-go get github.com/celsiainternet/elvis@v1.1.321
-go get github.com/celsiainternet/elvis@latest
+# En una carpeta nueva
+go mod init github.com/<organizacion>/<proyecto>
+
+# Pide los dos comandos (no solo el módulo) para que go.sum quede completo;
+# con "go get github.com/celsiainternet/elvis@..." los go run fallan con "missing go.sum entry"
+go get github.com/celsiainternet/elvis/cmd/install@v1.1.321
 go run github.com/celsiainternet/elvis/cmd/install
 ```
 
@@ -507,6 +510,29 @@ event.Publish("pedido.nuevo", et.Json{"pedido_id": "123"})
 ```
 
 > Los handlers de `Subscribe`, `Queue` y `Stack` están protegidos con `recover()`. Un panic dentro del handler se loguea como error en lugar de matar el goroutine de NATS.
+
+### Reportar errores al registro central (`event.Error`)
+
+Publica un error en `EVENT_ERROR` (`"event:error"`). Catalog lo guarda en su registro central: agrupa los iguales y el front abre el ticket en ADA o GLPI. `Error` valida el reporte y devuelve ese error; si es válido publica en otra goroutine, así que nunca bloquea ni hace fallar a quien reporta. Sin conexión a NATS no hace nada.
+
+```go
+err := event.Error(event.ErrorReport{
+    App:         "app.vcore",                // obligatorio
+    Service:     "vcore-api",
+    Level:       event.ERROR_LEVEL_ERROR,    // error (por defecto), warning o critical
+    Code:        "CRM-LEAD-SAVE",            // con code, los mismos errores se agrupan aunque cambie el mensaje
+    Message:     "No se pudo guardar el lead", // obligatorio
+    Detail:      et.Json{"request_id": "r-1"},
+    OwnerKind:   "lead",                     // obligatorio: entidad afectada
+    OwnerId:     "L-1234",                   // obligatorio
+    UserId:      userId,                     // opcional: usuario que tuvo el error
+    TicketKind:  "incidente",                // opcional
+    TicketId:    "45871",                    // opcional; si viene, TicketOwner es obligatorio
+    TicketOwner: event.TICKET_OWNER_GLPI,    // ADA o GLPI
+})
+```
+
+`OccurredAt` es la hora actual si no se envía. Quien consume el canal lee el mensaje con `event.ParseErrorReport(msg.Data)`, que normaliza y valida igual.
 
 ### Work y WorkState
 

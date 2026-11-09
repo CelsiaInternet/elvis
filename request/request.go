@@ -282,7 +282,11 @@ func httpDo(ctx context.Context, method, path string, header, body et.Json, tlsC
 			return
 		}
 
+		// Sin Content-Type se asume JSON, que es como se arma el body por defecto
 		contentType := header.Str("Content-Type")
+		if contentType == "" {
+			contentType = "application/json"
+		}
 
 		mediaType, _, err := mime.ParseMediaType(contentType)
 		if err != nil {
@@ -364,6 +368,9 @@ func httpDo(ctx context.Context, method, path string, header, body et.Json, tlsC
 
 		for k, v := range header {
 			req.Header.Set(k, v.(string))
+		}
+		if ioBody != nil && req.Header.Get("Content-Type") == "" {
+			req.Header.Set("Content-Type", contentType)
 		}
 
 		client := defaultClient

@@ -16,6 +16,10 @@ type Item struct {
 	Result Json `json:"result"`
 }
 
+func (it *Item) IsEmpty() bool {
+	return it.Result.IsEmpty()
+}
+
 func (it *Item) ScanRows(rows *sql.Rows) error {
 	it.Ok = true
 	it.Result = make(Json)

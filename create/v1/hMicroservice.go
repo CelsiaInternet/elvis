@@ -3,30 +3,28 @@ package create
 import "github.com/celsiainternet/elvis/agentsguide"
 
 /**
-* MkProject
+* MkProject: Crea un proyecto completo. Primero escribe todos los archivos
+* (microservicio, README, .env, .gitignore y soporte para agentes) y al final
+* ejecuta go mod tidy, que es lo lento: si se interrumpe, no falta ningun archivo.
 * @param packageName, name, author, schema string
 * @return error
 **/
 func MkProject(packageName, name, author, schema string) error {
-	ProgressNext(16)
-	err := MkMicroservice(packageName, name, schema)
+	err := makeMicroservice(packageName, name, schema)
 	if err != nil {
 		return err
 	}
 
-	ProgressNext(16)
 	err = MakeReadme(name)
 	if err != nil {
 		return err
 	}
 
-	ProgressNext(16)
 	err = MakeEnv(name)
 	if err != nil {
 		return err
 	}
 
-	ProgressNext(16)
 	err = MakeGitignore(name)
 	if err != nil {
 		return err
@@ -37,23 +35,41 @@ func MkProject(packageName, name, author, schema string) error {
 		return err
 	}
 
-	ProgressNext(16)
 	err = agentsguide.Install()
 	if err != nil {
 		return err
 	}
 
 	ProgressNext(20)
+	GoModTidy()
 
 	return nil
 }
 
 /**
-* MkMicroservice
+* MkMicroservice: Agrega un microservicio al proyecto actual y ejecuta go mod tidy.
 * @param packageName, name, schema string
 * @return error
 **/
 func MkMicroservice(packageName, name, schema string) error {
+	err := makeMicroservice(packageName, name, schema)
+	if err != nil {
+		return err
+	}
+
+	ProgressNext(20)
+	GoModTidy()
+
+	return nil
+}
+
+/**
+* makeMicroservice: Escribe los archivos de un microservicio (cmd, deployments,
+* internal, pkg, scripts, test, www). Avanza la barra hasta el 80%.
+* @param packageName, name, schema string
+* @return error
+**/
+func makeMicroservice(packageName, name, schema string) error {
 	ProgressNext(10)
 	err := MakeCmd(packageName, name)
 	if err != nil {
@@ -95,8 +111,6 @@ func MkMicroservice(packageName, name, schema string) error {
 	if err != nil {
 		return err
 	}
-
-	GoModTidy()
 
 	return nil
 }
