@@ -23,9 +23,9 @@
 
 ## 📑 Tabla de Contenidos
 
+- [Instalación](#-instalación)
 - [Descripción](#-descripción)
 - [Requisitos Previos](#-requisitos-previos)
-- [Instalación](#-instalación)
 - [Quick Start](#-quick-start)
 - [Tipos de Datos Centrales (et)](#-tipos-de-datos-centrales-et)
 - [Base de Datos (jdb)](#-base-de-datos-jdb)
@@ -42,6 +42,35 @@
 - [Estructura del Proyecto](#-estructura-del-proyecto)
 - [Eventos del Sistema](#-eventos-del-sistema)
 - [Licencia](#-licencia)
+
+---
+
+## 🚀 Instalación
+
+Para empezar un proyecto con Elvis, ejecuta estos comandos en una carpeta nueva:
+
+```bash
+go mod init github.com/<organizacion>/<proyecto>
+
+go get github.com/celsiainternet/elvis@v1.1.323
+go run github.com/celsiainternet/elvis/cmd/install
+go run github.com/celsiainternet/elvis/cmd/create go
+```
+
+| Comando | Qué hace |
+| ------- | -------- |
+| `go mod init ...` | Crea el `go.mod`. Los dos comandos siguientes lo necesitan: toman de ahí la ruta del módulo y se detienen si no existe. |
+| `go get github.com/celsiainternet/elvis@v1.1.323` | Agrega Elvis como dependencia y deja en `go.sum` las entradas que necesitan los `go run` siguientes; sin este paso fallan con `missing go.sum entry`. |
+| `go run .../cmd/install` | Prepara el proyecto: ejecuta `go mod tidy` si ya hay paquetes Go e instala el marco de trabajo para agentes (ver la nota de abajo). No fija versiones de otras dependencias. |
+| `go run .../cmd/create go` | Abre un menú interactivo para generar código: **Project** (proyecto completo), **Microservice**, **Modelo** (modelo `linq` + CRUD en un paquete existente) o **Rpc**. |
+
+> Tanto `cmd/install` como la opción **Project** de `cmd/create`
+> instalan automáticamente un marco de trabajo para agentes (Claude Code, Codex
+> y compatibles): copian las guías en `.claude/guides/elvis/` y agregan un
+> bloque en `CLAUDE.md` y `AGENTS.md` que las referencia. Volver a ejecutarlo
+> actualiza las guías a la versión instalada de Elvis sin tocar el resto de
+> esos archivos. Si el proyecto usa jdb, `go run github.com/celsiainternet/jdb/cmd/install`
+> agrega su guía. Ver [`agentsguide/MARCO.md`](agentsguide/MARCO.md).
 
 ---
 
@@ -73,34 +102,6 @@ Incluye:
 - **PostgreSQL** — base de datos principal
 - **Redis** — cache y almacenamiento de tokens JWT
 - **NATS** — mensajería distribuida (eventos y RPC entre servicios)
-
----
-
-## 🚀 Instalación
-
-```bash
-# En una carpeta nueva
-go mod init github.com/<organizacion>/<proyecto>
-
-# Pide los dos comandos (no solo el módulo) para que go.sum quede completo;
-# con "go get github.com/celsiainternet/elvis@..." los go run fallan con "missing go.sum entry"
-go get github.com/celsiainternet/elvis@v1.1.323
-go run github.com/celsiainternet/elvis/cmd/install
-```
-
-Para generar un nuevo microservicio con la estructura base de Elvis:
-
-```bash
-go run github.com/celsiainternet/elvis/cmd/create go
-```
-
-> Tanto `cmd/install` como la opción **Project** de `cmd/create`
-> instalan automáticamente un marco de trabajo para agentes (Claude Code, Codex
-> y compatibles): copian las guías en `.claude/guides/elvis/` y agregan un
-> bloque en `CLAUDE.md` y `AGENTS.md` que las referencia. Volver a ejecutarlo
-> actualiza las guías a la versión instalada de Elvis sin tocar el resto de
-> esos archivos. Si el proyecto usa jdb, `go run github.com/celsiainternet/jdb/cmd/install`
-> agrega su guía. Ver [`agentsguide/MARCO.md`](agentsguide/MARCO.md).
 
 ---
 
