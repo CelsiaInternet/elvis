@@ -84,7 +84,7 @@ go mod init github.com/<organizacion>/<proyecto>
 
 # Pide los dos comandos (no solo el módulo) para que go.sum quede completo;
 # con "go get github.com/celsiainternet/elvis@..." los go run fallan con "missing go.sum entry"
-go get github.com/celsiainternet/elvis/cmd/install@v1.1.323
+go get github.com/celsiainternet/elvis@v1.1.323
 go run github.com/celsiainternet/elvis/cmd/install
 ```
 
