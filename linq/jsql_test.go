@@ -105,25 +105,116 @@ func TestRunQueryEscapesQuotedGoString(t *testing.T) {
 func TestRunQueryIn(t *testing.T) {
 	query := et.Json{
 		"wheres": []any{
-			map[string]any{"owner_id": map[string]any{"in": []any{"cc:1", "id_deal:2", map[string]any{}}}},
+			map[string]any{"owner_id": map[string]any{"in": []any{"cc:1", "id_deal:2"}}},
 		},
 	}
 	sql := querySql(t, query)
 	assertContains(t, sql, "WHERE A.OWNER_ID IN ('cc:1','id_deal:2')")
 }
 
-func TestRunQueryIgnoresUnknownHiddenAndUnsupported(t *testing.T) {
+func TestRunQueryInGoSlice(t *testing.T) {
 	query := et.Json{
-		"wheres": []any{
-			map[string]any{"nope": map[string]any{"eq": "x"}},
-			map[string]any{"secret": map[string]any{"eq": "x"}},
-			map[string]any{"name": map[string]any{"isNull": true}},
-			map[string]any{"name": map[string]any{"eq": map[string]any{"a": 1}}},
-			map[string]any{"name": map[string]any{"in": "no es lista"}},
+		"wheres": []et.Json{
+			{"owner_id": et.Json{"in": []string{"cc:1", "cc:2"}}},
 		},
 	}
 	sql := querySql(t, query)
+	assertContains(t, sql, "WHERE A.OWNER_ID IN ('cc:1','cc:2')")
+}
+
+/**
+* assertQueryError: Falla si queryLinq no da error para query o si el mensaje no contiene part.
+* @param t *testing.T, query et.Json, part string
+**/
+func assertQueryError(t *testing.T, query et.Json, part string) {
+	t.Helper()
+	_, err := queryLinq(queryTestModel(), query)
+	if err == nil {
+		t.Fatalf("%v: se esperaba error", query)
+	}
+	if !strings.Contains(err.Error(), part) {
+		t.Fatalf("%v: se esperaba %q en el error %q", query, part, err.Error())
+	}
+}
+
+func TestRunQueryWheresInvalid(t *testing.T) {
+	cases := []struct {
+		where map[string]any
+		part  string
+	}{
+		{map[string]any{"nope": map[string]any{"eq": "x"}}, "Columna no valida en la consulta (nope)"},
+		{map[string]any{"secret": map[string]any{"eq": "x"}}, "Columna no valida en la consulta (secret)"},
+		{map[string]any{"name": map[string]any{"isNull": true}}, "Operador no valido en la consulta (name.isNull)"},
+		{map[string]any{"name": map[string]any{"search": "x"}}, "Operador no valido en la consulta (name.search)"},
+		{map[string]any{"name": map[string]any{"eq": map[string]any{"a": 1}}}, "Valor no valido en la consulta (name.eq)"},
+		{map[string]any{"name": map[string]any{"eq": nil}}, "Valor no valido en la consulta (name.eq)"},
+		{map[string]any{"name": map[string]any{"eq": []any{"a"}}}, "Valor no valido en la consulta (name.eq)"},
+		{map[string]any{"name": map[string]any{"in": "no es lista"}}, "Valor no valido en la consulta (name.in)"},
+		{map[string]any{"name": map[string]any{"in": []any{}}}, "Valor no valido en la consulta (name.in)"},
+		{map[string]any{"name": map[string]any{"in": []any{"a", nil}}}, "Valor no valido en la consulta (name.in)"},
+		{map[string]any{"name": map[string]any{"in": []any{"a", map[string]any{}}}}, "Valor no valido en la consulta (name.in)"},
+		{map[string]any{"name": "x"}, "Valor no valido en la consulta (name)"},
+		{map[string]any{"name": map[string]any{}}, "Valor no valido en la consulta (name)"},
+		{map[string]any{"or": map[string]any{"nope": map[string]any{"eq": "x"}}}, "Columna no valida en la consulta (nope)"},
+		{map[string]any{"and": map[string]any{"name": map[string]any{"eq": "a"}, "secret": map[string]any{"eq": "x"}}}, "Columna no valida en la consulta (secret)"},
+		{map[string]any{"OR": map[string]any{"name": map[string]any{"notIn": []any{"a"}}}}, "Operador no valido en la consulta (name.notIn)"},
+		{map[string]any{"or": map[string]any{}}, "Valor no valido en la consulta (or)"},
+		{map[string]any{"or": "x"}, "Valor no valido en la consulta (or)"},
+		{map[string]any{"concat": map[string]any{"fields": []any{"name", "nope"}, "like": "%x%"}}, "Columna no valida en la consulta (nope)"},
+		{map[string]any{"concat": map[string]any{"fields": []any{"secret"}, "like": "%x%"}}, "Columna no valida en la consulta (secret)"},
+		{map[string]any{"concat": map[string]any{"fields": []any{}, "like": "%x%"}}, "Valor no valido en la consulta (concat.fields)"},
+		{map[string]any{"concat": map[string]any{"like": "%x%"}}, "Valor no valido en la consulta (concat.fields)"},
+		{map[string]any{"concat": map[string]any{"fields": []any{"name"}}}, "Valor no valido en la consulta (concat)"},
+		{map[string]any{"concat": map[string]any{"fields": []any{"name"}, "between": "x"}}, "Operador no valido en la consulta (concat.between)"},
+	}
+	for _, item := range cases {
+		query := et.Json{"wheres": []any{item.where}}
+		assertQueryError(t, query, item.part)
+	}
+}
+
+func TestRunQueryWheresNotList(t *testing.T) {
+	assertQueryError(t, et.Json{"wheres": map[string]any{"name": map[string]any{"eq": "a"}}}, "Valor no valido en la consulta (wheres)")
+	assertQueryError(t, et.Json{"wheres": []any{"name"}}, "Valor no valido en la consulta (wheres)")
+	assertQueryError(t, et.Json{"wheres": []any{nil}}, "Valor no valido en la consulta (wheres)")
+
+	sql := querySql(t, et.Json{"wheres": nil})
 	assertNotContains(t, sql, "WHERE")
+	sql = querySql(t, et.Json{"wheres": []any{}})
+	assertNotContains(t, sql, "WHERE")
+}
+
+func TestRunQueryUnknownRootKey(t *testing.T) {
+	for _, key := range []string{"folder", "project_id", "where", "orderBy", "sort"} {
+		assertQueryError(t, et.Json{key: "x"}, "Llave no valida en la consulta ("+key+")")
+	}
+
+	sql := querySql(t, et.Json{"wheres": []any{}, "selects": []any{}, "order_by": map[string]any{}, "search": map[string]any{}, "page": 1, "rows": 10, "limit": 10})
+	assertNotContains(t, sql, "WHERE")
+}
+
+func TestRunQueryFixedWheresNotValidated(t *testing.T) {
+	model := queryTestModel()
+	secret := model.Column("secret").Eq("x")
+	sql := querySql(t, et.Json{}, secret)
+	assertContains(t, sql, "WHERE A.SECRET = 'x'")
+}
+
+func TestRunQueryGroupUsesEveryField(t *testing.T) {
+	model := queryTestModel()
+	state := model.Column("_state").Eq("0")
+	query := et.Json{
+		"wheres": []any{
+			map[string]any{"name": map[string]any{"eq": "a"}},
+			map[string]any{"or": map[string]any{
+				"owner_id":    map[string]any{"eq": "cc:1"},
+				"description": map[string]any{"like": "%b%", "neg": "c"},
+			}},
+		},
+	}
+	sql := querySql(t, query, state)
+	assertContains(t, sql, "WHERE A._STATE = '0'")
+	assertContains(t, sql, "AND (A.NAME = 'a' OR A.DESCRIPTION ILIKE '%b%' AND A.DESCRIPTION != 'c' OR A.OWNER_ID = 'cc:1')")
 }
 
 func TestRunQueryOperators(t *testing.T) {
@@ -188,21 +279,11 @@ func TestRunQueryWithoutOrIsNotGrouped(t *testing.T) {
 func TestRunQueryConcat(t *testing.T) {
 	query := et.Json{
 		"wheres": []any{
-			map[string]any{"concat": map[string]any{"fields": []any{"name", "nope", "description"}, "like": "%juan perez%"}},
+			map[string]any{"concat": map[string]any{"fields": []any{"name", "description"}, "like": "%juan perez%"}},
 		},
 	}
 	sql := querySql(t, query)
 	assertContains(t, sql, "WHERE CONCAT(A.NAME, ' ', A.DESCRIPTION)::TEXT ILIKE '%juan perez%'")
-}
-
-func TestRunQueryConcatWithoutFields(t *testing.T) {
-	query := et.Json{
-		"wheres": []any{
-			map[string]any{"concat": map[string]any{"fields": []any{"nope", "secret"}, "like": "%x%"}},
-		},
-	}
-	sql := querySql(t, query)
-	assertNotContains(t, sql, "WHERE")
 }
 
 func TestRunQueryOrderBy(t *testing.T) {

@@ -35,6 +35,7 @@
 - [Autenticación y Autorización (claim / middleware)](#-autenticación-y-autorización-claim--middleware)
 - [HTTP Router y Respuestas (router / response)](#-http-router-y-respuestas-router--response)
 - [Cliente HTTP saliente (request)](#-cliente-http-saliente-request)
+- [Secretos guardados (secret)](#-secretos-guardados-secret)
 - [Resiliencia](#-resiliencia)
 - [Workflows](#-workflows)
 - [Variables de Entorno](#-variables-de-entorno)
@@ -451,22 +452,25 @@ list, err := linq.RunQuery(modelo, query, projectWhere)
 
 - Operadores: `eq` (`=`), `neg` (`!=`), `in` (lista), `like` (`ILIKE`, sin distinguir mayúsculas; los `%` los pone el cliente), `more` (`>`), `less` (`<`), `moreEq` (`>=`), `lessEq` (`<=`). Los nombres de operador distinguen mayúsculas; `and`/`or` no.
 - Un campo puede llevar varios operadores (`{ "date_make": { "more": "2026-01-01", "less": "2026-12-31" } }`): el primero lleva el conector y los demás van con AND.
-- Dentro de un grupo `and`/`or` solo cuenta el **primer** campo reconocido (en orden alfabético); los demás campos del grupo se ignoran. Usa un grupo por campo.
-- `concat`: `{ "concat": { "fields": ["name", "description"], "like": "%juan%" } }` compara contra los campos unidos con un espacio. Los campos desconocidos u ocultos se omiten; si no queda ninguno, la condición se ignora.
+- Un grupo `and`/`or` puede traer varios campos: cada uno va con el conector del grupo, en orden alfabético, y sus operadores adicionales con AND. `{ "or": { "a": { "eq": 1 }, "b": { "eq": 2 } } }` es `OR A = 1 OR B = 2`. El grupo debe ser un objeto con al menos un campo.
+- `concat`: `{ "concat": { "fields": ["name", "description"], "like": "%juan%" } }` compara contra los campos unidos con un espacio. `fields` es obligatorio y todos deben existir y ser visibles; además de `fields` lleva al menos un operador.
 - Los campos pueden ser columnas o atributos de `_data` (`DefineAtrib`).
 - `wheres` (variádico) son condiciones fijas del llamador, por ejemplo el proyecto del token: van con AND y las del cliente van entre paréntesis si traen `or`, así un `or` no las salta.
-- Los textos se escapan (comilla simple duplicada) sin pasar por `et.Unquote`. Solo se aceptan textos, números y booleanos.
+- Los textos se escapan (comilla simple duplicada) sin pasar por `et.Unquote`. Solo se aceptan textos, números y booleanos; `in` acepta cualquier lista (`[]any`, `[]string`, …) no vacía de esos valores.
 - `search`: cada palabra de `value` (separadas por espacios, máximo 5: `SEARCH_MAX_WORDS`; las demás se ignoran) debe aparecer, sin distinguir mayúsculas, en los `fields` unidos con un espacio: `CONCAT(A.NAME, ' ', A.DESCRIPTION)::TEXT ILIKE '%ana%' AND ... ILIKE '%gomez%'`. Cada palabra es una condición AND que va **después** de los `wheres` fijos y de los del cliente (fuera de su paréntesis), así la búsqueda no salta el alcance. `%`, `_` y `\` de `value` se buscan como texto. Sin `value`, o si `search` no es un objeto (por ejemplo el texto suelto de `jdb.RunQuery`), no filtra. `fields` admite columnas y atributos visibles (1 a 5: `SEARCH_MAX_FIELDS`), no JSON ni binarios. No usa índice (es `ILIKE` sobre un `CONCAT`).
 
 **Respuesta**: `et.List` (`rows`, `all` = total de registros que cumplen, `count` = registros de la página, `page`, `start`, `end`, `result`). Cada elemento de `result` es el objeto del registro (consulta `model.Data`).
 
 **Errores**
 
-- `Columna no valida en la consulta (<campo>)` (`MSG_QUERY_COLUMN_NOT_VALID`) si un campo de `selects` u `order_by` no existe o es oculto (`DefineHidden`).
+- `Llave no valida en la consulta (<llave>)` (`MSG_QUERY_KEY_NOT_VALID`) si `query` trae una llave raíz distinta de `wheres`, `selects`, `order_by`, `search`, `page`, `rows` y `limit` (por ejemplo `project_id` o `folder`: el servicio que las use las saca antes de llamar a `RunQuery`).
+- `Columna no valida en la consulta (<campo>)` (`MSG_QUERY_COLUMN_NOT_VALID`) si un campo de `selects`, `order_by` o `wheres` (también dentro de un grupo `and`/`or` y en `concat.fields`) no existe o es oculto (`DefineHidden`).
+- `Operador no valido en la consulta (<campo>.<operador>)` (`MSG_QUERY_OPERATOR_NOT_VALID`) si el operador no es uno de los soportados (por ejemplo `isNull`, `notIn`, `between`, `search`).
+- `Valor no valido en la consulta (<campo>[.<operador>])` (`MSG_QUERY_VALUE_NOT_VALID`) si el valor no es texto, número ni booleano (`null`, objeto, lista fuera de `in`), si `in` no es una lista, está vacío o trae un elemento no válido, si un campo no trae un objeto con al menos un operador, si un grupo `and`/`or` no es un objeto o está vacío, si `concat` no trae `fields`, o si `wheres` no es una lista de objetos (`(wheres)`).
 - En `search`: `MSG_SEARCH_LENGTH` si `value` pasa de 100 caracteres (`SEARCH_MAX_LENGTH`), `MSG_SEARCH_FIELDS` si `fields` está vacío o trae más de 5, y `MSG_SEARCH_FIELD_NOT_VALID` si un campo no existe, es oculto o es JSON/binario.
 - El error de la base, si la consulta falla.
 
-Lo que **no** da error se ignora sin aviso: un campo desconocido u oculto en `wheres`, un operador no soportado, un valor que no es texto, número ni booleano (`null`, objetos), un `in` vacío y las llaves distintas de `wheres`, `selects`, `order_by`, `search`, `page`, `rows` y `limit`. Un filtro mal escrito no filtra: la consulta devuelve todo lo que permiten los `wheres` fijos.
+Estos errores salen antes de consultar la base, así que un filtro mal escrito responde 400 en vez de devolver todo lo que permiten los `wheres` fijos. Los `wheres` fijos del llamador (variádicos) no se validan. Sin `value`, o si `search` no es un objeto, la búsqueda sigue sin filtrar ni dar error.
 
 **No soporta** (sí están en `jdb.RunQuery`): `isNull`, `notNull`, `notIn`, `between`, el operador `search` dentro de `wheres` ni la llave raíz `search` como texto (`DefineSearch` de jdb), ni rutas JSON (`_data.campo`). Para "sin valor" en un texto usa `{ "eq": "" }`.
 
@@ -824,6 +828,34 @@ body, status := request.GetWithTimeout(url, header, 3*time.Second, []byte(`{}`))
 
 ---
 
+## 🔒 Secretos guardados (`secret`)
+
+Cifra y descifra secretos que un servicio guarda en su base (por ejemplo la contraseña de una base origen) con **AES-256-GCM**. El texto guardado es `"v1:" + base64(nonce || cifrado)`, con un nonce aleatorio en cada cifrado, y la llave es `sha256` del secreto configurado, así que acepta una llave de cualquier largo. Guardar o no el secreto lo decide cada servicio; el paquete solo cifra y descifra. Úsalo en lugar de `utility.EncryptMessage` (CFB con `SECRET` tal cual como llave, sin detectar un texto alterado), que se mantiene sin cambios.
+
+```go
+// Llave de la primera variable no vacía: MIGRATION_SECRET o, si no está, SECRET
+c, err := secret.FromEnv("MIGRATION_SECRET", "SECRET")
+if err != nil {
+    return err // secret.ErrKeyRequired
+}
+
+stored, err := c.Encrypt(password) // "v1:..."
+plain, err := c.Decrypt(stored)    // secret.ErrInvalid si se alteró, la llave cambió o no tiene "v1:"
+
+// Atajos sin crear el Cipher (sin nombres usa SECRET)
+stored, err = secret.Encrypt(password, "MIGRATION_SECRET", "SECRET")
+plain, err = secret.Decrypt(stored, "MIGRATION_SECRET", "SECRET")
+
+// En tests, llave fija sin pasar por envar (envar guarda el primer valor que lee)
+c, _ = secret.New("llave-de-pruebas")
+```
+
+- `secret.New(key)` / `secret.FromEnv(names...)` → `(*secret.Cipher, error)`; `secret.EnvKey(names...)` devuelve el valor de la primera variable no vacía.
+- Errores: `secret.ErrKeyRequired` (llave vacía) y `secret.ErrInvalid` (sin prefijo, base64 roto, texto alterado u otra llave). Cuando GCM no abre el texto el error es `*secret.InvalidError`: `errors.Is(err, secret.ErrInvalid)` es verdadero y `errors.Unwrap(err)` da el error de GCM. Los servicios los traducen a sus propios mensajes con `errors.Is`.
+- Cambiar la llave deja ilegible lo ya guardado: hay que volver a escribir esos secretos.
+
+---
+
 ## 🛡️ Resiliencia
 
 Sistema de reintentos automáticos para operaciones que pueden fallar.
@@ -1020,6 +1052,7 @@ elvis/
 ├── resilience/     # Reintentos automáticos
 ├── response/       # Helpers de respuesta HTTP
 ├── router/         # Registro de rutas chi con API Gateway
+├── secret/         # Cifrado de secretos guardados (AES-256-GCM, formato v1:)
 ├── service/        # Cliente HTTP entre servicios
 ├── stdrout/        # Salida estándar / terminal
 ├── strs/           # Utilidades de strings

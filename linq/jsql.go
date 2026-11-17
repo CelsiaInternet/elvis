@@ -2,6 +2,7 @@ package linq
 
 import (
 	"fmt"
+	"reflect"
 	"slices"
 	"sort"
 	"strings"
@@ -10,19 +11,28 @@ import (
 )
 
 const (
-	QUERY_DEFAULT_ROWS         = 100
-	QUERY_MAX_ROWS             = 1000
-	MSG_QUERY_COLUMN_NOT_VALID = "Columna no valida en la consulta (%s)"
-	SEARCH_MAX_FIELDS          = 5
-	SEARCH_MAX_WORDS           = 5
-	SEARCH_MAX_LENGTH          = 100
-	MSG_SEARCH_LENGTH          = "La busqueda admite maximo %d caracteres"
-	MSG_SEARCH_FIELDS          = "La busqueda requiere entre 1 y %d campos (search.fields)"
-	MSG_SEARCH_FIELD_NOT_VALID = "Campo no valido en la busqueda (%s)"
+	QUERY_DEFAULT_ROWS           = 100
+	QUERY_MAX_ROWS               = 1000
+	MSG_QUERY_COLUMN_NOT_VALID   = "Columna no valida en la consulta (%s)"
+	MSG_QUERY_OPERATOR_NOT_VALID = "Operador no valido en la consulta (%s)"
+	MSG_QUERY_VALUE_NOT_VALID    = "Valor no valido en la consulta (%s)"
+	MSG_QUERY_KEY_NOT_VALID      = "Llave no valida en la consulta (%s)"
+	SEARCH_MAX_FIELDS            = 5
+	SEARCH_MAX_WORDS             = 5
+	SEARCH_MAX_LENGTH            = 100
+	MSG_SEARCH_LENGTH            = "La busqueda admite maximo %d caracteres"
+	MSG_SEARCH_FIELDS            = "La busqueda requiere entre 1 y %d campos (search.fields)"
+	MSG_SEARCH_FIELD_NOT_VALID   = "Campo no valido en la busqueda (%s)"
 )
 
 // Comodines de LIKE escapados con \ (el escape por defecto de Postgres) para buscarlos como texto
 var likeEscaper = strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`)
+
+// Operadores que admite wheres
+var queryOperators = []string{"eq", "neg", "in", "like", "more", "less", "moreEq", "lessEq"}
+
+// Llaves raiz que admite query
+var queryRootKeys = []string{"wheres", "selects", "order_by", "search", "page", "rows", "limit"}
 
 // Tipos de columna que no se buscan como texto
 var searchSkipTypes = []string{"JSON", "JSONB", "BYTEA", "TSVECTOR"}
@@ -32,8 +42,11 @@ var searchSkipTypes = []string{"JSON", "JSONB", "BYTEA", "TSVECTOR"}
 * query admite wheres, selects, order_by ({ asc: [], desc: [] }), page y rows (limit es alias de rows; 100 por defecto,
 * maximo 1000) y search ({ value, fields }, ver querySearch). Las condiciones de wheres van entre parentesis si
 * traen or; wheres (opcional) son condiciones fijas del llamador que se aplican con AND sobre ellas, y search se
-* aplica con AND despues de todo. En wheres se ignora la columna desconocida u oculta; en selects, order_by y
-* search.fields da error. No soporta isNull, notNull, notIn ni between.
+* aplica con AND despues de todo. Da error (sin consultar la base) ante una llave raiz desconocida
+* (MSG_QUERY_KEY_NOT_VALID), una columna desconocida u oculta en selects, order_by o wheres (tambien en grupos and/or
+* y en concat; MSG_QUERY_COLUMN_NOT_VALID), un operador no soportado (MSG_QUERY_OPERATOR_NOT_VALID) o un valor de
+* wheres que no es texto, numero ni booleano, o un in vacio (MSG_QUERY_VALUE_NOT_VALID), y en search ver querySearch.
+* Los wheres fijos del llamador no se validan. No soporta isNull, notNull, notIn ni between.
 * @param model *Model, query et.Json, wheres ...*Where
 * @return et.List, error
 **/
@@ -50,10 +63,15 @@ func RunQuery(model *Model, query et.Json, wheres ...*Where) (et.List, error) {
 
 /**
 * queryLinq: Arma el Linq de RunQuery (selects, wheres fijos, wheres de query, search y order_by) sin ejecutarlo.
+* Antes valida las llaves raiz (queryKeys).
 * @param model *Model, query et.Json, wheres ...*Where
 * @return *Linq, error
 **/
 func queryLinq(model *Model, query et.Json, wheres ...*Where) (*Linq, error) {
+	if err := queryKeys(query); err != nil {
+		return nil, err
+	}
+
 	selectNames := query.ArrayStr("selects")
 	selected, err := querySelects(model, selectNames)
 	if err != nil {
@@ -65,8 +83,14 @@ func queryLinq(model *Model, query et.Json, wheres ...*Where) (*Linq, error) {
 		ql.Where(where)
 	}
 
-	queryWheres := query.ArrayJson("wheres")
-	conditions := queryConditions(model, queryWheres)
+	queryWheres, err := queryWheres(query)
+	if err != nil {
+		return nil, err
+	}
+	conditions, err := queryConditions(model, queryWheres)
+	if err != nil {
+		return nil, err
+	}
 	ql = applyConditions(ql, conditions)
 
 	search, err := querySearch(model, query.Json("search"))
@@ -231,62 +255,121 @@ func sortedKeys(data et.Json) []string {
 }
 
 /**
-* queryConditions: Condiciones de wheres con su conector: { campo: {...} } va con AND y { and|or: { campo: {...} } }
-* con ese conector (la primera condicion reconocida del grupo). Lo que no se reconoce se omite.
-* @param model *Model, wheres []et.Json
-* @return []*Where
+* queryWheres: Lista de wheres de query como objetos; error si wheres no es una lista o trae algo que no es un objeto.
+* @param query et.Json
+* @return []et.Json, error
 **/
-func queryConditions(model *Model, wheres []et.Json) []*Where {
+func queryWheres(query et.Json) ([]et.Json, error) {
+	value, ok := query["wheres"]
+	if !ok || value == nil {
+		return []et.Json{}, nil
+	}
+
+	list, ok := queryList(value)
+	if !ok {
+		return nil, fmt.Errorf(MSG_QUERY_VALUE_NOT_VALID, "wheres")
+	}
+
+	result := []et.Json{}
+	for _, item := range list {
+		where, ok := queryObject(item)
+		if !ok {
+			return nil, fmt.Errorf(MSG_QUERY_VALUE_NOT_VALID, "wheres")
+		}
+		result = append(result, where)
+	}
+
+	return result, nil
+}
+
+/**
+* queryConditions: Condiciones de wheres con su conector: { campo: {...} } va con AND y { and|or: { campo: {...}, ... } }
+* con ese conector en cada campo del grupo (en orden alfabetico). Error si un campo no existe o es oculto, si un grupo
+* no es un objeto o esta vacio, o si un operador o un valor no son validos (ver queryColumnConditions).
+* @param model *Model, wheres []et.Json
+* @return []*Where, error
+**/
+func queryConditions(model *Model, wheres []et.Json) ([]*Where, error) {
 	result := []*Where{}
 	for _, where := range wheres {
 		for _, column := range sortedKeys(where) {
 			connector := strings.ToLower(column)
 			if connector != "and" && connector != "or" {
-				operators := where.Json(column)
-				conditions := queryColumnConditions(model, "AND", column, operators)
+				conditions, err := queryColumnConditions(model, "AND", column, where[column])
+				if err != nil {
+					return nil, err
+				}
 				result = append(result, conditions...)
 				continue
 			}
 
-			group := where.Json(column)
+			group, ok := queryObject(where[column])
+			if !ok || len(group) == 0 {
+				return nil, fmt.Errorf(MSG_QUERY_VALUE_NOT_VALID, column)
+			}
+
 			for _, inner := range sortedKeys(group) {
-				operators := group.Json(inner)
-				conditions := queryColumnConditions(model, strings.ToUpper(connector), inner, operators)
-				if len(conditions) > 0 {
-					result = append(result, conditions...)
-					break
+				conditions, err := queryColumnConditions(model, strings.ToUpper(connector), inner, group[inner])
+				if err != nil {
+					return nil, err
 				}
+				result = append(result, conditions...)
 			}
 		}
 	}
 
-	return result
+	return result, nil
 }
 
 /**
 * queryColumnConditions: Condiciones de una columna (o de concat: { fields: [], like: "%texto%" }, los campos unidos
-* con un espacio). La primera lleva connector y las demas AND. Vacio si la columna no existe o es oculta.
-* @param model *Model, connector, name string, operators et.Json
-* @return []*Where
+* con un espacio). La primera lleva connector y las demas AND. Error si la columna (o un campo de concat) no existe o
+* es oculta, si value no es un objeto con al menos un operador, si un operador no se soporta o si su valor no es valido.
+* @param model *Model, connector, name string, value any
+* @return []*Where, error
 **/
-func queryColumnConditions(model *Model, connector, name string, operators et.Json) []*Where {
+func queryColumnConditions(model *Model, connector, name string, value any) ([]*Where, error) {
+	operators, ok := queryObject(value)
+	if !ok {
+		return nil, fmt.Errorf(MSG_QUERY_VALUE_NOT_VALID, name)
+	}
+
 	var col *Column
 	if strings.EqualFold(name, "concat") {
-		col = queryConcat(model, operators.ArrayStr("fields"))
+		fields, ok := queryList(operators["fields"])
+		if !ok || len(fields) == 0 {
+			return nil, fmt.Errorf(MSG_QUERY_VALUE_NOT_VALID, name+".fields")
+		}
+
+		names := []string{}
+		for _, field := range fields {
+			fieldName, ok := field.(string)
+			if !ok || queryColumn(model, fieldName) == nil {
+				return nil, fmt.Errorf(MSG_QUERY_COLUMN_NOT_VALID, fmt.Sprint(field))
+			}
+			names = append(names, fieldName)
+		}
+
+		col = queryConcat(model, names)
+		operators = operators.Clone()
+		delete(operators, "fields")
 	} else {
 		col = queryColumn(model, name)
 	}
 
-	result := []*Where{}
 	if col == nil {
-		return result
+		return nil, fmt.Errorf(MSG_QUERY_COLUMN_NOT_VALID, name)
 	}
 
+	if len(operators) == 0 {
+		return nil, fmt.Errorf(MSG_QUERY_VALUE_NOT_VALID, name)
+	}
+
+	result := []*Where{}
 	for _, operator := range sortedKeys(operators) {
-		value := operators[operator]
-		where := queryOperator(col, operator, value)
-		if where == nil {
-			continue
+		where, err := queryOperator(col, name, operator, operators[operator])
+		if err != nil {
+			return nil, err
 		}
 
 		where.connector = "AND"
@@ -296,7 +379,7 @@ func queryColumnConditions(model *Model, connector, name string, operators et.Js
 		result = append(result, where)
 	}
 
-	return result
+	return result, nil
 }
 
 /**
@@ -326,71 +409,130 @@ func queryConcat(model *Model, fields []string) *Column {
 }
 
 /**
-* queryOperator: Condicion de col para el operador (eq, neg, in, like, more, less, moreEq, lessEq); nil si el
-* operador no se soporta o el valor no es texto, numero o booleano.
-* @param col *Column, operator string, value any
-* @return *Where
+* queryOperator: Condicion de col para el operador (eq, neg, in, like, more, less, moreEq, lessEq). Error
+* MSG_QUERY_OPERATOR_NOT_VALID si el operador no se soporta y MSG_QUERY_VALUE_NOT_VALID si el valor no es texto,
+* numero o booleano (en in, si no es una lista, esta vacia o algun elemento no es valido).
+* @param col *Column, name, operator string, value any
+* @return *Where, error
 **/
-func queryOperator(col *Column, operator string, value any) *Where {
+func queryOperator(col *Column, name, operator string, value any) (*Where, error) {
+	if !slices.Contains(queryOperators, operator) {
+		return nil, fmt.Errorf(MSG_QUERY_OPERATOR_NOT_VALID, name+"."+operator)
+	}
+
 	if operator == "in" {
-		values := queryValues(value)
-		if len(values) == 0 {
-			return nil
+		values, ok := queryValues(value)
+		if !ok {
+			return nil, fmt.Errorf(MSG_QUERY_VALUE_NOT_VALID, name+"."+operator)
 		}
 
-		return col.In(values...)
+		return col.In(values...), nil
 	}
 
 	sqlValue, ok := queryValue(value)
 	if !ok {
-		return nil
+		return nil, fmt.Errorf(MSG_QUERY_VALUE_NOT_VALID, name+"."+operator)
 	}
 
 	switch operator {
 	case "eq":
-		return col.Eq(sqlValue)
+		return col.Eq(sqlValue), nil
 	case "neg":
-		return col.Neg(sqlValue)
+		return col.Neg(sqlValue), nil
 	case "like":
-		return col.Like(sqlValue)
+		return col.Like(sqlValue), nil
 	case "more":
-		return col.More(sqlValue)
+		return col.More(sqlValue), nil
 	case "less":
-		return col.Less(sqlValue)
+		return col.Less(sqlValue), nil
 	case "moreEq":
-		return col.MoreEq(sqlValue)
-	case "lessEq":
-		return col.LessEq(sqlValue)
+		return col.MoreEq(sqlValue), nil
 	default:
-		return nil
+		return col.LessEq(sqlValue), nil
 	}
 }
 
 /**
-* queryValues: Valores validos de la lista de in (se omiten los que no son texto, numero o booleano).
+* queryValues: Valores de la lista de in listos para el SQL; ok=false si value no es una lista, esta vacia o algun
+* elemento no es texto, numero o booleano.
 * @param value any
-* @return []any
+* @return []any, bool
 **/
-func queryValues(value any) []any {
-	result := []any{}
-	list, ok := value.([]any)
-	if !ok {
-		return result
+func queryValues(value any) ([]any, bool) {
+	list, ok := queryList(value)
+	if !ok || len(list) == 0 {
+		return nil, false
 	}
 
+	result := []any{}
 	for _, item := range list {
 		sqlValue, ok := queryValue(item)
-		if ok {
-			result = append(result, sqlValue)
+		if !ok {
+			return nil, false
+		}
+		result = append(result, sqlValue)
+	}
+
+	return result, true
+}
+
+/**
+* queryList: Elementos de value si es una lista (slice o arreglo de cualquier tipo, como []any o []string); ok=false si no lo es.
+* @param value any
+* @return []any, bool
+**/
+func queryList(value any) ([]any, bool) {
+	if list, ok := value.([]any); ok {
+		return list, true
+	}
+
+	rv := reflect.ValueOf(value)
+	if !rv.IsValid() || (rv.Kind() != reflect.Slice && rv.Kind() != reflect.Array) {
+		return nil, false
+	}
+
+	result := make([]any, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		result[i] = rv.Index(i).Interface()
+	}
+
+	return result, true
+}
+
+/**
+* queryObject: value como objeto (et.Json o map[string]any); ok=false si no lo es.
+* @param value any
+* @return et.Json, bool
+**/
+func queryObject(value any) (et.Json, bool) {
+	switch v := value.(type) {
+	case et.Json:
+		return v, v != nil
+	case map[string]any:
+		return et.Json(v), v != nil
+	default:
+		return nil, false
+	}
+}
+
+/**
+* queryKeys: Error MSG_QUERY_KEY_NOT_VALID si query trae una llave raiz distinta de queryRootKeys.
+* @param query et.Json
+* @return error
+**/
+func queryKeys(query et.Json) error {
+	for _, key := range sortedKeys(query) {
+		if !slices.Contains(queryRootKeys, key) {
+			return fmt.Errorf(MSG_QUERY_KEY_NOT_VALID, key)
 		}
 	}
 
-	return result
+	return nil
 }
 
 /**
 * queryValue: Valor listo para el SQL: el texto va entre comillas simples con las comillas internas duplicadas (no pasa
-* por et.Unquote, que no las escapa); numeros y booleanos van tal cual. ok=false para otros tipos.
+* por et.Unquote, que no las escapa); numeros y booleanos van tal cual. ok=false para otros tipos (null, objetos, listas).
 * @param value any
 * @return any, bool
 **/
@@ -400,7 +542,7 @@ func queryValue(value any) (any, bool) {
 		escaped := strings.ReplaceAll(v, "'", "''")
 		quoted := fmt.Sprintf(`'%s'`, escaped)
 		return SQL{val: quoted}, true
-	case float64, float32, int, int32, int64, bool:
+	case float64, float32, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, bool:
 		return v, true
 	default:
 		return nil, false
