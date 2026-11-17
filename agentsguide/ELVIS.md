@@ -66,6 +66,8 @@ Dos familias de métodos, no intercambiables:
 
 No existe `.One()` en `linq`, y `.Page(…)` ya ejecuta la consulta: no se le encadena `.List()`. SQL crudo (`model.Query(sql, args...)`, `model.QueryOne`) solo para lo que `linq` no modela, siempre con argumentos enlazados, nunca concatenando valores.
 
+Filtros que llegan del cliente (`POST /query`): `linq.RunQuery(model, body, wheres...)` → `et.List`, que se responde con `response.LIST`. Los `wheres` fijos (por ejemplo `model.Column("project_id").Eq(claim.ProjectId(r))`) no los puede saltar un `or` del cliente. No armes esos filtros con `Column.Eq/Like/...`: pasan el valor por `et.Unquote`, que no escapa la comilla simple. La búsqueda libre va en `search: { value, fields }` (como en los `/query` de catalog): cada palabra es un `ILIKE` sobre los campos unidos, con AND después de los `wheres`; un campo desconocido u oculto en `fields` da error. `linq.RunQuery` no soporta `isNull`, `notNull`, `notIn`, `between` ni el `search` de texto suelto de jdb; si hacen falta, el servicio usa jdb. Aún no está en un tag publicado (el último es `v1.1.323`).
+
 ### 3. Middleware y claim
 
 - CORS: `middleware.AllowAll(origenes []string).Handler`. No existe `middleware.Cors`.

@@ -413,6 +413,86 @@ col.LessEq(val)   // <=
 col.Search(val)   // @@ (búsqueda full-text)
 ```
 
+> Estas condiciones pasan el valor por `et.Unquote`, que no escapa la comilla simple: no les pases texto del cliente sin validar. Para consultas que llegan del cliente usa `linq.RunQuery`.
+
+### Consulta jsql (`linq.RunQuery`)
+
+`RunQuery(model, query, wheres...)` arma la consulta desde un `et.Json` con el contrato de `jdb.RunQuery` y devuelve la página (`et.List`):
+
+```go
+query := et.Json{
+    "wheres": []et.Json{
+        {"owner_id": et.Json{"in": []string{"cc:1", "id_deal:2"}}},
+        {"or": et.Json{"name": et.Json{"like": "%acta%"}}},
+        {"concat": et.Json{"fields": []string{"name", "description"}, "like": "%juan%"}},
+    },
+    "search":   et.Json{"value": "ana gomez", "fields": []string{"name", "description"}},
+    "selects":  []string{"_id", "name"},
+    "order_by": et.Json{"desc": []string{"date_make"}},
+    "page":     1,
+    "rows":     50, // alias limit; 100 por defecto (QUERY_DEFAULT_ROWS), máximo 1000 (QUERY_MAX_ROWS)
+}
+projectWhere := modelo.Column("project_id").In("-1", projectId)
+list, err := linq.RunQuery(modelo, query, projectWhere)
+```
+
+> Sin publicar: `linq/jsql.go` no está en ningún tag todavía (el último es `v1.1.323`). Un servicio que compila fuera del `go.work` necesita el tag que lo incluya.
+
+**Formato de `query`**
+
+| Llave | Forma | Qué hace |
+|-------|-------|----------|
+| `selects` | `["_id", "name"]` | Columnas del resultado. Vacío o ausente: todas. |
+| `wheres` | `[{ campo: { operador: valor } }, …]` | Condiciones con AND. `{ "and": { campo: {…} } }` u `{ "or": { campo: {…} } }` usan ese conector. |
+| `order_by` | `{ "asc": [...], "desc": [...] }` | Primero los `asc`, luego los `desc`. |
+| `search` | `{ "value": "ana gomez", "fields": ["name", "description"] }` | Búsqueda de texto libre (contrato de los `/query` de catalog), ver abajo. |
+| `page` | número | Página pedida; 1 si no viene o es menor que 1. |
+| `rows` | número | Filas por página (alias `limit`). 100 por defecto (`QUERY_DEFAULT_ROWS`), máximo 1000 (`QUERY_MAX_ROWS`). |
+
+- Operadores: `eq` (`=`), `neg` (`!=`), `in` (lista), `like` (`ILIKE`, sin distinguir mayúsculas; los `%` los pone el cliente), `more` (`>`), `less` (`<`), `moreEq` (`>=`), `lessEq` (`<=`). Los nombres de operador distinguen mayúsculas; `and`/`or` no.
+- Un campo puede llevar varios operadores (`{ "date_make": { "more": "2026-01-01", "less": "2026-12-31" } }`): el primero lleva el conector y los demás van con AND.
+- Dentro de un grupo `and`/`or` solo cuenta el **primer** campo reconocido (en orden alfabético); los demás campos del grupo se ignoran. Usa un grupo por campo.
+- `concat`: `{ "concat": { "fields": ["name", "description"], "like": "%juan%" } }` compara contra los campos unidos con un espacio. Los campos desconocidos u ocultos se omiten; si no queda ninguno, la condición se ignora.
+- Los campos pueden ser columnas o atributos de `_data` (`DefineAtrib`).
+- `wheres` (variádico) son condiciones fijas del llamador, por ejemplo el proyecto del token: van con AND y las del cliente van entre paréntesis si traen `or`, así un `or` no las salta.
+- Los textos se escapan (comilla simple duplicada) sin pasar por `et.Unquote`. Solo se aceptan textos, números y booleanos.
+- `search`: cada palabra de `value` (separadas por espacios, máximo 5: `SEARCH_MAX_WORDS`; las demás se ignoran) debe aparecer, sin distinguir mayúsculas, en los `fields` unidos con un espacio: `CONCAT(A.NAME, ' ', A.DESCRIPTION)::TEXT ILIKE '%ana%' AND ... ILIKE '%gomez%'`. Cada palabra es una condición AND que va **después** de los `wheres` fijos y de los del cliente (fuera de su paréntesis), así la búsqueda no salta el alcance. `%`, `_` y `\` de `value` se buscan como texto. Sin `value`, o si `search` no es un objeto (por ejemplo el texto suelto de `jdb.RunQuery`), no filtra. `fields` admite columnas y atributos visibles (1 a 5: `SEARCH_MAX_FIELDS`), no JSON ni binarios. No usa índice (es `ILIKE` sobre un `CONCAT`).
+
+**Respuesta**: `et.List` (`rows`, `all` = total de registros que cumplen, `count` = registros de la página, `page`, `start`, `end`, `result`). Cada elemento de `result` es el objeto del registro (consulta `model.Data`).
+
+**Errores**
+
+- `Columna no valida en la consulta (<campo>)` (`MSG_QUERY_COLUMN_NOT_VALID`) si un campo de `selects` u `order_by` no existe o es oculto (`DefineHidden`).
+- En `search`: `MSG_SEARCH_LENGTH` si `value` pasa de 100 caracteres (`SEARCH_MAX_LENGTH`), `MSG_SEARCH_FIELDS` si `fields` está vacío o trae más de 5, y `MSG_SEARCH_FIELD_NOT_VALID` si un campo no existe, es oculto o es JSON/binario.
+- El error de la base, si la consulta falla.
+
+Lo que **no** da error se ignora sin aviso: un campo desconocido u oculto en `wheres`, un operador no soportado, un valor que no es texto, número ni booleano (`null`, objetos), un `in` vacío y las llaves distintas de `wheres`, `selects`, `order_by`, `search`, `page`, `rows` y `limit`. Un filtro mal escrito no filtra: la consulta devuelve todo lo que permiten los `wheres` fijos.
+
+**No soporta** (sí están en `jdb.RunQuery`): `isNull`, `notNull`, `notIn`, `between`, el operador `search` dentro de `wheres` ni la llave raíz `search` como texto (`DefineSearch` de jdb), ni rutas JSON (`_data.campo`). Para "sin valor" en un texto usa `{ "eq": "" }`.
+
+**Handler `POST /query`**
+
+```go
+func (s *Router) query(w http.ResponseWriter, r *http.Request) {
+    body, err := response.GetBody(r)
+    if err != nil {
+        response.HTTPError(w, r, http.StatusBadRequest, err.Error())
+        return
+    }
+
+    // El proyecto sale del token, nunca del body.
+    projectId := claim.ProjectId(r)
+    projectWhere := Documents.Column("project_id").Eq(projectId)
+    list, err := linq.RunQuery(Documents, body, projectWhere)
+    if err != nil {
+        response.HTTPError(w, r, http.StatusBadRequest, err.Error())
+        return
+    }
+
+    response.LIST(w, r, http.StatusOK, list) // {"ok": true, "rows", "all", "count", "page", "start", "end", "result"}
+}
+```
+
 ### Referencias entre modelos
 
 ```go
@@ -683,6 +763,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
     response.JSON(w, r, http.StatusOK, data)               // {"ok": true, "result": data}
     response.ITEM(w, r, http.StatusOK, item)               // et.Item
     response.ITEMS(w, r, http.StatusOK, items)             // et.Items
+    response.LIST(w, r, http.StatusOK, list)               // et.List: {"ok": true, "rows", "all", "count", "page", "start", "end", "result"}
     response.HTTPError(w, r, http.StatusBadRequest, "msg") // {"ok": false, "result": {"message": "msg"}}
     response.HTTPAlert(w, r, "alerta")                     // 400
     response.Unauthorized(w, r)                            // 401

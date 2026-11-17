@@ -262,6 +262,56 @@ type HttpResult struct {
 }
 
 /**
+* File: Archivo de un body multipart/form-data: el campo se envia como archivo con su nombre.
+**/
+type File struct {
+	Name string
+	Data []byte
+}
+
+/**
+* writeMultipart: Escribe body en buf como multipart/form-data; los valores File o *File van como archivo y los
+* demas como texto (body.Str).
+* @param buf *bytes.Buffer, body et.Json
+* @return string, error: el Content-Type con el boundary
+**/
+func writeMultipart(buf *bytes.Buffer, body et.Json) (string, error) {
+	writer := multipart.NewWriter(buf)
+	for key, value := range body {
+		file, isFile := value.(File)
+		filePtr, isFilePtr := value.(*File)
+		if isFilePtr && filePtr != nil {
+			file = *filePtr
+			isFile = true
+		}
+
+		if !isFile {
+			text := body.Str(key)
+			if err := writer.WriteField(key, text); err != nil {
+				return "", err
+			}
+			continue
+		}
+
+		part, err := writer.CreateFormFile(key, file.Name)
+		if err != nil {
+			return "", err
+		}
+
+		if _, err := part.Write(file.Data); err != nil {
+			return "", err
+		}
+	}
+
+	if err := writer.Close(); err != nil {
+		return "", err
+	}
+
+	contentType := writer.FormDataContentType()
+	return contentType, nil
+}
+
+/**
 * httpDo executes an HTTP request with context and buffer pool support.
 * @param ctx context.Context, method, path string, header, body et.Json, tlsConfig *tls.Config, timeout time.Duration, defaultValue interface{}
 * @return *Body, Status
@@ -303,25 +353,16 @@ func httpDo(ctx context.Context, method, path string, header, body et.Json, tlsC
 
 		var ioBody io.Reader
 		var buf *bytes.Buffer
+		// multipart lleva el boundary en el Content-Type: reemplaza al "multipart/form-data" del header.
+		formContentType := ""
 
 		switch mediaType {
 		case "multipart/form-data":
-			writer := multipart.NewWriter(buf)
-			for k := range body {
-				v := body.Str(k)
-				if err := writer.WriteField(k, v); err != nil {
-					result <- HttpResult{
-						Body: nil,
-						Status: Status{
-							Ok:      false,
-							Code:    http.StatusBadRequest,
-							Message: err.Error(),
-						},
-					}
-					return
-				}
-			}
-			if err := writer.Close(); err != nil {
+			buf = bufPool.Get().(*bytes.Buffer)
+			buf.Reset()
+			formContentType, err = writeMultipart(buf, body)
+			if err != nil {
+				bufPool.Put(buf)
 				result <- HttpResult{
 					Body: nil,
 					Status: Status{
@@ -368,6 +409,9 @@ func httpDo(ctx context.Context, method, path string, header, body et.Json, tlsC
 
 		for k, v := range header {
 			req.Header.Set(k, v.(string))
+		}
+		if formContentType != "" {
+			req.Header.Set("Content-Type", formContentType)
 		}
 		if ioBody != nil && req.Header.Get("Content-Type") == "" {
 			req.Header.Set("Content-Type", contentType)
