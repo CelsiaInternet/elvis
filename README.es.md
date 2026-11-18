@@ -13,17 +13,17 @@ Para empezar un proyecto con Elvis, ejecuta estos comandos en una carpeta nueva:
 ```bash
 go mod init github.com/<organizacion>/<proyecto>
 
-go get github.com/celsiainternet/elvis@v1.1.328
+go get github.com/celsiainternet/elvis@v1.1.329
 go run github.com/celsiainternet/elvis/cmd/install
 go run github.com/celsiainternet/elvis/cmd/create go
 ```
 
-| Comando | Qué hace |
-| ------- | -------- |
-| `go mod init ...` | Crea el `go.mod`. Los dos comandos siguientes lo necesitan: toman de ahí la ruta del módulo y se detienen si no existe. |
-| `go get github.com/celsiainternet/elvis@v1.1.328` | Agrega Elvis como dependencia y deja en `go.sum` las entradas que necesitan los `go run` siguientes; sin este paso fallan con `missing go.sum entry`. |
-| `go run .../cmd/install` | Prepara el proyecto: ejecuta `go mod tidy` si ya hay paquetes Go e instala el marco de trabajo para agentes (ver la nota de abajo). No fija versiones de otras dependencias. |
-| `go run .../cmd/create go` | Abre un menú interactivo para generar código: **Project** (proyecto completo), **Microservice**, **Modelo** (modelo `linq` + CRUD en un paquete existente) o **Rpc**. |
+| Comando                                           | Qué hace                                                                                                                                                                     |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `go mod init ...`                                 | Crea el `go.mod`. Los dos comandos siguientes lo necesitan: toman de ahí la ruta del módulo y se detienen si no existe.                                                      |
+| `go get github.com/celsiainternet/elvis@v1.1.328` | Agrega Elvis como dependencia y deja en `go.sum` las entradas que necesitan los `go run` siguientes; sin este paso fallan con `missing go.sum entry`.                        |
+| `go run .../cmd/install`                          | Prepara el proyecto: ejecuta `go mod tidy` si ya hay paquetes Go e instala el marco de trabajo para agentes (ver la nota de abajo). No fija versiones de otras dependencias. |
+| `go run .../cmd/create go`                        | Abre un menú interactivo para generar código: **Project** (proyecto completo), **Microservice**, **Modelo** (modelo `linq` + CRUD en un paquete existente) o **Rpc**.        |
 
 Requisitos: **Go 1.23** o superior y, para correr el servicio generado, **PostgreSQL** (base de datos), **Redis** (caché, tokens JWT y registro de RPC) y **NATS** (eventos).
 
@@ -35,23 +35,23 @@ Requisitos: **Go 1.23** o superior y, para correr el servicio generado, **Postgr
 
 ## ✨ Funcionalidades
 
-| Área | Qué ofrece |
-| ---- | ---------- |
-| Tipos (`et`) | `et.Json`, `et.Item`, `et.Items`, `et.List` y `et.Any`, con accesores tipados (`Str`, `Int`, `Bool`, …). |
-| Base de datos (`jdb`) | Conexión a PostgreSQL, MySQL u Oracle desde variables de entorno, consultas directas y tablas core (series, auditoría, papelera). |
-| ORM (`linq`) | Modelos con columnas, atributos JSONB, referencias y triggers; CRUD fluido y `linq.RunQuery` para el contrato jsql de `POST /query`. |
-| SQL desde JSON (`jquery`) | Traduce un `et.Json` (from/join/select/wheres/…) a un `SELECT`, con dialecto intercambiable. |
-| Caché (`cache`, `mem`) | Redis con pub/sub y caché en memoria con TTL. |
-| Eventos (`event`) | Eventos locales y por NATS (`Subscribe`, `Queue`, `Stack`), trabajos con estado (`Work`) y reporte al registro central de errores (`event.Error`). |
-| Autenticación (`claim`, `middleware`) | Tokens JWT guardados en Redis (normales, con proyecto/perfil y efímeros) y middleware de autenticación, autorización, CORS, logger, request id y recover. |
-| Router (`router`, `response`) | Rutas chi públicas, protegidas y con permisos que se publican solas en el API Gateway; helpers de respuesta y streaming paginado. |
-| RPC (`jrpc`) | RPC TCP entre servicios con registro en Redis, llamadas tipadas y proxy único opcional (`PIPE_HOST`). |
-| Envíos (`service`) | SMS, WhatsApp, email y OTP por RPC a los servicios send y otp, con respaldo a `event.Work`. |
-| Cliente HTTP (`request`) | Verbos HTTP con TLS, timeout, JSON, formulario y `multipart/form-data`. |
-| Secretos (`secret`) | Cifrado AES-256-GCM de secretos que un servicio guarda. |
-| Resiliencia y flujos (`resilience`, `workflow`) | Reintentos automáticos y flujos multi-paso con rollback. |
-| Otros | Crontab, Excel (`xls`), cola por lotes (`queue`), certificados TLS (`jtls`), zonas horarias, logging (`console`, `logs`). |
-| Generador (`cmd/create`) | Proyecto, microservicio, modelo o RPC, con manifiestos de docker-compose y Kubernetes y el marco para agentes. |
+| Área                                            | Qué ofrece                                                                                                                                                |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tipos (`et`)                                    | `et.Json`, `et.Item`, `et.Items`, `et.List` y `et.Any`, con accesores tipados (`Str`, `Int`, `Bool`, …).                                                  |
+| Base de datos (`jdb`)                           | Conexión a PostgreSQL, MySQL u Oracle desde variables de entorno, consultas directas y tablas core (series, auditoría, papelera).                         |
+| ORM (`linq`)                                    | Modelos con columnas, atributos JSONB, referencias y triggers; CRUD fluido y `linq.RunQuery` para el contrato jsql de `POST /query`.                      |
+| SQL desde JSON (`jquery`)                       | Traduce un `et.Json` (from/join/select/wheres/…) a un `SELECT`, con dialecto intercambiable.                                                              |
+| Caché (`cache`, `mem`)                          | Redis con pub/sub y caché en memoria con TTL.                                                                                                             |
+| Eventos (`event`)                               | Eventos locales y por NATS (`Subscribe`, `Queue`, `Stack`), trabajos con estado (`Work`) y reporte al registro central de errores (`event.Error`).        |
+| Autenticación (`claim`, `middleware`)           | Tokens JWT guardados en Redis (normales, con proyecto/perfil y efímeros) y middleware de autenticación, autorización, CORS, logger, request id y recover. |
+| Router (`router`, `response`)                   | Rutas chi públicas, protegidas y con permisos que se publican solas en el API Gateway; helpers de respuesta y streaming paginado.                         |
+| RPC (`jrpc`)                                    | RPC TCP entre servicios con registro en Redis, llamadas tipadas y proxy único opcional (`PIPE_HOST`).                                                     |
+| Envíos (`service`)                              | SMS, WhatsApp, email y OTP por RPC a los servicios send y otp, con respaldo a `event.Work`.                                                               |
+| Cliente HTTP (`request`)                        | Verbos HTTP con TLS, timeout, JSON, formulario y `multipart/form-data`.                                                                                   |
+| Secretos (`secret`)                             | Cifrado AES-256-GCM de secretos que un servicio guarda.                                                                                                   |
+| Resiliencia y flujos (`resilience`, `workflow`) | Reintentos automáticos y flujos multi-paso con rollback.                                                                                                  |
+| Otros                                           | Crontab, Excel (`xls`), cola por lotes (`queue`), certificados TLS (`jtls`), zonas horarias, logging (`console`, `logs`).                                 |
+| Generador (`cmd/create`)                        | Proyecto, microservicio, modelo o RPC, con manifiestos de docker-compose y Kubernetes y el marco para agentes.                                            |
 
 ## 🧭 Uso
 
@@ -386,14 +386,14 @@ list, err := linq.RunQuery(modelo, query, projectWhere)
 
 **Formato de `query`**
 
-| Llave | Forma | Qué hace |
-|-------|-------|----------|
-| `selects` | `["_id", "name"]` | Columnas del resultado. Vacío o ausente: todas. |
-| `wheres` | `[{ campo: { operador: valor } }, …]` | Condiciones con AND. `{ "and": { campo: {…} } }` u `{ "or": { campo: {…} } }` usan ese conector. |
-| `order_by` | `{ "asc": [...], "desc": [...] }` | Primero los `asc`, luego los `desc`. |
-| `search` | `{ "value": "ana gomez", "fields": ["name", "description"] }` | Búsqueda de texto libre (contrato de los `/query` de catalog), ver abajo. |
-| `page` | número | Página pedida; 1 si no viene o es menor que 1. |
-| `rows` | número | Filas por página (alias `limit`). 100 por defecto (`QUERY_DEFAULT_ROWS`), máximo 1000 (`QUERY_MAX_ROWS`). |
+| Llave      | Forma                                                         | Qué hace                                                                                                  |
+| ---------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `selects`  | `["_id", "name"]`                                             | Columnas del resultado. Vacío o ausente: todas.                                                           |
+| `wheres`   | `[{ campo: { operador: valor } }, …]`                         | Condiciones con AND. `{ "and": { campo: {…} } }` u `{ "or": { campo: {…} } }` usan ese conector.          |
+| `order_by` | `{ "asc": [...], "desc": [...] }`                             | Primero los `asc`, luego los `desc`.                                                                      |
+| `search`   | `{ "value": "ana gomez", "fields": ["name", "description"] }` | Búsqueda de texto libre (contrato de los `/query` de catalog), ver abajo.                                 |
+| `page`     | número                                                        | Página pedida; 1 si no viene o es menor que 1.                                                            |
+| `rows`     | número                                                        | Filas por página (alias `limit`). 100 por defecto (`QUERY_DEFAULT_ROWS`), máximo 1000 (`QUERY_MAX_ROWS`). |
 
 - Operadores: `eq` (`=`), `neg` (`!=`), `in` (lista), `like` (`ILIKE`, sin distinguir mayúsculas; los `%` los pone el cliente), `more` (`>`), `less` (`<`), `moreEq` (`>=`), `lessEq` (`<=`). Los nombres de operador distinguen mayúsculas; `and`/`or` no.
 - Un campo puede llevar varios operadores (`{ "date_make": { "more": "2026-01-01", "less": "2026-12-31" } }`): el primero lleva el conector y los demás van con AND.
@@ -579,16 +579,16 @@ event.WorkState(workId, event.WorkStatusCompleted, et.Json{"url": "..."})
 
 `service.SendSms`, `SendWhatsapp`, `SendEmail`, `SendEmailByTemplate` y `SendEmailToByTemplate` llaman por RPC (`jrpc`) al servicio send; `SendOtpSms`, `SendOtpWhatsapp` y `SendOtpEmail`, al servicio otp. La llamada es síncrona y usa `RPC_TIMEOUT`, así que quien envía recibe el resultado o el error del proveedor.
 
-| Función | Método RPC | Evento de respaldo |
-| --- | --- | --- |
-| `SendSms` | `<SEND_RPC>.SendSMS` | `send/sms` |
-| `SendWhatsapp` | `<SEND_RPC>.SendWhatsapp` | `send/whatsapp` |
-| `SendEmail` | `<SEND_RPC>.SendEmail` | `send/email` |
-| `SendEmailByTemplate` | `<SEND_RPC>.SendEmailByTemplate` | `send/emailbytemplate` |
+| Función                 | Método RPC                         | Evento de respaldo       |
+| ----------------------- | ---------------------------------- | ------------------------ |
+| `SendSms`               | `<SEND_RPC>.SendSMS`               | `send/sms`               |
+| `SendWhatsapp`          | `<SEND_RPC>.SendWhatsapp`          | `send/whatsapp`          |
+| `SendEmail`             | `<SEND_RPC>.SendEmail`             | `send/email`             |
+| `SendEmailByTemplate`   | `<SEND_RPC>.SendEmailByTemplate`   | `send/emailbytemplate`   |
 | `SendEmailToByTemplate` | `<SEND_RPC>.SendEmailToByTemplate` | `send/emailtobytemplate` |
-| `SendOtpSms` | `<OTP_RPC>.GenerateOTPSMS` | `generate/otp/sms` |
-| `SendOtpWhatsapp` | `<OTP_RPC>.GenerateOTPWhatsapp` | `generate/otp/whatsapp` |
-| `SendOtpEmail` | `<OTP_RPC>.GenerateOTPEmail` | `generate/otp/email` |
+| `SendOtpSms`            | `<OTP_RPC>.GenerateOTPSMS`         | `generate/otp/sms`       |
+| `SendOtpWhatsapp`       | `<OTP_RPC>.GenerateOTPWhatsapp`    | `generate/otp/whatsapp`  |
+| `SendOtpEmail`          | `<OTP_RPC>.GenerateOTPEmail`       | `generate/otp/email`     |
 
 `SEND_RPC` vale por defecto `Service-send.Services` y `OTP_RPC`, `Service-otp.Services`. La firma no cambia: devuelven `et.Json` con el `result` del RPC más `ok`, `service_id` y, si la llamada falló, `error` con el texto.
 
@@ -970,37 +970,37 @@ Eventos internos que emite la librería y a los que se puede suscribir:
 
 Variables de entorno que lee Elvis (`envar` carga también un `.env`):
 
-| Variable                    | Paquete       | Default     | Descripción                                                     |
-| --------------------------- | ------------- | ----------- | --------------------------------------------------------------- |
-| `DB_DRIVER`                 | jdb           | —           | `postgres`, `mysql` u `oracle`                                  |
-| `DB_HOST`                   | jdb           | —           | Host de la base de datos                                        |
-| `DB_PORT`                   | jdb           | `5432`      | Puerto de la base de datos                                      |
-| `DB_NAME`                   | jdb           | —           | Nombre de la base de datos                                      |
-| `DB_USER`                   | jdb           | —           | Usuario de la base de datos                                     |
-| `DB_PASSWORD`               | jdb           | —           | Contraseña de la base de datos                                  |
-| `DB_APPLICATION_NAME`       | jdb           | `elvis`     | Nombre de la aplicación en PostgreSQL                           |
-| `USE_CORE`                  | jdb           | `true`      | Inicializar tablas core (series, records, recycling)            |
-| `REDIS_HOST`                | cache         | —           | Host de Redis (ej. `localhost:6379`)                            |
-| `REDIS_PASSWORD`            | cache         | —           | Contraseña de Redis                                             |
-| `REDIS_DB`                  | cache         | `0`         | Número de base de datos Redis                                   |
-| `NATS_HOST`                 | event         | —           | URL de conexión NATS                                            |
-| `NATS_USER`                 | event         | —           | Usuario NATS                                                    |
-| `NATS_PASSWORD`             | event         | —           | Contraseña NATS                                                 |
-| `SECRET`                    | claim         | `1977`      | Clave de firma JWT                                              |
-| `HOST`                      | jrpc / router | `localhost` | Host del servicio actual                                        |
-| `PORT`                      | servicio      | `3400`      | Puerto HTTP                                                     |
-| `RPC_HOST`                  | jrpc          | `HOST`      | Host para RPC entre servicios                                   |
-| `RPC_PORT`                  | jrpc          | `4200`      | Puerto RPC                                                      |
-| `AUTHORIZATION_METHOD`      | router        | —           | Método RPC para verificar permisos                              |
-| `RESILIENCE_TOTAL_ATTEMPTS` | resilience    | `3`         | Intentos totales por operación                                  |
-| `RESILIENCE_TIME_ATTEMPTS`  | resilience    | `30`        | Segundos entre reintentos                                       |
-| `PIPE_HOST`                 | jrpc          | —           | Host del proxy RPC único (se combina con `PIPE_PORT`)           |
-| `PIPE_PORT`                 | jrpc          | `4200`      | Puerto del proxy RPC único                                      |
-| `RPC_TIMEOUT`               | jrpc          | `600`       | Segundos de espera de una llamada RPC (también los envíos)      |
-| `SEND_RPC`                  | service       | `Service-send.Services` | Paquete RPC de send para `service.Send*`             |
-| `OTP_RPC`                   | service       | `Service-otp.Services`  | Paquete RPC de otp para `service.SendOtp*`           |
-| `STAGE`                     | event         | `local`     | Prefijo de entorno para canal pipe (`pipe:<stage>:<canal>`)     |
-| `PRODUCTION`                | dt            | `true`      | Habilita persistencia en Redis del cache de objetos `dt.Object` |
+| Variable                    | Paquete       | Default                 | Descripción                                                     |
+| --------------------------- | ------------- | ----------------------- | --------------------------------------------------------------- |
+| `DB_DRIVER`                 | jdb           | —                       | `postgres`, `mysql` u `oracle`                                  |
+| `DB_HOST`                   | jdb           | —                       | Host de la base de datos                                        |
+| `DB_PORT`                   | jdb           | `5432`                  | Puerto de la base de datos                                      |
+| `DB_NAME`                   | jdb           | —                       | Nombre de la base de datos                                      |
+| `DB_USER`                   | jdb           | —                       | Usuario de la base de datos                                     |
+| `DB_PASSWORD`               | jdb           | —                       | Contraseña de la base de datos                                  |
+| `DB_APPLICATION_NAME`       | jdb           | `elvis`                 | Nombre de la aplicación en PostgreSQL                           |
+| `USE_CORE`                  | jdb           | `true`                  | Inicializar tablas core (series, records, recycling)            |
+| `REDIS_HOST`                | cache         | —                       | Host de Redis (ej. `localhost:6379`)                            |
+| `REDIS_PASSWORD`            | cache         | —                       | Contraseña de Redis                                             |
+| `REDIS_DB`                  | cache         | `0`                     | Número de base de datos Redis                                   |
+| `NATS_HOST`                 | event         | —                       | URL de conexión NATS                                            |
+| `NATS_USER`                 | event         | —                       | Usuario NATS                                                    |
+| `NATS_PASSWORD`             | event         | —                       | Contraseña NATS                                                 |
+| `SECRET`                    | claim         | `1977`                  | Clave de firma JWT                                              |
+| `HOST`                      | jrpc / router | `localhost`             | Host del servicio actual                                        |
+| `PORT`                      | servicio      | `3400`                  | Puerto HTTP                                                     |
+| `RPC_HOST`                  | jrpc          | `HOST`                  | Host para RPC entre servicios                                   |
+| `RPC_PORT`                  | jrpc          | `4200`                  | Puerto RPC                                                      |
+| `AUTHORIZATION_METHOD`      | router        | —                       | Método RPC para verificar permisos                              |
+| `RESILIENCE_TOTAL_ATTEMPTS` | resilience    | `3`                     | Intentos totales por operación                                  |
+| `RESILIENCE_TIME_ATTEMPTS`  | resilience    | `30`                    | Segundos entre reintentos                                       |
+| `PIPE_HOST`                 | jrpc          | —                       | Host del proxy RPC único (se combina con `PIPE_PORT`)           |
+| `PIPE_PORT`                 | jrpc          | `4200`                  | Puerto del proxy RPC único                                      |
+| `RPC_TIMEOUT`               | jrpc          | `600`                   | Segundos de espera de una llamada RPC (también los envíos)      |
+| `SEND_RPC`                  | service       | `Service-send.Services` | Paquete RPC de send para `service.Send*`                        |
+| `OTP_RPC`                   | service       | `Service-otp.Services`  | Paquete RPC de otp para `service.SendOtp*`                      |
+| `STAGE`                     | event         | `local`                 | Prefijo de entorno para canal pipe (`pipe:<stage>:<canal>`)     |
+| `PRODUCTION`                | dt            | `true`                  | Habilita persistencia en Redis del cache de objetos `dt.Object` |
 
 ## 🔧 Desarrollo
 

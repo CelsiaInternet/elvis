@@ -13,17 +13,17 @@ To start a project with Elvis, run these commands in a new folder:
 ```bash
 go mod init github.com/<organizacion>/<proyecto>
 
-go get github.com/celsiainternet/elvis@v1.1.328
+go get github.com/celsiainternet/elvis@v1.1.329
 go run github.com/celsiainternet/elvis/cmd/install
 go run github.com/celsiainternet/elvis/cmd/create go
 ```
 
-| Command | What it does |
-| ------- | ------------ |
-| `go mod init ...` | Creates `go.mod`. The next two commands need it: they read the module path from it and stop if it does not exist. |
-| `go get github.com/celsiainternet/elvis@v1.1.328` | Adds Elvis as a dependency and writes the `go.sum` entries the following `go run` commands need; without this step they fail with `missing go.sum entry`. |
-| `go run .../cmd/install` | Prepares the project: runs `go mod tidy` when there are already Go packages and installs the agents framework (see the note below). It pins no versions of other dependencies. |
-| `go run .../cmd/create go` | Opens an interactive menu to generate code: **Project** (full project), **Microservice**, **Modelo** (a `linq` model + CRUD in an existing package) or **Rpc**. |
+| Command                                           | What it does                                                                                                                                                                   |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `go mod init ...`                                 | Creates `go.mod`. The next two commands need it: they read the module path from it and stop if it does not exist.                                                              |
+| `go get github.com/celsiainternet/elvis@v1.1.328` | Adds Elvis as a dependency and writes the `go.sum` entries the following `go run` commands need; without this step they fail with `missing go.sum entry`.                      |
+| `go run .../cmd/install`                          | Prepares the project: runs `go mod tidy` when there are already Go packages and installs the agents framework (see the note below). It pins no versions of other dependencies. |
+| `go run .../cmd/create go`                        | Opens an interactive menu to generate code: **Project** (full project), **Microservice**, **Modelo** (a `linq` model + CRUD in an existing package) or **Rpc**.                |
 
 Requirements: **Go 1.23** or later and, to run the generated service, **PostgreSQL** (database), **Redis** (cache, JWT tokens and RPC registry) and **NATS** (events).
 
@@ -35,23 +35,23 @@ Requirements: **Go 1.23** or later and, to run the generated service, **PostgreS
 
 ## ✨ Features
 
-| Area | What you get |
-| ---- | ------------ |
-| Types (`et`) | `et.Json`, `et.Item`, `et.Items`, `et.List` and `et.Any`, with typed accessors (`Str`, `Int`, `Bool`, …). |
-| Database (`jdb`) | Connection to PostgreSQL, MySQL or Oracle from environment variables, direct queries and core tables (series, audit, recycle bin). |
-| ORM (`linq`) | Models with columns, JSONB attributes, references and triggers; fluent CRUD and `linq.RunQuery` for the jsql contract of `POST /query`. |
-| SQL from JSON (`jquery`) | Translates an `et.Json` (from/join/select/wheres/…) into a `SELECT`, with a pluggable dialect. |
-| Cache (`cache`, `mem`) | Redis with pub/sub and an in-memory cache with TTL. |
-| Events (`event`) | Local and NATS events (`Subscribe`, `Queue`, `Stack`), jobs with state (`Work`) and reports to the central error registry (`event.Error`). |
-| Authentication (`claim`, `middleware`) | JWT tokens stored in Redis (regular, with project/profile, and ephemeral) and middleware for authentication, authorization, CORS, logging, request id and recover. |
-| Router (`router`, `response`) | Public, protected and permission-checked chi routes that publish themselves to the API Gateway; response helpers and paginated streaming. |
-| RPC (`jrpc`) | TCP RPC between services with a Redis registry, typed calls and an optional single proxy (`PIPE_HOST`). |
-| Notifications (`service`) | SMS, WhatsApp, email and OTP through RPC to the send and otp services, falling back to `event.Work`. |
-| HTTP client (`request`) | HTTP verbs with TLS, timeout, JSON, form and `multipart/form-data`. |
-| Secrets (`secret`) | AES-256-GCM encryption of secrets a service stores. |
-| Resilience and flows (`resilience`, `workflow`) | Automatic retries and multi-step flows with rollback. |
-| Other | Crontab, Excel (`xls`), batching queue (`queue`), TLS certificates (`jtls`), time zones, logging (`console`, `logs`). |
-| Generator (`cmd/create`) | Project, microservice, model or RPC, with docker-compose and Kubernetes manifests and the agents framework. |
+| Area                                            | What you get                                                                                                                                                       |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Types (`et`)                                    | `et.Json`, `et.Item`, `et.Items`, `et.List` and `et.Any`, with typed accessors (`Str`, `Int`, `Bool`, …).                                                          |
+| Database (`jdb`)                                | Connection to PostgreSQL, MySQL or Oracle from environment variables, direct queries and core tables (series, audit, recycle bin).                                 |
+| ORM (`linq`)                                    | Models with columns, JSONB attributes, references and triggers; fluent CRUD and `linq.RunQuery` for the jsql contract of `POST /query`.                            |
+| SQL from JSON (`jquery`)                        | Translates an `et.Json` (from/join/select/wheres/…) into a `SELECT`, with a pluggable dialect.                                                                     |
+| Cache (`cache`, `mem`)                          | Redis with pub/sub and an in-memory cache with TTL.                                                                                                                |
+| Events (`event`)                                | Local and NATS events (`Subscribe`, `Queue`, `Stack`), jobs with state (`Work`) and reports to the central error registry (`event.Error`).                         |
+| Authentication (`claim`, `middleware`)          | JWT tokens stored in Redis (regular, with project/profile, and ephemeral) and middleware for authentication, authorization, CORS, logging, request id and recover. |
+| Router (`router`, `response`)                   | Public, protected and permission-checked chi routes that publish themselves to the API Gateway; response helpers and paginated streaming.                          |
+| RPC (`jrpc`)                                    | TCP RPC between services with a Redis registry, typed calls and an optional single proxy (`PIPE_HOST`).                                                            |
+| Notifications (`service`)                       | SMS, WhatsApp, email and OTP through RPC to the send and otp services, falling back to `event.Work`.                                                               |
+| HTTP client (`request`)                         | HTTP verbs with TLS, timeout, JSON, form and `multipart/form-data`.                                                                                                |
+| Secrets (`secret`)                              | AES-256-GCM encryption of secrets a service stores.                                                                                                                |
+| Resilience and flows (`resilience`, `workflow`) | Automatic retries and multi-step flows with rollback.                                                                                                              |
+| Other                                           | Crontab, Excel (`xls`), batching queue (`queue`), TLS certificates (`jtls`), time zones, logging (`console`, `logs`).                                              |
+| Generator (`cmd/create`)                        | Project, microservice, model or RPC, with docker-compose and Kubernetes manifests and the agents framework.                                                        |
 
 ## 🧭 Usage
 
@@ -386,14 +386,14 @@ list, err := linq.RunQuery(modelo, query, projectWhere)
 
 **`query` format**
 
-| Key | Shape | What it does |
-|-----|-------|--------------|
-| `selects` | `["_id", "name"]` | Result columns. Empty or missing: all. |
-| `wheres` | `[{ field: { operator: value } }, …]` | Conditions joined with AND. `{ "and": { field: {…} } }` or `{ "or": { field: {…} } }` use that connector. |
-| `order_by` | `{ "asc": [...], "desc": [...] }` | The `asc` fields first, then the `desc` ones. |
-| `search` | `{ "value": "ana gomez", "fields": ["name", "description"] }` | Free-text search (the contract of catalog's `/query` routes), see below. |
-| `page` | number | Requested page; 1 when missing or lower than 1. |
-| `rows` | number | Rows per page (alias `limit`). 100 by default (`QUERY_DEFAULT_ROWS`), at most 1000 (`QUERY_MAX_ROWS`). |
+| Key        | Shape                                                         | What it does                                                                                              |
+| ---------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `selects`  | `["_id", "name"]`                                             | Result columns. Empty or missing: all.                                                                    |
+| `wheres`   | `[{ field: { operator: value } }, …]`                         | Conditions joined with AND. `{ "and": { field: {…} } }` or `{ "or": { field: {…} } }` use that connector. |
+| `order_by` | `{ "asc": [...], "desc": [...] }`                             | The `asc` fields first, then the `desc` ones.                                                             |
+| `search`   | `{ "value": "ana gomez", "fields": ["name", "description"] }` | Free-text search (the contract of catalog's `/query` routes), see below.                                  |
+| `page`     | number                                                        | Requested page; 1 when missing or lower than 1.                                                           |
+| `rows`     | number                                                        | Rows per page (alias `limit`). 100 by default (`QUERY_DEFAULT_ROWS`), at most 1000 (`QUERY_MAX_ROWS`).    |
 
 - Operators: `eq` (`=`), `neg` (`!=`), `in` (list), `like` (`ILIKE`, case-insensitive; the client adds the `%`), `more` (`>`), `less` (`<`), `moreEq` (`>=`), `lessEq` (`<=`). Operator names are case-sensitive; `and`/`or` are not.
 - A field can carry several operators (`{ "date_make": { "more": "2026-01-01", "less": "2026-12-31" } }`): the first one takes the connector and the others go with AND.
@@ -579,16 +579,16 @@ event.WorkState(workId, event.WorkStatusCompleted, et.Json{"url": "..."})
 
 `service.SendSms`, `SendWhatsapp`, `SendEmail`, `SendEmailByTemplate` and `SendEmailToByTemplate` call the send service through RPC (`jrpc`); `SendOtpSms`, `SendOtpWhatsapp` and `SendOtpEmail` call the otp service. The call is synchronous and uses `RPC_TIMEOUT`, so the caller gets the provider's result or error.
 
-| Function | RPC method | Fallback event |
-| --- | --- | --- |
-| `SendSms` | `<SEND_RPC>.SendSMS` | `send/sms` |
-| `SendWhatsapp` | `<SEND_RPC>.SendWhatsapp` | `send/whatsapp` |
-| `SendEmail` | `<SEND_RPC>.SendEmail` | `send/email` |
-| `SendEmailByTemplate` | `<SEND_RPC>.SendEmailByTemplate` | `send/emailbytemplate` |
+| Function                | RPC method                         | Fallback event           |
+| ----------------------- | ---------------------------------- | ------------------------ |
+| `SendSms`               | `<SEND_RPC>.SendSMS`               | `send/sms`               |
+| `SendWhatsapp`          | `<SEND_RPC>.SendWhatsapp`          | `send/whatsapp`          |
+| `SendEmail`             | `<SEND_RPC>.SendEmail`             | `send/email`             |
+| `SendEmailByTemplate`   | `<SEND_RPC>.SendEmailByTemplate`   | `send/emailbytemplate`   |
 | `SendEmailToByTemplate` | `<SEND_RPC>.SendEmailToByTemplate` | `send/emailtobytemplate` |
-| `SendOtpSms` | `<OTP_RPC>.GenerateOTPSMS` | `generate/otp/sms` |
-| `SendOtpWhatsapp` | `<OTP_RPC>.GenerateOTPWhatsapp` | `generate/otp/whatsapp` |
-| `SendOtpEmail` | `<OTP_RPC>.GenerateOTPEmail` | `generate/otp/email` |
+| `SendOtpSms`            | `<OTP_RPC>.GenerateOTPSMS`         | `generate/otp/sms`       |
+| `SendOtpWhatsapp`       | `<OTP_RPC>.GenerateOTPWhatsapp`    | `generate/otp/whatsapp`  |
+| `SendOtpEmail`          | `<OTP_RPC>.GenerateOTPEmail`       | `generate/otp/email`     |
 
 `SEND_RPC` defaults to `Service-send.Services` and `OTP_RPC` to `Service-otp.Services`. The signature is unchanged: they return `et.Json` with the RPC `result` plus `ok`, `service_id` and, when the call failed, `error` with the text.
 
@@ -767,14 +767,14 @@ if !status.Ok {
 user, err := body.ToJson() // también: ToItem, ToItems, ToArrayJson, ToString, ToInt, ToInt64, ToFloat, ToBool, ToTime
 ```
 
-| Family                              | Signature (after `path`/`method`)                                     | Use                                                       |
-| ----------------------------------- | --------------------------------------------------------------------- | --------------------------------------------------------- |
-| `Get/Post/Put/Delete/Patch/Options` | `header[, body]`                                                      | Plain call                                                |
-| `<Verb>WithTls`                     | `header[, body], tlsConfig`                                           | mTLS / own CA (`request.NewTlsConfig(ca, cert, key)`)     |
-| `<Verb>WithTimeout`                 | `header[, body], timeout, defaultValue`                               | With a time limit                                         |
-| `<Verb>WithTlsTimeout`              | `header[, body], tlsConfig, timeout, defaultValue`                    | TLS + time limit                                          |
-| `Http` / `HttpWithTimeout`          | `method, path, header, body, tlsConfig[, timeout, defaultValue]`      | Dynamic method                                            |
-| `HttpCtx` / `HttpCtxWithTimeout`    | `ctx, method, path, header, body, tlsConfig[, timeout, defaultValue]` | With a `context.Context`                                  |
+| Family                              | Signature (after `path`/`method`)                                     | Use                                                   |
+| ----------------------------------- | --------------------------------------------------------------------- | ----------------------------------------------------- |
+| `Get/Post/Put/Delete/Patch/Options` | `header[, body]`                                                      | Plain call                                            |
+| `<Verb>WithTls`                     | `header[, body], tlsConfig`                                           | mTLS / own CA (`request.NewTlsConfig(ca, cert, key)`) |
+| `<Verb>WithTimeout`                 | `header[, body], timeout, defaultValue`                               | With a time limit                                     |
+| `<Verb>WithTlsTimeout`              | `header[, body], tlsConfig, timeout, defaultValue`                    | TLS + time limit                                      |
+| `Http` / `HttpWithTimeout`          | `method, path, header, body, tlsConfig[, timeout, defaultValue]`      | Dynamic method                                        |
+| `HttpCtx` / `HttpCtxWithTimeout`    | `ctx, method, path, header, body, tlsConfig[, timeout, defaultValue]` | With a `context.Context`                              |
 
 Behavior to keep in mind:
 
@@ -970,37 +970,37 @@ Internal events the library emits, which you can subscribe to:
 
 Environment variables Elvis reads (`envar` also loads a `.env` file):
 
-| Variable                    | Package       | Default     | Description                                                     |
-| --------------------------- | ------------- | ----------- | --------------------------------------------------------------- |
-| `DB_DRIVER`                 | jdb           | —           | `postgres`, `mysql` or `oracle`                                 |
-| `DB_HOST`                   | jdb           | —           | Database host                                                   |
-| `DB_PORT`                   | jdb           | `5432`      | Database port                                                   |
-| `DB_NAME`                   | jdb           | —           | Database name                                                   |
-| `DB_USER`                   | jdb           | —           | Database user                                                   |
-| `DB_PASSWORD`               | jdb           | —           | Database password                                               |
-| `DB_APPLICATION_NAME`       | jdb           | `elvis`     | Application name in PostgreSQL                                  |
-| `USE_CORE`                  | jdb           | `true`      | Initialize the core tables (series, records, recycling)         |
-| `REDIS_HOST`                | cache         | —           | Redis host (e.g. `localhost:6379`)                              |
-| `REDIS_PASSWORD`            | cache         | —           | Redis password                                                  |
-| `REDIS_DB`                  | cache         | `0`         | Redis database number                                           |
-| `NATS_HOST`                 | event         | —           | NATS connection URL                                             |
-| `NATS_USER`                 | event         | —           | NATS user                                                       |
-| `NATS_PASSWORD`             | event         | —           | NATS password                                                   |
-| `SECRET`                    | claim         | `1977`      | JWT signing key                                                 |
-| `HOST`                      | jrpc / router | `localhost` | Host of the current service                                     |
-| `PORT`                      | service       | `3400`      | HTTP port                                                       |
-| `RPC_HOST`                  | jrpc          | `HOST`      | Host for RPC between services                                   |
-| `RPC_PORT`                  | jrpc          | `4200`      | RPC port                                                        |
-| `AUTHORIZATION_METHOD`      | router        | —           | RPC method that checks permissions                              |
-| `RESILIENCE_TOTAL_ATTEMPTS` | resilience    | `3`         | Total attempts per operation                                    |
-| `RESILIENCE_TIME_ATTEMPTS`  | resilience    | `30`        | Seconds between retries                                         |
-| `PIPE_HOST`                 | jrpc          | —           | Host of the single RPC proxy (combined with `PIPE_PORT`)        |
-| `PIPE_PORT`                 | jrpc          | `4200`      | Port of the single RPC proxy                                    |
-| `RPC_TIMEOUT`               | jrpc          | `600`       | Seconds to wait for an RPC call (notifications too)             |
-| `SEND_RPC`                  | service       | `Service-send.Services` | send RPC package for `service.Send*`                |
-| `OTP_RPC`                   | service       | `Service-otp.Services`  | otp RPC package for `service.SendOtp*`              |
-| `STAGE`                     | event         | `local`     | Environment prefix for the pipe channel (`pipe:<stage>:<channel>`) |
-| `PRODUCTION`                | dt            | `true`      | Enables Redis persistence of the `dt.Object` object cache       |
+| Variable                    | Package       | Default                 | Description                                                        |
+| --------------------------- | ------------- | ----------------------- | ------------------------------------------------------------------ |
+| `DB_DRIVER`                 | jdb           | —                       | `postgres`, `mysql` or `oracle`                                    |
+| `DB_HOST`                   | jdb           | —                       | Database host                                                      |
+| `DB_PORT`                   | jdb           | `5432`                  | Database port                                                      |
+| `DB_NAME`                   | jdb           | —                       | Database name                                                      |
+| `DB_USER`                   | jdb           | —                       | Database user                                                      |
+| `DB_PASSWORD`               | jdb           | —                       | Database password                                                  |
+| `DB_APPLICATION_NAME`       | jdb           | `elvis`                 | Application name in PostgreSQL                                     |
+| `USE_CORE`                  | jdb           | `true`                  | Initialize the core tables (series, records, recycling)            |
+| `REDIS_HOST`                | cache         | —                       | Redis host (e.g. `localhost:6379`)                                 |
+| `REDIS_PASSWORD`            | cache         | —                       | Redis password                                                     |
+| `REDIS_DB`                  | cache         | `0`                     | Redis database number                                              |
+| `NATS_HOST`                 | event         | —                       | NATS connection URL                                                |
+| `NATS_USER`                 | event         | —                       | NATS user                                                          |
+| `NATS_PASSWORD`             | event         | —                       | NATS password                                                      |
+| `SECRET`                    | claim         | `1977`                  | JWT signing key                                                    |
+| `HOST`                      | jrpc / router | `localhost`             | Host of the current service                                        |
+| `PORT`                      | service       | `3400`                  | HTTP port                                                          |
+| `RPC_HOST`                  | jrpc          | `HOST`                  | Host for RPC between services                                      |
+| `RPC_PORT`                  | jrpc          | `4200`                  | RPC port                                                           |
+| `AUTHORIZATION_METHOD`      | router        | —                       | RPC method that checks permissions                                 |
+| `RESILIENCE_TOTAL_ATTEMPTS` | resilience    | `3`                     | Total attempts per operation                                       |
+| `RESILIENCE_TIME_ATTEMPTS`  | resilience    | `30`                    | Seconds between retries                                            |
+| `PIPE_HOST`                 | jrpc          | —                       | Host of the single RPC proxy (combined with `PIPE_PORT`)           |
+| `PIPE_PORT`                 | jrpc          | `4200`                  | Port of the single RPC proxy                                       |
+| `RPC_TIMEOUT`               | jrpc          | `600`                   | Seconds to wait for an RPC call (notifications too)                |
+| `SEND_RPC`                  | service       | `Service-send.Services` | send RPC package for `service.Send*`                               |
+| `OTP_RPC`                   | service       | `Service-otp.Services`  | otp RPC package for `service.SendOtp*`                             |
+| `STAGE`                     | event         | `local`                 | Environment prefix for the pipe channel (`pipe:<stage>:<channel>`) |
+| `PRODUCTION`                | dt            | `true`                  | Enables Redis persistence of the `dt.Object` object cache          |
 
 ## 🔧 Development
 
