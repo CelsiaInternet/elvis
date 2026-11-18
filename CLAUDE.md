@@ -28,11 +28,12 @@ go build -o bin/create ./cmd/create
 ./version.sh --request   # patch: v1.0.X
 ./version.sh --minor     # minor: v1.X.0
 ./version.sh --major     # major: vX.0.0
+./version.sh --show      # versions of HEAD, main and develop
 ```
 
 Test coverage is very thin: the only test files are `queue/example_test.go`, `secret/secret_test.go` (`go test ./secret/`), `linq/jsql_test.go` (SQL of `RunQuery`, `go test ./linq/`) and `jquery/test/*_test.go` (a separate package under `jquery/test/`, so run it with `go test ./jquery/...`, not `./jquery`). `service/send_test.go` covers the RPC sends and their `event.Work` fallback (`go test ./service/`). `create/v1/model_test.go` checks that every Go template of the generator renders to valid, gofmt-clean code and that no template embeds a JWT (`go test ./create/...`). `event/error_test.go` covers `ParseErrorReport` (`go test ./event/`) and `request/request_test.go` the default `Content-Type` handling against an `httptest` server (`go test ./request/`). For most packages, `go test ./...` only proves they compile; `go build`/`go vet` are the real check. As of 2026-11-18 `go test ./...` is not green: `jquery/test` `TestJQuery_MultipleColumnsAreAnded` fails (`'and' debe ser un arreglo de objetos condicion`), tracked as Q2 in `spec.md`.
 
-`version.sh` is outward-facing: it creates an annotated tag and immediately runs `git push origin --tags`. Only run it when the user asks for a release. Before tagging, it `sed`-replaces the current tag string with the new one in `README.md` and `README.es.md` (the `go get github.com/celsiainternet/elvis@vX.Y.Z` line of the install section), but it **does not commit** that edit. The tag therefore points at a commit whose READMEs still show the old version, and the working tree is left with modified READMEs that have to be committed separately.
+`version.sh` is outward-facing: it fetches the remote tags, computes the next version from the highest `vX.Y.Z` tag in the whole repo (not the one nearest HEAD), creates an annotated tag on HEAD and pushes only that tag (`git push origin <tag>`). It refuses if HEAD already has a version tag; `--s` shows the version of the current branch, `main` and `develop`. Only run it when the user asks for a release. Before tagging, `update_readmes` replaces every `@vX.Y.Z` (the `go get github.com/celsiainternet/elvis@vX.Y.Z` install line) with the new version in `README.md` and `README.es.md`, each only if it exists; other version mentions (e.g. "since `v1.1.324`") are left alone. It **does not commit** that edit, so the tag points at a commit whose READMEs still show the old version and the working tree is left with modified READMEs to commit separately.
 
 ## Documentation
 
