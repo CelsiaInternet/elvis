@@ -11,8 +11,8 @@ import (
 
 const (
 	// Paquetes RPC por defecto de send y otp (strs.DaskSpace del PackageName de cada servicio + ".Services")
-	DEFAULT_SEND_RPC = "Service-send.Services"
-	DEFAULT_OTP_RPC  = "Service-otp.Services"
+	DEFAULT_SEND_RPC = "service-send.Services"
+	DEFAULT_OTP_RPC  = "service-otp.Services"
 )
 
 var (
