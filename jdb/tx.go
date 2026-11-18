@@ -10,8 +10,7 @@ import (
 )
 
 /**
-* Tx wraps a *sql.Tx exposing the same query methods as DB so that
-* linq operations can be executed inside a transaction transparently.
+* Tx: Envuelve *sql.Tx con los mismos métodos de consulta que DB, para usar linq en una transacción.
 **/
 type Tx struct {
 	tx *sql.Tx
@@ -86,8 +85,7 @@ func (t *Tx) Command(sql string, args ...any) (et.Items, error) {
 }
 
 /**
-* CommandSource executes a DML statement inside the transaction and
-* extracts the JSONB sourceField from each returned row.
+* CommandSource: Ejecuta un DML en la transacción y extrae sourceField de cada fila.
 * @param sourceField string, sql string, args ...any
 * @return et.Items, error
 **/

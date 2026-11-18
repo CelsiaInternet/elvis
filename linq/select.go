@@ -72,7 +72,6 @@ func (s *Linq) Select(sel ...any) *Linq {
 }
 
 /**
-*
 **/
 func (s *Linq) Find() (et.Items, error) {
 	s.SqlSelect()

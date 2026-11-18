@@ -264,8 +264,7 @@ func (c *Model) Details(name, description string, _default any, details Details)
 
 /**
 * NextCode
-* @param tag string
-* @param prefix string
+* @param tag string, prefix string
 * @return string
 **/
 func (c *Model) NexCode(tag, prefix string) string {
@@ -415,7 +414,6 @@ func (c *Model) IndexSource(ok bool) *Model {
 }
 
 /**
-*
 **/
 func (c *Model) From() *Linq {
 	return From(c)
@@ -440,7 +438,6 @@ func (c *Model) Select(sel ...any) *Linq {
 }
 
 /**
-*
 **/
 func (c *Model) Insert(data et.Json) *Linq {
 	tp := TpRow

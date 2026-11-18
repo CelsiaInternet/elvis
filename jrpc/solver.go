@@ -20,9 +20,7 @@ type Solver struct {
 
 /**
 * Mount
-* @param host string
-* @param port int
-* @param service any
+* @param host string, port int, service any
 **/
 func Mount(services any) error {
 	if pkg == nil {
@@ -58,8 +56,7 @@ func UnMount(host, name string) error {
 /**
 * GetSolver
 * @param method string
-* @return *Solver
-* @return error
+* @return *Solver, error
 **/
 func GetSolver(method string) (*Solver, error) {
 	method = strings.TrimSpace(method)

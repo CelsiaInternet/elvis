@@ -19,8 +19,7 @@ type Item struct {
 
 /**
 * New create new item
-* @param key string
-* @param value interface{}
+* @param key string, value interface{}
 * @return *Item
 **/
 func New(key string, value interface{}) *Item {

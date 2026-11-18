@@ -14,8 +14,7 @@ func (c *Linq) Debug() *Linq {
 
 /**
 * Command
-* @return et.Items
-* @return error
+* @return et.Items, error
 **/
 func (c *Linq) Command() (et.Items, error) {
 	if c.Act == ActInsert {
@@ -39,8 +38,7 @@ func (c *Linq) Command() (et.Items, error) {
 
 /**
 * CommandOne
-* @return et.Item
-* @return error
+* @return et.Item, error
 **/
 func (c *Linq) CommandOne() (et.Item, error) {
 	result, err := c.Command()
@@ -60,17 +58,14 @@ func (c *Linq) CommandOne() (et.Item, error) {
 
 /**
 * Go
-* @return et.Item
-* @return error
+* @return et.Item, error
 **/
 func (c *Linq) Go() (et.Item, error) {
 	return c.CommandOne()
 }
 
 /**
-* commandInsert uses ON CONFLICT DO NOTHING in the SQL so duplicate
-* detection is atomic and requires only one round-trip to the database.
-* result.Ok == false means the record already existed (conflict).
+* commandInsert: Inserta con ON CONFLICT DO NOTHING; Ok=false si ya existía.
 **/
 func (c *Linq) commandInsert() (et.Items, error) {
 	if err := c.prepareInsertData(); err != nil {
@@ -228,7 +223,6 @@ func (c *Linq) commandUpsert() (et.Items, error) {
 }
 
 /**
-*
 **/
 func (c *Linq) Current() (et.Items, error) {
 	return c.SqlCurrent()

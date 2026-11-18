@@ -162,7 +162,7 @@ func (s *Authorization) SetAuthor(projectId, profileId, method, path string) err
 
 /**
 * SetPath
-* @params method, path string
+* @param method, path string
 * @return error
 **/
 func (s *Authorization) SetPath(method, path string) error {

@@ -171,8 +171,7 @@ func MakeFile(folder, name, model string, args ...any) (string, error) {
 }
 
 /**
-* WriteFile: Overwrites path with content, unlike MakeFile which never
-* touches a file that already exists.
+* WriteFile: Sobrescribe path con content.
 * @param path, content string
 * @return error
 **/
@@ -187,9 +186,7 @@ func WriteFile(path, content string) error {
 }
 
 /**
-* AppendFile: Appends content to a file, creating it (and any content
-* passed the first time) if it does not exist yet. Unlike MakeFile, it
-* never no-ops on an existing file - each call always adds content.
+* AppendFile: Agrega content al archivo y lo crea si no existe.
 * @param folder, name, content string
 * @return string, error
 **/

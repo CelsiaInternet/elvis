@@ -21,9 +21,8 @@ func init() {
 }
 
 /**
-* NowTime
+* NowTime: Hora actual en la zona de ZONEINFO.
 * @return time.Time
-* Remember to this function use ZONEINFO variable
 **/
 func NowTime() time.Time {
 	return time.Now().In(loc)
@@ -47,9 +46,8 @@ func Add(d time.Duration) time.Time {
 }
 
 /**
-* Location
+* Location: Zona horaria de ZONEINFO.
 * @return *time.Location
-* Remember to this function use ZONEINFO variable
 **/
 func Location() *time.Location {
 	return loc

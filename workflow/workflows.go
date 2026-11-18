@@ -215,8 +215,7 @@ func (s *WorkFlows) getOrCreateInstance(id, tag string, step int, tags et.Json, 
 }
 
 /**
-* runInstance
-* Si el step es -1 se ejecuta el siguiente paso, si no se ejecuta el paso indicado
+* runInstance: Ejecuta el paso step de la instancia (-1 = el siguiente).
 * @param instanceId, tag string, step int, tags, ctx et.Json, createdBy string
 * @return et.Json, error
 **/

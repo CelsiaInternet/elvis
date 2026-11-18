@@ -7,7 +7,6 @@ import (
 )
 
 /**
-*
 **/
 func (c *Model) Consolidate(linq *Linq) *Linq {
 	var col *Column
@@ -102,9 +101,7 @@ func (c *Model) Changue(current et.Json, linq *Linq) *Linq {
 }
 
 /**
-*	prepareInsertData consolidates and validates insert data without
-*	running the pre-check SELECT. Used internally by commandInsert so
-*	that duplicate detection is delegated to ON CONFLICT in the SQL.
+* prepareInsertData: Consolida y valida los datos del insert.
 **/
 func (c *Linq) prepareInsertData() error {
 	model := c.from[0].model
@@ -122,8 +119,7 @@ func (c *Linq) prepareInsertData() error {
 }
 
 /**
-*	PrepareInsert consolidates data, validates required fields, and runs a
-*	pre-check SELECT to detect existing records. Kept for backward compatibility.
+* PrepareInsert: Consolida y valida los datos y busca si el registro ya existe.
 *	@return et.Items, error
 **/
 func (c *Linq) PrepareInsert() (et.Items, error) {

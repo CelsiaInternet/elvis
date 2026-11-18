@@ -7,8 +7,7 @@ import (
 )
 
 /**
-* SQLServer es el nombre bajo el cual SQLServerDialect se registra en
-* el registry (ver Register/Get).
+* SQLServer: Nombre con que se registra SQLServerDialect.
 **/
 const SQLServer = "sqlserver"
 
@@ -32,8 +31,7 @@ func (d *SQLServerDialect) Name() string {
 }
 
 /**
-* QuoteIdent: SQL Server usa corchetes ([col]) como caracter de
-* comillado de identificadores.
+* QuoteIdent: Cita el identificador con corchetes.
 * @param name string
 * @return string
 **/
@@ -52,8 +50,7 @@ func (d *SQLServerDialect) QuoteIdent(name string) string {
 }
 
 /**
-* Like: SQL Server no tiene ILIKE; la sensibilidad a mayusculas de
-* LIKE depende de la collation de la columna/base de datos.
+* Like: LIKE, porque SQL Server no tiene ILIKE.
 * @return string
 **/
 func (d *SQLServerDialect) Like() string {
@@ -61,9 +58,7 @@ func (d *SQLServerDialect) Like() string {
 }
 
 /**
-* LimitOffset: SQL Server no soporta LIMIT/OFFSET; usa la clausula
-* OFFSET/FETCH del estandar ANSI SQL:2008 (SQL Server 2012+), que
-* requiere una clausula ORDER BY previa en la consulta.
+* LimitOffset: Usa OFFSET/FETCH (SQL Server 2012+, requiere ORDER BY).
 * @param rows int, offset int
 * @return string
 **/

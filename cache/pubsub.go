@@ -21,8 +21,7 @@ func (s Message) ToJson() (et.Json, error) {
 
 /**
 * Pub
-* @param channel string
-* @param message interface{}
+* @param channel string, message interface{}
 * @return error
 **/
 func (s *Conn) Pub(channel string, message []byte) error {
@@ -36,8 +35,7 @@ func (s *Conn) Pub(channel string, message []byte) error {
 
 /**
 * Sub
-* @param channel string
-* @param f func(interface{})
+* @param channel string, f func(interface{})
 **/
 func (s *Conn) Sub(channel string, f func(*redis.Message)) {
 	s.mutex.Lock()

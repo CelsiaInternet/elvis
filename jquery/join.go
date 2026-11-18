@@ -9,9 +9,7 @@ import (
 )
 
 /**
-* JoinType: variante de JOIN soportada dentro de "join" (ver Join).
-* El valor string es exactamente la clave que se espera recibir en el
-* atributo "type" de cada join.
+* JoinType: Tipo de JOIN aceptado en "type".
 **/
 type JoinType string
 
@@ -33,25 +31,7 @@ var joinKeywords = map[JoinType]string{
 }
 
 /**
-* Join: una entrada de la clausula "join" del query, con la forma:
-*
-*	{
-*	  "type": "left",
-*	  "to": "roles:B",
-*	  "on": {
-*	    "B.user_id": {"eq": {"col": "A.id"}},
-*	    "and": [
-*	      {"B.role": {"neg": "admin"}}
-*	    ]
-*	  }
-*	}
-*
-* "type" es opcional y por defecto es "join" (JOIN simple, equivalente
-* a INNER JOIN). "to" acepta la misma sintaxis "tabla:alias" que
-* "from" (ver renderTableRef). "on" tiene la misma forma recursiva
-* and/or que "wheres"/"having" (ver buildWheres); sus valores aceptan
-* referencias a columna via {"col": "identificador"} (ver renderValue),
-* lo usual para condiciones columna-a-columna como B.user_id = A.id.
+* Join: Entrada de "join" del query (type, to, on).
 **/
 type Join struct {
 	Type JoinType
@@ -60,9 +40,7 @@ type Join struct {
 }
 
 /**
-* parseJoins normaliza el atributo "join" del query (un unico objeto o
-* un arreglo de objetos) a []Join. raw nil (atributo ausente) produce
-* (nil, nil): el query simplemente no tiene joins.
+* parseJoins: Normaliza "join" (objeto o arreglo) a []Join.
 * @param raw any
 * @return []Join, error
 **/
@@ -112,10 +90,7 @@ func parseJoins(raw any) ([]Join, error) {
 }
 
 /**
-* renderTableRef renderiza una referencia de tabla con alias opcional,
-* con la forma "tabla" o "tabla:alias" (p.ej. "users:A" produce
-* "\"users\" AS \"A\""). "tabla" puede venir calificada por esquema
-* (p.ej. "public.users:A").
+* renderTableRef: Renderiza "tabla" o "tabla:alias".
 * @param d dialect.Dialect, ref string
 * @return string
 **/
@@ -136,8 +111,7 @@ func renderTableRef(d dialect.Dialect, ref string) string {
 }
 
 /**
-* buildJoins arma las clausulas JOIN (una por cada elemento de Joins),
-* en el orden en que fueron declaradas.
+* buildJoins: Arma las cláusulas JOIN en el orden declarado.
 * @param d dialect.Dialect, joins []Join
 * @return string, error
 **/

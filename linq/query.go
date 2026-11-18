@@ -87,8 +87,7 @@ func (c *Linq) queryCount() int {
 }
 
 /**
-* queryWithCount executes a query that includes COUNT(*) OVER() AS _total
-* and returns items plus the total count in a single round-trip.
+* queryWithCount: Ejecuta la consulta con COUNT(*) OVER() y devuelve items y total.
 * @return et.Items, int, error
 **/
 func (c *Linq) queryWithCount() (et.Items, int, error) {

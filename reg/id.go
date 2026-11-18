@@ -51,7 +51,7 @@ func XID() string {
 
 /**
 * GenKey
-* @params args ...interface{}
+* @param args ...interface{}
 * @return string
 **/
 func GenKey(args ...interface{}) string {
@@ -65,7 +65,7 @@ func GenKey(args ...interface{}) string {
 
 /**
 * Id
-* @params tag string
+* @param tag string
 * @return string
 **/
 func GenId(tag string) string {
@@ -74,7 +74,7 @@ func GenId(tag string) string {
 
 /**
 * GenUlId
-* @params tag string
+* @param tag string
 * @return string
 **/
 func GenUlId(tag string) string {
@@ -83,7 +83,7 @@ func GenUlId(tag string) string {
 
 /**
 * GenXid
-* @params tag string
+* @param tag string
 * @return string
 **/
 func GenXid(tag string) string {
@@ -109,7 +109,7 @@ func GenSnowflake() string {
 
 /**
 * GenHashKey
-* @params args ...interface{}
+* @param args ...interface{}
 * @return string
 **/
 func GenHashKey(args ...interface{}) string {
@@ -119,7 +119,7 @@ func GenHashKey(args ...interface{}) string {
 
 /**
 * GetId
-* @params tag, id string
+* @param tag, id string
 * @return string
 **/
 func GetId(tag, id string) string {
@@ -132,7 +132,7 @@ func GetId(tag, id string) string {
 
 /**
 * GetUUID
-* @params id string
+* @param id string
 * @return string
 **/
 func GetUUID(id string) string {
@@ -145,7 +145,7 @@ func GetUUID(id string) string {
 
 /**
 * GetULID
-* @params id string
+* @param id string
 * @return string
 **/
 func GetULID(id string) string {
@@ -158,7 +158,7 @@ func GetULID(id string) string {
 
 /**
 * GetXID
-* @params id string
+* @param id string
 * @return string
 **/
 func GetXID(id string) string {

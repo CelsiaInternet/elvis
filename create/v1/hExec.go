@@ -30,9 +30,7 @@ func Command(coms []string) ([][]byte, error) {
 }
 
 /**
-* GoModTidy: Ejecuta go mod tidy en el directorio actual para que el go.mod
-* incluya los imports de lo recien generado. No es fatal: si falla (p. ej.
-* sin red), avisa y lo generado se conserva.
+* GoModTidy: Ejecuta go mod tidy en el directorio actual; si falla solo avisa.
 **/
 func GoModTidy() {
 	fmt.Println("\nEjecutando go mod tidy (la primera vez descarga dependencias y puede tardar unos minutos)...")

@@ -12,9 +12,9 @@ import (
 /**
 * SendSms
 * @param project_id string, service_id string, contactNumbers []string, content string, params []et.Json, tp TpMessage, user et.Json
-* @response et.Json
+* @return et.Json
 **/
-func SendSms(project_id, service_id string, contactNumbers []string, content string, params []et.Json, tp TpMessage, user et.Json) et.Json {
+func SendSms(project_id, service_id string, contactNumbers []string, content string, params []et.Json, tp TpMessage, user et.Json) (et.Item, error) {
 	service_id = reg.GetUUID(service_id)
 	return sendRpc("SendSMS", "send/sms", et.Json{
 		"project_id":      project_id,
@@ -30,9 +30,9 @@ func SendSms(project_id, service_id string, contactNumbers []string, content str
 /**
 * SendWhatsapp
 * @param project_id string, service_id string, template_id int, contactNumbers []string, params []et.Json, tp TpMessage, user et.Json
-* @response et.Json
+* @return et.Json
 **/
-func SendWhatsapp(project_id, service_id string, template_id int, contactNumbers []string, params []et.Json, tp TpMessage, user et.Json) et.Json {
+func SendWhatsapp(project_id, service_id string, template_id int, contactNumbers []string, params []et.Json, tp TpMessage, user et.Json) (et.Item, error) {
 	service_id = reg.GetUUID(service_id)
 	return sendRpc("SendWhatsapp", "send/whatsapp", et.Json{
 		"project_id":      project_id,
@@ -48,9 +48,9 @@ func SendWhatsapp(project_id, service_id string, template_id int, contactNumbers
 /**
 * SendEmail
 * @param project_id string, service_id string, to []et.Json, subject string, html_content string, params []et.Json, tp TpMessage, user et.Json
-* @response et.Json
+* @return et.Json
 **/
-func SendEmail(project_id, service_id string, to []et.Json, subject string, html_content string, params []et.Json, tp TpMessage, user et.Json) et.Json {
+func SendEmail(project_id, service_id string, to []et.Json, subject string, html_content string, params []et.Json, tp TpMessage, user et.Json) (et.Item, error) {
 	service_id = reg.GetUUID(service_id)
 	return sendRpc("SendEmail", "send/email", et.Json{
 		"project_id":   project_id,
@@ -67,9 +67,9 @@ func SendEmail(project_id, service_id string, to []et.Json, subject string, html
 /**
 * SendEmailByTemplate
 * @param project_id string, service_id string, groups []string, subject string, template_id int, params []et.Json, tp TpMessage, user et.Json
-* @response et.Json
+* @return et.Json
 **/
-func SendEmailByTemplate(project_id, service_id string, groups []string, subject, template_id string, params []et.Json, tp TpMessage, user et.Json) et.Json {
+func SendEmailByTemplate(project_id, service_id string, groups []string, subject, template_id string, params []et.Json, tp TpMessage, user et.Json) (et.Item, error) {
 	service_id = reg.GetUUID(service_id)
 	return sendRpc("SendEmailByTemplate", "send/emailbytemplate", et.Json{
 		"project_id":  project_id,
@@ -86,9 +86,9 @@ func SendEmailByTemplate(project_id, service_id string, groups []string, subject
 /**
 * SendEmailToByTemplate
 * @param project_id, service_id, name, email string, subject, template_id string, params []et.Json, tp TpMessage, user et.Json
-* @response et.Json
+* @return et.Json
 **/
-func SendEmailToByTemplate(project_id, service_id, name, email string, subject, template_id string, params []et.Json, tp TpMessage, user et.Json) et.Json {
+func SendEmailToByTemplate(project_id, service_id, name, email string, subject, template_id string, params []et.Json, tp TpMessage, user et.Json) (et.Item, error) {
 	service_id = reg.GetUUID(service_id)
 	return sendRpc("SendEmailToByTemplate", "send/emailtobytemplate", et.Json{
 		"project_id":  project_id,
@@ -106,9 +106,9 @@ func SendEmailToByTemplate(project_id, service_id, name, email string, subject, 
 /**
 * SendOtp
 * @param project_id string, channel, name, device string, length, duration int, user et.Json
-* @response et.Json
+* @return et.Json
 **/
-func SendOtpSms(project_id string, phone_number, name, device string, length int, duration int, user et.Json) et.Json {
+func SendOtpSms(project_id string, phone_number, name, device string, length int, duration int, user et.Json) (et.Item, error) {
 	service_id := reg.UUID()
 	return otpRpc("GenerateOTPSMS", "generate/otp/sms", et.Json{
 		"project_id": project_id,
@@ -126,9 +126,9 @@ func SendOtpSms(project_id string, phone_number, name, device string, length int
 /**
 * SendOtpWhatsapp
 * @param project_id string, phone_number, name, device string, length, duration int, user et.Json
-* @response et.Json
+* @return et.Json
 **/
-func SendOtpWhatsapp(project_id string, phone_number, name, device string, length int, duration int, user et.Json) et.Json {
+func SendOtpWhatsapp(project_id string, phone_number, name, device string, length int, duration int, user et.Json) (et.Item, error) {
 	service_id := reg.UUID()
 	return otpRpc("GenerateOTPWhatsapp", "generate/otp/whatsapp", et.Json{
 		"project_id": project_id,
@@ -146,9 +146,9 @@ func SendOtpWhatsapp(project_id string, phone_number, name, device string, lengt
 /**
 * SendOtpEmail
 * @param project_id string, email, name, device string, length, duration int, user et.Json
-* @response et.Json
+* @return et.Json
 **/
-func SendOtpEmail(project_id string, email, name, device string, length int, duration int, user et.Json) et.Json {
+func SendOtpEmail(project_id string, email, name, device string, length int, duration int, user et.Json) (et.Item, error) {
 	service_id := reg.UUID()
 	return otpRpc("GenerateOTPEmail", "generate/otp/email", et.Json{
 		"project_id": project_id,
@@ -166,7 +166,7 @@ func SendOtpEmail(project_id string, email, name, device string, length int, dur
 /**
 * VerifyOtp
 * @param channel, device, kind, code, clientId string
-* @response et.Item, error
+* @return et.Item, error
 **/
 func VerifyOtp(channel, device, kind, code, clientId string) (et.Item, error) {
 	if !utility.ValidStr(channel, 1, []string{}) {

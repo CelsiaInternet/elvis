@@ -137,8 +137,7 @@ func GetHeader(r *http.Request) et.Json {
 
 /**
 * GetParam
-* @param r *http.Request
-* @param key string
+* @param r *http.Request, key string
 * @return *et.Any
 **/
 func GetParam(r *http.Request, key string) string {
@@ -149,9 +148,7 @@ func GetParam(r *http.Request, key string) string {
 
 /**
 * WriteResponse
-* @param w http.ResponseWriter
-* @param statusCode int
-* @param e []byte
+* @param w http.ResponseWriter, statusCode int, e []byte
 * @return error
 **/
 func WriteResponse(w http.ResponseWriter, statusCode int, e []byte) error {
@@ -164,10 +161,7 @@ func WriteResponse(w http.ResponseWriter, statusCode int, e []byte) error {
 
 /**
 * RESULT
-* @param w http.ResponseWriter
-* @param r *http.Request
-* @param statusCode int
-* @param data interface{}
+* @param w http.ResponseWriter, r *http.Request, statusCode int, data interface{}
 * @return error
 **/
 func RESULT(w http.ResponseWriter, r *http.Request, statusCode int, data interface{}) error {
@@ -187,10 +181,7 @@ func RESULT(w http.ResponseWriter, r *http.Request, statusCode int, data interfa
 
 /**
 * ANY
-* @param w http.ResponseWriter
-* @param r *http.Request
-* @param statusCode int
-* @param result interface{}
+* @param w http.ResponseWriter, r *http.Request, statusCode int, result interface{}
 * @return error
 **/
 func ANY(w http.ResponseWriter, r *http.Request, statusCode int, result interface{}) error {
@@ -206,10 +197,7 @@ func ANY(w http.ResponseWriter, r *http.Request, statusCode int, result interfac
 
 /**
 * JSON
-* @param w http.ResponseWriter
-* @param r *http.Request
-* @param statusCode int
-* @param dt interface{}
+* @param w http.ResponseWriter, r *http.Request, statusCode int, dt interface{}
 * @return error
 **/
 func JSON(w http.ResponseWriter, r *http.Request, statusCode int, dt interface{}) error {
@@ -234,10 +222,7 @@ func JSON(w http.ResponseWriter, r *http.Request, statusCode int, dt interface{}
 
 /**
 * ITEM
-* @param w http.ResponseWriter
-* @param r *http.Request
-* @param statusCode int
-* @param dt et.Item
+* @param w http.ResponseWriter, r *http.Request, statusCode int, dt et.Item
 * @return error
 **/
 func ITEM(w http.ResponseWriter, r *http.Request, statusCode int, dt et.Item) error {
@@ -257,10 +242,7 @@ func ITEM(w http.ResponseWriter, r *http.Request, statusCode int, dt et.Item) er
 
 /**
 * ITEMS
-* @param w http.ResponseWriter
-* @param r *http.Request
-* @param statusCode int
-* @param dt et.Items
+* @param w http.ResponseWriter, r *http.Request, statusCode int, dt et.Items
 * @return error
 **/
 func ITEMS(w http.ResponseWriter, r *http.Request, statusCode int, dt et.Items) error {
@@ -280,10 +262,7 @@ func ITEMS(w http.ResponseWriter, r *http.Request, statusCode int, dt et.Items) 
 
 /**
 * LIST: Responde una página et.List con ok (rows, all, count, page, start, end y result)
-* @param w http.ResponseWriter
-* @param r *http.Request
-* @param statusCode int
-* @param dt et.List
+* @param w http.ResponseWriter, r *http.Request, statusCode int, dt et.List
 * @return error
 **/
 func LIST(w http.ResponseWriter, r *http.Request, statusCode int, dt et.List) error {
@@ -299,10 +278,7 @@ func LIST(w http.ResponseWriter, r *http.Request, statusCode int, dt et.List) er
 
 /**
 * HTTPError
-* @param w http.ResponseWriter
-* @param r *http.Request
-* @param statusCode int
-* @param message string
+* @param w http.ResponseWriter, r *http.Request, statusCode int, message string
 * @return error
 **/
 func HTTPError(w http.ResponseWriter, r *http.Request, statusCode int, message string) error {
@@ -378,9 +354,7 @@ func Stream(w http.ResponseWriter, r *http.Request, rows int, getData DataFuncti
 
 /**
 * HTTPApp
-* @param r chi.Router
-* @param path string
-* @param root http.FileSystem
+* @param r chi.Router, path string, root http.FileSystem
 **/
 func HTTPApp(r chi.Router, path string, root http.FileSystem) {
 	if strings.ContainsAny(path, "{}*") {

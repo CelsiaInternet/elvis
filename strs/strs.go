@@ -10,8 +10,7 @@ import (
 
 /**
 * Format
-* @param format string
-* @param args ...any
+* @param format string, args ...any
 * @return string
 **/
 func Format(format string, args ...any) string {
@@ -22,8 +21,7 @@ func Format(format string, args ...any) string {
 
 /**
 * FormatUppCase
-* @param format string
-* @param args ...any
+* @param format string, args ...any
 * @return string
 **/
 func FormatUppCase(format string, args ...any) string {
@@ -34,8 +32,7 @@ func FormatUppCase(format string, args ...any) string {
 
 /**
 * FormatLowCase
-* @param format string
-* @param args ...any
+* @param format string, args ...any
 * @return string
 **/
 func FormatLowCase(format string, args ...any) string {
@@ -45,17 +42,9 @@ func FormatLowCase(format string, args ...any) string {
 }
 
 /**
-* FormatDateTime
-* @param format string
-* @param value time.Time
+* FormatDateTime: Formatea value con un layout de Go (p. ej. "2006-01-02").
+* @param format string, value time.Time
 * @return string
-*
-* Format examples:
-* "2006-01-02" → YYYY-MM-DD
-* "02/01/2006" → DD/MM/YYYY
-* "15:04:05" → HH:MM:SS (24 horas)
-* "03:04:05 PM" → HH:MM:SS AM/PM
-*
 **/
 func FormatDateTime(format string, value time.Time) string {
 	if format == "" {
@@ -67,8 +56,7 @@ func FormatDateTime(format string, value time.Time) string {
 
 /**
 * Contains
-* @param str string
-* @param substr string
+* @param str string, substr string
 * @return bool
 **/
 func Contains(str string, substr string) bool {
@@ -77,9 +65,7 @@ func Contains(str string, substr string) bool {
 
 /**
 * Replace
-* @param str string
-* @param old string
-* @param new string
+* @param str string, old string, new string
 * @return string
 **/
 func Replace(str string, old string, new string) string {
@@ -88,9 +74,7 @@ func Replace(str string, old string, new string) string {
 
 /**
 * ReplaceAll
-* @param str string
-* @param olds []string
-* @param new string
+* @param str string, olds []string, new string
 * @return string
 **/
 func ReplaceAll(str string, olds []string, new string) string {
@@ -191,8 +175,7 @@ func Titlecase(str string) string {
 
 /**
 * Empty
-* @param str1 string
-* @param str2 string
+* @param str1 string, str2 string
 * @return string
 **/
 func Empty(str1, str2 string) string {
@@ -205,8 +188,7 @@ func Empty(str1, str2 string) string {
 
 /**
 * EmptyAny
-* @param val1 interface{}
-* @param val2 interface{}
+* @param val1 interface{}, val2 interface{}
 * @return interface{}
 **/
 func Append(str1, str2, sp string) string {
@@ -222,9 +204,7 @@ func Append(str1, str2, sp string) string {
 
 /**
 * AppendAny
-* @param val1 interface{}
-* @param val2 interface{}
-* @param sp string
+* @param val1 interface{}, val2 interface{}, sp string
 * @return interface{}
 **/
 func AppendAny(val1, val2 interface{}, sp string) interface{} {
@@ -243,8 +223,7 @@ func AppendAny(val1, val2 interface{}, sp string) interface{} {
 
 /**
 * Split
-* @param str string
-* @param sep string
+* @param str string, sep string
 * @return []string
 **/
 func Split(str, sep string) []string {
@@ -253,9 +232,7 @@ func Split(str, sep string) []string {
 
 /**
 * GetSplitIndex
-* @param str string
-* @param sep string
-* @param idx int
+* @param str string, sep string, idx int
 * @return string
 **/
 func GetSplitIndex(str, sep string, idx int) string {
@@ -273,8 +250,7 @@ func GetSplitIndex(str, sep string, idx int) string {
 
 /**
 * ApendAny
-* @param space string
-* @param args ...any
+* @param space string, args ...any
 * @return string
 **/
 func ApendAny(space string, args ...any) string {

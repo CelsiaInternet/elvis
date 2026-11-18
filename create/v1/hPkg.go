@@ -9,10 +9,7 @@ import (
 )
 
 /**
-* upsertModelInit: Writes pkg/<packageName>/model.go the first time a
-* model is added, and appends a Define<modelo>(db) call to initModels
-* on every subsequent call instead of leaving the file untouched, since
-* file.MakeFile never overwrites a file that already exists.
+* upsertModelInit: Crea pkg/<packageName>/model.go o agrega Define<modelo>(db) a initModels.
 * @param path, packageName, modelo string
 * @return error
 **/
@@ -46,22 +43,17 @@ func upsertModelInit(path, packageName, modelo string) error {
 }
 
 /**
-* MakePkg: Genera pkg/<name>: config, eventos, mensajes, RPC, controller,
-* router y, si hay schema, el primer modelo linq con su CRUD.
+* MakePkg: Genera pkg/<name>: config, eventos, mensajes, RPC, controller, router y el primer modelo si hay schema.
 * @param name, schema string
 * @return error
 **/
 /**
-* routesAnchor: Linea que el generador escribe en Routes() justo despues de
-* las rutas; las rutas de los modelos nuevos se insertan antes de ella.
+* routesAnchor: Línea de Routes() antes de la cual se insertan las rutas de los modelos nuevos.
 **/
 const routesAnchor = "\n\tctx := context.Background()\n"
 
 /**
-* upsertRoutes: Agrega a Routes() de pkg/<name>/router.go las rutas de un
-* modelo nuevo. No hace nada si el handler ya esta enrutado. Devuelve false
-* si router.go fue editado y ya no tiene la linea de anclaje: en ese caso
-* las rutas hay que copiarlas a mano.
+* upsertRoutes: Agrega a Routes() las rutas de un modelo nuevo; false si router.go ya no tiene el anclaje.
 * @param path, handler, routes string
 * @return bool, error
 **/
@@ -86,8 +78,7 @@ func upsertRoutes(path, handler, routes string) (bool, error) {
 }
 
 /**
-* hasModels: Indica si el paquete ya inicializa modelos (Controller.Init
-* llama a initModels), es decir, si se creo con schema y tiene base de datos.
+* hasModels: Indica si el paquete ya inicializa modelos (se creó con schema).
 * @param path string
 * @return bool
 **/
@@ -178,9 +169,7 @@ func MakePkg(name, schema string) error {
 }
 
 /**
-* MakeModel: Agrega un modelo (con schema, linq + CRUD) o un handler (sin
-* schema) a un paquete existente en pkg/<packageName> y registra sus rutas
-* en router.go. Devuelve false si las rutas no se pudieron registrar solas.
+* MakeModel: Agrega un modelo o handler a pkg/<packageName> y registra sus rutas; false si no se pudieron registrar.
 * @param packageName, modelo, schema string
 * @return bool, error
 **/

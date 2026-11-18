@@ -17,7 +17,7 @@ var crontab *Jobs
 
 /**
 * Load
-* @params db *jdb.DB, schemaName, tag string
+* @param db *jdb.DB, schemaName, tag string
 * @return error
 **/
 func Load(tag string, store instances.Store) error {
@@ -90,8 +90,7 @@ func AddCronJob(tag, spec string, repetitions int, started bool, params et.Json,
 }
 
 /**
-* AddScheduleJob
-* Add job to crontab in execute local
+* AddScheduleJob: Agrega un job al crontab local.
 * @param tag, schedule string, started bool, params et.Json, fn func(event.EvenMessage)
 * @return error
 **/
@@ -160,7 +159,7 @@ func StopJob(tag string) error {
 
 /**
 * HttpGet
-* @params w http.ResponseWriter, r *http.Request
+* @param w http.ResponseWriter, r *http.Request
 **/
 func HttpGet(w http.ResponseWriter, r *http.Request) {
 	if getInstance == nil {
@@ -192,7 +191,7 @@ func HttpGet(w http.ResponseWriter, r *http.Request) {
 
 /**
 * HttpStart
-* @params w http.ResponseWriter, r *http.Request
+* @param w http.ResponseWriter, r *http.Request
 **/
 func HttpStart(w http.ResponseWriter, r *http.Request) {
 	if getInstance == nil {
@@ -230,7 +229,7 @@ func HttpStart(w http.ResponseWriter, r *http.Request) {
 
 /**
 * HttpStop
-* @params w http.ResponseWriter, r *http.Request
+* @param w http.ResponseWriter, r *http.Request
 **/
 func HttpStop(w http.ResponseWriter, r *http.Request) {
 	if getInstance == nil {

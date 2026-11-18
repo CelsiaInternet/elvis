@@ -69,9 +69,7 @@ package jquery
 import "github.com/celsiainternet/elvis/et"
 
 /**
-* JQuery traduce query a una sentencia SQL SELECT completa para
-* PostgreSQL. Para usar otro dialecto (una vez implementado), use
-* NewJQueryBuilderWithDialect directamente.
+* JQuery: Traduce query a un SELECT para PostgreSQL.
 * @param query et.Json
 * @return string, error
 **/

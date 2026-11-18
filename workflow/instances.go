@@ -304,7 +304,7 @@ func (s *Instance) GetTraces(idx int) (et.Json, error) {
 
 /**
 * GetTraceByStep
-* @params step int
+* @param step int
 * @return []et.Json
 **/
 func (s *Instance) GetTraceByStep(step int) []et.Json {

@@ -47,7 +47,7 @@ func SetPackageName(name string) {
 /**
 * GetId
 * @param client_id, kind, description string
-* @response string
+* @return string
 **/
 func GetId(client_id, kind, description string) string {
 	now := utility.Now()
@@ -81,7 +81,7 @@ func SetStatus(serviceId string, status et.Json) {
 /**
 * GetStatus
 * @param serviceId string
-* @response et.Json, error
+* @return et.Json, error
 **/
 func GetStatus(serviceId string) (et.Json, error) {
 	return cache.GetJson(serviceId)

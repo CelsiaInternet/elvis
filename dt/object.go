@@ -72,8 +72,7 @@ func (s *Object) save() bool {
 /**
 * Load
 * @return error
-*
- */
+**/
 func (s *Object) load() error {
 	item, err := cache.GetItem("object:" + s.Key)
 	if err != nil {

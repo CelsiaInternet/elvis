@@ -45,7 +45,7 @@ type ResponseWriterWrapper struct {
 
 /**
 * Write
-* @params b []byte
+* @param b []byte
 **/
 func (rw *ResponseWriterWrapper) Write(b []byte) (int, error) {
 	size, err := rw.ResponseWriter.Write(b)
@@ -55,7 +55,7 @@ func (rw *ResponseWriterWrapper) Write(b []byte) (int, error) {
 
 /**
 * SetServiceName
-* @params name string
+* @param name string
 **/
 func SetServiceName(name string) {
 	serviceName = name
@@ -173,7 +173,7 @@ func PushTokenLastUse(data et.Json) {
 
 /**
 * NewMetric
-* @params r *http.Request
+* @param r *http.Request
 * @return *Metrics
 **/
 func NewMetric(r *http.Request) *Metrics {
@@ -226,7 +226,7 @@ func NewMetric(r *http.Request) *Metrics {
 
 /**
 * NewRpcMetric
-* @params method string
+* @param method string
 * @return *Metrics
 **/
 func NewRpcMetric(method string) *Metrics {
@@ -248,7 +248,7 @@ func NewRpcMetric(method string) *Metrics {
 
 /**
 * setRequest
-* @params remove bool
+* @param remove bool
 **/
 func (m *Metrics) setRequest(remove bool) {
 	m.key = fmt.Sprintf(`%s:%s`, m.Method, m.Path)
@@ -261,7 +261,7 @@ func (m *Metrics) setRequest(remove bool) {
 
 /**
 * SetPath
-* @params val string
+* @param val string
 **/
 func (m *Metrics) SetPath(val string) {
 	if val == "" {
@@ -384,7 +384,7 @@ func (m *Metrics) telemetry() et.Json {
 
 /**
 * DoneHTTP
-* @params rw *ResponseWriterWrapper
+* @param rw *ResponseWriterWrapper
 * @return et.Json
 **/
 func (m *Metrics) DoneHTTP(rw *ResponseWriterWrapper) et.Json {
@@ -398,7 +398,7 @@ func (m *Metrics) DoneHTTP(rw *ResponseWriterWrapper) et.Json {
 
 /**
 * Done
-* @params rw *ResponseWriterWrapper
+* @param rw *ResponseWriterWrapper
 **/
 func (m *Metrics) DoneTelemetry(rw *ResponseWriterWrapper) et.Json {
 	m.DoneHTTP(rw)
@@ -407,7 +407,7 @@ func (m *Metrics) DoneTelemetry(rw *ResponseWriterWrapper) et.Json {
 
 /**
 * DoneRpc
-* @params r et.Json
+* @param r et.Json
 * @return et.Json
 **/
 func (m *Metrics) DoneRpc(r any) et.Json {
@@ -427,7 +427,7 @@ func (m *Metrics) DoneRpc(r any) et.Json {
 
 /**
 * WriteResponse
-* @params w http.ResponseWriter, r *http.Request, statusCode int, e []byte
+* @param w http.ResponseWriter, r *http.Request, statusCode int, e []byte
 **/
 func (m *Metrics) WriteResponse(w http.ResponseWriter, r *http.Request, statusCode int, e []byte) error {
 	rw := &ResponseWriterWrapper{ResponseWriter: w, StatusCode: statusCode}
@@ -441,7 +441,7 @@ func (m *Metrics) WriteResponse(w http.ResponseWriter, r *http.Request, statusCo
 
 /**
 * JSON
-* @params w http.ResponseWriter, r *http.Request, statusCode int, dt interface{}
+* @param w http.ResponseWriter, r *http.Request, statusCode int, dt interface{}
 **/
 func (m *Metrics) JSON(w http.ResponseWriter, r *http.Request, statusCode int, dt interface{}) error {
 	if dt == nil {
@@ -465,7 +465,7 @@ func (m *Metrics) JSON(w http.ResponseWriter, r *http.Request, statusCode int, d
 
 /**
 * ITEM
-* @params w http.ResponseWriter, r *http.Request, statusCode int, dt et.Item
+* @param w http.ResponseWriter, r *http.Request, statusCode int, dt et.Item
 **/
 func (m *Metrics) ITEM(w http.ResponseWriter, r *http.Request, statusCode int, dt et.Item) error {
 	if &dt == (&et.Item{}) {
@@ -484,7 +484,7 @@ func (m *Metrics) ITEM(w http.ResponseWriter, r *http.Request, statusCode int, d
 
 /**
 * ITEMS
-* @params w http.ResponseWriter, r *http.Request, statusCode int, dt et.Items
+* @param w http.ResponseWriter, r *http.Request, statusCode int, dt et.Items
 **/
 func (m *Metrics) ITEMS(w http.ResponseWriter, r *http.Request, statusCode int, dt et.Items) error {
 	if &dt == (&et.Items{}) {
@@ -503,7 +503,7 @@ func (m *Metrics) ITEMS(w http.ResponseWriter, r *http.Request, statusCode int, 
 
 /**
 * HTTPError
-* @params w http.ResponseWriter, r *http.Request, statusCode int, message string
+* @param w http.ResponseWriter, r *http.Request, statusCode int, message string
 **/
 func (m *Metrics) HTTPError(w http.ResponseWriter, r *http.Request, statusCode int, message string) error {
 	msg := et.Json{
@@ -515,7 +515,7 @@ func (m *Metrics) HTTPError(w http.ResponseWriter, r *http.Request, statusCode i
 
 /**
 * Unauthorized
-* @params w http.ResponseWriter, r *http.Request
+* @param w http.ResponseWriter, r *http.Request
 **/
 func (m *Metrics) Unauthorized(w http.ResponseWriter, r *http.Request) {
 	m.HTTPError(w, r, http.StatusUnauthorized, "401 Unauthorized")

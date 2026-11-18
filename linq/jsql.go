@@ -38,15 +38,7 @@ var queryRootKeys = []string{"wheres", "selects", "order_by", "search", "page", 
 var searchSkipTypes = []string{"JSON", "JSONB", "BYTEA", "TSVECTOR"}
 
 /**
-* RunQuery: Arma la consulta sobre model a partir de query (contrato de jdb.RunQuery) y devuelve la pagina pedida con el total.
-* query admite wheres, selects, order_by ({ asc: [], desc: [] }), page y rows (limit es alias de rows; 100 por defecto,
-* maximo 1000) y search ({ value, fields }, ver querySearch). Las condiciones de wheres van entre parentesis si
-* traen or; wheres (opcional) son condiciones fijas del llamador que se aplican con AND sobre ellas, y search se
-* aplica con AND despues de todo. Da error (sin consultar la base) ante una llave raiz desconocida
-* (MSG_QUERY_KEY_NOT_VALID), una columna desconocida u oculta en selects, order_by o wheres (tambien en grupos and/or
-* y en concat; MSG_QUERY_COLUMN_NOT_VALID), un operador no soportado (MSG_QUERY_OPERATOR_NOT_VALID) o un valor de
-* wheres que no es texto, numero ni booleano, o un in vacio (MSG_QUERY_VALUE_NOT_VALID), y en search ver querySearch.
-* Los wheres fijos del llamador no se validan. No soporta isNull, notNull, notIn ni between.
+* RunQuery: Ejecuta una consulta jsql sobre model y devuelve la página con el total.
 * @param model *Model, query et.Json, wheres ...*Where
 * @return et.List, error
 **/
@@ -62,8 +54,7 @@ func RunQuery(model *Model, query et.Json, wheres ...*Where) (et.List, error) {
 }
 
 /**
-* queryLinq: Arma el Linq de RunQuery (selects, wheres fijos, wheres de query, search y order_by) sin ejecutarlo.
-* Antes valida las llaves raiz (queryKeys).
+* queryLinq: Arma el Linq de RunQuery sin ejecutarlo.
 * @param model *Model, query et.Json, wheres ...*Where
 * @return *Linq, error
 **/
@@ -106,12 +97,7 @@ func queryLinq(model *Model, query et.Json, wheres ...*Where) (*Linq, error) {
 }
 
 /**
-* querySearch: Condiciones de search = { value, fields } (contrato de los /query de catalog): cada palabra de value
-* (hasta SEARCH_MAX_WORDS, separadas por espacios) debe aparecer, sin distinguir mayusculas (ILIKE), en los campos
-* unidos con un espacio (concat), asi "ana gomez" encuentra nombre "Ana" y apellido "Gomez". Cada palabra es una
-* condicion AND, de modo que la busqueda no salta los wheres fijos. % y _ de value se buscan como texto. Sin value
-* (o si search no es un objeto) no agrega nada. Error si value pasa de SEARCH_MAX_LENGTH, si fields esta vacio o pasa
-* de SEARCH_MAX_FIELDS, o si un campo no existe, es oculto o es JSON/binario.
+* querySearch: Condiciones ILIKE por palabra de search.value sobre search.fields.
 * @param model *Model, search et.Json
 * @return []*Where, error
 **/
@@ -283,9 +269,7 @@ func queryWheres(query et.Json) ([]et.Json, error) {
 }
 
 /**
-* queryConditions: Condiciones de wheres con su conector: { campo: {...} } va con AND y { and|or: { campo: {...}, ... } }
-* con ese conector en cada campo del grupo (en orden alfabetico). Error si un campo no existe o es oculto, si un grupo
-* no es un objeto o esta vacio, o si un operador o un valor no son validos (ver queryColumnConditions).
+* queryConditions: Condiciones de wheres con su conector.
 * @param model *Model, wheres []et.Json
 * @return []*Where, error
 **/
@@ -322,9 +306,7 @@ func queryConditions(model *Model, wheres []et.Json) ([]*Where, error) {
 }
 
 /**
-* queryColumnConditions: Condiciones de una columna (o de concat: { fields: [], like: "%texto%" }, los campos unidos
-* con un espacio). La primera lleva connector y las demas AND. Error si la columna (o un campo de concat) no existe o
-* es oculta, si value no es un objeto con al menos un operador, si un operador no se soporta o si su valor no es valido.
+* queryColumnConditions: Condiciones de una columna o de concat.
 * @param model *Model, connector, name string, value any
 * @return []*Where, error
 **/
@@ -409,9 +391,7 @@ func queryConcat(model *Model, fields []string) *Column {
 }
 
 /**
-* queryOperator: Condicion de col para el operador (eq, neg, in, like, more, less, moreEq, lessEq). Error
-* MSG_QUERY_OPERATOR_NOT_VALID si el operador no se soporta y MSG_QUERY_VALUE_NOT_VALID si el valor no es texto,
-* numero o booleano (en in, si no es una lista, esta vacia o algun elemento no es valido).
+* queryOperator: Condición de col para un operador soportado.
 * @param col *Column, name, operator string, value any
 * @return *Where, error
 **/
@@ -453,8 +433,7 @@ func queryOperator(col *Column, name, operator string, value any) (*Where, error
 }
 
 /**
-* queryValues: Valores de la lista de in listos para el SQL; ok=false si value no es una lista, esta vacia o algun
-* elemento no es texto, numero o booleano.
+* queryValues: Valores de la lista de in listos para el SQL.
 * @param value any
 * @return []any, bool
 **/
@@ -531,8 +510,7 @@ func queryKeys(query et.Json) error {
 }
 
 /**
-* queryValue: Valor listo para el SQL: el texto va entre comillas simples con las comillas internas duplicadas (no pasa
-* por et.Unquote, que no las escapa); numeros y booleanos van tal cual. ok=false para otros tipos (null, objetos, listas).
+* queryValue: Valor listo para el SQL, con las comillas simples escapadas.
 * @param value any
 * @return any, bool
 **/
@@ -550,8 +528,7 @@ func queryValue(value any) (any, bool) {
 }
 
 /**
-* applyConditions: Agrega conditions a ql. Si alguna es OR van todas en un grupo entre parentesis, para que el OR no
-* salte las condiciones fijas ni las que van antes.
+* applyConditions: Agrega conditions a ql; si hay OR van agrupadas entre paréntesis.
 * @param ql *Linq, conditions []*Where
 * @return *Linq
 **/

@@ -27,9 +27,9 @@ var (
 /**
 * sendRpc: Envia por RPC a send (paquete SEND_RPC, por defecto Service-send.Services).
 * @param method string, eventName string, data et.Json
-* @return et.Json
+* @return et.Item, error
 **/
-func sendRpc(method, eventName string, data et.Json) et.Json {
+func sendRpc(method, eventName string, data et.Json) (et.Item, error) {
 	pkg := envar.GetStrOs(DEFAULT_SEND_RPC, "SEND_RPC")
 	return dispatchRpc(pkg, method, eventName, data)
 }
@@ -37,24 +37,19 @@ func sendRpc(method, eventName string, data et.Json) et.Json {
 /**
 * otpRpc: Genera la OTP por RPC en otp (paquete OTP_RPC, por defecto Service-otp.Services).
 * @param method string, eventName string, data et.Json
-* @return et.Json
+* @return et.Item, error
 **/
-func otpRpc(method, eventName string, data et.Json) et.Json {
+func otpRpc(method, eventName string, data et.Json) (et.Item, error) {
 	pkg := envar.GetStrOs(DEFAULT_OTP_RPC, "OTP_RPC")
 	return dispatchRpc(pkg, method, eventName, data)
 }
 
 /**
-* dispatchRpc: Llama <pkg>.<method> con data y espera la respuesta (RPC_TIMEOUT). Si GetSolver no
-* resuelve el metodo (no registrado, Redis sin cargar o nombre invalido) la llamada no se intento,
-* asi que publica event.Work(eventName, data) como antes. Si la llamada falla despues de resolverse
-* devuelve el error sin reenviar, para no duplicar mensajes.
-* Retorno: el result del RPC mas ok, service_id y, si fallo, error con el texto; en el respaldo,
-* el sobre del trabajo (_id, event, data, created_at) mas service_id.
+* dispatchRpc: Llama <pkg>.<method> por RPC; si no resuelve el método publica event.Work.
 * @param pkg string, method string, eventName string, data et.Json
-* @return et.Json
+* @return et.Item, error
 **/
-func dispatchRpc(pkg, method, eventName string, data et.Json) et.Json {
+func dispatchRpc(pkg, method, eventName string, data et.Json) (et.Item, error) {
 	serviceId := data.Str("service_id")
 	rpcMethod := strs.Format(`%s.%s`, pkg, method)
 	solver, err := rpcSolve(rpcMethod)
@@ -62,30 +57,8 @@ func dispatchRpc(pkg, method, eventName string, data et.Json) et.Json {
 		console.AlertF(`%s: %s; se publica event.Work %s`, rpcMethod, err.Error(), eventName)
 		result := workPublish(eventName, data)
 		result["service_id"] = serviceId
-		return result
+		return et.Item{Ok: true, Result: result}, nil
 	}
 
-	item, err := rpcCall(solver, data)
-	return rpcResult(item, err, serviceId)
-}
-
-/**
-* rpcResult: Arma el retorno de los Send*: result del RPC, ok, service_id y error si fallo.
-* @param item et.Item, err error, serviceId string
-* @return et.Json
-**/
-func rpcResult(item et.Item, err error, serviceId string) et.Json {
-	result := et.Json{}
-	for k, v := range item.Result {
-		result[k] = v
-	}
-
-	result["ok"] = item.Ok
-	result["service_id"] = serviceId
-	if err != nil {
-		result["ok"] = false
-		result["error"] = err.Error()
-	}
-
-	return result
+	return rpcCall(solver, data)
 }

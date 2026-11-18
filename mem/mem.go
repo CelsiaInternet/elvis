@@ -88,9 +88,7 @@ func (c *Mem) Type() string {
 
 /**
 * Set
-* @param key string
-* @param value string
-* @param expiration time.Duration
+* @param key string, value string, expiration time.Duration
 * @return string
 **/
 func (c *Mem) Set(key string, value string, expiration time.Duration) string {
@@ -150,8 +148,7 @@ func (c *Mem) Del(key string) bool {
 
 /**
 * More
-* @param key string
-* @param expiration time.Duration
+* @param key string, expiration time.Duration
 * @return int64
 **/
 func (c *Mem) More(key string, expiration time.Duration) int64 {
@@ -179,8 +176,7 @@ func (c *Mem) More(key string, expiration time.Duration) int64 {
 }
 
 /**
-* Clear removes all keys whose name contains the match substring.
-* The regexp is compiled once before the loop instead of per-key.
+* Clear: Elimina las llaves que contienen match.
 * @param match string
 **/
 func (c *Mem) Clear(match string) {

@@ -147,8 +147,7 @@ func UUIndex(tag string) int64 {
 
 /**
 * Pointer return a string with the format collection/id
-* @param collection string
-* @param id string
+* @param collection string, id string
 * @return string
 **/
 func Pointer(collection string, id string) string {
@@ -203,8 +202,7 @@ func InInt(val string, in []string) bool {
 
 /**
 * TimeDifference return the difference between two dates
-* @param dateInt any
-* @param dateEnd any
+* @param dateInt any, dateEnd any
 * @return time.Duration
 **/
 func TimeDifference(dateInt, dateEnd any) time.Duration {
@@ -256,8 +254,7 @@ func IsJsonBuild(str string) bool {
 
 /**
 * FindIndex return the index of a value in a slice
-* @param arr []string
-* @param valor string
+* @param arr []string, valor string
 * @return int
 **/
 func FindIndex(arr []string, valor string) int {
@@ -271,9 +268,7 @@ func FindIndex(arr []string, valor string) int {
 
 /**
 * OkOrNot return the value of the condition
-* @param condition bool
-* @param ok interface{}
-* @param not interface{}
+* @param condition bool, ok interface{}, not interface{}
 * @return interface{}
 **/
 func OkOrNot(condition bool, ok interface{}, not interface{}) interface{} {
@@ -374,8 +369,7 @@ func Quote(val interface{}) any {
 
 /**
 * Params return the value in a string format
-* @param str string
-* @param args ...any
+* @param str string, args ...any
 * @return string
 **/
 func Params(str string, args ...any) string {
@@ -391,8 +385,7 @@ func Params(str string, args ...any) string {
 
 /**
 * ParamQuote return the value in a string format
-* @param str string
-* @param args ...any
+* @param str string, args ...any
 * @return string
 **/
 func ParamQuote(str string, args ...any) string {
@@ -407,8 +400,7 @@ func ParamQuote(str string, args ...any) string {
 
 /**
 * Address return the value in a string format
-* @param host string
-* @param port int
+* @param host string, port int
 * @return string
 **/
 func Address(host string, port int) string {
@@ -417,8 +409,7 @@ func Address(host string, port int) string {
 
 /**
 * BannerTitle return the value in a string format
-* @param name string
-* @param size int
+* @param name string, size int
 * @return string
 **/
 func BannerTitle(name string, size int) string {
@@ -428,8 +419,7 @@ func BannerTitle(name string, size int) string {
 /**
 * GoMod return the value in a string format
 * @param atrib string
-* @return string
-* @return error
+* @return string, error
 **/
 func GoMod(atrib string) (string, error) {
 	var result string

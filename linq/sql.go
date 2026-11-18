@@ -32,7 +32,6 @@ func (c *Linq) SQL() SQL {
 }
 
 /**
-*
 **/
 func (c *Linq) SqlColumDef(cols ...*Column) string {
 	var result string
@@ -252,8 +251,7 @@ func (c *Linq) SqlFrom() string {
 }
 
 /**
-* addRefJoin registers a LEFT JOIN for a TpReference/TpCaption column (if not
-* already registered) and returns the alias assigned to the joined table.
+* addRefJoin: Registra el LEFT JOIN de una columna de referencia y devuelve su alias.
 * @param col *Column
 * @return string
 **/
@@ -400,8 +398,7 @@ func (c *Linq) SqlOffset(limit, offset int) string {
 }
 
 /**
-* SqlOffsetWithCount builds the same query as SqlOffset but injects
-* COUNT(*) OVER() AS _total so total and page data come in one round-trip.
+* SqlOffsetWithCount: SqlOffset con COUNT(*) OVER() AS _total.
 **/
 func (c *Linq) SqlOffsetWithCount(limit, offset int) string {
 	c.SqlSelect()

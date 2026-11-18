@@ -31,8 +31,7 @@ var (
 )
 
 /**
-* InvalidError: Error de Decrypt cuando GCM no abre el texto (alterado o con otra llave).
-* errors.Is(err, ErrInvalid) es verdadero y errors.Unwrap(err) devuelve el error de GCM.
+* InvalidError: Error de Decrypt cuando GCM no abre el texto; envuelve ErrInvalid.
 **/
 type InvalidError struct {
 	Cause error
@@ -114,8 +113,7 @@ func New(key string) (*Cipher, error) {
 }
 
 /**
-* FromEnv: Crea un Cipher con la llave de la primera variable no vacia, p. ej.
-* FromEnv("MIGRATION_SECRET", "SECRET"). Sin nombres usa SECRET.
+* FromEnv: Crea un Cipher con la primera variable no vacía (SECRET por defecto).
 * @param names ...string
 * @return *Cipher, error (ErrKeyRequired si ninguna tiene valor)
 **/

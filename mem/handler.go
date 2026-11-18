@@ -54,8 +54,7 @@ func Delete(key string) bool {
 
 /**
 * More
-* @param key string
-* @param expiration time.Duration
+* @param key string, expiration time.Duration
 **/
 func More(key string, expiration time.Duration) {
 	if conn == nil {

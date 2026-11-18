@@ -7,8 +7,7 @@ import (
 )
 
 /**
-* SQLite es el nombre bajo el cual SQLiteDialect se registra en el
-* registry (ver Register/Get).
+* SQLite: Nombre con que se registra SQLiteDialect.
 **/
 const SQLite = "sqlite"
 
@@ -51,8 +50,7 @@ func (d *SQLiteDialect) QuoteIdent(name string) string {
 }
 
 /**
-* Like: SQLite no tiene ILIKE; LIKE ya es insensible a mayusculas
-* para ASCII por defecto.
+* Like: LIKE, porque SQLite no tiene ILIKE.
 * @return string
 **/
 func (d *SQLiteDialect) Like() string {

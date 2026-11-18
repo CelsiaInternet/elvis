@@ -129,8 +129,7 @@ func (s *Package) Save() error {
 
 /**
 * getPackages
-* @return []*Package
-* @return error
+* @return []*Package, error
 **/
 func getPackages() ([]*Package, error) {
 	packages := make([]*Package, 0)

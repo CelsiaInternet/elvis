@@ -39,7 +39,7 @@ var DecrKeepTTLScript = redis.NewScript(`
 
 /**
 * SetCtx
-* @params ctx context.Context, key string, val string, second time.Duration
+* @param ctx context.Context, key string, val string, second time.Duration
 * @return error
 **/
 func SetCtx(ctx context.Context, key, val string, second time.Duration) error {
@@ -57,7 +57,7 @@ func SetCtx(ctx context.Context, key, val string, second time.Duration) error {
 
 /**
 * ExpireCtx
-* @params ctx context.Context, key string, second time.Duration
+* @param ctx context.Context, key string, second time.Duration
 * @return error
 **/
 func ExpireCtx(ctx context.Context, key string, second time.Duration) error {
@@ -70,8 +70,7 @@ func ExpireCtx(ctx context.Context, key string, second time.Duration) error {
 
 /**
 * GetCtx
-* @params ctx context.Context, key string
-* @params def string
+* @param ctx context.Context, key string, def string
 * @return string, error
 **/
 func GetCtx(ctx context.Context, key, def string) (string, error) {
@@ -91,7 +90,7 @@ func GetCtx(ctx context.Context, key, def string) (string, error) {
 
 /**
 * ExistsCtx
-* @params ctx context.Context, key string
+* @param ctx context.Context, key string
 * @return bool
 **/
 func ExistsCtx(ctx context.Context, key string) bool {
@@ -111,7 +110,7 @@ func ExistsCtx(ctx context.Context, key string) bool {
 
 /**
 * DeleteCtx
-* @params ctx context.Context, key string
+* @param ctx context.Context, key string
 * @return int64, error
 **/
 func DeleteCtx(ctx context.Context, key string) (int64, error) {
@@ -126,7 +125,7 @@ func DeleteCtx(ctx context.Context, key string) (int64, error) {
 
 /**
 * DeleteByPrefixCtx
-* @params ctx context.Context, prefix string
+* @param ctx context.Context, prefix string
 * @return error
 **/
 func DeleteByPrefixCtx(ctx context.Context, prefix string) error {
@@ -156,7 +155,7 @@ func DeleteByPrefixCtx(ctx context.Context, prefix string) error {
 
 /**
 * IncrCtx
-* @params ctx context.Context, key string, second time.Duration
+* @param ctx context.Context, key string, second time.Duration
 * @return int64
 **/
 func IncrCtx(ctx context.Context, key string, second time.Duration) int64 {
@@ -179,7 +178,7 @@ func IncrCtx(ctx context.Context, key string, second time.Duration) int64 {
 
 /**
 * DecrCtx
-* @params ctx context.Context, key string
+* @param ctx context.Context, key string
 * @return int64
 **/
 func DecrCtx(ctx context.Context, key string) int64 {
@@ -201,7 +200,7 @@ func DecrCtx(ctx context.Context, key string) int64 {
 
 /**
 * LPushCtx
-* @params ctx context.Context, key string, val string
+* @param ctx context.Context, key string, val string
 * @return error
 **/
 func LPushCtx(ctx context.Context, key string, val string) error {
@@ -219,7 +218,7 @@ func LPushCtx(ctx context.Context, key string, val string) error {
 
 /**
 * LPushCtx
-* @params ctx context.Context, key string, val string
+* @param ctx context.Context, key string, val string
 * @return error
 **/
 func LRemCtx(ctx context.Context, key string, val string) error {
@@ -237,7 +236,7 @@ func LRemCtx(ctx context.Context, key string, val string) error {
 
 /**
 * LRangeCtx
-* @params ctx context.Context, key string, start int64, stop int64
+* @param ctx context.Context, key string, start int64, stop int64
 * @return []string, error
 **/
 func LRangeCtx(ctx context.Context, key string, start int64, stop int64) ([]string, error) {
@@ -252,7 +251,7 @@ func LRangeCtx(ctx context.Context, key string, start int64, stop int64) ([]stri
 
 /**
 * LTrimCtx
-* @params ctx context.Context, key string, start int64, stop int64
+* @param ctx context.Context, key string, start int64, stop int64
 * @return error
 **/
 func LTrimCtx(ctx context.Context, key string, start int64, stop int64) error {
@@ -270,7 +269,7 @@ func LTrimCtx(ctx context.Context, key string, start int64, stop int64) error {
 
 /**
 * HSetCtx
-* @params ctx context.Context, key string, val map[string]string
+* @param ctx context.Context, key string, val map[string]string
 * @return error
 **/
 func HSetCtx(ctx context.Context, key string, val map[string]string) error {
@@ -288,7 +287,7 @@ func HSetCtx(ctx context.Context, key string, val map[string]string) error {
 
 /**
 * HGetCtx
-* @params ctx context.Context, key string
+* @param ctx context.Context, key string
 * @return map[string]string, error
 **/
 func HGetCtx(ctx context.Context, key string) (map[string]string, error) {
@@ -303,8 +302,7 @@ func HGetCtx(ctx context.Context, key string) (map[string]string, error) {
 
 /**
 * HDeleteCtx
-* @params ctx context.Context, key string
-* @params atr string
+* @param ctx context.Context, key string, atr string
 * @return error
 **/
 func HDeleteCtx(ctx context.Context, key, atr string) error {

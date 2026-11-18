@@ -9,11 +9,7 @@ import (
 )
 
 /**
-* Queue: Cola genérica que implementa el patrón clásico de "batching
-* queue": agrupa cada item recibido por Push en un arreglo y despacha
-* ese arreglo al handler cuando ocurre la primera de dos condiciones
-* de disparo: se alcanza maxEvents elementos (batch size) o transcurre
-* period sin completar el lote (timeout).
+* Queue: Cola que despacha lotes al llegar a maxEvents o al vencer period.
 **/
 type Queue[T any] struct {
 	queue     chan T
@@ -26,13 +22,8 @@ type Queue[T any] struct {
 }
 
 /**
-* New: Crea una cola genérica que agrupa items en lotes y los despacha
-* a handler cuando se reúnen maxEvents elementos (batch size) o
-* transcurre period (timeout), lo que ocurra primero.
-* @param queueSize int, tamaño máximo de la cola
-* @param maxEvents int, cantidad máxima de eventos por lote
-* @param period time.Duration, tiempo máximo de espera por lote
-* @param handler func(context.Context, []T) error
+* New: Crea una cola que despacha lotes de maxEvents o cada period.
+* @param queueSize int, tamaño máximo de la cola; maxEvents int, cantidad máxima de eventos por lote; period time.Duration, tiempo máximo de espera por lote; handler func(context.Context, []T) error
 * @return *Queue[T]
 **/
 func New[T any](
@@ -63,11 +54,7 @@ func New[T any](
 }
 
 /**
-* worker: Acumula items en un arreglo (buffer) y despacha el lote al
-* handler tan pronto se cumple alguna de las dos condiciones de
-* disparo: el arreglo alcanza maxEvents elementos, o vence el timer de
-* period sin haberse llenado. El timer se reinicia después de cada
-* despacho, de modo que siempre mide el tiempo desde el último lote.
+* worker: Acumula items y despacha el lote por tamaño o por tiempo.
 **/
 func (q *Queue[T]) worker() {
 	defer close(q.done)
@@ -127,8 +114,7 @@ func (q *Queue[T]) worker() {
 }
 
 /**
-* Push: Encola un item para ser agrupado y procesado. No hace nada si
-* la cola ya fue cerrada.
+* Push: Encola un item; no hace nada si la cola está cerrada.
 * @param item T
 **/
 func (q *Queue[T]) Push(item T) {
@@ -151,9 +137,7 @@ func (q *Queue[T]) Len() int {
 }
 
 /**
-* Close: Cierra la cola y espera a que el worker despache el lote
-* pendiente antes de retornar. Los llamados a Push posteriores a Close
-* no tienen efecto.
+* Close: Cierra la cola y espera el último lote.
 **/
 func (q *Queue[T]) Close() {
 	q.mu.Lock()

@@ -159,7 +159,7 @@ func (s *Flow) Step(name, description string, fn FnContext, stop bool) *Flow {
 
 /**
 * Rollback
-* @params fn FnContext
+* @param fn FnContext
 * @return *Flow
 **/
 func (s *Flow) Rollback(fn FnContext) *Flow {

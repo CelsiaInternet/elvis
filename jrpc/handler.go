@@ -21,8 +21,7 @@ import (
 
 /**
 * GetRouters
-* @return et.Items
-* @return error
+* @return et.Items, error
 **/
 func GetRouters() (et.Items, error) {
 	var result = et.Items{Result: []et.Json{}}
@@ -227,8 +226,7 @@ func CallJsonToHost(method, host string, port int, args et.Json) (et.Json, error
 }
 
 /**
-* CallItemToHost: Llama method en host:port y devuelve et.Item; sirve cuando el solver ya se
-* resolvio con GetSolver (method es solver.Method).
+* CallItemToHost: Llama method en host:port con un solver ya resuelto.
 * @param method string, host string, port int, args et.Json
 * @return et.Item, error
 **/
@@ -387,8 +385,7 @@ func DeleteRouters(host, packageName string) (et.Item, error) {
 
 /**
 * HttpCallRPC
-* @param w http.ResponseWriter
-* @param r *http.Request
+* @param w http.ResponseWriter, r *http.Request
 **/
 func HttpCallRPC(w http.ResponseWriter, r *http.Request) {
 	body, _ := response.GetBody(r)

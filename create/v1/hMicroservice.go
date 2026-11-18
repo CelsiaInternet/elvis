@@ -3,9 +3,7 @@ package create
 import "github.com/celsiainternet/elvis/agentsguide"
 
 /**
-* MkProject: Crea un proyecto completo. Primero escribe todos los archivos
-* (microservicio, README, .env, .gitignore y soporte para agentes) y al final
-* ejecuta go mod tidy, que es lo lento: si se interrumpe, no falta ningun archivo.
+* MkProject: Crea un proyecto completo y ejecuta go mod tidy al final.
 * @param packageName, name, author, schema string
 * @return error
 **/
@@ -64,8 +62,7 @@ func MkMicroservice(packageName, name, schema string) error {
 }
 
 /**
-* makeMicroservice: Escribe los archivos de un microservicio (cmd, deployments,
-* internal, pkg, scripts, test, www). Avanza la barra hasta el 80%.
+* makeMicroservice: Escribe los archivos de un microservicio (cmd, deployments, internal, pkg, scripts, test, www).
 * @param packageName, name, schema string
 * @return error
 **/

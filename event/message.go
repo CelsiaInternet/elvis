@@ -24,8 +24,7 @@ type EvenMessage struct {
 
 /**
 * NewEvenMessage
-* @param string channel
-* @param et.Json data
+* @param string channel, et.Json data
 * @return EvenMessage
 **/
 func NewEvenMessage(channel string, data et.Json) EvenMessage {

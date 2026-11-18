@@ -17,10 +17,7 @@ var files embed.FS
 const module = "github.com/celsiainternet/elvis"
 
 /**
-* Install: Installs the Elvis agents framework (MARCO.md, ELVIS.md, REVISION.md)
-* into the current project: writes the guides to .claude/guides/elvis/ and a
-* managed block in CLAUDE.md and AGENTS.md that points to them. Running it again
-* replaces the guides and the block with the ones of the installed Elvis version.
+* Install: Instala las guías de agentes de Elvis en .claude/guides/elvis/ y su bloque en CLAUDE.md y AGENTS.md.
 * @return error
 **/
 func Install() error {
@@ -28,14 +25,8 @@ func Install() error {
 }
 
 /**
-* InstallGuide: Writes the guides of a library into .claude/guides/<name>/ and
-* upserts the block delimited by "<!-- <name>:agents-guide:start" and
-* "<!-- <name>:agents-guide:end -->" in CLAUDE.md (as @imports) and AGENTS.md
-* (as a reading list). Content outside the markers is never touched.
-* @param name string, library name used for the folder and the markers
-* @param modulePath string, Go module path used to resolve the installed version
-* @param guides fs.FS, embedded guide files
-* @param names []string, guide file names in reading order
+* InstallGuide: Escribe las guías de una librería en .claude/guides/<name>/ y actualiza su bloque en CLAUDE.md y AGENTS.md.
+* @param name string, library name used for the folder and the markers; modulePath string, Go module path used to resolve the installed version; guides fs.FS, embedded guide files; names []string, guide file names in reading order
 * @return error
 **/
 func InstallGuide(name, modulePath string, guides fs.FS, names []string) error {
@@ -71,8 +62,7 @@ func InstallGuide(name, modulePath string, guides fs.FS, names []string) error {
 }
 
 /**
-* ModuleVersion: Returns the version of modulePath compiled into the running
-* binary, or "devel" when it is a local checkout (workspace or replace).
+* ModuleVersion: Versión compilada de modulePath, o "devel" si es una copia local.
 * @param modulePath string
 * @return string
 **/
@@ -104,10 +94,7 @@ func ModuleVersion(modulePath string) string {
 
 /**
 * managedBlock: Builds the marked block that points to the installed guides.
-* @param name string
-* @param version string
-* @param paths []string
-* @param lineFormat string, format applied to each guide path
+* @param name string; version string; paths []string; lineFormat string, format applied to each guide path
 * @return string
 **/
 func managedBlock(name, version string, paths []string, lineFormat string) string {
@@ -127,11 +114,8 @@ func managedBlock(name, version string, paths []string, lineFormat string) strin
 }
 
 /**
-* upsertBlock: Replaces the marked block of the library in path, appends it if
-* the file has none, or creates the file with it.
-* @param path string
-* @param name string
-* @param block string
+* upsertBlock: Reemplaza, agrega o crea el bloque marcado de la librería en path.
+* @param path string, name string, block string
 * @return error
 **/
 func upsertBlock(path, name, block string) error {

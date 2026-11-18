@@ -29,7 +29,7 @@ func init() {
 /**
 * Load
 * @return error
- */
+**/
 func Load(store instances.Store) error {
 	_, err := cache.Load()
 	if err != nil {
@@ -201,7 +201,7 @@ func DeleteInstance(instanceId string) error {
 
 /**
 * HttpGet
-* @params w http.ResponseWriter, r *http.Request
+* @param w http.ResponseWriter, r *http.Request
 **/
 func HttpGet(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
@@ -228,7 +228,7 @@ func HttpGet(w http.ResponseWriter, r *http.Request) {
 
 /**
 * HttpGetInstance
-* @params w http.ResponseWriter, r *http.Request
+* @param w http.ResponseWriter, r *http.Request
 **/
 func HttpState(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
@@ -268,7 +268,7 @@ func HttpState(w http.ResponseWriter, r *http.Request) {
 
 /**
 * HttpGetInstance
-* @params w http.ResponseWriter, r *http.Request
+* @param w http.ResponseWriter, r *http.Request
 **/
 func HttpSetParams(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")

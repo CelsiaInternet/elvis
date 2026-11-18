@@ -13,7 +13,7 @@ import (
 * Instance
 * @param id, tag, description string, totalAttempts int, timeAttempts time.Duration, tags et.Json, team string, level string, fn interface{}, fnArgs ...interface{}
 * @return Instance
- */
+**/
 func NewInstance(id, tag, description string, totalAttempts int, timeAttempts time.Duration, tags et.Json, team string, level string, fn interface{}, fnArgs ...interface{}) *Instance {
 	id = reg.GetUUID(id)
 	preArgs := make([]reflect.Value, len(fnArgs))

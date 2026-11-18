@@ -64,10 +64,12 @@ Usa siempre un formato constante (una constante de `msg`) en las funciones con `
   ```go
   /**
   * FunctionName: descripción breve.
-  * @param paramName type
-  * @return type
+  * @param name string, age int, opts ...Option
+  * @return et.Json, error
   **/
   ```
+
+  Máximo tres líneas entre `/**` y `**/`: `Nombre: descripción` en una línea, una línea `@param` y una `@return`; las explicaciones largas van al README, no al comentario. Una sola línea `@param` con todos los parámetros separados por coma y una sola línea `@return` con todos los valores de retorno; si los parámetros llevan descripción, se separan con `;`. Sin parámetros o sin retorno, se omite la línea. Solo `@param` y `@return` (no `@params`, `@response` ni `@result`).
 
   Si la función devuelve un `et.Json` con varias claves, documenta las claves en el comentario.
 - **Una responsabilidad por archivo**, siguiendo el layout del generador: el router solo registra rutas; el handler lee la petición, llama a la lógica y responde; la lógica y la persistencia viven en el modelo o controlador.

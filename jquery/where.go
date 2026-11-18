@@ -15,10 +15,7 @@ const (
 )
 
 /**
-* asJson normaliza un valor crudo (proveniente de json.Unmarshal o de
-* un et.Json construido a mano en Go) a et.Json. json.Unmarshal
-* produce map[string]any; codigo Go que arma el query sin
-* pasar por texto JSON normalmente produce et.Json directamente.
+* asJson: Normaliza un valor (map o et.Json) a et.Json.
 * @param val any
 * @return et.Json, bool
 **/
@@ -34,9 +31,7 @@ func asJson(val any) (et.Json, bool) {
 }
 
 /**
-* asArray normaliza un valor crudo a []any, soportando los
-* mismos dos origenes que asJson (JSON real vs et.Json/[]et.Json
-* armado a mano).
+* asArray: Normaliza un valor a []any.
 * @param val any
 * @return []any, bool
 **/
@@ -62,14 +57,7 @@ func asArray(val any) ([]any, bool) {
 }
 
 /**
-* sortedKeys devuelve las claves de un et.Json ordenadas
-* alfabeticamente. El orden de iteracion de un map en Go no es
-* determinista; como todas las condiciones de un mismo grupo se
-* combinan con el mismo conector (AND, o AND entre los grupos "and"/
-* "or"), el orden no afecta el significado de la consulta — pero sin
-* ordenar, el mismo query.Json produciria un SQL con las condiciones
-* en distinto orden en cada llamada, lo cual complica pruebas y el
-* uso del SQL resultante como cache key.
+* sortedKeys: Claves de data en orden alfabético, para un SQL determinista.
 * @param data et.Json
 * @return []string
 **/
@@ -84,22 +72,8 @@ func sortedKeys(data et.Json) []string {
 }
 
 /**
-* buildWheres construye recursivamente la clausula WHERE (sin la
-* palabra WHERE) a partir de un grupo de condiciones con la forma:
-*
-*	{
-*	  "<columna>": {"<operador>": valor, ...},
-*	  "and": [ {<grupo>}, {<grupo>}, ... ],
-*	  "or":  [ {<grupo>}, {<grupo>}, ... ]
-*	}
-*
-* Las columnas presentes directamente en el grupo se combinan entre si
-* con AND. Cada elemento del arreglo "and"/"or" es a su vez un grupo
-* del mismo tipo (recursivo); esos elementos se combinan entre si con
-* AND u OR segun corresponda, y el resultado se agrega entre parentesis
-* al resto del grupo padre cuando hay mas de un elemento.
-* @param d dialect.Dialect
-* @param group et.Json
+* buildWheres: Arma recursivamente el WHERE desde columnas y grupos and/or.
+* @param d dialect.Dialect, group et.Json
 * @return string, error
 **/
 func buildWheres(d dialect.Dialect, group et.Json) (string, error) {
@@ -163,12 +137,7 @@ func buildWheres(d dialect.Dialect, group et.Json) (string, error) {
 }
 
 /**
-* buildColumnConditions arma una condicion SQL por cada operador
-* definido para una columna (p.ej. {"more": 10, "less": 20} produce
-* dos condiciones, combinadas luego con AND por buildWheres). column
-* acepta tanto una columna simple/calificada como una llamada de
-* agregacion COUNT/MAX/MIN/SUM (p.ej. "count(*)"), util cuando este
-* grupo se usa para HAVING (ver renderExpr).
+* buildColumnConditions: Una condición SQL por operador de la columna.
 * @param d dialect.Dialect, column string, ops et.Json
 * @return []string, error
 **/
@@ -194,13 +163,7 @@ func buildColumnConditions(d dialect.Dialect, column string, ops et.Json) ([]str
 }
 
 /**
-* renderValue renderiza el lado derecho de una condicion. Por defecto
-* val es un literal (numero, texto, bool, etc.), citado/escapado via
-* et.Unquote. Si val es un objeto de la forma {"col": "identificador"}
-* se renderiza como referencia a columna (via d.QuoteIdent) en lugar
-* de literal — necesario para condiciones columna-a-columna, como las
-* clausulas ON de un join (p.ej. {"eq": {"col": "A.id"}} produce
-* "= \"A\".\"id\"" en vez de "= 'A.id'").
+* renderValue: Renderiza un literal o, con {"col": ...}, una columna.
 * @param d dialect.Dialect, val any
 * @return string
 **/

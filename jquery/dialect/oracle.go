@@ -7,8 +7,7 @@ import (
 )
 
 /**
-* Oracle es el nombre bajo el cual OracleDialect se registra en el
-* registry (ver Register/Get).
+* Oracle: Nombre con que se registra OracleDialect.
 **/
 const Oracle = "oracle"
 
@@ -59,8 +58,7 @@ func (d *OracleDialect) Like() string {
 }
 
 /**
-* LimitOffset: usa la clausula OFFSET/FETCH del estandar ANSI
-* SQL:2008, soportada desde Oracle Database 12c.
+* LimitOffset: Usa OFFSET/FETCH (Oracle 12c+).
 * @param rows int, offset int
 * @return string
 **/

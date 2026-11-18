@@ -23,8 +23,7 @@ func render(model string, args ...string) string {
 }
 
 /**
-* TestGoTemplatesAreGofmtClean: Cada plantilla Go, con los argumentos que le
-* pasa el generador, debe ser codigo valido y ya formateado con gofmt.
+* TestGoTemplatesAreGofmtClean: Cada plantilla Go genera código válido y formateado con gofmt.
 **/
 func TestGoTemplatesAreGofmtClean(t *testing.T) {
 	cases := []struct {
@@ -81,8 +80,7 @@ func TestTemplatesHaveNoTokens(t *testing.T) {
 }
 
 /**
-* TestEnvTemplate: El .env usa el nombre del servicio y trae las variables
-* que el servicio generado lee al arrancar.
+* TestEnvTemplate: El .env usa el nombre del servicio y trae las variables que lee al arrancar.
 **/
 func TestEnvTemplate(t *testing.T) {
 	env := render(modelEnvar, "demo")
@@ -101,8 +99,7 @@ func TestEnvTemplate(t *testing.T) {
 }
 
 /**
-* TestAgentsTemplates: Las reglas para agentes estan en la plantilla y el
-* settings.json de Claude Code es JSON valido que bloquea commit y push.
+* TestAgentsTemplates: Las reglas para agentes existen y settings.json bloquea commit y push.
 **/
 func TestAgentsTemplates(t *testing.T) {
 	rules := render(modelAgents, "demo")

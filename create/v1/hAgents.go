@@ -15,16 +15,12 @@ var modelAgents string
 var modelClaudeSettings string
 
 /**
-* rulesMarker: Marca que identifica las reglas del proyecto en CLAUDE.md y
-* AGENTS.md; evita agregarlas dos veces.
+* rulesMarker: Marca de las reglas del proyecto en CLAUDE.md y AGENTS.md, para no agregarlas dos veces.
 **/
 const rulesMarker = "<!-- elvis:project-rules -->"
 
 /**
-* MakeAgents: Deja las reglas del proyecto para los agentes en CLAUDE.md y
-* AGENTS.md, y crea .claude/settings.json, que impide a Claude Code hacer
-* commit o push. Si los .md ya existen (p. ej. los creo cmd/install con el
-* bloque de guias), antepone las reglas y conserva su contenido.
+* MakeAgents: Escribe las reglas para agentes en CLAUDE.md y AGENTS.md y crea .claude/settings.json.
 * @param name string
 * @return error
 **/
@@ -49,8 +45,7 @@ func MakeAgents(name string) error {
 }
 
 /**
-* upsertRules: Crea fileName con las reglas o, si ya existe sin ellas, las
-* antepone al contenido actual.
+* upsertRules: Crea fileName con las reglas o las antepone si aún no las tiene.
 * @param fileName, name string
 * @return error
 **/

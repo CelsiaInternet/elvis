@@ -18,14 +18,12 @@ const ActUpdate = 6
 const ActUpsert = 7
 
 /**
-*
 **/
 type SQL struct {
 	val string
 }
 
 /**
-*
 **/
 type FRom struct {
 	model *Model
@@ -58,7 +56,6 @@ func (c *FRom) Column(name string, cast ...string) *Col {
 }
 
 /**
-*
 **/
 type Join struct {
 	kind  string
@@ -68,7 +65,6 @@ type Join struct {
 }
 
 /**
-*
 **/
 type OrderBy struct {
 	colum  *Column
@@ -76,7 +72,6 @@ type OrderBy struct {
 }
 
 /**
-*
 **/
 type Validate struct {
 	Col   *Column
@@ -84,7 +79,6 @@ type Validate struct {
 }
 
 /**
-*
 **/
 type Linq struct {
 	Tp        int
@@ -114,7 +108,6 @@ type Linq struct {
 }
 
 /**
-*
 **/
 func NewLinq(act int, model *Model, as ...string) *Linq {
 	if len(as) == 0 && act == ActSelect {
@@ -145,7 +138,6 @@ func NewLinq(act int, model *Model, as ...string) *Linq {
 }
 
 /**
-*
 **/
 func GetAs(n int) string {
 	limit := 18251
@@ -184,7 +176,6 @@ func GetAs(n int) string {
 }
 
 /**
-*
 **/
 func (c *Linq) SetTp(tp int) *Linq {
 	c.Tp = tp

@@ -270,8 +270,7 @@ type File struct {
 }
 
 /**
-* writeMultipart: Escribe body en buf como multipart/form-data; los valores File o *File van como archivo y los
-* demas como texto (body.Str).
+* writeMultipart: Escribe body como multipart/form-data; File va como archivo.
 * @param buf *bytes.Buffer, body et.Json
 * @return string, error: el Content-Type con el boundary
 **/

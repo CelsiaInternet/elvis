@@ -18,7 +18,6 @@ const TpClone = 6
 const TpField = 7
 
 /**
-*
 **/
 type Col struct {
 	from string
@@ -58,7 +57,6 @@ func (c *Col) AsLow() string {
 }
 
 /**
-*
 **/
 type Details func(col *Column, data *et.Json)
 
@@ -275,7 +273,6 @@ func (c *Column) ReferencesAdd(col *Column) int {
 }
 
 /**
-*
 **/
 func (c *Column) Up() string {
 	return strs.Uppcase(c.name)
@@ -432,7 +429,6 @@ func (c *Column) Cast(cast string) *Column {
 }
 
 /**
-*
 **/
 func (c *Column) Eq(val any) *Where {
 	result := NewWhere(c, "=", val)

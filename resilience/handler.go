@@ -17,7 +17,7 @@ var resilience map[string]*Instance
 /**
 * load
 * @return error
- */
+**/
 func load() error {
 	if resilience != nil {
 		return nil
@@ -55,7 +55,7 @@ func HealthCheck() bool {
 * AddCustom
 * @param id, tag, description string, totalAttempts int, timeAttempts time.Duration, tags et.Json, team string, level string, fn interface{}, fnArgs ...interface{}
 * @return *Instance
- */
+**/
 func AddCustom(id, tag, description string, totalAttempts int, timeAttempts time.Duration, tags et.Json, team string, level string, fn interface{}, fnArgs ...interface{}) *Instance {
 	if err := load(); err != nil {
 		return nil
@@ -72,7 +72,7 @@ func AddCustom(id, tag, description string, totalAttempts int, timeAttempts time
 * Add
 * @param tag, description string, tags et.Json, team string, level string, fn interface{}, fnArgs ...interface{}
 * @return *Instance
- */
+**/
 func Add(id, tag, description string, tags et.Json, team string, level string, fn interface{}, fnArgs ...interface{}) *Instance {
 	totalAttempts := envar.EnvarInt(3, "RESILIENCE_TOTAL_ATTEMPTS")
 	timeAttempts := envar.EnvarNumber(30, "RESILIENCE_TIME_ATTEMPTS")
@@ -84,7 +84,7 @@ func Add(id, tag, description string, tags et.Json, team string, level string, f
 * Stop
 * @param id string
 * @return error
- */
+**/
 func Stop(id string) error {
 	if err := load(); err != nil {
 		return err
@@ -103,7 +103,7 @@ func Stop(id string) error {
 * Restart
 * @param id string
 * @return error
- */
+**/
 func Restart(id string) error {
 	if err := load(); err != nil {
 		return err

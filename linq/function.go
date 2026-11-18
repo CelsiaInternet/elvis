@@ -59,7 +59,6 @@ func Concat(args ...any) *Column {
 }
 
 /**
-*
 **/
 func (c *Model) Concat(args ...any) *Column {
 	return Concat(args...)

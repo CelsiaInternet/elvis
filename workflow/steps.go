@@ -37,7 +37,7 @@ func newStep(name, description string, fn FnContext, stop bool) (*Step, error) {
 
 /**
 * run
-* @params flow *Instance, ctx et.Json
+* @param flow *Instance, ctx et.Json
 * @return et.Json, error
 **/
 func (s *Step) run(flow *Instance, ctx et.Json) (et.Json, error) {

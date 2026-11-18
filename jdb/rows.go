@@ -65,8 +65,7 @@ func sourceItems(rows *sql.Rows, source string) et.Items {
 }
 
 /**
-* rowsItemsWithTotal scans rows that include a COUNT(*) OVER() column,
-* strips it from each result row, and returns the total separately.
+* rowsItemsWithTotal: Lee filas con COUNT(*) OVER() y devuelve los items sin esa columna y el total.
 * @param rows *sql.Rows, totalField string
 * @return et.Items, int
 **/
@@ -92,8 +91,7 @@ func rowsItemsWithTotal(rows *sql.Rows, totalField string) (et.Items, int) {
 }
 
 /**
-* sourceItemsWithTotal scans rows that include a COUNT(*) OVER() column,
-* extracts the source JSONB field per row, and returns the total separately.
+* sourceItemsWithTotal: Lee filas con COUNT(*) OVER(), extrae el campo source y devuelve el total.
 * @param rows *sql.Rows, totalField string, source string
 * @return et.Items, int
 **/

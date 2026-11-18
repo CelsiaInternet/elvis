@@ -293,8 +293,7 @@ func (d *DB) Bulck(sql string, args ...any) error {
 }
 
 /**
-* QueryWithTotal runs a query that includes COUNT(*) OVER() AS <totalField>,
-* strips that column from each row, and returns items + total count.
+* QueryWithTotalContext: Ejecuta una consulta con COUNT(*) OVER() y devuelve los items y el total.
 * @param ctx context.Context, totalField string, sql string, args ...any
 * @return et.Items, int, error
 **/
@@ -319,8 +318,7 @@ func (d *DB) QueryWithTotal(totalField, sql string, args ...any) (et.Items, int,
 }
 
 /**
-* SourceWithTotal runs a query that includes COUNT(*) OVER() AS <totalField>,
-* extracts the JSONB source field per row, and returns items + total count.
+* SourceWithTotalContext: Como QueryWithTotalContext, pero extrae el campo JSONB source de cada fila.
 * @param ctx context.Context, totalField string, sourceField string, sql string, args ...any
 * @return et.Items, int, error
 **/

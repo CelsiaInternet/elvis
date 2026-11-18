@@ -454,8 +454,7 @@ func StartRpcServer() error {
 
 /**
 * Version: Describe el servicio por RPC.
-* @param require et.Json
-* @param response *et.Item
+* @param require et.Json, response *et.Item
 * @return error
 **/
 func (c *Services) Version(require et.Json, response *et.Item) error {
@@ -477,8 +476,7 @@ func (c *Services) Version(require et.Json, response *et.Item) error {
 const modelMsg = `package $1
 
 /**
-* Mensajes propios del paquete. Usa primero las constantes de
-* github.com/celsiainternet/elvis/msg y agrega aqui solo las que no existan.
+* Mensajes propios del paquete; usa primero los de github.com/celsiainternet/elvis/msg.
 **/
 const ()
 `
@@ -657,8 +655,7 @@ func (rt *Router) Routes() http.Handler {
 
 /**
 * version: Responde la version del servicio.
-* @param w http.ResponseWriter
-* @param r *http.Request
+* @param w http.ResponseWriter, r *http.Request
 **/
 func (rt *Router) version(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -673,8 +670,7 @@ func (rt *Router) version(w http.ResponseWriter, r *http.Request) {
 
 /**
 * routes: Lista las rutas registradas.
-* @param w http.ResponseWriter
-* @param r *http.Request
+* @param w http.ResponseWriter, r *http.Request
 **/
 func (rt *Router) routes(w http.ResponseWriter, r *http.Request) {
 	_routes := er.GetRoutes()
@@ -750,8 +746,7 @@ func (rt *Router) Routes() http.Handler {
 
 /**
 * version: Responde la version del servicio.
-* @param w http.ResponseWriter
-* @param r *http.Request
+* @param w http.ResponseWriter, r *http.Request
 **/
 func (rt *Router) version(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -766,8 +761,7 @@ func (rt *Router) version(w http.ResponseWriter, r *http.Request) {
 
 /**
 * routes: Lista las rutas registradas.
-* @param w http.ResponseWriter
-* @param r *http.Request
+* @param w http.ResponseWriter, r *http.Request
 **/
 func (rt *Router) routes(w http.ResponseWriter, r *http.Request) {
 	_routes := er.GetRoutes()
@@ -842,9 +836,7 @@ import (
 var $2 *linq.Model
 
 /**
-* Define$2: Define la tabla $4. date_make, date_update, _state, project_id,
-* index y _data son campos que linq reconoce y mantiene solo; los atributos
-* que no son columnas se guardan en _data.
+* Define$2: Define la tabla $4; los atributos que no son columnas van en _data.
 * @param db *jdb.DB
 * @return error
 **/
@@ -916,10 +908,8 @@ func Get$2ById(id string) (et.Item, error) {
 }
 
 /**
-* Insert$2: Crea el registro; si id viene vacio se genera uno. Si el id ya
-* existe devuelve Ok=false con el registro actual.
-* @param projectId, id, name, description string
-* @param data et.Json
+* Insert$2: Crea el registro (genera el id si viene vacío); Ok=false si ya existe.
+* @param projectId, id, name, description string, data et.Json
 * @return et.Item, error
 **/
 func Insert$2(projectId, id, name, description string, data et.Json) (et.Item, error) {
@@ -952,8 +942,7 @@ func Insert$2(projectId, id, name, description string, data et.Json) (et.Item, e
 
 /**
 * UpSert$2: Crea el registro o, si ya existe y esta activo, lo actualiza.
-* @param projectId, id, name, description string
-* @param data et.Json
+* @param projectId, id, name, description string, data et.Json
 * @return et.Item, error
 **/
 func UpSert$2(projectId, id, name, description string, data et.Json) (et.Item, error) {
@@ -1023,11 +1012,8 @@ func Delete$2(id string) (et.Item, error) {
 }
 
 /**
-* All$2: Lista paginada. state "" = activos, "*" = todos menos borrados,
-* "0" = activos e indefinidos; search busca en name, description y _data.
-* @param projectId, state, search string
-* @param page, rows int
-* @param _select string
+* All$2: Lista paginada por state ("" activos, "*" todos menos borrados) y search.
+* @param projectId, state, search string, page, rows int, _select string
 * @return et.List, error
 **/
 func All$2(projectId, state, search string, page, rows int, _select string) (et.List, error) {
@@ -1064,8 +1050,7 @@ func All$2(projectId, state, search string, page, rows int, _select string) (et.
 
 /**
 * Get$2ById: Expone Get$2ById por RPC ($1.Services.Get$2ById).
-* @param require et.Json
-* @param response *et.Item
+* @param require et.Json, response *et.Item
 * @return error
 **/
 func (c *Services) Get$2ById(require et.Json, response *et.Item) error {
@@ -1081,8 +1066,7 @@ func (c *Services) Get$2ById(require et.Json, response *et.Item) error {
 
 /**
 * upSert$2: POST, crea o actualiza.
-* @param w http.ResponseWriter
-* @param r *http.Request
+* @param w http.ResponseWriter, r *http.Request
 **/
 func (rt *Router) upSert$2(w http.ResponseWriter, r *http.Request) {
 	body, err := response.GetBody(r)
@@ -1107,8 +1091,7 @@ func (rt *Router) upSert$2(w http.ResponseWriter, r *http.Request) {
 
 /**
 * get$2ById: GET /{id}.
-* @param w http.ResponseWriter
-* @param r *http.Request
+* @param w http.ResponseWriter, r *http.Request
 **/
 func (rt *Router) get$2ById(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
@@ -1124,8 +1107,7 @@ func (rt *Router) get$2ById(w http.ResponseWriter, r *http.Request) {
 
 /**
 * state$2: PUT /state/{id}, body {"state": "..."}.
-* @param w http.ResponseWriter
-* @param r *http.Request
+* @param w http.ResponseWriter, r *http.Request
 **/
 func (rt *Router) state$2(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
@@ -1146,8 +1128,7 @@ func (rt *Router) state$2(w http.ResponseWriter, r *http.Request) {
 
 /**
 * delete$2: DELETE /{id}.
-* @param w http.ResponseWriter
-* @param r *http.Request
+* @param w http.ResponseWriter, r *http.Request
 **/
 func (rt *Router) delete$2(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
@@ -1163,8 +1144,7 @@ func (rt *Router) delete$2(w http.ResponseWriter, r *http.Request) {
 
 /**
 * all$2: GET /?project_id=&state=&search=&page=&rows=&select=.
-* @param w http.ResponseWriter
-* @param r *http.Request
+* @param w http.ResponseWriter, r *http.Request
 **/
 func (rt *Router) all$2(w http.ResponseWriter, r *http.Request) {
 	query := response.GetQuery(r)
@@ -1205,8 +1185,7 @@ import (
 
 /**
 * $2: Logica del caso de uso.
-* @param projectId, id string
-* @param params et.Json
+* @param projectId, id string, params et.Json
 * @return et.Item, error
 **/
 func $2(projectId, id string, params et.Json) (et.Item, error) {
@@ -1215,8 +1194,7 @@ func $2(projectId, id string, params et.Json) (et.Item, error) {
 
 /**
 * $3: Handler HTTP de $2.
-* @param w http.ResponseWriter
-* @param r *http.Request
+* @param w http.ResponseWriter, r *http.Request
 **/
 func (rt *Router) $3(w http.ResponseWriter, r *http.Request) {
 	body, err := response.GetBody(r)

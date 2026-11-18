@@ -15,7 +15,6 @@ import (
 )
 
 /**
-*
 **/
 func unquote(str string) string {
 	result, err := strconv.Unquote(str)
@@ -237,7 +236,6 @@ func ArrayToString(vals []Json) string {
 }
 
 /**
-*
 **/
 func Val(data Json, _default any, atribs ...string) any {
 	var result any
@@ -306,8 +304,7 @@ func ApendJson(m Json, n Json) Json {
 const maxJsonDepth = 32
 
 /**
-* Compara b contra a y se establece que es diferente si y solo si
-* los valor de b no estan en a o los valores de b son diferentes en a
+* IsDiferent: Indica si algún valor de b no está en a o es distinto.
 **/
 func IsDiferent(a, b Json) bool {
 	return isDiferent(a, b, 0)
@@ -356,8 +353,7 @@ func isDiferent(a, b Json, depth int) bool {
 }
 
 /**
-* Compara b contra a y se establece que si ubo cambio si y solo si
-* los valor de b esta en a y alguno es direfernte
+* IsChange: Indica si algún valor de b que está en a cambió.
 **/
 func IsChange(a, b Json) bool {
 	return isChange(a, b, 0)

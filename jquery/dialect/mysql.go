@@ -7,8 +7,7 @@ import (
 )
 
 /**
-* MySQL es el nombre bajo el cual MySQLDialect se registra en el
-* registry (ver Register/Get).
+* MySQL: Nombre con que se registra MySQLDialect.
 **/
 const MySQL = "mysql"
 
@@ -32,8 +31,7 @@ func (d *MySQLDialect) Name() string {
 }
 
 /**
-* QuoteIdent: MySQL usa backtick (`) como caracter de comillado de
-* identificadores.
+* QuoteIdent: Cita el identificador con backticks.
 * @param name string
 * @return string
 **/
@@ -52,8 +50,7 @@ func (d *MySQLDialect) QuoteIdent(name string) string {
 }
 
 /**
-* Like: MySQL no tiene ILIKE; LIKE es insensible a mayusculas por
-* defecto con las collations mas comunes (p.ej. utf8mb4_general_ci).
+* Like: LIKE, porque MySQL no tiene ILIKE.
 * @return string
 **/
 func (d *MySQLDialect) Like() string {

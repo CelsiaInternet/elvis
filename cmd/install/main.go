@@ -10,9 +10,7 @@ import (
 )
 
 /**
-* main: Prepara un proyecto que consume elvis: completa el go.mod con
-* go mod tidy (solo si ya hay codigo) e instala la guia de agentes.
-* No fija versiones: tidy toma las que exige elvis y nunca las baja.
+* main: Prepara un proyecto que consume elvis: go mod tidy (si hay código) e instala la guía de agentes.
 **/
 func main() {
 	goMod, err := os.ReadFile("go.mod")
@@ -40,9 +38,7 @@ func main() {
 }
 
 /**
-* tidy: Ejecuta go mod tidy si el modulo ya tiene paquetes Go. En un
-* proyecto vacio tidy quitaria elvis del go.mod (nada la importa todavia),
-* y despues cmd/create no se podria ejecutar.
+* tidy: Ejecuta go mod tidy solo si el módulo ya tiene paquetes Go.
 * @return bool
 **/
 func tidy() bool {

@@ -24,10 +24,7 @@ var (
 )
 
 /**
-* ErrorReport: Error que un servicio reporta al registro central (catalog) por EVENT_ERROR.
-* App, Message, OwnerKind y OwnerId son obligatorios. OwnerKind/OwnerId identifican la entidad
-* afectada (lead, contrato, cliente...) y UserId al usuario que lo tuvo, si aplica. El ticket es
-* opcional; TicketOwner es el sistema donde vive (ADA o GLPI) y define como lo abre el front.
+* ErrorReport: Error que un servicio reporta al registro central por EVENT_ERROR.
 **/
 type ErrorReport struct {
 	App         string    `json:"app"`
@@ -46,8 +43,7 @@ type ErrorReport struct {
 }
 
 /**
-* normalize: Quita espacios, Level en minusculas (error por defecto), TicketOwner en mayusculas
-* y OccurredAt = ahora si no viene.
+* normalize: Limpia espacios, normaliza Level y TicketOwner y fija OccurredAt si no viene.
 **/
 func (s *ErrorReport) normalize() {
 	for _, field := range []*string{&s.App, &s.Service, &s.Code, &s.Message, &s.OwnerKind, &s.OwnerId, &s.UserId, &s.TicketKind, &s.TicketId} {
@@ -125,8 +121,7 @@ func (s ErrorReport) ToJson() et.Json {
 }
 
 /**
-* ParseErrorReport: Lee y valida el reporte que llega por EVENT_ERROR. occurred_at puede venir
-* como RFC 3339 o sin zona ("2006-01-02T15:04:05", hora local de timezone).
+* ParseErrorReport: Lee y valida el reporte que llega por EVENT_ERROR.
 * @param data et.Json
 * @return ErrorReport, error
 **/
@@ -166,9 +161,7 @@ func ParseErrorReport(data et.Json) (ErrorReport, error) {
 }
 
 /**
-* Error: Publica el reporte en EVENT_ERROR sin bloquear a quien lo llama. Devuelve el error de
-* validacion; si el reporte es valido la publicacion va en otra goroutine y no falla al llamador.
-* Sin conexion a NATS no hace nada (como Publish).
+* Error: Valida el reporte y lo publica en EVENT_ERROR sin bloquear.
 * @param report ErrorReport
 * @return error
 **/

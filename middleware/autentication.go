@@ -15,8 +15,7 @@ import (
 /**
 * tokenFromAuthorization
 * @param authorization string
-* @return string
-* @return error
+* @return string, error
 **/
 func tokenFromAuthorization(authorization, prefix string) (string, error) {
 	if authorization == "" {
@@ -37,10 +36,8 @@ func tokenFromAuthorization(authorization, prefix string) (string, error) {
 
 /**
 * GetAuthorization
-* @param w http.ResponseWriter
-* @param r *http.Request
-* @return string
-* @return error
+* @param w http.ResponseWriter, r *http.Request
+* @return string, error
 **/
 func GetAuthorization(w http.ResponseWriter, r *http.Request) (string, error) {
 	_, ok := r.Header["Authorization"]

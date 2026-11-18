@@ -28,8 +28,7 @@ const (
 )
 
 /**
-* Dialect: reglas de sintaxis especificas de un motor de base de
-* datos.
+* Dialect: Reglas de sintaxis de un motor de base de datos.
 **/
 type Dialect interface {
 	// Name identifica el dialecto (p.ej. "postgres").
@@ -47,17 +46,14 @@ type Dialect interface {
 }
 
 /**
-* Factory construye una nueva instancia de un Dialect. Se registra una
-* factory -no una instancia compartida- para que cada llamador reciba
-* su propia instancia si algun dialecto llega a tener estado propio.
+* Factory: Construye una instancia nueva de un Dialect.
 **/
 type Factory func() Dialect
 
 var registry = map[string]Factory{}
 
 /**
-* Register agrega (o reemplaza) la factory de un dialecto bajo name.
-* Se llama desde el func init() del archivo de cada dialecto.
+* Register: Agrega o reemplaza la factory de un dialecto.
 * @param name string, factory Factory
 * @return void
 **/
@@ -66,8 +62,7 @@ func Register(name string, factory Factory) {
 }
 
 /**
-* Get busca el dialecto registrado bajo name y devuelve una instancia
-* nueva via su factory.
+* Get: Devuelve una instancia nueva del dialecto registrado bajo name.
 * @param name string
 * @return Dialect, error
 **/
@@ -81,8 +76,7 @@ func Get(name string) (Dialect, error) {
 }
 
 /**
-* Registered devuelve los nombres de todos los dialectos registrados
-* actualmente (util para validacion o diagnostico).
+* Registered: Nombres de los dialectos registrados.
 * @return []string
 **/
 func Registered() []string {

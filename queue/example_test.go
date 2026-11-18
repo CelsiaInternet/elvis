@@ -10,11 +10,7 @@ import (
 )
 
 /**
-* Example_queue: Muestra el patrón "batching queue" clásico de Queue:
-* cada item enviado con Push se agrupa en un arreglo y ese arreglo se
-* despacha al handler cuando ocurre la primera de dos condiciones de
-* disparo: se alcanza el tamaño máximo del lote (maxEvents) o vence el
-* tiempo máximo de espera (period).
+* Example_queue: Agrupa items en lotes por tamaño o por tiempo.
 **/
 func Example_queue() {
 	var mu sync.Mutex

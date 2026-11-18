@@ -1,9 +1,7 @@
 package jquery
 
 /**
-* Operator: operador soportado dentro de un bloque "wheres". El valor
-* string es exactamente la clave que se espera recibir en el JSON del
-* query (p.ej. `{"age": {"more": 45}}` usa el operador MORE).
+* Operator: Operador aceptado en "wheres".
 **/
 type Operator string
 
@@ -26,11 +24,7 @@ const (
 )
 
 /**
-* operatorSymbols: mapea los operadores de comparacion simple
-* (columna <simbolo> valor) a su simbolo SQL. Los demas operadores
-* (LIKE, IN/NOT_IN, NULL/NOT_NULL, BETWEEN/NOT_BETWEEN) tienen su
-* propia forma de renderizado en buildCondition, porque no encajan en
-* el patron "columna <simbolo> valor".
+* operatorSymbols: Símbolo SQL de los operadores de comparación simple.
 **/
 var operatorSymbols = map[Operator]string{
 	EQ:      "=",

@@ -52,9 +52,7 @@ func LoadAuthorization(method string) *AuthorStore {
 }
 
 /**
-* Author: Pregunta por RPC si el perfil tiene permiso en el proyecto (team) sobre el metodo y la ruta.
-* Las respuestas se guardan en memoria AUTHORIZATION_CACHE_SECONDS, asi que un cambio de permisos
-* puede tardar ese tiempo en verse en cada replica.
+* Author: Pregunta por RPC si el perfil tiene permiso; cachea la respuesta en memoria.
 * @param projectId, profileId, method, path string
 * @return bool, error
 **/

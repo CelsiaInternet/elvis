@@ -49,12 +49,13 @@ All doc comments for functions, methods, and types must use this block style:
 ```go
 /**
 * FunctionName: Brief description.
-* @param paramName type
-* @return type
+* @param name string, age int, opts ...Option
+* @return et.Json, error
 **/
 ```
 
-- Use `@param` for each parameter and `@return` for the return value(s).
+- At most three lines between `/**` and `**/`: `Name: description` in one line, then one `@param` line and one `@return` line. Longer explanations go in the README or CLAUDE.md, not in the comment. Package doc comments (`jquery/jquery.go`, `jquery/dialect/dialect.go`) are the exception.
+- One `@param` line with every parameter separated by commas, and one `@return` line with every return value separated by commas. When the parameters carry a description, separate them with `;` (`* @param name string, folder name; names []string, files in reading order`). Omit the line when there are no parameters or no return value. Use only `@param` and `@return` (not `@params`, `@response` or `@result`).
 - Inline comments inside function bodies stay as `//`.
 - Never use single-line `//` doc comments above a function or type declaration.
 

@@ -21,7 +21,7 @@ const IsNil = redis.Nil
 
 /**
 * GenId
-* @params args ...interface{}
+* @param args ...interface{}
 * @return string
 **/
 func GenId(args ...interface{}) string {
@@ -35,7 +35,7 @@ func GenId(args ...interface{}) string {
 
 /**
 * GenKey
-* @params args ...interface{}
+* @param args ...interface{}
 * @return string
 **/
 func GenKey(args ...interface{}) string {
@@ -45,7 +45,7 @@ func GenKey(args ...interface{}) string {
 
 /**
 * Set
-* @params key string, val interface{}, second time.Duration
+* @param key string, val interface{}, second time.Duration
 * @return error
 **/
 func Set(key string, val interface{}, second time.Duration) error {
@@ -98,7 +98,7 @@ func Set(key string, val interface{}, second time.Duration) error {
 
 /**
 * Get
-* @params key string, def string
+* @param key string, def string
 * @return string, error
 **/
 func Get(key, def string) (string, error) {
@@ -111,7 +111,7 @@ func Get(key, def string) (string, error) {
 
 /**
 * Exists
-* @params key string
+* @param key string
 * @return bool
 **/
 func Exists(key string) bool {
@@ -124,7 +124,7 @@ func Exists(key string) bool {
 
 /**
 * Delete
-* @params key string
+* @param key string
 * @return int64, error
 **/
 func Delete(key string) (int64, error) {
@@ -137,7 +137,7 @@ func Delete(key string) (int64, error) {
 
 /**
 * DeleteByPrefix
-* @params prefix string
+* @param prefix string
 * @return error
 **/
 func DeleteByPrefix(prefix string) error {
@@ -146,7 +146,7 @@ func DeleteByPrefix(prefix string) error {
 
 /**
 * Expire
-* @params key string, second time.Duration
+* @param key string, second time.Duration
 * @return error
 **/
 func Expire(key string, second time.Duration) error {
@@ -155,7 +155,7 @@ func Expire(key string, second time.Duration) error {
 
 /**
 * Incr
-* @params key string, second time.Duration (second)
+* @param key string, second time.Duration (second)
 * @return int64
 **/
 func Incr(key string, second time.Duration) int64 {
@@ -164,7 +164,7 @@ func Incr(key string, second time.Duration) int64 {
 
 /**
 * Decr
-* @params key string
+* @param key string
 * @return int64
 **/
 func Decr(key string) int64 {
@@ -173,7 +173,7 @@ func Decr(key string) int64 {
 
 /**
 * LPush
-* @params key string, val string
+* @param key string, val string
 * @return error
 **/
 func LPush(key, val string) error {
@@ -186,7 +186,7 @@ func LPush(key, val string) error {
 
 /**
 * LRem
-* @params key string, val string
+* @param key string, val string
 * @return error
 **/
 func LRem(key, val string) error {
@@ -199,7 +199,7 @@ func LRem(key, val string) error {
 
 /**
 * LRange
-* @params key string, start int64, stop int64
+* @param key string, start int64, stop int64
 * @return []string, error
 **/
 func LRange(key string, start, stop int64) ([]string, error) {
@@ -212,7 +212,7 @@ func LRange(key string, start, stop int64) ([]string, error) {
 
 /**
 * LTrim
-* @params key string, start int64, stop int64
+* @param key string, start int64, stop int64
 * @return error
 **/
 func LTrim(key string, start, stop int64) error {
@@ -225,7 +225,7 @@ func LTrim(key string, start, stop int64) error {
 
 /**
 * SetH
-* @params key string, val interface{}
+* @param key string, val interface{}
 * @return error
 **/
 func SetH(key string, val interface{}) error {
@@ -234,7 +234,7 @@ func SetH(key string, val interface{}) error {
 
 /**
 * SetD
-* @params key string, val interface{}
+* @param key string, val interface{}
 * @return error
 **/
 func SetD(key string, val interface{}) error {
@@ -243,7 +243,7 @@ func SetD(key string, val interface{}) error {
 
 /**
 * SetW
-* @params key string, val interface{}
+* @param key string, val interface{}
 * @return error
 **/
 func SetW(key string, val interface{}) error {
@@ -252,7 +252,7 @@ func SetW(key string, val interface{}) error {
 
 /**
 * SetM
-* @params key string, val interface{}
+* @param key string, val interface{}
 * @return error
 **/
 func SetM(key string, val interface{}) error {
@@ -261,7 +261,7 @@ func SetM(key string, val interface{}) error {
 
 /**
 * SetY
-* @params key string, interface{}
+* @param key string, interface{}
 * @return error
 **/
 func SetY(key string, val interface{}) error {
@@ -288,7 +288,7 @@ func Empty(match string) error {
 
 /**
 * More
-* @params key string, time.Duration
+* @param key string, time.Duration
 * @return int
 **/
 func More(key string, second time.Duration) int {
@@ -314,7 +314,7 @@ func More(key string, second time.Duration) int {
 
 /**
 * HSet
-* @params key string, map[string]string
+* @param key string, map[string]string
 * @return error
 **/
 func HSet(key string, val map[string]string) error {
@@ -327,7 +327,7 @@ func HSet(key string, val map[string]string) error {
 
 /**
 * HGet
-* @params key string
+* @param key string
 * @return map[string]string, error
 **/
 func HGet(key string) (map[string]string, error) {
@@ -340,9 +340,7 @@ func HGet(key string) (map[string]string, error) {
 
 /**
 * HSetAtrib
-* @params key string
-* @params atr string
-* @params val string
+* @param key string, atr string, val string
 * @return error
 **/
 func HSetAtrib(key, atr, val string) error {
@@ -355,8 +353,7 @@ func HSetAtrib(key, atr, val string) error {
 
 /**
 * HGetAtrib
-* @params key string
-* @params atr string
+* @param key string, atr string
 * @return string, error
 **/
 func HGetAtrib(key, atr string) (string, error) {
@@ -380,8 +377,7 @@ func HGetAtrib(key, atr string) (string, error) {
 
 /**
 * HDelete
-* @params key string
-* @params atr string
+* @param key string, atr string
 * @return error
 **/
 func HDelete(key, atr string) error {
@@ -394,10 +390,7 @@ func HDelete(key, atr string) error {
 
 /**
 * SetVerify
-* @params device string
-* @params key string
-* @params val string
-* @params duration time.Duration
+* @param device string, key string, val string, duration time.Duration
 * @return error
 **/
 func SetVerify(device, key, val string, duration time.Duration) error {
@@ -407,8 +400,7 @@ func SetVerify(device, key, val string, duration time.Duration) error {
 
 /**
 * GetVerify
-* @params device string
-* @params key string
+* @param device string, key string
 * @return string, error
 **/
 func GetVerify(device string, key string) (string, error) {
@@ -423,8 +415,7 @@ func GetVerify(device string, key string) (string, error) {
 
 /**
 * DeleteVerify
-* @params device string
-* @params key string
+* @param device string, key string
 * @return int64, error
 **/
 func DeleteVerify(device string, key string) (int64, error) {
@@ -434,9 +425,7 @@ func DeleteVerify(device string, key string) (int64, error) {
 
 /**
 * AllCache
-* @params device string
-* @params key string
-* @params val string
+* @param device string, key string, val string
 * @return error
 **/
 func AllCache(search string, page, rows int) (et.List, error) {
@@ -463,7 +452,7 @@ func AllCache(search string, page, rows int) (et.List, error) {
 
 /**
 * GetInt
-* @params key string
+* @param key string
 * @return int64, error
 **/
 func GetInt(key string) (int, error) {
@@ -486,7 +475,7 @@ func GetInt(key string) (int, error) {
 
 /**
 * GetInt64
-* @params key string
+* @param key string
 * @return int64, error
 **/
 func GetInt64(key string) (int64, error) {
@@ -509,8 +498,8 @@ func GetInt64(key string) (int64, error) {
 
 /**
 * GetFloat
-* @params key string
-* @result float64, error
+* @param key string
+* @return float64, error
 **/
 func GetFloat(key string) (float64, error) {
 	if conn == nil {
@@ -531,7 +520,7 @@ func GetFloat(key string) (float64, error) {
 }
 
 /**
-* @params key string
+* @param key string
 * @return bool, error
 **/
 func GetBool(key string) (bool, error) {
@@ -554,10 +543,9 @@ func GetBool(key string) (bool, error) {
 
 /**
 * GetJson
-* @params key string
+* @param key string
 * @return Json, error
-*
- */
+**/
 func GetJson(key string) (et.Json, error) {
 	if conn == nil {
 		return et.Json{}, fmt.Errorf(msg.ERR_NOT_CACHE_SERVICE)
@@ -584,7 +572,7 @@ func GetJson(key string) (et.Json, error) {
 
 /**
 * GetItem
-* @params key string
+* @param key string
 * @return Item, error
 **/
 func GetItem(key string) (et.Item, error) {
@@ -613,7 +601,7 @@ func GetItem(key string) (et.Item, error) {
 
 /**
 * GetItems
-* @params key string
+* @param key string
 * @return Items, error
 **/
 func GetItems(key string) (et.Items, error) {
@@ -642,8 +630,7 @@ func GetItems(key string) (et.Items, error) {
 
 /**
 * HandlerAll
-* @params w http.ResponseWriter
-* @params r *http.Request
+* @param w http.ResponseWriter, r *http.Request
 **/
 func HandlerAll(w http.ResponseWriter, r *http.Request) {
 	query := response.GetQuery(r)
@@ -662,8 +649,7 @@ func HandlerAll(w http.ResponseWriter, r *http.Request) {
 
 /**
 * HandlerGet
-* @params w http.ResponseWriter
-* @params r *http.Request
+* @param w http.ResponseWriter, r *http.Request
 **/
 func HandlerGet(w http.ResponseWriter, r *http.Request) {
 	query := response.GetQuery(r)
@@ -680,8 +666,7 @@ func HandlerGet(w http.ResponseWriter, r *http.Request) {
 
 /**
 * HandlerDelete
-* @params w http.ResponseWriter
-* @params r *http.Request
+* @param w http.ResponseWriter, r *http.Request
 **/
 func HandlerDelete(w http.ResponseWriter, r *http.Request) {
 	query := response.GetQuery(r)

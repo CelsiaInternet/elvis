@@ -132,8 +132,7 @@ var CmdRpc = &cobra.Command{
 }
 
 /**
-* moduleName: Lee el modulo del go.mod del directorio actual; el generador
-* lo usa para los imports internos del proyecto.
+* moduleName: Módulo del go.mod del directorio actual.
 * @return string, error
 **/
 func moduleName() (string, error) {

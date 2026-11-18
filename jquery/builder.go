@@ -9,48 +9,7 @@ import (
 )
 
 /**
-* JQueryBuilder guarda el estado necesario para traducir un et.Json
-* con la forma:
-*
-*	{
-*	  "from": "table:A",
-*	  "join": {
-*	    "type": "left",
-*	    "to": "roles:B",
-*	    "on": {
-*	      "B.user_id": {"eq": {"col": "A.id"}},
-*	      "and": [
-*	        {"B.role": {"neg": "admin"}}
-*	      ]
-*	    }
-*	  },
-*	  "select": ["A.id", "A.name", "count(*)"],
-*	  "wheres": {...},
-*	  "group_by": ["A.name"],
-*	  "having": {...},
-*	  "limit": {"page": 1, "rows": 100},
-*	  "order_by": ["A.name"],
-*	  "order_by_desc": ["A.age"]
-*	}
-*
-* "from" y el "to" de cada join aceptan alias con la sintaxis
-* "tabla:alias" (ver renderTableRef). "join" acepta un unico objeto o
-* un arreglo de ellos (para varios joins); "type" es opcional
-* ("join"/"inner"/"left"/"right", por defecto "join"); "on" tiene la
-* misma forma recursiva and/or que "wheres" (ver Join/buildJoins).
-*
-* "select" y las claves de columna dentro de "having" aceptan tanto
-* columnas simples/calificadas como llamadas a funciones de
-* agregacion COUNT/MAX/MIN/SUM (p.ej. "count(*)", "sum(price)"); ver
-* renderExpr. "having" tiene la misma forma recursiva and/or que
-* "wheres" (ver buildWheres).
-*
-* Los valores de una condicion (en "wheres", "having" u "on") son
-* literales por defecto; para comparar contra otra columna en vez de
-* un literal, use {"col": "identificador"} (ver renderValue) — asi es
-* como una clausula ON expresa "B.user_id = A.id".
-*
-* a una sentencia SQL SELECT para el jquery/dialect.Dialect indicado.
+* JQueryBuilder: Estado para traducir un et.Json (ver el paquete jquery) a un SELECT de un dialecto.
 **/
 type JQueryBuilder struct {
 	Dialect     dialect.Dialect
@@ -67,8 +26,7 @@ type JQueryBuilder struct {
 }
 
 /**
-* NewJQueryBuilder crea un JQueryBuilder para PostgreSQL a partir del
-* query recibido.
+* NewJQueryBuilder: Crea un JQueryBuilder para PostgreSQL.
 * @param query et.Json
 * @return *JQueryBuilder, error
 **/
@@ -77,15 +35,7 @@ func NewJQueryBuilder(query et.Json) (*JQueryBuilder, error) {
 }
 
 /**
-* NewJQueryBuilderWithDialect crea un JQueryBuilder para el dialecto
-* indicado en el atributo "dialect" del query (ver jquery/dialect:
-* Register/Get, patron factory por motor). Si el query no trae
-* "dialect", cae al dialecto por defecto de jquery (dialect.Postgres).
-* Motores disponibles: dialect.Postgres, dialect.SQLite, dialect.MySQL,
-* dialect.SQLServer y dialect.Oracle. Agregar uno nuevo es cuestion de
-* sumar su propio archivo al paquete jquery/dialect implementando
-* dialect.Dialect (ver el comentario de paquete en dialect/dialect.go),
-* sin tocar este archivo.
+* NewJQueryBuilderWithDialect: Crea un JQueryBuilder para el "dialect" del query (por defecto Postgres).
 * @param query et.Json
 * @return *JQueryBuilder, error
 **/
@@ -128,8 +78,7 @@ func NewJQueryBuilderWithDialect(query et.Json) (*JQueryBuilder, error) {
 }
 
 /**
-* Build arma la sentencia SQL SELECT completa a partir del estado del
-* builder.
+* Build: Arma la sentencia SELECT completa.
 * @return string, error
 **/
 func (b *JQueryBuilder) Build() (string, error) {
@@ -183,9 +132,7 @@ func (b *JQueryBuilder) Build() (string, error) {
 }
 
 /**
-* buildSelect. Cada elemento de Select puede ser una columna simple/
-* calificada o una llamada de agregacion COUNT/MAX/MIN/SUM (ver
-* renderExpr).
+* buildSelect: Arma el SELECT con columnas o agregaciones COUNT/MAX/MIN/SUM.
 * @return string
 **/
 func (b *JQueryBuilder) buildSelect() string {
@@ -231,9 +178,7 @@ func (b *JQueryBuilder) buildGroupBy() string {
 }
 
 /**
-* buildHaving tiene la misma forma recursiva and/or que buildWhere;
-* las claves de columna dentro de "having" tambien aceptan llamadas de
-* agregacion (p.ej. "count(*)"), ver renderExpr/buildColumnConditions.
+* buildHaving: Arma el HAVING con la misma forma and/or que WHERE.
 * @return string, error
 **/
 func (b *JQueryBuilder) buildHaving() (string, error) {
@@ -271,8 +216,7 @@ func (b *JQueryBuilder) limitRows() int {
 }
 
 /**
-* limitOffset calcula el OFFSET a partir de page/rows (page 1-based).
-* Paginas <= 0 se tratan como pagina 1.
+* limitOffset: Calcula el OFFSET desde page/rows (page base 1).
 * @return int
 **/
 func (b *JQueryBuilder) limitOffset() int {
