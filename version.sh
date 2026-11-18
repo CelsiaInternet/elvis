@@ -62,9 +62,9 @@ update_version() {
   echo "Etiquetando con: $NEW_VERSION"
 
   if [[ "$OSTYPE" == "darwin"* ]]; then
-    sed -i "" "s/$CURRENT_VERSION/$NEW_VERSION/g" README.md
+    sed -i "" "s/$CURRENT_VERSION/$NEW_VERSION/g" README.md README.es.md
   else
-    sed -i "s/$CURRENT_VERSION/$NEW_VERSION/g" README.md
+    sed -i "s/$CURRENT_VERSION/$NEW_VERSION/g" README.md README.es.md
   fi
   
   git tag -a "$NEW_VERSION" -m "$NEW_VERSION"
