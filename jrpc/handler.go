@@ -227,6 +227,24 @@ func CallJsonToHost(method, host string, port int, args et.Json) (et.Json, error
 }
 
 /**
+* CallItemToHost: Llama method en host:port y devuelve et.Item; sirve cuando el solver ya se
+* resolvio con GetSolver (method es solver.Method).
+* @param method string, host string, port int, args et.Json
+* @return et.Item, error
+**/
+func CallItemToHost(method, host string, port int, args et.Json) (et.Item, error) {
+	var result et.Item
+	metric, err := call(host, port, method, args, &result)
+	if err != nil {
+		return result, err
+	}
+
+	metric.DoneRpc(result.ToString())
+
+	return result, nil
+}
+
+/**
 * CallJson
 * @param method string, args et.Json
 * @return et.Json, error

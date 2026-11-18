@@ -32,6 +32,7 @@
 - [ORM / Query Builder (linq)](#-orm--query-builder-linq)
 - [Cache (cache / mem)](#-cache-cache--mem)
 - [Eventos (event)](#-eventos-event)
+- [Envíos y OTP (service)](#-envíos-y-otp-service)
 - [Autenticación y Autorización (claim / middleware)](#-autenticación-y-autorización-claim--middleware)
 - [HTTP Router y Respuestas (router / response)](#-http-router-y-respuestas-router--response)
 - [Cliente HTTP saliente (request)](#-cliente-http-saliente-request)
@@ -636,6 +637,35 @@ event.WorkState(workId, event.WorkStatusCompleted, et.Json{"url": "..."})
 
 ---
 
+## 📨 Envíos y OTP (`service`)
+
+`service.SendSms`, `SendWhatsapp`, `SendEmail`, `SendEmailByTemplate` y `SendEmailToByTemplate` llaman por RPC (`jrpc`) al servicio send; `SendOtpSms`, `SendOtpWhatsapp` y `SendOtpEmail`, al servicio otp. La llamada es síncrona y usa `RPC_TIMEOUT`, así que quien envía recibe el resultado o el error del proveedor.
+
+| Función | Método RPC | Evento de respaldo |
+| --- | --- | --- |
+| `SendSms` | `<SEND_RPC>.SendSMS` | `send/sms` |
+| `SendWhatsapp` | `<SEND_RPC>.SendWhatsapp` | `send/whatsapp` |
+| `SendEmail` | `<SEND_RPC>.SendEmail` | `send/email` |
+| `SendEmailByTemplate` | `<SEND_RPC>.SendEmailByTemplate` | `send/emailbytemplate` |
+| `SendEmailToByTemplate` | `<SEND_RPC>.SendEmailToByTemplate` | `send/emailtobytemplate` |
+| `SendOtpSms` | `<OTP_RPC>.GenerateOTPSMS` | `generate/otp/sms` |
+| `SendOtpWhatsapp` | `<OTP_RPC>.GenerateOTPWhatsapp` | `generate/otp/whatsapp` |
+| `SendOtpEmail` | `<OTP_RPC>.GenerateOTPEmail` | `generate/otp/email` |
+
+`SEND_RPC` vale por defecto `Service-send.Services` y `OTP_RPC`, `Service-otp.Services`. La firma no cambia: devuelven `et.Json` con el `result` del RPC más `ok`, `service_id` y, si la llamada falló, `error` con el texto.
+
+```go
+result := service.SendSms(projectId, "", []string{"3001234567"}, "Hola {{name}}", []et.Json{{"name": "Ana"}}, service.TpTransactional, user)
+if !result.Bool("ok") {
+	console.Alert(result.Str("error"))
+}
+serviceId := result.Str("service_id") // id del envío en send
+```
+
+Respaldo: si `jrpc.GetSolver` no resuelve el método (send u otp no registrados en Redis, Redis sin cargar o nombre inválido), la llamada no se intenta y se publica `event.Work` como antes; el retorno es entonces el sobre del trabajo (`_id`, `event`, `data`, `created_at`) más `service_id`. Si la llamada falla después de resolverse, se devuelve el error y no se reenvía por NATS, para no duplicar mensajes. Con `PIPE_HOST` el solver siempre se resuelve, así que no hay respaldo.
+
+---
+
 ## 🔐 Autenticación y Autorización (`claim` / `middleware`)
 
 ### Generar tokens JWT
@@ -983,6 +1013,9 @@ result, err := workflow.Run(
 | `RESILIENCE_TIME_ATTEMPTS`  | resilience    | `30`        | Segundos entre reintentos                                       |
 | `PIPE_HOST`                 | jrpc          | —           | Host del proxy RPC único (se combina con `PIPE_PORT`)           |
 | `PIPE_PORT`                 | jrpc          | `4200`      | Puerto del proxy RPC único                                      |
+| `RPC_TIMEOUT`               | jrpc          | `600`       | Segundos de espera de una llamada RPC (también los envíos)      |
+| `SEND_RPC`                  | service       | `Service-send.Services` | Paquete RPC de send para `service.Send*`             |
+| `OTP_RPC`                   | service       | `Service-otp.Services`  | Paquete RPC de otp para `service.SendOtp*`           |
 | `STAGE`                     | event         | `local`     | Prefijo de entorno para canal pipe (`pipe:<stage>:<canal>`)     |
 | `PRODUCTION`                | dt            | `true`      | Habilita persistencia en Redis del cache de objetos `dt.Object` |
 
@@ -1053,7 +1086,7 @@ elvis/
 ├── response/       # Helpers de respuesta HTTP
 ├── router/         # Registro de rutas chi con API Gateway
 ├── secret/         # Cifrado de secretos guardados (AES-256-GCM, formato v1:)
-├── service/        # Cliente HTTP entre servicios
+├── service/        # Envíos (send) y OTP (otp) por RPC, con respaldo a event.Work
 ├── stdrout/        # Salida estándar / terminal
 ├── strs/           # Utilidades de strings
 ├── timezone/       # Manejo de zonas horarias

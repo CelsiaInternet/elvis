@@ -4,7 +4,6 @@ import (
 	"github.com/celsiainternet/elvis/cache"
 	"github.com/celsiainternet/elvis/console"
 	"github.com/celsiainternet/elvis/et"
-	"github.com/celsiainternet/elvis/event"
 	"github.com/celsiainternet/elvis/msg"
 	"github.com/celsiainternet/elvis/reg"
 	"github.com/celsiainternet/elvis/utility"
@@ -17,7 +16,7 @@ import (
 **/
 func SendSms(project_id, service_id string, contactNumbers []string, content string, params []et.Json, tp TpMessage, user et.Json) et.Json {
 	service_id = reg.GetUUID(service_id)
-	result := event.Work("send/sms", et.Json{
+	return sendRpc("SendSMS", "send/sms", et.Json{
 		"project_id":      project_id,
 		"service_id":      service_id,
 		"contact_numbers": contactNumbers,
@@ -26,9 +25,6 @@ func SendSms(project_id, service_id string, contactNumbers []string, content str
 		"type":            tp.String(),
 		"user":            user,
 	})
-
-	result["service_id"] = service_id
-	return result
 }
 
 /**
@@ -38,7 +34,7 @@ func SendSms(project_id, service_id string, contactNumbers []string, content str
 **/
 func SendWhatsapp(project_id, service_id string, template_id int, contactNumbers []string, params []et.Json, tp TpMessage, user et.Json) et.Json {
 	service_id = reg.GetUUID(service_id)
-	result := event.Work("send/whatsapp", et.Json{
+	return sendRpc("SendWhatsapp", "send/whatsapp", et.Json{
 		"project_id":      project_id,
 		"service_id":      service_id,
 		"template_id":     template_id,
@@ -47,9 +43,6 @@ func SendWhatsapp(project_id, service_id string, template_id int, contactNumbers
 		"type":            tp.String(),
 		"user":            user,
 	})
-
-	result["service_id"] = service_id
-	return result
 }
 
 /**
@@ -59,7 +52,7 @@ func SendWhatsapp(project_id, service_id string, template_id int, contactNumbers
 **/
 func SendEmail(project_id, service_id string, to []et.Json, subject string, html_content string, params []et.Json, tp TpMessage, user et.Json) et.Json {
 	service_id = reg.GetUUID(service_id)
-	result := event.Work("send/email", et.Json{
+	return sendRpc("SendEmail", "send/email", et.Json{
 		"project_id":   project_id,
 		"service_id":   service_id,
 		"to":           to,
@@ -69,9 +62,6 @@ func SendEmail(project_id, service_id string, to []et.Json, subject string, html
 		"type":         tp.String(),
 		"user":         user,
 	})
-
-	result["service_id"] = service_id
-	return result
 }
 
 /**
@@ -81,7 +71,7 @@ func SendEmail(project_id, service_id string, to []et.Json, subject string, html
 **/
 func SendEmailByTemplate(project_id, service_id string, groups []string, subject, template_id string, params []et.Json, tp TpMessage, user et.Json) et.Json {
 	service_id = reg.GetUUID(service_id)
-	result := event.Work("send/emailbytemplate", et.Json{
+	return sendRpc("SendEmailByTemplate", "send/emailbytemplate", et.Json{
 		"project_id":  project_id,
 		"service_id":  service_id,
 		"groups":      groups,
@@ -91,9 +81,6 @@ func SendEmailByTemplate(project_id, service_id string, groups []string, subject
 		"type":        tp.String(),
 		"user":        user,
 	})
-
-	result["service_id"] = service_id
-	return result
 }
 
 /**
@@ -103,7 +90,7 @@ func SendEmailByTemplate(project_id, service_id string, groups []string, subject
 **/
 func SendEmailToByTemplate(project_id, service_id, name, email string, subject, template_id string, params []et.Json, tp TpMessage, user et.Json) et.Json {
 	service_id = reg.GetUUID(service_id)
-	result := event.Work("send/emailtobytemplate", et.Json{
+	return sendRpc("SendEmailToByTemplate", "send/emailtobytemplate", et.Json{
 		"project_id":  project_id,
 		"service_id":  service_id,
 		"name":        name,
@@ -114,9 +101,6 @@ func SendEmailToByTemplate(project_id, service_id, name, email string, subject, 
 		"type":        tp.String(),
 		"user":        user,
 	})
-
-	result["service_id"] = service_id
-	return result
 }
 
 /**
@@ -126,7 +110,7 @@ func SendEmailToByTemplate(project_id, service_id, name, email string, subject, 
 **/
 func SendOtpSms(project_id string, phone_number, name, device string, length int, duration int, user et.Json) et.Json {
 	service_id := reg.UUID()
-	result := event.Work("generate/otp/sms", et.Json{
+	return otpRpc("GenerateOTPSMS", "generate/otp/sms", et.Json{
 		"project_id": project_id,
 		"service_id": service_id,
 		"channel":    phone_number,
@@ -137,9 +121,6 @@ func SendOtpSms(project_id string, phone_number, name, device string, length int
 		"duration":   duration,
 		"user":       user,
 	})
-
-	result["service_id"] = service_id
-	return result
 }
 
 /**
@@ -149,7 +130,7 @@ func SendOtpSms(project_id string, phone_number, name, device string, length int
 **/
 func SendOtpWhatsapp(project_id string, phone_number, name, device string, length int, duration int, user et.Json) et.Json {
 	service_id := reg.UUID()
-	result := event.Work("generate/otp/whatsapp", et.Json{
+	return otpRpc("GenerateOTPWhatsapp", "generate/otp/whatsapp", et.Json{
 		"project_id": project_id,
 		"service_id": service_id,
 		"channel":    phone_number,
@@ -160,9 +141,6 @@ func SendOtpWhatsapp(project_id string, phone_number, name, device string, lengt
 		"duration":   duration,
 		"user":       user,
 	})
-
-	result["service_id"] = service_id
-	return result
 }
 
 /**
@@ -172,7 +150,7 @@ func SendOtpWhatsapp(project_id string, phone_number, name, device string, lengt
 **/
 func SendOtpEmail(project_id string, email, name, device string, length int, duration int, user et.Json) et.Json {
 	service_id := reg.UUID()
-	result := event.Work("generate/otp/email", et.Json{
+	return otpRpc("GenerateOTPEmail", "generate/otp/email", et.Json{
 		"project_id": project_id,
 		"service_id": service_id,
 		"channel":    email,
@@ -183,9 +161,6 @@ func SendOtpEmail(project_id string, email, name, device string, length int, dur
 		"duration":   duration,
 		"user":       user,
 	})
-
-	result["service_id"] = service_id
-	return result
 }
 
 /**
