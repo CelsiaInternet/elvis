@@ -13,7 +13,7 @@ Para empezar un proyecto con Elvis, ejecuta estos comandos en una carpeta nueva:
 ```bash
 go mod init github.com/<organizacion>/<proyecto>
 
-go get github.com/celsiainternet/elvis@v1.1.327
+go get github.com/celsiainternet/elvis@v1.1.328
 go run github.com/celsiainternet/elvis/cmd/install
 go run github.com/celsiainternet/elvis/cmd/create go
 ```
@@ -21,7 +21,7 @@ go run github.com/celsiainternet/elvis/cmd/create go
 | Comando | Qué hace |
 | ------- | -------- |
 | `go mod init ...` | Crea el `go.mod`. Los dos comandos siguientes lo necesitan: toman de ahí la ruta del módulo y se detienen si no existe. |
-| `go get github.com/celsiainternet/elvis@v1.1.327` | Agrega Elvis como dependencia y deja en `go.sum` las entradas que necesitan los `go run` siguientes; sin este paso fallan con `missing go.sum entry`. |
+| `go get github.com/celsiainternet/elvis@v1.1.328` | Agrega Elvis como dependencia y deja en `go.sum` las entradas que necesitan los `go run` siguientes; sin este paso fallan con `missing go.sum entry`. |
 | `go run .../cmd/install` | Prepara el proyecto: ejecuta `go mod tidy` si ya hay paquetes Go e instala el marco de trabajo para agentes (ver la nota de abajo). No fija versiones de otras dependencias. |
 | `go run .../cmd/create go` | Abre un menú interactivo para generar código: **Project** (proyecto completo), **Microservice**, **Modelo** (modelo `linq` + CRUD en un paquete existente) o **Rpc**. |
 
