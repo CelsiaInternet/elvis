@@ -50,11 +50,12 @@ func SendWhatsapp(project_id, service_id string, template_id int, contactNumbers
 * @param project_id string, service_id string, to []et.Json, subject string, html_content string, params []et.Json, tp TpMessage, user et.Json
 * @return et.Json
 **/
-func SendEmail(project_id, service_id string, to []et.Json, subject string, html_content string, params []et.Json, tp TpMessage, user et.Json) (et.Item, error) {
+func SendEmail(project_id, service_id, smtp string, to []et.Json, subject string, html_content string, params []et.Json, tp TpMessage, user et.Json) (et.Item, error) {
 	service_id = reg.GetUUID(service_id)
 	return sendRpc("SendEmail", "send/email", et.Json{
 		"project_id":   project_id,
 		"service_id":   service_id,
+		"smtp":         smtp,
 		"to":           to,
 		"subject":      subject,
 		"html_content": html_content,
@@ -69,11 +70,12 @@ func SendEmail(project_id, service_id string, to []et.Json, subject string, html
 * @param project_id string, service_id string, groups []string, subject string, template_id int, params []et.Json, tp TpMessage, user et.Json
 * @return et.Json
 **/
-func SendEmailByTemplate(project_id, service_id string, groups []string, subject, template_id string, params []et.Json, tp TpMessage, user et.Json) (et.Item, error) {
+func SendEmailByTemplate(project_id, service_id, smtp string, groups []string, subject, template_id string, params []et.Json, tp TpMessage, user et.Json) (et.Item, error) {
 	service_id = reg.GetUUID(service_id)
 	return sendRpc("SendEmailByTemplate", "send/emailbytemplate", et.Json{
 		"project_id":  project_id,
 		"service_id":  service_id,
+		"smtp":        smtp,
 		"groups":      groups,
 		"subject":     subject,
 		"template_id": template_id,
@@ -88,11 +90,12 @@ func SendEmailByTemplate(project_id, service_id string, groups []string, subject
 * @param project_id, service_id, name, email string, subject, template_id string, params []et.Json, tp TpMessage, user et.Json
 * @return et.Json
 **/
-func SendEmailToByTemplate(project_id, service_id, name, email string, subject, template_id string, params []et.Json, tp TpMessage, user et.Json) (et.Item, error) {
+func SendEmailToByTemplate(project_id, service_id, smtp, name, email string, subject, template_id string, params []et.Json, tp TpMessage, user et.Json) (et.Item, error) {
 	service_id = reg.GetUUID(service_id)
 	return sendRpc("SendEmailToByTemplate", "send/emailtobytemplate", et.Json{
 		"project_id":  project_id,
 		"service_id":  service_id,
+		"smtp":        smtp,
 		"name":        name,
 		"email":       email,
 		"subject":     subject,
