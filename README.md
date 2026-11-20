@@ -589,8 +589,9 @@ event.WorkState(workId, event.WorkStatusCompleted, et.Json{"url": "..."})
 | `SendOtpSms`            | `<OTP_RPC>.GenerateOTPSMS`         | `generate/otp/sms`       |
 | `SendOtpWhatsapp`       | `<OTP_RPC>.GenerateOTPWhatsapp`    | `generate/otp/whatsapp`  |
 | `SendOtpEmail`          | `<OTP_RPC>.GenerateOTPEmail`       | `generate/otp/email`     |
+| `RegisterError`         | `<CATALOG_RPC>.RegisterError`      | `support/error`          |
 
-`SEND_RPC` defaults to `Service-send.Services` and `OTP_RPC` to `Service-otp.Services`. The signature is unchanged: they return `et.Json` with the RPC `result` plus `ok`, `service_id` and, when the call failed, `error` with the text.
+`SEND_RPC` defaults to `Service-send.Services`, `OTP_RPC` to `Service-otp.Services` and `CATALOG_RPC` to `catalog.Services`. `service.RegisterError(event.ErrorReport{...})` registers a support case in catalog's central error registry (Sistema › Soporte): it validates the report (`app`, `message`, `owner_kind`, `owner_id`), calls catalog by RPC and returns `et.Item` with the registered row, or, when the method does not resolve, the published `support/error` work, which catalog stores later. Unlike `event.Error` (fire and forget on `event:error`), the caller gets the result. The signature is unchanged: they return `et.Json` with the RPC `result` plus `ok`, `service_id` and, when the call failed, `error` with the text.
 
 ```go
 result := service.SendSms(projectId, "", []string{"3001234567"}, "Hola {{name}}", []et.Json{{"name": "Ana"}}, service.TpTransactional, user)
