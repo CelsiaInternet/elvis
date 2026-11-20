@@ -13,7 +13,7 @@ To start a project with Elvis, run these commands in a new folder:
 ```bash
 go mod init github.com/<organizacion>/<proyecto>
 
-go get github.com/celsiainternet/elvis@v1.1.330
+go get github.com/celsiainternet/elvis@v1.1.331
 go run github.com/celsiainternet/elvis/cmd/install
 go run github.com/celsiainternet/elvis/cmd/create go
 ```
@@ -21,7 +21,7 @@ go run github.com/celsiainternet/elvis/cmd/create go
 | Command                                           | What it does                                                                                                                                                                   |
 | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `go mod init ...`                                 | Creates `go.mod`. The next two commands need it: they read the module path from it and stop if it does not exist.                                                              |
-| `go get github.com/celsiainternet/elvis@v1.1.330` | Adds Elvis as a dependency and writes the `go.sum` entries the following `go run` commands need; without this step they fail with `missing go.sum entry`.                      |
+| `go get github.com/celsiainternet/elvis@v1.1.331` | Adds Elvis as a dependency and writes the `go.sum` entries the following `go run` commands need; without this step they fail with `missing go.sum entry`.                      |
 | `go run .../cmd/install`                          | Prepares the project: runs `go mod tidy` when there are already Go packages and installs the agents framework (see the note below). It pins no versions of other dependencies. |
 | `go run .../cmd/create go`                        | Opens an interactive menu to generate code: **Project** (full project), **Microservice**, **Modelo** (a `linq` model + CRUD in an existing package) or **Rpc**.                |
 
